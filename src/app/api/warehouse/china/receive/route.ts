@@ -1,0 +1,47 @@
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { notifyOrderStatusChange } from "@/lib/notifications";
+
+export async function POST(request: Request) {
+  const user = await getCurrentUser();
+  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN"])) {
+    return errorResponse("Forbidden", 403);
+  }
+
+  const body = await request.json();
+  const { orderId, weightKg, note } = body;
+
+  if (!orderId) return errorResponse("Order ID is required");
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return errorResponse("Order not found", 404);
+
+  if (order.status !== "SELLER_SHIPPED") {
+    return errorResponse("Order must be in SELLER_SHIPPED status");
+  }
+
+  const updateData: Record<string, unknown> = {
+    status: "ARRIVED_CHINA_WH",
+    statusLogs: {
+      create: {
+        fromStatus: order.status,
+        toStatus: "ARRIVED_CHINA_WH",
+        changedBy: user.id,
+        note: note || "Goods received at China warehouse",
+      },
+    },
+  };
+
+  if (weightKg) {
+    updateData.weightKg = parseFloat(weightKg);
+  }
+
+  const updated = await prisma.order.update({
+    where: { id: orderId },
+    data: updateData,
+  });
+
+  await notifyOrderStatusChange(order.userId, order.id, order.orderCode, "ARRIVED_CHINA_WH");
+
+  return jsonResponse(updated);
+}

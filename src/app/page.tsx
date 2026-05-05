@@ -1,65 +1,92 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-gray-900 text-white">
+      <nav className="flex items-center justify-between px-8 py-4">
+        <h1 className="text-2xl font-bold">VN Logistics</h1>
+        <div className="flex gap-4">
+          <Link href="/login" className="px-4 py-2 text-sm hover:text-blue-300 transition">
+            Login
+          </Link>
+          <Link
+            href="/register"
+            className="px-4 py-2 text-sm bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+          >
+            Register
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-8 py-20">
+        <div className="text-center">
+          <h2 className="text-5xl font-bold mb-6">
+            China to Vietnam
+            <br />
+            <span className="text-blue-400">Shipping Made Easy</span>
+          </h2>
+          <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+            Order from Taobao, 1688, Tmall — we handle purchasing, warehousing,
+            and delivery to your door in Vietnam.
+          </p>
+          <Link
+            href="/register"
+            className="inline-block px-8 py-3 bg-blue-600 rounded-lg text-lg font-semibold hover:bg-blue-700 transition"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Get Started
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
+          {[
+            {
+              title: "Easy Ordering",
+              desc: "Paste any product link from Taobao, 1688, or Tmall and we handle the rest.",
+              icon: "🛒",
+            },
+            {
+              title: "Real-Time Tracking",
+              desc: "Track your order from purchase to delivery with detailed status updates.",
+              icon: "📍",
+            },
+            {
+              title: "Transparent Pricing",
+              desc: "See full cost breakdown including fees, exchange rates, and shipping.",
+              icon: "💰",
+            },
+          ].map((f) => (
+            <div key={f.title} className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <div className="text-3xl mb-3">{f.icon}</div>
+              <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
+              <p className="text-gray-400 text-sm">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-20">
+          <h3 className="text-2xl font-bold text-center mb-10">How It Works</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[
+              { step: "1", title: "Place Order", desc: "Submit product link and quantity" },
+              { step: "2", title: "We Purchase", desc: "We buy from the Chinese seller" },
+              { step: "3", title: "Ship to Vietnam", desc: "Via our warehouse network" },
+              { step: "4", title: "Delivery", desc: "Delivered to your door" },
+            ].map((s) => (
+              <div key={s.step} className="text-center">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-lg font-bold">
+                  {s.step}
+                </div>
+                <h4 className="font-semibold mb-1">{s.title}</h4>
+                <p className="text-sm text-gray-400">{s.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </main>
+
+      <footer className="text-center py-8 text-gray-500 text-sm">
+        &copy; 2026 VN Logistics. All rights reserved.
+      </footer>
     </div>
   );
 }
