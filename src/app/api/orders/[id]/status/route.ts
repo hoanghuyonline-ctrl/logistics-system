@@ -45,9 +45,12 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
       const currentBalance = parseFloat(wallet.balance.toString());
       const newBalance = currentBalance - cost;
 
+      const currentDebt = parseFloat(wallet.debt.toString());
+      const newDebt = newBalance < 0 ? currentDebt + Math.abs(newBalance) : currentDebt;
+
       await prisma.wallet.update({
         where: { userId: order.userId },
-        data: { balance: newBalance < 0 ? 0 : newBalance, debt: newBalance < 0 ? Math.abs(newBalance) : 0 },
+        data: { balance: newBalance < 0 ? 0 : newBalance, debt: newDebt },
       });
 
       await prisma.transaction.create({

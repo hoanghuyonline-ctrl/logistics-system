@@ -16,6 +16,12 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/warehouse/
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) return errorResponse("Order not found", 404);
 
+  const { ORDER_STATUS_TRANSITIONS } = await import("@/types");
+  const allowed = ORDER_STATUS_TRANSITIONS[order.status];
+  if (!allowed || !allowed.includes(status)) {
+    return errorResponse(`Cannot transition from ${order.status} to ${status}`);
+  }
+
   const updated = await prisma.order.update({
     where: { id },
     data: {
