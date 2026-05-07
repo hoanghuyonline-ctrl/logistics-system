@@ -147,6 +147,32 @@ const zh: Record<string, string> = {
   "notif.hrAgo": "小时前",
   "notif.dayAgo": "天前",
 
+  // Warehouse scan
+  "scan.title": "扫描包裹",
+  "scan.subtitleCN": "在中国仓库扫描条码",
+  "scan.subtitleVN": "在越南仓库扫描条码",
+  "scan.inputTitle": "输入条码",
+  "scan.placeholder": "扫描或输入条码/包裹号...",
+  "scan.lookup": "查询",
+  "scan.clear": "清除",
+  "scan.found": "找到包裹",
+  "scan.notFound": "未找到包裹",
+  "scan.error": "发生错误",
+  "scan.updateSuccess": "状态更新成功",
+  "scan.updateFailed": "状态更新失败",
+  "scan.resultTitle": "包裹详情",
+  "scan.packageCode": "包裹号",
+  "scan.barcode": "条码",
+  "scan.status": "状态",
+  "scan.weight": "重量",
+  "scan.createdBy": "创建人",
+  "scan.orders": "订单数",
+  "scan.ordersInPackage": "包裹内订单",
+  "scan.markShipping": "标记为运输中",
+  "scan.markArrivedVN": "标记为到达越南",
+  "scan.markDelivered": "标记为已送达",
+  "nav.scan": "扫描",
+
   // Language
   "language.label": "语言",
 };

@@ -147,6 +147,32 @@ const en: Record<string, string> = {
   "notif.hrAgo": "h ago",
   "notif.dayAgo": "d ago",
 
+  // Warehouse scan
+  "scan.title": "Scan Package",
+  "scan.subtitleCN": "Scan barcode at China warehouse",
+  "scan.subtitleVN": "Scan barcode at Vietnam warehouse",
+  "scan.inputTitle": "Enter Barcode",
+  "scan.placeholder": "Scan or type barcode / package code...",
+  "scan.lookup": "Lookup",
+  "scan.clear": "Clear",
+  "scan.found": "Package found",
+  "scan.notFound": "Package not found",
+  "scan.error": "An error occurred",
+  "scan.updateSuccess": "Status updated successfully",
+  "scan.updateFailed": "Failed to update status",
+  "scan.resultTitle": "Package Details",
+  "scan.packageCode": "Package Code",
+  "scan.barcode": "Barcode",
+  "scan.status": "Status",
+  "scan.weight": "Weight",
+  "scan.createdBy": "Created By",
+  "scan.orders": "Orders",
+  "scan.ordersInPackage": "Orders in Package",
+  "scan.markShipping": "Mark as Shipping",
+  "scan.markArrivedVN": "Mark as Arrived VN",
+  "scan.markDelivered": "Mark as Delivered",
+  "nav.scan": "Scan",
+
   // Language
   "language.label": "Language",
 };
