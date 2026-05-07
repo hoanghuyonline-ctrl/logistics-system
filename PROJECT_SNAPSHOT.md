@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-07
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `270828f`
+**Latest stable commit:** `14c7c54`
 
 ---
 
@@ -22,6 +22,7 @@
 - **Email Notification Foundation** — SMTP/Nodemailer helper with templates
 - **Notification Triggers** — Order created and shipment status changed events connected using fire-and-forget pattern
 - **Notification UI** — Bell dropdown with unread badge, latest notifications, mark-as-read action, and VI/EN/ZH translations
+- **Telegram Notification Delivery** — Telegram Bot API channel using `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, integrated with notification service
 
 ## Stack
 
@@ -72,8 +73,8 @@
 
 ## Remaining Major Tasks
 
-- Telegram notification delivery implementation
 - Zalo notification delivery implementation
+- Production Telegram bot/chat configuration
 - Production SMTP configuration
 - Package image upload (model exists, no upload endpoint)
 - Accountant role pages (role exists, no dedicated UI)
@@ -88,5 +89,6 @@
 3. **bwip-js types** — local interface used because package types don't resolve under `moduleResolution: "bundler"`. Low risk.
 4. **No CI pipeline** — no automated tests or checks configured.
 5. **Notification delivery is fire-and-forget** — failed sends are logged but do not block APIs.
-6. **Telegram/Zalo channels are placeholders only** — return "not implemented" gracefully.
-7. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+6. **Zalo channel is a placeholder only** — returns "not implemented" gracefully.
+7. **Telegram delivery requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in production** — failures are logged and do not block APIs.
+8. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
