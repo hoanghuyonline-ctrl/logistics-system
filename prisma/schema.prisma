@@ -27,6 +27,17 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum ShipmentStatus {
+  PENDING
+  RECEIVED_CHINA
+  IN_CHINA_WAREHOUSE
+  SHIPPED_TO_VN
+  IN_VN_WAREHOUSE
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
 enum PackageStatus {
   AT_CHINA_WH
   SHIPPING

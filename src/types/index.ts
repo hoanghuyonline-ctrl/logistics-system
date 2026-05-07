@@ -1,6 +1,20 @@
-import { Role, OrderStatus } from "@prisma/client";
+import { Role, OrderStatus, ShipmentStatus } from "@prisma/client";
 
-export type { Role, OrderStatus };
+export type { Role, OrderStatus, ShipmentStatus };
+
+// Re-export centralized shipment status helpers for convenience
+export {
+  SHIPMENT_TRANSITIONS,
+  isValidTransition,
+  getNextStatuses,
+  assertTransition,
+  InvalidTransitionError,
+  toShipmentStatus,
+  toOrderStatus,
+  transitionOrder,
+  validateOrderTransition,
+  SHIPMENT_STATUS_LABELS,
+} from "@/lib/shipment-status";
 
 export interface SessionUser {
   id: string;

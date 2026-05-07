@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { ORDER_STATUS_TRANSITIONS } from "@/types";
 import { notifyOrderStatusChange } from "@/lib/notifications";
+import { InvalidTransitionError, toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
 import { OrderStatus } from "@prisma/client";
 import type { NextRequest } from "next/server";
 
@@ -18,9 +19,17 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) return errorResponse("Order not found", 404);
 
-  const allowed = ORDER_STATUS_TRANSITIONS[order.status];
-  if (!allowed.includes(status as OrderStatus)) {
-    return errorResponse(`Cannot transition from ${order.status} to ${status}`);
+  // Validate via centralized ShipmentStatus transitions first
+  const fromShipment = toShipmentStatus(order.status);
+  const toShipment = toShipmentStatus(status as OrderStatus);
+  if (!isValidTransition(fromShipment, toShipment)) {
+    // Fall back to legacy OrderStatus transitions for finer-grained
+    // statuses (e.g. PENDING → PURCHASED) that the ShipmentStatus
+    // layer intentionally collapses.
+    const allowed = ORDER_STATUS_TRANSITIONS[order.status];
+    if (!allowed.includes(status as OrderStatus)) {
+      return errorResponse(`Cannot transition from ${order.status} to ${status}`);
+    }
   }
 
   const updated = await prisma.order.update({

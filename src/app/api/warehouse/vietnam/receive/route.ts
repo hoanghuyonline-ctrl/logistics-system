@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { notifyOrderStatusChange } from "@/lib/notifications";
+import { toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
+import { ShipmentStatus } from "@prisma/client";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -16,8 +18,11 @@ export async function POST(request: Request) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) return errorResponse("Order not found", 404);
 
-  if (order.status !== "SHIPPING_TO_VIETNAM") {
-    return errorResponse("Order must be in SHIPPING_TO_VIETNAM status");
+  const currentShipment = toShipmentStatus(order.status);
+  if (!isValidTransition(currentShipment, ShipmentStatus.IN_VN_WAREHOUSE)) {
+    return errorResponse(
+      `Cannot receive order: current status ${order.status} does not allow transition to IN_VN_WAREHOUSE`,
+    );
   }
 
   const updated = await prisma.order.update({

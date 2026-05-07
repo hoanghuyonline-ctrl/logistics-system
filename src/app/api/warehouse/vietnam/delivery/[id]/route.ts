@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { notifyOrderStatusChange } from "@/lib/notifications";
+import { toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
+import { OrderStatus } from "@prisma/client";
 import type { NextRequest } from "next/server";
 
 export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/warehouse/vietnam/delivery/[id]">) {
@@ -16,9 +18,9 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/warehouse/
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) return errorResponse("Order not found", 404);
 
-  const { ORDER_STATUS_TRANSITIONS } = await import("@/types");
-  const allowed = ORDER_STATUS_TRANSITIONS[order.status];
-  if (!allowed || !allowed.includes(status)) {
+  const fromShipment = toShipmentStatus(order.status);
+  const toShipment = toShipmentStatus(status as OrderStatus);
+  if (!isValidTransition(fromShipment, toShipment)) {
     return errorResponse(`Cannot transition from ${order.status} to ${status}`);
   }
 
