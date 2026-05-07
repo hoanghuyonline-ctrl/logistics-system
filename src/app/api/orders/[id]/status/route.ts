@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { ORDER_STATUS_TRANSITIONS } from "@/types";
 import { notifyOrderStatusChange } from "@/lib/notifications";
+import { onShipmentStatusChanged } from "@/lib/notifications/triggers";
 import { InvalidTransitionError, toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
 import { OrderStatus } from "@prisma/client";
 import type { NextRequest } from "next/server";
@@ -110,6 +111,23 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
   }
 
   await notifyOrderStatusChange(order.userId, order.id, order.orderCode, status);
+
+  prisma.user
+    .findUnique({ where: { id: order.userId }, select: { email: true, fullName: true } })
+    .then((orderUser) =>
+      onShipmentStatusChanged({
+        userId: order.userId,
+        userEmail: orderUser?.email,
+        userName: orderUser?.fullName,
+        orderId: order.id,
+        orderCode: order.orderCode,
+        fromStatus: order.status,
+        toStatus: status,
+      }),
+    )
+    .catch((err) => {
+      console.error("[notifications] onShipmentStatusChanged failed:", err);
+    });
 
   return jsonResponse(updated);
 }
