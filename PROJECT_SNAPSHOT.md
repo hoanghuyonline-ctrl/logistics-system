@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-07
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `cecef99`
+**Latest stable commit:** `5251d2d`
 
 ---
 
@@ -18,6 +18,9 @@
 - **Centralized ShipmentStatus Workflow** — 8-state enum with validated transitions, bidirectional mapping to legacy OrderStatus
 - **Barcode Rendering** — Code128 barcode generation (PNG/SVG) via bwip-js, print label popup
 - **UI/UX Redesign** — Modern SaaS design across all 25+ pages, reusable components, toast notifications, loading/empty states
+- **Notification Infrastructure** — Modular service layer for SYSTEM/EMAIL/TELEGRAM/ZALO channels
+- **Email Notification Foundation** — SMTP/Nodemailer helper with templates
+- **Notification Triggers** — Order created and shipment status changed events connected using fire-and-forget pattern
 
 ## Stack
 
@@ -68,7 +71,10 @@
 
 ## Remaining Major Tasks
 
-- Email/Telegram/Zalo notification delivery (structure exists, no transport implemented)
+- Telegram notification delivery implementation
+- Zalo notification delivery implementation
+- Notification UI improvements
+- Production SMTP configuration
 - Package image upload (model exists, no upload endpoint)
 - Accountant role pages (role exists, no dedicated UI)
 - Order notes/history log UI
@@ -81,3 +87,6 @@
 2. **ShipmentStatus enum in Postgres but not as a column** — validation-only layer; adding as Order column later requires data migration.
 3. **bwip-js types** — local interface used because package types don't resolve under `moduleResolution: "bundler"`. Low risk.
 4. **No CI pipeline** — no automated tests or checks configured.
+5. **Notification delivery is fire-and-forget** — failed sends are logged but do not block APIs.
+6. **Telegram/Zalo channels are placeholders only** — return "not implemented" gracefully.
+7. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
