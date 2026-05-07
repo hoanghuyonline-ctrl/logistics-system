@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-07
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `75bcd19`
+**Latest stable commit:** `4b403ab`
 
 ---
 
@@ -24,6 +24,7 @@
 - **Notification UI** — Bell dropdown with unread badge, latest notifications, mark-as-read action, and VI/EN/ZH translations
 - **Telegram Notification Delivery** — Telegram Bot API channel using `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, integrated with notification service
 - **Warehouse Scan Workflow** — Barcode/packageCode scan pages for China and Vietnam warehouses, server-validated status transitions, USB scanner/manual input support, VI/EN/ZH translations
+- **Audit Log System** — Centralized audit helper, warehouse scan/order status logging, admin read-only audit log page, VI/EN/ZH translations
 
 ## Stack
 
@@ -56,6 +57,7 @@
 | `/api/warehouse/vietnam/delivery/[id]` | PATCH | Dispatch/complete delivery |
 | `/api/users` | GET/POST | User management |
 | `/api/warehouse/scan` | POST | Barcode lookup + package status update |
+| `/api/admin/audit-log` | GET | Paginated audit log (OrderStatusLog) |
 | `/api/analytics` | GET | Dashboard analytics |
 
 ## Important Prisma Models
@@ -96,3 +98,4 @@
 8. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 9. **Scan workflow uses web input only** — no camera scanning or mobile offline mode yet.
 10. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
+11. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
