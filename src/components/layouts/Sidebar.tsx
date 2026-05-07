@@ -3,49 +3,51 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   href: string;
   icon: string;
 }
 
 const customerNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "📊" },
-  { label: "New Order", href: "/orders/new", icon: "➕" },
-  { label: "My Orders", href: "/orders", icon: "📦" },
-  { label: "Wallet", href: "/wallet", icon: "💰" },
-  { label: "Transactions", href: "/transactions", icon: "📋" },
-  { label: "Notifications", href: "/notifications", icon: "🔔" },
-  { label: "Profile", href: "/profile", icon: "👤" },
+  { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
+  { labelKey: "nav.newOrder", href: "/orders/new", icon: "➕" },
+  { labelKey: "nav.myOrders", href: "/orders", icon: "📦" },
+  { labelKey: "nav.wallet", href: "/wallet", icon: "💰" },
+  { labelKey: "nav.transactions", href: "/transactions", icon: "📋" },
+  { labelKey: "nav.notifications", href: "/notifications", icon: "🔔" },
+  { labelKey: "nav.profile", href: "/profile", icon: "👤" },
 ];
 
 const adminNav: NavItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: "📊" },
-  { label: "Users", href: "/admin/users", icon: "👥" },
-  { label: "Orders", href: "/admin/orders", icon: "📦" },
-  { label: "Packages", href: "/admin/packages", icon: "📫" },
-  { label: "Finance", href: "/admin/finance", icon: "💰" },
-  { label: "Settings", href: "/admin/settings", icon: "⚙️" },
-  { label: "Analytics", href: "/admin/analytics", icon: "📈" },
+  { labelKey: "nav.dashboard", href: "/admin/dashboard", icon: "📊" },
+  { labelKey: "nav.users", href: "/admin/users", icon: "👥" },
+  { labelKey: "nav.orders", href: "/admin/orders", icon: "📦" },
+  { labelKey: "nav.packages", href: "/admin/packages", icon: "📫" },
+  { labelKey: "nav.finance", href: "/admin/finance", icon: "💰" },
+  { labelKey: "nav.settings", href: "/admin/settings", icon: "⚙️" },
+  { labelKey: "nav.analytics", href: "/admin/analytics", icon: "📈" },
 ];
 
 const warehouseCNNav: NavItem[] = [
-  { label: "Dashboard", href: "/warehouse/china/dashboard", icon: "📊" },
-  { label: "Receive Goods", href: "/warehouse/china/receive", icon: "📥" },
-  { label: "Packages", href: "/warehouse/china/packages", icon: "📦" },
+  { labelKey: "nav.dashboard", href: "/warehouse/china/dashboard", icon: "📊" },
+  { labelKey: "nav.receiveGoods", href: "/warehouse/china/receive", icon: "📥" },
+  { labelKey: "nav.packages", href: "/warehouse/china/packages", icon: "📦" },
 ];
 
 const warehouseVNNav: NavItem[] = [
-  { label: "Dashboard", href: "/warehouse/vietnam/dashboard", icon: "📊" },
-  { label: "Receive Goods", href: "/warehouse/vietnam/receive", icon: "📥" },
-  { label: "Delivery", href: "/warehouse/vietnam/delivery", icon: "🚚" },
+  { labelKey: "nav.dashboard", href: "/warehouse/vietnam/dashboard", icon: "📊" },
+  { labelKey: "nav.receiveGoods", href: "/warehouse/vietnam/receive", icon: "📥" },
+  { labelKey: "nav.delivery", href: "/warehouse/vietnam/delivery", icon: "🚚" },
 ];
 
 const accountantNav: NavItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: "📊" },
-  { label: "Finance", href: "/admin/finance", icon: "💰" },
-  { label: "Analytics", href: "/admin/analytics", icon: "📈" },
+  { labelKey: "nav.dashboard", href: "/admin/dashboard", icon: "📊" },
+  { labelKey: "nav.finance", href: "/admin/finance", icon: "💰" },
+  { labelKey: "nav.analytics", href: "/admin/analytics", icon: "📈" },
 ];
 
 function getNavItems(role: string): NavItem[] {
@@ -58,20 +60,10 @@ function getNavItems(role: string): NavItem[] {
   }
 }
 
-function getRoleLabel(role: string): string {
-  const labels: Record<string, string> = {
-    ADMIN: "Administrator",
-    CUSTOMER: "Customer",
-    WAREHOUSE_CN: "China Warehouse",
-    WAREHOUSE_VN: "Vietnam Warehouse",
-    ACCOUNTANT: "Accountant",
-  };
-  return labels[role] || role;
-}
-
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { t, locale, setLocale } = useI18n();
   const role = (session?.user as Record<string, unknown>)?.role as string || "CUSTOMER";
   const navItems = getNavItems(role);
 
@@ -84,8 +76,8 @@ export default function Sidebar() {
             <span className="text-white text-sm font-bold">VN</span>
           </div>
           <div>
-            <h1 className="text-base font-bold text-slate-900 leading-tight">VN Logistics</h1>
-            <p className="text-[11px] text-slate-400 font-medium">China → Vietnam Shipping</p>
+            <h1 className="text-base font-bold text-slate-900 leading-tight">{t("common.appName")}</h1>
+            <p className="text-[11px] text-slate-400 font-medium">{t("common.tagline")}</p>
           </div>
         </div>
       </div>
@@ -105,12 +97,26 @@ export default function Sidebar() {
               }`}
             >
               <span className="text-base w-6 text-center flex-shrink-0">{item.icon}</span>
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
               {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />}
             </Link>
           );
         })}
       </nav>
+
+      {/* Language switcher */}
+      <div className="px-4 py-3 border-t border-slate-100 mx-2">
+        <label className="block text-[11px] text-slate-400 font-medium mb-1.5">{t("language.label")}</label>
+        <select
+          value={locale}
+          onChange={(e) => setLocale(e.target.value as Locale)}
+          className="w-full px-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+        >
+          {SUPPORTED_LOCALES.map((l) => (
+            <option key={l} value={l}>{LOCALE_LABELS[l]}</option>
+          ))}
+        </select>
+      </div>
 
       {/* User section */}
       <div className="px-4 py-4 border-t border-slate-100 mx-2 mb-2">
@@ -122,7 +128,7 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-slate-900 truncate">{session?.user?.name}</p>
-            <p className="text-[11px] text-slate-400 font-medium">{getRoleLabel(role)}</p>
+            <p className="text-[11px] text-slate-400 font-medium">{t(`role.${role}`)}</p>
           </div>
         </div>
         <button
@@ -130,7 +136,7 @@ export default function Sidebar() {
           className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         >
           <span className="text-base">🚪</span>
-          Sign Out
+          {t("common.signOut")}
         </button>
       </div>
     </aside>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 import KPICard from "@/components/ui/KPICard";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -26,6 +27,7 @@ interface Wallet {
 
 export default function CustomerDashboard() {
   const { data: session } = useSession();
+  const { t } = useI18n();
   const [orders, setOrders] = useState<Order[]>([]);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function CustomerDashboard() {
     load();
   }, []);
 
-  if (loading) return <LoadingSpinner text="Loading dashboard..." />;
+  if (loading) return <LoadingSpinner text={t("common.loading")} />;
 
   const balance = wallet ? parseFloat(wallet.balance).toLocaleString() : "0";
   const debt = wallet ? parseFloat(wallet.debt).toLocaleString() : "0";
@@ -53,8 +55,8 @@ export default function CustomerDashboard() {
   return (
     <div>
       <PageHeader
-        title={`Welcome back, ${session?.user?.name || "User"}`}
-        subtitle="Here's an overview of your shipping activity"
+        title={`${t("dashboard.welcome")}, ${session?.user?.name || "User"}`}
+        subtitle={t("common.tagline")}
         action={
           <Link href="/orders/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
             + New Order
@@ -63,13 +65,13 @@ export default function CustomerDashboard() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <KPICard title="Wallet Balance" value={`${balance} VND`} icon={<span>💰</span>} color="green" />
-        <KPICard title="Outstanding Debt" value={`${debt} VND`} icon={<span>📊</span>} color="red" />
-        <KPICard title="Total Orders" value={orders.length} icon={<span>📦</span>} color="blue" />
+        <KPICard title={t("dashboard.walletBalance")} value={`${balance} VND`} icon={<span>💰</span>} color="green" />
+        <KPICard title={t("dashboard.pendingOrders")} value={`${debt} VND`} icon={<span>📊</span>} color="red" />
+        <KPICard title={t("dashboard.totalOrders")} value={orders.length} icon={<span>📦</span>} color="blue" />
       </div>
 
       <Card
-        title="Recent Orders"
+        title={t("dashboard.recentOrders")}
         action={
           <Link href="/orders" className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
             View all →
@@ -80,9 +82,9 @@ export default function CustomerDashboard() {
         {orders.length === 0 ? (
           <EmptyState
             icon="📦"
-            title="No orders yet"
-            description="Create your first order to start shipping from China to Vietnam"
-            actionLabel="Create First Order"
+            title={t("dashboard.noOrders")}
+            description={t("dashboard.createFirst")}
+            actionLabel={t("nav.newOrder")}
             actionHref="/orders/new"
           />
         ) : (

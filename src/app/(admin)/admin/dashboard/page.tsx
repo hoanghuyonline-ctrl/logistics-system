@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 import KPICard from "@/components/ui/KPICard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
@@ -22,6 +23,7 @@ interface DashboardData {
 }
 
 export default function AdminDashboard() {
+  const { t } = useI18n();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,22 +33,22 @@ export default function AdminDashboard() {
       .then((d) => { setData(d); setLoading(false); });
   }, []);
 
-  if (loading || !data) return <LoadingSpinner text="Loading dashboard..." />;
+  if (loading || !data) return <LoadingSpinner text={t("common.loading")} />;
 
   return (
     <div>
-      <PageHeader title="Admin Dashboard" subtitle="Overview of your logistics operations" />
+      <PageHeader title={t("admin.dashboard")} subtitle={t("common.tagline")} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <KPICard title="Total Orders" value={data.totalOrders} subtitle={`Today: ${data.ordersToday}`} icon={<span>📦</span>} color="blue" />
-        <KPICard title="Pending Orders" value={data.pendingOrders} subtitle="Awaiting action" icon={<span>⏳</span>} color="yellow" />
+        <KPICard title={t("admin.totalOrders")} value={data.totalOrders} subtitle={`Today: ${data.ordersToday}`} icon={<span>📦</span>} color="blue" />
+        <KPICard title={t("dashboard.pendingOrders")} value={data.pendingOrders} subtitle="Awaiting action" icon={<span>⏳</span>} color="yellow" />
         <KPICard title="In Transit" value={data.inTransitOrders} icon={<span>✈️</span>} color="cyan" />
         <KPICard title="Active Customers" value={data.activeCustomers} subtitle={`of ${data.totalCustomers} total`} icon={<span>👥</span>} color="green" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-        <KPICard title="Total Revenue" value={`${data.totalRevenue.toLocaleString()} VND`} icon={<span>💰</span>} color="green" />
-        <KPICard title="Estimated Profit" value={`${data.estimatedProfit.toLocaleString()} VND`} icon={<span>📈</span>} color="purple" />
+        <KPICard title={t("admin.totalRevenue")} value={`${data.totalRevenue.toLocaleString()} VND`} icon={<span>💰</span>} color="green" />
+        <KPICard title={t("admin.totalProfit")} value={`${data.estimatedProfit.toLocaleString()} VND`} icon={<span>📈</span>} color="purple" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

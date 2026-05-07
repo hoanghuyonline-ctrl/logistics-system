@@ -1,47 +1,53 @@
+"use client";
+
 import Link from "next/link";
-
-const features = [
-  {
-    title: "Easy Ordering",
-    desc: "Paste any product link from Taobao, 1688, or Tmall. We handle purchasing, quality checks, and warehousing.",
-    icon: "🛒",
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    title: "Real-Time Tracking",
-    desc: "Track your order from purchase through China warehouse, international shipping, and Vietnam delivery.",
-    icon: "📍",
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    title: "Transparent Pricing",
-    desc: "See full cost breakdown with exchange rates, service fees, and shipping costs before you order.",
-    icon: "💰",
-    color: "bg-amber-50 text-amber-600",
-  },
-  {
-    title: "Secure Wallet",
-    desc: "Deposit funds, track balances, and view transaction history. All payments are logged and transparent.",
-    icon: "🔒",
-    color: "bg-violet-50 text-violet-600",
-  },
-];
-
-const steps = [
-  { step: "01", title: "Place Your Order", desc: "Submit the product URL, quantity, and we calculate costs instantly", icon: "📝" },
-  { step: "02", title: "We Purchase & Ship", desc: "Our team buys from the seller and ships to our China warehouse", icon: "🏭" },
-  { step: "03", title: "Cross-Border Transit", desc: "Goods are consolidated, packed, and shipped from China to Vietnam", icon: "✈️" },
-  { step: "04", title: "Delivered to You", desc: "Receive your goods at your door in Vietnam, fully tracked", icon: "🏠" },
-];
-
-const stats = [
-  { value: "10K+", label: "Orders Delivered" },
-  { value: "99.5%", label: "Delivery Rate" },
-  { value: "5-7", label: "Days Average" },
-  { value: "24/7", label: "Support" },
-];
+import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 export default function Home() {
+  const { t, locale, setLocale } = useI18n();
+
+  const features = [
+    {
+      title: t("landing.easyOrdering"),
+      desc: t("landing.easyOrderingDesc"),
+      icon: "🛒",
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
+      title: t("landing.realTimeTracking"),
+      desc: t("landing.realTimeTrackingDesc"),
+      icon: "📍",
+      color: "bg-emerald-50 text-emerald-600",
+    },
+    {
+      title: t("landing.transparentPricing"),
+      desc: t("landing.transparentPricingDesc"),
+      icon: "💰",
+      color: "bg-amber-50 text-amber-600",
+    },
+    {
+      title: t("landing.secureWallet"),
+      desc: t("landing.secureWalletDesc"),
+      icon: "🔒",
+      color: "bg-violet-50 text-violet-600",
+    },
+  ];
+
+  const steps = [
+    { step: "01", title: t("landing.step01"), desc: t("landing.step01Desc"), icon: "📝" },
+    { step: "02", title: t("landing.step02"), desc: t("landing.step02Desc"), icon: "🏭" },
+    { step: "03", title: t("landing.step03"), desc: t("landing.step03Desc"), icon: "✈️" },
+    { step: "04", title: t("landing.step04"), desc: t("landing.step04Desc"), icon: "🏠" },
+  ];
+
+  const stats = [
+    { value: "10K+", label: t("landing.ordersDelivered") },
+    { value: "99.5%", label: t("landing.deliveryRate") },
+    { value: "5-7", label: t("landing.daysAverage") },
+    { value: "24/7", label: t("landing.support") },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
@@ -51,14 +57,23 @@ export default function Home() {
             <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center">
               <span className="text-white text-sm font-bold">VN</span>
             </div>
-            <span className="text-lg font-bold text-slate-900">VN Logistics</span>
+            <span className="text-lg font-bold text-slate-900">{t("common.appName")}</span>
           </div>
           <div className="flex items-center gap-3">
+            <select
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as Locale)}
+              className="px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-600 focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              {SUPPORTED_LOCALES.map((l) => (
+                <option key={l} value={l}>{LOCALE_LABELS[l]}</option>
+              ))}
+            </select>
             <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-              Sign In
+              {t("common.signIn")}
             </Link>
             <Link href="/register" className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-              Get Started
+              {t("common.getStarted")}
             </Link>
           </div>
         </div>
@@ -71,25 +86,24 @@ export default function Home() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold mb-6 border border-blue-100">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-              Trusted by 2,000+ businesses in Vietnam
+              {t("landing.badge")}
             </div>
             <h1 className="text-4xl lg:text-6xl font-bold text-slate-900 leading-[1.1] tracking-tight">
-              China to Vietnam
+              {t("landing.heroTitle1")}
               <br />
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Shipping Made Easy
+                {t("landing.heroTitle2")}
               </span>
             </h1>
             <p className="mt-6 text-lg lg:text-xl text-slate-500 leading-relaxed max-w-2xl">
-              Order from Taobao, 1688, Tmall — we handle purchasing, warehousing,
-              cross-border shipping, and last-mile delivery to your door in Vietnam.
+              {t("landing.heroDesc")}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link href="/register" className="inline-flex items-center justify-center px-6 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 text-sm">
-                Start Shipping Today →
+                {t("landing.startShipping")}
               </Link>
               <Link href="/login" className="inline-flex items-center justify-center px-6 py-3.5 bg-white text-slate-700 font-semibold rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-sm">
-                Sign In to Dashboard
+                {t("landing.signInDashboard")}
               </Link>
             </div>
           </div>
@@ -115,10 +129,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
-              Everything You Need
+              {t("landing.everythingYouNeed")}
             </h2>
             <p className="mt-3 text-lg text-slate-500 max-w-2xl mx-auto">
-              A complete logistics platform from order to delivery
+              {t("landing.platformDesc")}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -140,10 +154,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
-              How It Works
+              {t("landing.howItWorks")}
             </h2>
             <p className="mt-3 text-lg text-slate-500 max-w-2xl mx-auto">
-              Simple 4-step process from China to your doorstep in Vietnam
+              {t("landing.howItWorksDesc")}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -172,17 +186,17 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-br from-blue-600 to-indigo-700">
         <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
-            Ready to start shipping?
+            {t("landing.readyToStart")}
           </h2>
           <p className="mt-4 text-lg text-blue-100 max-w-2xl mx-auto">
-            Join thousands of businesses using VN Logistics for reliable China-to-Vietnam shipping.
+            {t("landing.readyToStartDesc")}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-all shadow-lg text-sm">
-              Create Free Account
+              {t("landing.createFreeAccount")}
             </Link>
             <Link href="/login" className="inline-flex items-center justify-center px-8 py-3.5 bg-white/10 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 transition-all text-sm">
-              Sign In →
+              {t("common.signIn")} →
             </Link>
           </div>
         </div>
@@ -196,9 +210,9 @@ export default function Home() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white text-xs font-bold">VN</span>
               </div>
-              <span className="text-sm font-semibold text-white">VN Logistics</span>
+              <span className="text-sm font-semibold text-white">{t("common.appName")}</span>
             </div>
-            <p className="text-sm">&copy; 2026 VN Logistics. All rights reserved.</p>
+            <p className="text-sm">{t("common.copyright")}</p>
           </div>
         </div>
       </footer>

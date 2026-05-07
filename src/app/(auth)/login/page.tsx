@@ -4,9 +4,12 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t, locale, setLocale } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -24,7 +27,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setError("Invalid email or password");
+      setError(t("auth.invalidCredentials"));
       setLoading(false);
       return;
     }
@@ -52,17 +55,17 @@ export default function LoginPage() {
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
             <span className="text-white font-bold">VN</span>
           </div>
-          <span className="text-xl font-bold text-white">VN Logistics</span>
+          <span className="text-xl font-bold text-white">{t("common.appName")}</span>
         </div>
         <div>
-          <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-            Manage your<br />shipments with ease
+          <h2 className="text-4xl font-bold text-white leading-tight mb-4 whitespace-pre-line">
+            {t("auth.loginBranding")}
           </h2>
           <p className="text-blue-100 text-lg leading-relaxed">
-            Track orders, manage warehouses, and deliver goods from China to Vietnam — all in one platform.
+            {t("auth.loginBrandingDesc")}
           </p>
         </div>
-        <p className="text-blue-200 text-sm">&copy; 2026 VN Logistics</p>
+        <p className="text-blue-200 text-sm">{t("common.copyright")}</p>
       </div>
 
       {/* Right form panel */}
@@ -72,11 +75,24 @@ export default function LoginPage() {
             <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center">
               <span className="text-white text-sm font-bold">VN</span>
             </div>
-            <span className="text-lg font-bold text-slate-900">VN Logistics</span>
+            <span className="text-lg font-bold text-slate-900">{t("common.appName")}</span>
           </div>
 
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome back</h1>
-          <p className="text-sm text-slate-500 mb-8">Sign in to your account to continue</p>
+          {/* Language selector */}
+          <div className="flex justify-end mb-4">
+            <select
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as Locale)}
+              className="px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-600 focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              {SUPPORTED_LOCALES.map((l) => (
+                <option key={l} value={l}>{LOCALE_LABELS[l]}</option>
+              ))}
+            </select>
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">{t("auth.welcomeBack")}</h1>
+          <p className="text-sm text-slate-500 mb-8">{t("auth.signInSubtitle")}</p>
 
           {error && (
             <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm border border-red-100">
@@ -87,24 +103,24 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("auth.emailLabel")}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("auth.passwordLabel")}</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="Enter your password"
+                placeholder={t("auth.passwordPlaceholder")}
                 required
               />
             </div>
@@ -116,16 +132,16 @@ export default function LoginPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing in...
+                  {t("auth.signingIn")}
                 </span>
-              ) : "Sign In"}
+              ) : t("common.signIn")}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            Don&apos;t have an account?{" "}
+            {t("auth.noAccount")}{" "}
             <Link href="/register" className="text-blue-600 font-medium hover:text-blue-700">
-              Create one
+              {t("auth.createOne")}
             </Link>
           </p>
         </div>
