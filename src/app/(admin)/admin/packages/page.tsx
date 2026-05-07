@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
@@ -33,6 +33,24 @@ export default function PackagesPage() {
   const [orderIds, setOrderIds] = useState("");
   const [pkgWeight, setPkgWeight] = useState("");
   const [dims, setDims] = useState({ lengthCm: "", widthCm: "", heightCm: "" });
+
+  const printLabel = useCallback((pkgId: string, packageCode: string, barcode: string) => {
+    const printWindow = window.open("", "_blank", "width=420,height=340");
+    if (!printWindow) return;
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Label - ${packageCode}</title>
+      <style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:system-ui,sans-serif}
+      .label{text-align:center;padding:24px;border:2px solid #000;width:360px}
+      .code{font-size:18px;font-weight:700;margin-bottom:8px}
+      .barcode-text{font-size:11px;color:#666;margin-top:4px}
+      img{max-width:100%}
+      @media print{body{margin:0}.label{border:none}}</style></head>
+      <body><div class="label">
+      <div class="code">${packageCode}</div>
+      <img src="/api/packages/${pkgId}/barcode?format=png" alt="barcode" onload="window.print()"/>
+      <div class="barcode-text">${barcode}</div>
+      </div></body></html>`);
+    printWindow.document.close();
+  }, []);
 
   function loadPackages() {
     setLoading(true);
@@ -125,6 +143,7 @@ export default function PackagesPage() {
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Weight</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Label</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -142,6 +161,14 @@ export default function PackagesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => printLabel(p.id, p.packageCode, p.barcode)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        🖨 Print Label
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
