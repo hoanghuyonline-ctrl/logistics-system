@@ -147,6 +147,32 @@ const vi: Record<string, string> = {
   "notif.hrAgo": " giờ trước",
   "notif.dayAgo": " ngày trước",
 
+  // Warehouse scan
+  "scan.title": "Quét hàng",
+  "scan.subtitleCN": "Quét mã vạch tại kho Trung Quốc",
+  "scan.subtitleVN": "Quét mã vạch tại kho Việt Nam",
+  "scan.inputTitle": "Nhập mã vạch",
+  "scan.placeholder": "Quét hoặc nhập mã vạch / mã kiện...",
+  "scan.lookup": "Tra cứu",
+  "scan.clear": "Xóa",
+  "scan.found": "Tìm thấy kiện hàng",
+  "scan.notFound": "Không tìm thấy kiện hàng",
+  "scan.error": "Đã xảy ra lỗi",
+  "scan.updateSuccess": "Cập nhật trạng thái thành công",
+  "scan.updateFailed": "Cập nhật trạng thái thất bại",
+  "scan.resultTitle": "Thông tin kiện hàng",
+  "scan.packageCode": "Mã kiện",
+  "scan.barcode": "Mã vạch",
+  "scan.status": "Trạng thái",
+  "scan.weight": "Trọng lượng",
+  "scan.createdBy": "Người tạo",
+  "scan.orders": "Số đơn hàng",
+  "scan.ordersInPackage": "Đơn hàng trong kiện",
+  "scan.markShipping": "Đánh dấu đang vận chuyển",
+  "scan.markArrivedVN": "Đánh dấu đến kho VN",
+  "scan.markDelivered": "Đánh dấu đã giao",
+  "nav.scan": "Quét hàng",
+
   // Language
   "language.label": "Ngôn ngữ",
 };

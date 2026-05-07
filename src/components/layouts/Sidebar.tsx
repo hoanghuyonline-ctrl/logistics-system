@@ -36,12 +36,14 @@ const adminNav: NavItem[] = [
 
 const warehouseCNNav: NavItem[] = [
   { labelKey: "nav.dashboard", href: "/warehouse/china/dashboard", icon: "📊" },
+  { labelKey: "nav.scan", href: "/warehouse/china/scan", icon: "📱" },
   { labelKey: "nav.receiveGoods", href: "/warehouse/china/receive", icon: "📥" },
   { labelKey: "nav.packages", href: "/warehouse/china/packages", icon: "📦" },
 ];
 
 const warehouseVNNav: NavItem[] = [
   { labelKey: "nav.dashboard", href: "/warehouse/vietnam/dashboard", icon: "📊" },
+  { labelKey: "nav.scan", href: "/warehouse/vietnam/scan", icon: "📱" },
   { labelKey: "nav.receiveGoods", href: "/warehouse/vietnam/receive", icon: "📥" },
   { labelKey: "nav.delivery", href: "/warehouse/vietnam/delivery", icon: "🚚" },
 ];
