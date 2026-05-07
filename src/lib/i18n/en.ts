@@ -138,6 +138,15 @@ const en: Record<string, string> = {
   "status.COMPLETED": "Completed",
   "status.CANCELLED": "Cancelled",
 
+  // Notification dropdown
+  "notif.markAllRead": "Mark all as read",
+  "notif.empty": "No notifications",
+  "notif.viewAll": "View all notifications",
+  "notif.justNow": "Just now",
+  "notif.minAgo": "m ago",
+  "notif.hrAgo": "h ago",
+  "notif.dayAgo": "d ago",
+
   // Language
   "language.label": "Language",
 };

@@ -138,6 +138,15 @@ const zh: Record<string, string> = {
   "status.COMPLETED": "已完成",
   "status.CANCELLED": "已取消",
 
+  // Notification dropdown
+  "notif.markAllRead": "全部标为已读",
+  "notif.empty": "暂无通知",
+  "notif.viewAll": "查看所有通知",
+  "notif.justNow": "刚刚",
+  "notif.minAgo": "分钟前",
+  "notif.hrAgo": "小时前",
+  "notif.dayAgo": "天前",
+
   // Language
   "language.label": "语言",
 };
