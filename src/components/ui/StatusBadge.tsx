@@ -6,8 +6,9 @@ import { OrderStatus } from "@prisma/client";
 export default function StatusBadge({ status }: { status: OrderStatus }) {
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[status]}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold tracking-wide ${STATUS_COLORS[status]}`}
     >
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
       {STATUS_LABELS[status]}
     </span>
   );

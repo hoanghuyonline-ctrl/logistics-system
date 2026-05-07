@@ -6,6 +6,9 @@ import Link from "next/link";
 import KPICard from "@/components/ui/KPICard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import Card from "@/components/ui/Card";
 
 interface Order {
   id: string;
@@ -42,68 +45,79 @@ export default function CustomerDashboard() {
     load();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner text="Loading dashboard..." />;
 
   const balance = wallet ? parseFloat(wallet.balance).toLocaleString() : "0";
   const debt = wallet ? parseFloat(wallet.debt).toLocaleString() : "0";
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">
-        Welcome, {session?.user?.name}
-      </h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <KPICard title="Wallet Balance" value={`${balance} VND`} color="green" />
-        <KPICard title="Outstanding Debt" value={`${debt} VND`} color="red" />
-        <KPICard title="Total Orders" value={orders.length} color="blue" />
-      </div>
-
-      <div className="bg-white rounded-lg shadow border">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold">Recent Orders</h2>
-          <Link href="/orders/new" className="text-sm text-blue-600 hover:underline">
+      <PageHeader
+        title={`Welcome back, ${session?.user?.name || "User"}`}
+        subtitle="Here's an overview of your shipping activity"
+        action={
+          <Link href="/orders/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
             + New Order
           </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-500">Order Code</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500">Product</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500">Total</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
-                      {order.orderCode}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">{order.productName}</td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={order.status as import("@prisma/client").OrderStatus} />
-                  </td>
-                  <td className="px-6 py-4">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
-                  <td className="px-6 py-4">{new Date(order.createdAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-              {orders.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    No orders yet. <Link href="/orders/new" className="text-blue-600 hover:underline">Create your first order</Link>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <KPICard title="Wallet Balance" value={`${balance} VND`} icon={<span>💰</span>} color="green" />
+        <KPICard title="Outstanding Debt" value={`${debt} VND`} icon={<span>📊</span>} color="red" />
+        <KPICard title="Total Orders" value={orders.length} icon={<span>📦</span>} color="blue" />
       </div>
+
+      <Card
+        title="Recent Orders"
+        action={
+          <Link href="/orders" className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+            View all →
+          </Link>
+        }
+        noPadding
+      >
+        {orders.length === 0 ? (
+          <EmptyState
+            icon="📦"
+            title="No orders yet"
+            description="Create your first order to start shipping from China to Vietnam"
+            actionLabel="Create First Order"
+            actionHref="/orders/new"
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Code</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {orders.map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                        {order.orderCode}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{order.productName}</td>
+                    <td className="px-6 py-4">
+                      <StatusBadge status={order.status as import("@prisma/client").OrderStatus} />
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

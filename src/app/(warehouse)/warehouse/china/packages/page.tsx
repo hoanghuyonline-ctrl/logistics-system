@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/ui/PageHeader";
+import { useToast } from "@/components/ui/Toast";
 
 interface Order {
   id: string;
@@ -13,12 +15,12 @@ interface Order {
 }
 
 export default function ChinaPackagesPage() {
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pkgWeight, setPkgWeight] = useState("");
   const [dims, setDims] = useState({ lengthCm: "", widthCm: "", heightCm: "" });
-  const [msg, setMsg] = useState("");
 
   function loadOrders() {
     fetch("/api/orders?status=ARRIVED_CHINA_WH&limit=50")
@@ -48,71 +50,86 @@ export default function ChinaPackagesPage() {
     });
     if (res.ok) {
       const pkg = await res.json();
-      setMsg(`Package ${pkg.packageCode} created!`);
+      toast(`Package ${pkg.packageCode} created!`, "success");
       setSelectedIds([]);
       setPkgWeight("");
       setDims({ lengthCm: "", widthCm: "", heightCm: "" });
       loadOrders();
     }
-    setTimeout(() => setMsg(""), 5000);
   }
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner text="Loading orders..." />;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Create Packages - China Warehouse</h1>
+      <PageHeader title="Create Packages" subtitle="Group orders into packages for shipping" />
 
-      {msg && <div className="bg-green-50 text-green-700 p-3 rounded mb-4 text-sm">{msg}</div>}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-white rounded-lg shadow border">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold">Orders at China WH ({orders.length})</h2>
-            <p className="text-sm text-gray-500">Select orders to group into a package</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 w-10"></th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Order</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Product</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Customer</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Weight</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {orders.map((o) => (
-                  <tr key={o.id} className={`hover:bg-gray-50 cursor-pointer ${selectedIds.includes(o.id) ? "bg-blue-50" : ""}`}
-                    onClick={() => toggleSelect(o.id)}>
-                    <td className="px-4 py-3">
-                      <input type="checkbox" checked={selectedIds.includes(o.id)} onChange={() => toggleSelect(o.id)} />
-                    </td>
-                    <td className="px-4 py-3 font-medium">{o.orderCode}</td>
-                    <td className="px-4 py-3">{o.productName}</td>
-                    <td className="px-4 py-3">{o.user.fullName}</td>
-                    <td className="px-4 py-3">{o.weightKg ? `${o.weightKg} kg` : "-"}</td>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card title={`Orders at China WH (${orders.length})`} noPadding>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="px-4 py-3.5 w-12"></th>
+                    <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                    <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Weight</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {orders.map((o) => (
+                    <tr key={o.id}
+                      className={`cursor-pointer transition-colors ${selectedIds.includes(o.id) ? "bg-blue-50" : "hover:bg-slate-50/50"}`}
+                      onClick={() => toggleSelect(o.id)}>
+                      <td className="px-4 py-3.5">
+                        <input type="checkbox" checked={selectedIds.includes(o.id)} onChange={() => toggleSelect(o.id)}
+                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" />
+                      </td>
+                      <td className="px-4 py-3.5 text-sm font-semibold text-slate-900">{o.orderCode}</td>
+                      <td className="px-4 py-3.5 text-sm text-slate-700">{o.productName}</td>
+                      <td className="px-4 py-3.5 text-sm text-slate-700">{o.user.fullName}</td>
+                      <td className="px-4 py-3.5 text-sm text-slate-700">{o.weightKg ? `${o.weightKg} kg` : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
 
         <Card title="Package Details">
-          <form onSubmit={createPackage} className="space-y-3">
-            <p className="text-sm text-gray-600">Selected: {selectedIds.length} orders</p>
-            <input type="number" step="0.001" placeholder="Total Weight (kg)" value={pkgWeight}
-              onChange={(e) => setPkgWeight(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
-            <input type="number" step="0.1" placeholder="Length (cm)" value={dims.lengthCm}
-              onChange={(e) => setDims({ ...dims, lengthCm: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
-            <input type="number" step="0.1" placeholder="Width (cm)" value={dims.widthCm}
-              onChange={(e) => setDims({ ...dims, widthCm: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
-            <input type="number" step="0.1" placeholder="Height (cm)" value={dims.heightCm}
-              onChange={(e) => setDims({ ...dims, heightCm: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+          <form onSubmit={createPackage} className="space-y-4">
+            <div className="bg-blue-50 rounded-xl px-4 py-3">
+              <p className="text-sm font-semibold text-blue-700">Selected: {selectedIds.length} order{selectedIds.length !== 1 ? "s" : ""}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Total Weight (kg)</label>
+              <input type="number" step="0.001" placeholder="0.000" value={pkgWeight}
+                onChange={(e) => setPkgWeight(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Length (cm)</label>
+              <input type="number" step="0.1" placeholder="0.0" value={dims.lengthCm}
+                onChange={(e) => setDims({ ...dims, lengthCm: e.target.value })}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Width (cm)</label>
+              <input type="number" step="0.1" placeholder="0.0" value={dims.widthCm}
+                onChange={(e) => setDims({ ...dims, widthCm: e.target.value })}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Height (cm)</label>
+              <input type="number" step="0.1" placeholder="0.0" value={dims.heightCm}
+                onChange={(e) => setDims({ ...dims, heightCm: e.target.value })}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            </div>
             <button type="submit" disabled={selectedIds.length === 0}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
+              className="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm text-sm">
               Create Package
             </button>
           </form>

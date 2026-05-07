@@ -5,6 +5,9 @@ import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import Card from "@/components/ui/Card";
 import { OrderStatus } from "@prisma/client";
 
 interface Order {
@@ -42,28 +45,32 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">My Orders</h1>
-        <Link
-          href="/orders/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-        >
-          + New Order
-        </Link>
-      </div>
+      <PageHeader
+        title="My Orders"
+        subtitle="View and track all your shipping orders"
+        action={
+          <Link href="/orders/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            + New Order
+          </Link>
+        }
+      />
 
-      <div className="flex gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Search orders..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="px-3 py-2 border rounded-lg text-sm w-64"
-        />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1 max-w-sm">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+          <input
+            type="text"
+            placeholder="Search orders..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          />
+        </div>
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          className="px-3 py-2 border rounded-lg text-sm"
+          className="px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
         >
           <option value="">All Statuses</option>
           <option value="PENDING">Pending</option>
@@ -79,46 +86,47 @@ export default function OrdersPage() {
       </div>
 
       {loading ? (
-        <LoadingSpinner />
+        <LoadingSpinner text="Loading orders..." />
       ) : (
-        <div className="bg-white rounded-lg shadow border">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Order Code</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Product</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Qty</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Total Cost</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline font-medium">
-                        {order.orderCode}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 max-w-xs truncate">{order.productName}</td>
-                    <td className="px-6 py-4">{order.quantity}</td>
-                    <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                    <td className="px-6 py-4">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
-                    <td className="px-6 py-4">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-                {orders.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">No orders found</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-        </div>
+        <Card noPadding>
+          {orders.length === 0 ? (
+            <EmptyState icon="📦" title="No orders found" description="Try adjusting your search or filters" />
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Code</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Qty</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Cost</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {orders.map((order) => (
+                      <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                            {order.orderCode}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">{order.productName}</td>
+                        <td className="px-6 py-4 text-sm text-slate-700">{order.quantity}</td>
+                        <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
+                        <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
+                        <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            </>
+          )}
+        </Card>
       )}
     </div>
   );

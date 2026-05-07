@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Notification {
   id: string;
@@ -34,44 +36,56 @@ export default function NotificationsPage() {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
   }
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner text="Loading notifications..." />;
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Notifications</h1>
-        <button onClick={markAllRead} className="text-sm text-blue-600 hover:underline">
-          Mark all as read
-        </button>
-      </div>
+      <PageHeader
+        title="Notifications"
+        subtitle={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All caught up"}
+        action={
+          unreadCount > 0 ? (
+            <button onClick={markAllRead} className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
+              Mark all as read
+            </button>
+          ) : undefined
+        }
+      />
 
-      <div className="space-y-2">
-        {notifications.map((n) => (
-          <div
-            key={n.id}
-            onClick={() => !n.isRead && markRead(n.id)}
-            className={`p-4 rounded-lg border cursor-pointer transition ${
-              n.isRead ? "bg-white" : "bg-blue-50 border-blue-200"
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className={`text-sm font-medium ${n.isRead ? "text-gray-700" : "text-blue-900"}`}>
-                  {!n.isRead && <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mr-2" />}
-                  {n.title}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">{n.message}</p>
+      {notifications.length === 0 ? (
+        <EmptyState icon="🔔" title="No notifications" description="You'll receive notifications when your order status changes" />
+      ) : (
+        <div className="space-y-2">
+          {notifications.map((n) => (
+            <div
+              key={n.id}
+              onClick={() => !n.isRead && markRead(n.id)}
+              className={`rounded-2xl border p-5 cursor-pointer transition-all duration-200 ${
+                n.isRead
+                  ? "bg-white border-slate-200 hover:border-slate-300"
+                  : "bg-blue-50/50 border-blue-200 hover:bg-blue-50"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    {!n.isRead && <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />}
+                    <h3 className={`text-sm font-semibold ${n.isRead ? "text-slate-700" : "text-slate-900"}`}>
+                      {n.title}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{n.message}</p>
+                </div>
+                <span className="text-xs text-slate-400 whitespace-nowrap font-medium">
+                  {new Date(n.createdAt).toLocaleDateString()}
+                </span>
               </div>
-              <span className="text-xs text-gray-400 whitespace-nowrap ml-4">
-                {new Date(n.createdAt).toLocaleDateString()}
-              </span>
             </div>
-          </div>
-        ))}
-        {notifications.length === 0 && (
-          <p className="text-center text-gray-500 py-8">No notifications</p>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

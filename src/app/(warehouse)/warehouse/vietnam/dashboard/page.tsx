@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import KPICard from "@/components/ui/KPICard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
 import { OrderStatus } from "@prisma/client";
 
 interface Order {
@@ -30,48 +32,57 @@ export default function VietnamWarehouseDashboard() {
     });
   }, []);
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner text="Loading dashboard..." />;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Vietnam Warehouse Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <KPICard title="Incoming Shipments" value={arrivedOrders.length} color="cyan" />
-        <KPICard title="Ready for Delivery" value={deliveryOrders.length} color="green" />
+      <PageHeader title="Vietnam Warehouse Dashboard" subtitle="Manage arrivals and deliveries" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+        <KPICard title="Incoming Shipments" value={arrivedOrders.length} subtitle="In transit from China" icon={<span>🚢</span>} color="cyan" />
+        <KPICard title="Ready for Delivery" value={deliveryOrders.length} subtitle="Awaiting dispatch" icon={<span>🚚</span>} color="green" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow border">
-          <div className="px-6 py-4 border-b"><h2 className="text-lg font-semibold">Incoming Shipments</h2></div>
-          <div className="divide-y">
+        <Card title="Incoming Shipments" noPadding>
+          <div className="divide-y divide-slate-50">
             {arrivedOrders.map((o) => (
-              <div key={o.id} className="px-6 py-3 flex items-center justify-between">
+              <div key={o.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                 <div>
-                  <p className="font-medium text-sm">{o.orderCode}</p>
-                  <p className="text-xs text-gray-500">{o.productName} - {o.user.fullName}</p>
+                  <p className="text-sm font-semibold text-slate-900">{o.orderCode}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{o.productName} — {o.user.fullName}</p>
                 </div>
                 <StatusBadge status={o.status} />
               </div>
             ))}
-            {arrivedOrders.length === 0 && <p className="px-6 py-4 text-sm text-gray-500">No incoming shipments</p>}
+            {arrivedOrders.length === 0 && (
+              <div className="px-6 py-12 text-center">
+                <span className="text-2xl">🚢</span>
+                <p className="text-sm text-slate-500 mt-2">No incoming shipments</p>
+              </div>
+            )}
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-lg shadow border">
-          <div className="px-6 py-4 border-b"><h2 className="text-lg font-semibold">Ready for Delivery</h2></div>
-          <div className="divide-y">
+        <Card title="Ready for Delivery" noPadding>
+          <div className="divide-y divide-slate-50">
             {deliveryOrders.map((o) => (
-              <div key={o.id} className="px-6 py-3 flex items-center justify-between">
+              <div key={o.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                 <div>
-                  <p className="font-medium text-sm">{o.orderCode}</p>
-                  <p className="text-xs text-gray-500">{o.productName} - {o.user.fullName}</p>
+                  <p className="text-sm font-semibold text-slate-900">{o.orderCode}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{o.productName} — {o.user.fullName}</p>
                 </div>
                 <StatusBadge status={o.status} />
               </div>
             ))}
-            {deliveryOrders.length === 0 && <p className="px-6 py-4 text-sm text-gray-500">No orders ready for delivery</p>}
+            {deliveryOrders.length === 0 && (
+              <div className="px-6 py-12 text-center">
+                <span className="text-2xl">📦</span>
+                <p className="text-sm text-slate-500 mt-2">No orders ready for delivery</p>
+              </div>
+            )}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

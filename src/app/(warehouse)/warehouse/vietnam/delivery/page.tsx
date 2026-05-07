@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import { useToast } from "@/components/ui/Toast";
 import { OrderStatus } from "@prisma/client";
 
 interface Order {
@@ -15,10 +18,10 @@ interface Order {
 }
 
 export default function VietnamDeliveryPage() {
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [outForDelivery, setOutForDelivery] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState("");
 
   function loadOrders() {
     setLoading(true);
@@ -41,95 +44,99 @@ export default function VietnamDeliveryPage() {
       body: JSON.stringify({ status, note: `Status updated to ${status.replace(/_/g, " ")}` }),
     });
     if (res.ok) {
-      setMsg("Order updated!");
+      toast("Order updated successfully!", "success");
       loadOrders();
+    } else {
+      toast("Failed to update order", "error");
     }
-    setTimeout(() => setMsg(""), 3000);
   }
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner text="Loading delivery queue..." />;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Delivery Management</h1>
-      {msg && <div className="bg-green-50 text-green-700 p-3 rounded mb-4 text-sm">{msg}</div>}
+      <PageHeader title="Delivery Management" subtitle="Dispatch and complete deliveries" />
 
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow border">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold">Ready for Dispatch ({orders.length})</h2>
-          </div>
+        <Card title={`Ready for Dispatch (${orders.length})`} noPadding>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Order</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Product</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Customer</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Total</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Action</th>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-slate-50">
                 {orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{o.orderCode}</td>
-                    <td className="px-4 py-3">{o.productName}</td>
-                    <td className="px-4 py-3">{o.user.fullName}</td>
-                    <td className="px-4 py-3">{parseFloat(o.totalCostVND).toLocaleString()} VND</td>
-                    <td className="px-4 py-3">
+                  <tr key={o.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">{o.orderCode}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{o.productName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{o.user.fullName}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(o.totalCostVND).toLocaleString()} VND</td>
+                    <td className="px-6 py-4">
                       <button onClick={() => updateDelivery(o.id, "OUT_FOR_DELIVERY")}
-                        className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">
+                        className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm">
                         Dispatch
                       </button>
                     </td>
                   </tr>
                 ))}
                 {orders.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No orders ready for dispatch</td></tr>
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <span className="text-2xl">📦</span>
+                      <p className="text-sm text-slate-500 mt-2">No orders ready for dispatch</p>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-lg shadow border">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold">Out for Delivery ({outForDelivery.length})</h2>
-          </div>
+        <Card title={`Out for Delivery (${outForDelivery.length})`} noPadding>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Order</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Product</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Customer</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Action</th>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-slate-50">
                 {outForDelivery.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{o.orderCode}</td>
-                    <td className="px-4 py-3">{o.productName}</td>
-                    <td className="px-4 py-3">{o.user.fullName}</td>
-                    <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
-                    <td className="px-4 py-3">
+                  <tr key={o.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">{o.orderCode}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{o.productName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{o.user.fullName}</td>
+                    <td className="px-6 py-4"><StatusBadge status={o.status} /></td>
+                    <td className="px-6 py-4">
                       <button onClick={() => updateDelivery(o.id, "COMPLETED")}
-                        className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">
-                        Mark Delivered
+                        className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+                        Complete
                       </button>
                     </td>
                   </tr>
                 ))}
                 {outForDelivery.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No orders out for delivery</td></tr>
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <span className="text-2xl">🚚</span>
+                      <p className="text-sm text-slate-500 mt-2">No orders currently out for delivery</p>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
