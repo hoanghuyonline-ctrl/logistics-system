@@ -147,6 +147,19 @@ const zh: Record<string, string> = {
   "notif.hrAgo": "小时前",
   "notif.dayAgo": "天前",
 
+  // Audit log
+  "audit.title": "操作日志",
+  "audit.subtitle": "订单状态变更历史",
+  "audit.empty": "暂无日志",
+  "audit.time": "时间",
+  "audit.actor": "操作人",
+  "audit.role": "角色",
+  "audit.order": "订单",
+  "audit.from": "从",
+  "audit.to": "到",
+  "audit.note": "备注",
+  "nav.auditLog": "操作日志",
+
   // Warehouse scan
   "scan.title": "扫描包裹",
   "scan.subtitleCN": "在中国仓库扫描条码",

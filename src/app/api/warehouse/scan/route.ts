@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import type { PackageStatus } from "@prisma/client";
+import { auditLog } from "@/lib/audit";
 
 const VALID_TRANSITIONS: Record<string, PackageStatus[]> = {
   AT_CHINA_WH: ["SHIPPING"],
@@ -71,12 +72,29 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(
-      `[warehouse:scan] Package ${pkg.packageCode} status: ${pkg.status} → ${newStatus} by ${user.email}`,
-    );
+    auditLog({
+      action: "WAREHOUSE_SCAN_UPDATE",
+      actorId: user.id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      entityType: "package",
+      entityId: pkg.id,
+      entityCode: pkg.packageCode,
+      details: { fromStatus: pkg.status, toStatus: newStatus },
+    });
 
     return jsonResponse({ package: updated, transitioned: true });
   }
+
+  auditLog({
+    action: "WAREHOUSE_SCAN_LOOKUP",
+    actorId: user.id,
+    actorEmail: user.email,
+    actorRole: user.role,
+    entityType: "package",
+    entityId: pkg.id,
+    entityCode: pkg.packageCode,
+  });
 
   return jsonResponse({ package: pkg, transitioned: false });
 }

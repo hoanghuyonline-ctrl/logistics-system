@@ -147,6 +147,19 @@ const en: Record<string, string> = {
   "notif.hrAgo": "h ago",
   "notif.dayAgo": "d ago",
 
+  // Audit log
+  "audit.title": "Audit Log",
+  "audit.subtitle": "Order status change history",
+  "audit.empty": "No audit entries",
+  "audit.time": "Time",
+  "audit.actor": "Actor",
+  "audit.role": "Role",
+  "audit.order": "Order",
+  "audit.from": "From",
+  "audit.to": "To",
+  "audit.note": "Note",
+  "nav.auditLog": "Audit Log",
+
   // Warehouse scan
   "scan.title": "Scan Package",
   "scan.subtitleCN": "Scan barcode at China warehouse",
