@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-07
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `5251d2d`
+**Latest stable commit:** `270828f`
 
 ---
 
@@ -21,6 +21,7 @@
 - **Notification Infrastructure** — Modular service layer for SYSTEM/EMAIL/TELEGRAM/ZALO channels
 - **Email Notification Foundation** — SMTP/Nodemailer helper with templates
 - **Notification Triggers** — Order created and shipment status changed events connected using fire-and-forget pattern
+- **Notification UI** — Bell dropdown with unread badge, latest notifications, mark-as-read action, and VI/EN/ZH translations
 
 ## Stack
 
@@ -73,7 +74,6 @@
 
 - Telegram notification delivery implementation
 - Zalo notification delivery implementation
-- Notification UI improvements
 - Production SMTP configuration
 - Package image upload (model exists, no upload endpoint)
 - Accountant role pages (role exists, no dedicated UI)
