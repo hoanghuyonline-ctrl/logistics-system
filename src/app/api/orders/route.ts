@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, generateOrderCode, jsonResponse, errorResponse } from "@/lib/utils";
 import { calculateOrderCost } from "@/lib/cost-calculator";
 import { createNotification } from "@/lib/notifications";
+import { onOrderCreated } from "@/lib/notifications/triggers";
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -128,6 +129,16 @@ export async function POST(request: Request) {
       orderId: order.id,
     });
   }
+
+  onOrderCreated({
+    userId: order.userId,
+    userEmail: order.user.email,
+    userName: order.user.fullName,
+    orderId: order.id,
+    orderCode: order.orderCode,
+  }).catch((err) => {
+    console.error("[notifications] onOrderCreated failed:", err);
+  });
 
   return jsonResponse(order, 201);
 }
