@@ -32,6 +32,7 @@ const adminNav: NavItem[] = [
   { labelKey: "nav.finance", href: "/admin/finance", icon: "💰" },
   { labelKey: "nav.settings", href: "/admin/settings", icon: "⚙️" },
   { labelKey: "nav.analytics", href: "/admin/analytics", icon: "📈" },
+  { labelKey: "nav.auditLog", href: "/admin/audit-log", icon: "📝" },
 ];
 
 const warehouseCNNav: NavItem[] = [

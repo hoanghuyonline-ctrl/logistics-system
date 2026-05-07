@@ -6,6 +6,7 @@ import { onShipmentStatusChanged } from "@/lib/notifications/triggers";
 import { InvalidTransitionError, toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
 import { OrderStatus } from "@prisma/client";
 import type { NextRequest } from "next/server";
+import { auditLog } from "@/lib/audit";
 
 export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/status">) {
   const user = await getCurrentUser();
@@ -109,6 +110,17 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
       }
     }
   }
+
+  auditLog({
+    action: "ORDER_STATUS_CHANGE",
+    actorId: user.id,
+    actorEmail: user.email,
+    actorRole: user.role,
+    entityType: "order",
+    entityId: order.id,
+    entityCode: order.orderCode,
+    details: { fromStatus: order.status, toStatus: status },
+  });
 
   await notifyOrderStatusChange(order.userId, order.id, order.orderCode, status);
 

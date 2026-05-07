@@ -3,6 +3,7 @@ import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/util
 import { notifyOrderStatusChange } from "@/lib/notifications";
 import { toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
 import { ShipmentStatus } from "@prisma/client";
+import { auditLog } from "@/lib/audit";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -44,6 +45,17 @@ export async function POST(request: Request) {
   const updated = await prisma.order.update({
     where: { id: orderId },
     data: updateData,
+  });
+
+  auditLog({
+    action: "WAREHOUSE_RECEIVE_CN",
+    actorId: user.id,
+    actorEmail: user.email,
+    actorRole: user.role,
+    entityType: "order",
+    entityId: order.id,
+    entityCode: order.orderCode,
+    details: { fromStatus: order.status, toStatus: "ARRIVED_CHINA_WH", weightKg },
   });
 
   await notifyOrderStatusChange(order.userId, order.id, order.orderCode, "ARRIVED_CHINA_WH");

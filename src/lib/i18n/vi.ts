@@ -147,6 +147,19 @@ const vi: Record<string, string> = {
   "notif.hrAgo": " giờ trước",
   "notif.dayAgo": " ngày trước",
 
+  // Audit log
+  "audit.title": "Nhật ký hoạt động",
+  "audit.subtitle": "Lịch sử thay đổi trạng thái đơn hàng",
+  "audit.empty": "Chưa có nhật ký",
+  "audit.time": "Thời gian",
+  "audit.actor": "Người thực hiện",
+  "audit.role": "Vai trò",
+  "audit.order": "Đơn hàng",
+  "audit.from": "Từ",
+  "audit.to": "Đến",
+  "audit.note": "Ghi chú",
+  "nav.auditLog": "Nhật ký",
+
   // Warehouse scan
   "scan.title": "Quét hàng",
   "scan.subtitleCN": "Quét mã vạch tại kho Trung Quốc",
