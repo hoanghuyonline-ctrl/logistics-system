@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { sendEmail } from "./channels/email";
+import { sendTelegram } from "./channels/telegram";
 import type {
   NotificationPayload,
   NotificationResult,
@@ -27,9 +28,13 @@ async function sendToChannel(
         return { channel, success: true };
       }
 
-      case "TELEGRAM":
+      case "TELEGRAM": {
+        await sendTelegram({ text: `<b>${payload.title}</b>\n${payload.message}` });
+        return { channel, success: true };
+      }
+
       case "ZALO":
-        return { channel, success: false, error: `${channel} not implemented` };
+        return { channel, success: false, error: "ZALO not implemented" };
 
       default:
         return { channel, success: false, error: "Unknown channel" };
@@ -51,7 +56,7 @@ export async function sendNotification(
       userId: payload.userId,
       title: payload.title,
       message: payload.message,
-      type: channels.includes("EMAIL") ? "EMAIL" : "SYSTEM",
+      type: channels.includes("EMAIL") ? "EMAIL" : channels.includes("TELEGRAM") ? "TELEGRAM" : "SYSTEM",
       orderId: payload.orderId,
     },
   });
