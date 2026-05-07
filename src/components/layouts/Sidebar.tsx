@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
+import NotificationDropdown from "@/components/notifications/NotificationDropdown";
 
 interface NavItem {
   labelKey: string;
@@ -18,9 +19,10 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.myOrders", href: "/orders", icon: "📦" },
   { labelKey: "nav.wallet", href: "/wallet", icon: "💰" },
   { labelKey: "nav.transactions", href: "/transactions", icon: "📋" },
-  { labelKey: "nav.notifications", href: "/notifications", icon: "🔔" },
   { labelKey: "nav.profile", href: "/profile", icon: "👤" },
 ];
+
+const NOTIFICATION_NAV_ROLES = ["CUSTOMER", "ADMIN"];
 
 const adminNav: NavItem[] = [
   { labelKey: "nav.dashboard", href: "/admin/dashboard", icon: "📊" },
@@ -102,6 +104,7 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {NOTIFICATION_NAV_ROLES.includes(role) && <NotificationDropdown />}
       </nav>
 
       {/* Language switcher */}

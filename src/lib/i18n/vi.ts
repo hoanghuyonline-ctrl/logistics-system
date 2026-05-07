@@ -138,6 +138,15 @@ const vi: Record<string, string> = {
   "status.COMPLETED": "Hoàn thành",
   "status.CANCELLED": "Đã hủy",
 
+  // Notification dropdown
+  "notif.markAllRead": "Đánh dấu tất cả đã đọc",
+  "notif.empty": "Không có thông báo",
+  "notif.viewAll": "Xem tất cả thông báo",
+  "notif.justNow": "Vừa xong",
+  "notif.minAgo": " phút trước",
+  "notif.hrAgo": " giờ trước",
+  "notif.dayAgo": " ngày trước",
+
   // Language
   "language.label": "Ngôn ngữ",
 };
