@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-07
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `14c7c54`
+**Latest stable commit:** `75bcd19`
 
 ---
 
@@ -23,6 +23,7 @@
 - **Notification Triggers** — Order created and shipment status changed events connected using fire-and-forget pattern
 - **Notification UI** — Bell dropdown with unread badge, latest notifications, mark-as-read action, and VI/EN/ZH translations
 - **Telegram Notification Delivery** — Telegram Bot API channel using `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, integrated with notification service
+- **Warehouse Scan Workflow** — Barcode/packageCode scan pages for China and Vietnam warehouses, server-validated status transitions, USB scanner/manual input support, VI/EN/ZH translations
 
 ## Stack
 
@@ -54,6 +55,7 @@
 | `/api/warehouse/vietnam/receive` | POST | Receive goods at VN warehouse |
 | `/api/warehouse/vietnam/delivery/[id]` | PATCH | Dispatch/complete delivery |
 | `/api/users` | GET/POST | User management |
+| `/api/warehouse/scan` | POST | Barcode lookup + package status update |
 | `/api/analytics` | GET | Dashboard analytics |
 
 ## Important Prisma Models
@@ -92,3 +94,5 @@
 6. **Zalo channel is a placeholder only** — returns "not implemented" gracefully.
 7. **Telegram delivery requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in production** — failures are logged and do not block APIs.
 8. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+9. **Scan workflow uses web input only** — no camera scanning or mobile offline mode yet.
+10. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
