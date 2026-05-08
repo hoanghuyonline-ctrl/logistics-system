@@ -7,6 +7,8 @@
 - No UI redesign unless explicitly requested
 - Preserve backward compatibility
 - No overengineering — keep solutions minimal and focused
+- Do not redesign working systems without operational justification
+- Prefer practical workflow over architectural perfection
 
 ## PR Workflow
 - 1 task -> 1 PR -> test -> merge -> checkpoint

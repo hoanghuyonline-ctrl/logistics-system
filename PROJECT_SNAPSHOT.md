@@ -224,9 +224,19 @@ tests/
 
 ---
 
+## Current Immediate Priority
+
+1. **Zalo notification visibility/testing** — make Zalo delivery observable and testable from admin panel
+2. **Practical tester workflow** — admin can trigger, verify, and debug notifications without code changes
+3. **Stable admin operations** — keep admin panel reliable; fix bugs before adding features
+
+**Approach:** operational-first, admin-centric, visible/testable notifications. No scope expansion.
+
+---
+
 ## Remaining Work
 
-- Merge unmerged PRs (#32 notification diagnostics, #33 Zalo order status notify) — or re-implement
+- Merge or re-implement unmerged PRs (#32 notification diagnostics, #33 Zalo order status notify)
 - Production Telegram/SMTP/Zalo configuration
 - Cloud storage provider (S3/R2/MinIO) implementation
 - Accountant finance/transactions pages (dashboard done, finance uses admin routes)
