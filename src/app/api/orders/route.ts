@@ -124,8 +124,8 @@ export async function POST(request: Request) {
   for (const admin of admins) {
     await createNotification({
       userId: admin.id,
-      title: "New Order Created",
-      message: `New order ${order.orderCode} created by ${order.user.fullName}.`,
+      title: "Đơn hàng mới",
+      message: `Đơn hàng ${order.orderCode} được tạo bởi ${order.user.fullName}.`,
       orderId: order.id,
     });
   }
