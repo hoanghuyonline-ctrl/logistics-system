@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `eedf3a5`
+**Latest stable commit:** `7bd33fd`
 
 ---
 
@@ -27,6 +27,8 @@
 - **Audit Log System** — Centralized audit helper, warehouse scan/order status logging, admin read-only audit log page, VI/EN/ZH translations
 - **Package Image Upload** — Warehouse/admin upload, local image storage, package image viewing/deletion, JPG/PNG/WebP validation
 - **Zalo OA Notification Foundation** — Basic OA text message delivery channel, env-configured, integrated with notification service
+- **Zalo Order Status Notification** (PR #33) — Fire-and-forget Vietnamese Zalo notification on order status change, reuses existing `sendZalo()`, gated by `ZALO_SEND_ENABLED`
+- **Vietnamese System Notifications** (PR #34) — Customer-facing bell-dropdown notifications converted to Vietnamese-first wording (9 status messages + title + fallback)
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
 - **Production Deployment Foundation** — Dockerfile, Docker Compose with PostgreSQL/nginx, healthcheck endpoint, uploads volume persistence, .env.production.example, DEPLOYMENT.md
