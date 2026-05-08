@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `9538b00`
+**Latest stable commit:** `eedf3a5`
 
 ---
 
@@ -35,6 +35,15 @@
 - **Order Detail i18n** — Customer and admin order detail pages fully translated with `useI18n()`, 50 `orderDetail.*` keys added to VI/EN/ZH
 - **Storage Abstraction Layer** — `StorageProvider` interface with `LocalStorageProvider`, package image upload/delete routed through abstraction, `STORAGE_PROVIDER` env var for future S3/R2/MinIO swap
 - **Vitest Test Infrastructure** — Vitest configured with `@/` path alias, `npm test` / `npm run test:watch` scripts, 5 smoke tests for `LocalStorageProvider` (upload, delete, missing file, nested dirs, URL format)
+- **Public Landing Page Redesign** — Complete 5-PR series (PRs #22–#26):
+  - **Brand Identity Update** (PR #22) — Company name, logo, brand colors (navy #1B2A6B, royal blue #2B4CB8, sky #4A90D9), contact info, SEO metadata
+  - **Component Extraction** (PR #23) — Monolithic `page.tsx` (235 lines) refactored into 7 reusable components under `src/components/landing/` with barrel export
+  - **Hero + Navbar Visual Upgrade** (PR #24) — Mobile hamburger menu, scroll-aware sticky navbar, hero background blobs, staggered fade-up CSS animations, trust indicators
+  - **Services + Locations Section** (PR #25) — SVG icons replacing emojis in services, new `LandingLocations` component (4 offices/warehouses), stats bar polish, footer i18n fix
+  - **Footer Legal/Bank + Final Polish** (PR #26) — 4-column footer with director (Phạm Văn Tuấn), bank info (Vietinbank CN Lạng Sơn / 110003049134), HowItWorks SVG icons, CTA hover/animation polish, hero i18n fix
+  - **i18n** — ~60 new landing-specific keys across VI/EN/ZH (additive only, zero deletions)
+  - **Architecture** — 8 landing components: LandingNavbar, LandingHero, LandingStats, LandingServices, LandingHowItWorks, LandingLocations, LandingCTA, LandingFooter
+  - **No new dependencies** — CSS-only animations, inline SVG icons, existing i18n hook pattern
 
 ## Stack
 
@@ -90,6 +99,8 @@
 
 ## Remaining Major Tasks
 
+- Public landing page visual testing across all 3 locales (VI/EN/ZH)
+- Dashboard redesign (not started — landing page complete)
 - Production Telegram bot/chat configuration
 - Production SMTP configuration
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
