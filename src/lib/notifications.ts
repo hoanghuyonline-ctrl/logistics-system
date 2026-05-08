@@ -26,22 +26,22 @@ export async function notifyOrderStatusChange(
   newStatus: string
 ) {
   const statusMessages: Record<string, string> = {
-    PURCHASED: "Your order has been purchased from the seller.",
-    SELLER_SHIPPED: "The seller has shipped your order.",
-    ARRIVED_CHINA_WH: "Your order has arrived at the China warehouse.",
-    PACKING: "Your order is being packed for international shipping.",
-    SHIPPING_TO_VIETNAM: "Your order is on the way to Vietnam.",
-    ARRIVED_VIETNAM_WH: "Your order has arrived at the Vietnam warehouse.",
-    OUT_FOR_DELIVERY: "Your order is out for delivery.",
-    COMPLETED: "Your order has been delivered successfully.",
-    CANCELLED: "Your order has been cancelled.",
+    PURCHASED: "Đơn hàng của bạn đã được mua từ người bán.",
+    SELLER_SHIPPED: "Người bán đã gửi hàng cho đơn hàng của bạn.",
+    ARRIVED_CHINA_WH: "Đơn hàng của bạn đã đến kho Trung Quốc.",
+    PACKING: "Đơn hàng của bạn đang được đóng gói để vận chuyển quốc tế.",
+    SHIPPING_TO_VIETNAM: "Đơn hàng của bạn đang trên đường về Việt Nam.",
+    ARRIVED_VIETNAM_WH: "Đơn hàng của bạn đã đến kho Việt Nam.",
+    OUT_FOR_DELIVERY: "Đơn hàng của bạn đang được giao.",
+    COMPLETED: "Đơn hàng của bạn đã giao thành công.",
+    CANCELLED: "Đơn hàng của bạn đã bị hủy.",
   };
 
-  const message = statusMessages[newStatus] || `Order status updated to ${newStatus}.`;
+  const message = statusMessages[newStatus] || `Trạng thái đơn hàng đã cập nhật: ${newStatus}.`;
 
   await createNotification({
     userId,
-    title: `Order ${orderCode} - Status Update`,
+    title: `Đơn hàng ${orderCode} - Cập nhật trạng thái`,
     message,
     orderId,
   });
