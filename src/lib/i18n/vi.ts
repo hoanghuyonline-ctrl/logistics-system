@@ -118,6 +118,13 @@ const vi: Record<string, string> = {
   "landing.footerContact": "Liên hệ",
   "landing.footerPartners": "Đối tác",
   "landing.footerCompanyFull": "CÔNG TY TNHH BẮC TRUNG HẢI LOGISTICS",
+  "landing.espPartner": "Đối tác ESP",
+  "landing.footerDirector": "Giám đốc",
+  "landing.footerTaxCode": "Mã số thuế",
+  "landing.footerBank": "Ngân hàng",
+  "landing.footerBankName": "Vietinbank CN Lạng Sơn",
+  "landing.footerAccountNumber": "Số tài khoản",
+  "landing.footerQuickLinks": "Liên kết",
 
   // Dashboard
   "dashboard.title": "Bảng điều khiển",

@@ -118,6 +118,13 @@ const en: Record<string, string> = {
   "landing.footerContact": "Contact",
   "landing.footerPartners": "Partners",
   "landing.footerCompanyFull": "BAC TRUNG HAI LOGISTICS CO., LTD",
+  "landing.espPartner": "ESP Partner",
+  "landing.footerDirector": "Director",
+  "landing.footerTaxCode": "Tax Code",
+  "landing.footerBank": "Bank",
+  "landing.footerBankName": "Vietinbank CN Lạng Sơn",
+  "landing.footerAccountNumber": "Account No.",
+  "landing.footerQuickLinks": "Quick Links",
 
   // Dashboard
   "dashboard.title": "Dashboard",

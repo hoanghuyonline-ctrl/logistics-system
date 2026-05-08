@@ -52,7 +52,7 @@ export default function LandingHero() {
           <div className="animate-fade-up animation-delay-400 mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-1 h-1 rounded-full bg-emerald-400" />
-              ESP Partner
+              {t("landing.espPartner")}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-1 h-1 rounded-full bg-emerald-400" />

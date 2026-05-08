@@ -118,6 +118,13 @@ const zh: Record<string, string> = {
   "landing.footerContact": "联系我们",
   "landing.footerPartners": "合作伙伴",
   "landing.footerCompanyFull": "BAC TRUNG HAI LOGISTICS CO., LTD",
+  "landing.espPartner": "ESP合作伙伴",
+  "landing.footerDirector": "总经理",
+  "landing.footerTaxCode": "税号",
+  "landing.footerBank": "银行",
+  "landing.footerBankName": "Vietinbank CN Lạng Sơn",
+  "landing.footerAccountNumber": "账号",
+  "landing.footerQuickLinks": "快捷链接",
 
   // Dashboard
   "dashboard.title": "仪表板",
