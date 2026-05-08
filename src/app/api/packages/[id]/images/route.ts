@@ -3,8 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import type { NextRequest } from "next/server";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import path from "path";
+import { storage } from "@/lib/storage";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -55,15 +54,9 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/packages/[i
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "packages");
-  await mkdir(uploadDir, { recursive: true });
-
   const safeName = sanitizeFilename(file.name);
-  const filename = `${id}-${Date.now()}-${safeName}`;
-  const filepath = path.join(uploadDir, filename);
-  await writeFile(filepath, buffer);
-
-  const imageUrl = `/uploads/packages/${filename}`;
+  const key = `packages/${id}-${Date.now()}-${safeName}`;
+  const imageUrl = await storage.upload(buffer, key);
 
   const image = await prisma.packageImage.create({
     data: { packageId: id, imageUrl },
@@ -90,12 +83,8 @@ export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/packages/
 
   if (!image) return errorResponse("Image not found", 404);
 
-  try {
-    const filepath = path.join(process.cwd(), "public", image.imageUrl);
-    await unlink(filepath);
-  } catch {
-    // file may already be deleted; continue
-  }
+  const key = image.imageUrl.replace(/^\/uploads\//, "");
+  await storage.delete(key);
 
   await prisma.packageImage.delete({ where: { id: imageId } });
 
