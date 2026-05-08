@@ -1,4 +1,5 @@
-import { Role, OrderStatus, ShipmentStatus } from "@prisma/client";
+import { Role, OrderStatus } from "@prisma/client";
+import { ShipmentStatus } from "@/lib/shipment-status";
 
 export type { Role, OrderStatus, ShipmentStatus };
 
