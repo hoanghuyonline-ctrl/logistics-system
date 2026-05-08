@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
+import CameraScanner from "@/components/warehouse/CameraScanner";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
 import type { PackageStatus, OrderStatus } from "@prisma/client";
@@ -50,6 +51,28 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  const handleCameraDetected = useCallback((code: string) => {
+    setBarcode(code);
+    setPkg(null);
+    setLoading(true);
+    fetch("/api/warehouse/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ barcode: code, action: "lookup" }),
+    })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          toast(data.error || t("scan.notFound"), "error");
+        } else {
+          setPkg(data.package);
+          toast(t("scan.found"), "success");
+        }
+      })
+      .catch(() => toast(t("scan.error"), "error"))
+      .finally(() => setLoading(false));
+  }, [toast, t]);
 
   async function handleLookup(e: React.FormEvent) {
     e.preventDefault();
@@ -122,6 +145,8 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
       <PageHeader title={t("scan.title")} subtitle={subtitle} />
 
       <Card title={t("scan.inputTitle")} className="mb-6">
+        <CameraScanner onDetected={handleCameraDetected} />
+        <div className="border-t border-slate-100 my-4" />
         <form onSubmit={handleLookup} className="flex gap-3">
           <input
             ref={inputRef}

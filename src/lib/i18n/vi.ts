@@ -184,6 +184,12 @@ const vi: Record<string, string> = {
   "scan.markShipping": "Đánh dấu đang vận chuyển",
   "scan.markArrivedVN": "Đánh dấu đến kho VN",
   "scan.markDelivered": "Đánh dấu đã giao",
+  "scan.cameraStart": "Bật camera",
+  "scan.cameraStop": "Tắt camera",
+  "scan.cameraHint": "Hướng camera vào mã vạch",
+  "scan.cameraPermissionDenied": "Quyền truy cập camera bị từ chối. Vui lòng cho phép truy cập camera trong cài đặt trình duyệt.",
+  "scan.cameraNotFound": "Không tìm thấy camera trên thiết bị này.",
+  "scan.cameraError": "Không thể khởi động camera.",
   "nav.scan": "Quét hàng",
 
   // Language
