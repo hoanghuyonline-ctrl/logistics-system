@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
@@ -8,6 +8,27 @@ import { useToast } from "@/components/ui/Toast";
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const [zaloSending, setZaloSending] = useState(false);
+
+  const sendTestZalo = useCallback(async () => {
+    setZaloSending(true);
+    try {
+      const res = await fetch("/api/admin/test-zalo", { method: "POST" });
+      const data = await res.json();
+      if (res.status === 403) {
+        toast("Admin access required", "error");
+      } else if (data.success) {
+        toast(data.message, "success");
+      } else {
+        toast(data.error || "Unknown error", "error");
+      }
+    } catch {
+      toast("Network error — could not reach server", "error");
+    } finally {
+      setZaloSending(false);
+    }
+  }, [toast]);
+
   const [settings, setSettings] = useState({
     exchange_rate: "",
     service_fee_percent: "",
@@ -79,6 +100,20 @@ export default function SettingsPage() {
             Save Settings
           </button>
         </form>
+      </Card>
+
+      <Card title="Zalo OA Notification Test">
+        <p className="text-sm text-slate-500 mb-4">
+          Send a test message to the configured ZALO_RECIPIENT_ID using the existing Zalo OA channel.
+        </p>
+        <button
+          type="button"
+          onClick={sendTestZalo}
+          disabled={zaloSending}
+          className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {zaloSending ? "Sending…" : "Send Test Zalo Notification"}
+        </button>
       </Card>
     </div>
   );
