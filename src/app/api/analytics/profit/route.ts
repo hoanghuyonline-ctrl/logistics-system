@@ -5,7 +5,7 @@ import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/util
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
   }
 
