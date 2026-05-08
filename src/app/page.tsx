@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
@@ -54,10 +55,8 @@ export default function Home() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 lg:px-8 h-16">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center">
-              <span className="text-white text-sm font-bold">VN</span>
-            </div>
-            <span className="text-lg font-bold text-slate-900">{t("common.appName")}</span>
+            <Image src="/logo.jpg" alt="Bắc Trung Hải Logistics" width={40} height={40} className="rounded-lg" />
+            <span className="text-lg font-bold" style={{ color: "var(--brand-navy)" }}>{t("common.appName")}</span>
           </div>
           <div className="flex items-center gap-3">
             <select
@@ -72,7 +71,7 @@ export default function Home() {
             <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
               {t("common.signIn")}
             </Link>
-            <Link href="/register" className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            <Link href="/register" className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors shadow-sm" style={{ backgroundColor: "var(--brand-navy)" }}>
               {t("common.getStarted")}
             </Link>
           </div>
@@ -84,14 +83,14 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40" />
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-20 pb-24 lg:pt-28 lg:pb-32">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold mb-6 border border-blue-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6 border" style={{ backgroundColor: "#eef2ff", color: "var(--brand-navy)", borderColor: "#c7d2fe" }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "var(--brand-navy)" }} />
               {t("landing.badge")}
             </div>
             <h1 className="text-4xl lg:text-6xl font-bold text-slate-900 leading-[1.1] tracking-tight">
               {t("landing.heroTitle1")}
               <br />
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(to right, var(--brand-navy), var(--brand-blue))" }}>
                 {t("landing.heroTitle2")}
               </span>
             </h1>
@@ -99,7 +98,7 @@ export default function Home() {
               {t("landing.heroDesc")}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Link href="/register" className="inline-flex items-center justify-center px-6 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 text-sm">
+              <Link href="/register" className="inline-flex items-center justify-center px-6 py-3.5 text-white font-semibold rounded-xl transition-all shadow-lg text-sm" style={{ backgroundColor: "var(--brand-navy)" }}>
                 {t("landing.startShipping")}
               </Link>
               <Link href="/login" className="inline-flex items-center justify-center px-6 py-3.5 bg-white text-slate-700 font-semibold rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-sm">
@@ -169,7 +168,7 @@ export default function Home() {
                 <div className="relative bg-slate-50 rounded-2xl p-6 border border-slate-100">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-3xl">{s.icon}</span>
-                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg" style={{ color: "var(--brand-navy)", backgroundColor: "#eef2ff" }}>
                       STEP {s.step}
                     </span>
                   </div>
@@ -183,7 +182,7 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 to-indigo-700">
+      <section className="py-20" style={{ background: "linear-gradient(to bottom right, var(--brand-navy), var(--brand-blue))" }}>
         <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
             {t("landing.readyToStart")}
@@ -192,7 +191,7 @@ export default function Home() {
             {t("landing.readyToStartDesc")}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-all shadow-lg text-sm">
+            <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-white font-semibold rounded-xl hover:bg-blue-50 transition-all shadow-lg text-sm" style={{ color: "var(--brand-navy)" }}>
               {t("landing.createFreeAccount")}
             </Link>
             <Link href="/login" className="inline-flex items-center justify-center px-8 py-3.5 bg-white/10 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 transition-all text-sm">
@@ -203,16 +202,30 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12">
+      <footer className="text-slate-300 py-12" style={{ backgroundColor: "var(--brand-navy)" }}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white text-xs font-bold">VN</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <Image src="/logo.jpg" alt="Bắc Trung Hải Logistics" width={36} height={36} className="rounded-lg" />
+                <span className="text-sm font-semibold text-white">{t("common.appName")}</span>
               </div>
-              <span className="text-sm font-semibold text-white">{t("common.appName")}</span>
+              <p className="text-xs text-slate-400">CÔNG TY TNHH BẮC TRUNG HẢI LOGISTICS</p>
+              <p className="text-xs text-slate-400">MST: 4900940606</p>
             </div>
-            <p className="text-sm">{t("common.copyright")}</p>
+            <div className="flex flex-col gap-2">
+              <h4 className="text-sm font-semibold text-white mb-1">Liên hệ / Contact</h4>
+              <p className="text-xs text-slate-400">📞 0989 711 888</p>
+              <p className="text-xs text-slate-400">✉️ bactrunghailogistics@gmail.com</p>
+              <p className="text-xs text-slate-400">📍 Số 260, Hùng Vương, Lạng Sơn</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h4 className="text-sm font-semibold text-white mb-1">Đối tác / Partners</h4>
+              <p className="text-xs text-slate-400">ESP · Alibaba · Taobao · 1688 · Tmall</p>
+            </div>
+          </div>
+          <div className="border-t border-slate-700 pt-6 text-center">
+            <p className="text-xs text-slate-500">{t("common.copyright")}</p>
           </div>
         </div>
       </footer>
