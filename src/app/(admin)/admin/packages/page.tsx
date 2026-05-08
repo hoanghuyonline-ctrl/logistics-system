@@ -17,6 +17,10 @@ interface Package {
   orders: Array<{ id: string; orderCode: string; productName: string }>;
 }
 
+interface PackageWithImages extends Package {
+  images?: Array<{ id: string }>;
+}
+
 const statusColors: Record<string, string> = {
   AT_CHINA_WH: "bg-violet-50 text-violet-700",
   SHIPPING: "bg-cyan-50 text-cyan-700",
@@ -143,7 +147,9 @@ export default function PackagesPage() {
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Weight</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Images</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Label</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -161,13 +167,22 @@ export default function PackagesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{(p as PackageWithImages).images?.length || 0}</td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => printLabel(p.id, p.packageCode, p.barcode)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                       >
-                        🖨 Print Label
+                        Print Label
                       </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <a
+                        href={`/admin/packages/${p.id}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+                      >
+                        View
+                      </a>
                     </td>
                   </tr>
                 ))}
