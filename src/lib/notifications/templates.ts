@@ -1,16 +1,16 @@
 import type { NotificationTemplate } from "./types";
 
 const STATUS_LABELS: Record<string, string> = {
-  PENDING: "Pending",
-  PURCHASED: "Purchased",
-  SELLER_SHIPPED: "Seller Shipped",
-  ARRIVED_CHINA_WH: "Arrived at China Warehouse",
-  PACKING: "Packing",
-  SHIPPING_TO_VIETNAM: "Shipping to Vietnam",
-  ARRIVED_VIETNAM_WH: "Arrived at Vietnam Warehouse",
-  OUT_FOR_DELIVERY: "Out for Delivery",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
+  PENDING: "Chờ xử lý",
+  PURCHASED: "Đã mua hàng",
+  SELLER_SHIPPED: "Người bán đã gửi",
+  ARRIVED_CHINA_WH: "Đã đến kho Trung Quốc",
+  PACKING: "Đang đóng gói",
+  SHIPPING_TO_VIETNAM: "Đang vận chuyển về Việt Nam",
+  ARRIVED_VIETNAM_WH: "Đã đến kho Việt Nam",
+  OUT_FOR_DELIVERY: "Đang giao hàng",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
 };
 
 function statusLabel(status: string): string {
@@ -21,15 +21,15 @@ export function orderCreatedTemplate(params: {
   orderCode: string;
   userName?: string;
 }): NotificationTemplate {
-  const greeting = params.userName ? `Hi ${params.userName}` : "Hello";
+  const greeting = params.userName ? `Xin chào ${params.userName}` : "Xin chào";
   return {
-    subject: `Order ${params.orderCode} — Created Successfully`,
-    body: `${greeting}, your order ${params.orderCode} has been created and is now being processed.`,
+    subject: `Đơn hàng ${params.orderCode} — Tạo thành công`,
+    body: `${greeting}, đơn hàng ${params.orderCode} của bạn đã được tạo và đang được xử lý.`,
     html: [
       `<p>${greeting},</p>`,
-      `<p>Your order <strong>${params.orderCode}</strong> has been created and is now being processed.</p>`,
-      `<p>We will notify you when the status changes.</p>`,
-      `<p>— VN Logistics</p>`,
+      `<p>Đơn hàng <strong>${params.orderCode}</strong> của bạn đã được tạo và đang được xử lý.</p>`,
+      `<p>Chúng tôi sẽ thông báo khi trạng thái đơn hàng thay đổi.</p>`,
+      `<p>— Nam Trung Hải Logistics</p>`,
     ].join("\n"),
   };
 }
@@ -40,16 +40,16 @@ export function shipmentStatusChangedTemplate(params: {
   toStatus: string;
   userName?: string;
 }): NotificationTemplate {
-  const greeting = params.userName ? `Hi ${params.userName}` : "Hello";
+  const greeting = params.userName ? `Xin chào ${params.userName}` : "Xin chào";
   const to = statusLabel(params.toStatus);
   return {
-    subject: `Order ${params.orderCode} — Status: ${to}`,
-    body: `${greeting}, your order ${params.orderCode} status has changed from ${statusLabel(params.fromStatus)} to ${to}.`,
+    subject: `Đơn hàng ${params.orderCode} — Trạng thái: ${to}`,
+    body: `${greeting}, đơn hàng ${params.orderCode} của bạn đã chuyển từ ${statusLabel(params.fromStatus)} sang ${to}.`,
     html: [
       `<p>${greeting},</p>`,
-      `<p>Your order <strong>${params.orderCode}</strong> status has been updated:</p>`,
+      `<p>Đơn hàng <strong>${params.orderCode}</strong> của bạn đã cập nhật trạng thái:</p>`,
       `<p><strong>${statusLabel(params.fromStatus)}</strong> → <strong>${to}</strong></p>`,
-      `<p>— VN Logistics</p>`,
+      `<p>— Nam Trung Hải Logistics</p>`,
     ].join("\n"),
   };
 }
