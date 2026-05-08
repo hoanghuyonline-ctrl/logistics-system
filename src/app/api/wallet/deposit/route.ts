@@ -54,8 +54,8 @@ export async function POST(request: Request) {
 
   await createNotification({
     userId,
-    title: "Deposit Confirmed",
-    message: `Your wallet has been credited with ${depositAmount.toLocaleString()} VND.`,
+    title: "Nạp tiền thành công",
+    message: `Ví của bạn đã được nạp ${depositAmount.toLocaleString()} VND.`,
   });
 
   return jsonResponse(transaction, 201);
