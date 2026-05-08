@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+!.env.production.example
+public/uploads
+docker-compose*.yml
+nginx
