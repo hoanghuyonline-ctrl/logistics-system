@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { notifyOrderStatusChange } from "@/lib/notifications";
-import { toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
-import { ShipmentStatus } from "@prisma/client";
+import { toShipmentStatus, isValidTransition, ShipmentStatus } from "@/lib/shipment-status";
 import { auditLog } from "@/lib/audit";
 
 export async function POST(request: Request) {

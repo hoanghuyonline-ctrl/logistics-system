@@ -1,4 +1,15 @@
-import { OrderStatus, ShipmentStatus } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
+
+export enum ShipmentStatus {
+  PENDING = "PENDING",
+  RECEIVED_CHINA = "RECEIVED_CHINA",
+  IN_CHINA_WAREHOUSE = "IN_CHINA_WAREHOUSE",
+  SHIPPED_TO_VN = "SHIPPED_TO_VN",
+  IN_VN_WAREHOUSE = "IN_VN_WAREHOUSE",
+  OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
+}
 
 /**
  * Centralized shipment status workflow.
