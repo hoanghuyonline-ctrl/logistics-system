@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `a1b50a5`
+**Latest stable commit:** `b8ea7fb`
 
 ---
 
@@ -26,6 +26,7 @@
 - **Warehouse Scan Workflow** — Barcode/packageCode scan pages for China and Vietnam warehouses, server-validated status transitions, USB scanner/manual input support, VI/EN/ZH translations
 - **Audit Log System** — Centralized audit helper, warehouse scan/order status logging, admin read-only audit log page, VI/EN/ZH translations
 - **Package Image Upload** — Warehouse/admin upload, local image storage, package image viewing/deletion, JPG/PNG/WebP validation
+- **Zalo OA Notification Foundation** — Basic OA text message delivery channel, env-configured, integrated with notification service
 
 ## Stack
 
@@ -79,7 +80,6 @@
 
 ## Remaining Major Tasks
 
-- Zalo notification delivery implementation
 - Production Telegram bot/chat configuration
 - Production SMTP configuration
 - Accountant role pages (role exists, no dedicated UI)
@@ -94,7 +94,7 @@
 3. **bwip-js types** — local interface used because package types don't resolve under `moduleResolution: "bundler"`. Low risk.
 4. **No CI pipeline** — no automated tests or checks configured.
 5. **Notification delivery is fire-and-forget** — failed sends are logged but do not block APIs.
-6. **Zalo channel is a placeholder only** — returns "not implemented" gracefully.
+6. **Zalo OA access token is short-lived** — needs OAuth refresh flow for production use.
 7. **Telegram delivery requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in production** — failures are logged and do not block APIs.
 8. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 9. **Scan workflow uses web input only** — no camera scanning or mobile offline mode yet.
@@ -102,3 +102,5 @@
 11. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
 12. **Package images stored locally** — stored under `public/uploads/packages/`, not suitable for multi-instance production deployment yet.
 13. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
+14. **Zalo delivery uses one global fallback recipient ID** — per-user Zalo delivery needs schema changes (e.g., `User.zaloChatId`).
+15. **Zalo delivery cannot be tested without real OA credentials** — requires valid `ZALO_OA_ACCESS_TOKEN` and `ZALO_RECIPIENT_ID`.
