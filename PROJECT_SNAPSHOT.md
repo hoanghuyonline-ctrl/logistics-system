@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `4eeca1c`
+**Latest stable commit:** `39eabcb`
 
 ---
 
@@ -28,6 +28,7 @@
 - **Package Image Upload** — Warehouse/admin upload, local image storage, package image viewing/deletion, JPG/PNG/WebP validation
 - **Zalo OA Notification Foundation** — Basic OA text message delivery channel, env-configured, integrated with notification service
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
+- **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
 
 ## Stack
 
@@ -98,11 +99,13 @@
 6. **Zalo OA access token is short-lived** — needs OAuth refresh flow for production use.
 7. **Telegram delivery requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in production** — failures are logged and do not block APIs.
 8. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
-9. **Scan workflow uses web input only** — no camera scanning or mobile offline mode yet.
-10. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
-11. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
-12. **Package images stored locally** — stored under `public/uploads/packages/`, not suitable for multi-instance production deployment yet.
-13. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
-14. **Zalo delivery uses one global fallback recipient ID** — per-user Zalo delivery needs schema changes (e.g., `User.zaloChatId`).
-15. **Zalo delivery cannot be tested without real OA credentials** — requires valid `ZALO_OA_ACCESS_TOKEN` and `ZALO_RECIPIENT_ID`.
-16. **No automated test suite yet** — CI validates build and typecheck only; no unit or E2E tests configured.
+9. **Camera scan requires HTTPS in production** — `getUserMedia` API is restricted to secure contexts by browsers.
+10. **html5-qrcode is in maintenance mode** — library works as-is (1M weekly downloads) but author is seeking new owners; no new bug fixes expected.
+11. **Camera scanning requires real-device testing** — cannot be tested without a physical camera; 3-second duplicate-scan cooldown may need tuning.
+12. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
+13. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
+14. **Package images stored locally** — stored under `public/uploads/packages/`, not suitable for multi-instance production deployment yet.
+15. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
+16. **Zalo delivery uses one global fallback recipient ID** — per-user Zalo delivery needs schema changes (e.g., `User.zaloChatId`).
+17. **Zalo delivery cannot be tested without real OA credentials** — requires valid `ZALO_OA_ACCESS_TOKEN` and `ZALO_RECIPIENT_ID`.
+18. **No automated test suite yet** — CI validates build and typecheck only; no unit or E2E tests configured.
