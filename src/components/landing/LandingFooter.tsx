@@ -15,17 +15,17 @@ export default function LandingFooter() {
               <Image src="/logo.jpg" alt="Bắc Trung Hải Logistics" width={36} height={36} className="rounded-lg" />
               <span className="text-sm font-semibold text-white">{t("common.appName")}</span>
             </div>
-            <p className="text-xs text-slate-400">CÔNG TY TNHH BẮC TRUNG HẢI LOGISTICS</p>
+            <p className="text-xs text-slate-400">{t("landing.footerCompanyFull")}</p>
             <p className="text-xs text-slate-400">MST: 4900940606</p>
           </div>
           <div className="flex flex-col gap-2">
-            <h4 className="text-sm font-semibold text-white mb-1">Liên hệ / Contact</h4>
-            <p className="text-xs text-slate-400">📞 0989 711 888</p>
-            <p className="text-xs text-slate-400">✉️ bactrunghailogistics@gmail.com</p>
-            <p className="text-xs text-slate-400">📍 Số 260, Hùng Vương, Lạng Sơn</p>
+            <h4 className="text-sm font-semibold text-white mb-1">{t("landing.footerContact")}</h4>
+            <p className="text-xs text-slate-400">0989 711 888</p>
+            <p className="text-xs text-slate-400">bactrunghailogistics@gmail.com</p>
+            <p className="text-xs text-slate-400">{t("landing.headOfficeAddr")}</p>
           </div>
           <div className="flex flex-col gap-2">
-            <h4 className="text-sm font-semibold text-white mb-1">Đối tác / Partners</h4>
+            <h4 className="text-sm font-semibold text-white mb-1">{t("landing.footerPartners")}</h4>
             <p className="text-xs text-slate-400">ESP · Alibaba · Taobao · 1688 · Tmall</p>
           </div>
         </div>
