@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `39eabcb`
+**Latest stable commit:** `ab6b4ff`
 
 ---
 
@@ -29,6 +29,7 @@
 - **Zalo OA Notification Foundation** — Basic OA text message delivery channel, env-configured, integrated with notification service
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
+- **Production Deployment Foundation** — Dockerfile, Docker Compose with PostgreSQL/nginx, healthcheck endpoint, uploads volume persistence, .env.production.example, DEPLOYMENT.md
 
 ## Stack
 
@@ -86,7 +87,6 @@
 - Production SMTP configuration
 - Accountant role pages (role exists, no dedicated UI)
 - Order notes/history log UI
-- Production deployment configuration
 - Comprehensive E2E test suite
 
 ## Known Risks / Issues
@@ -109,3 +109,7 @@
 16. **Zalo delivery uses one global fallback recipient ID** — per-user Zalo delivery needs schema changes (e.g., `User.zaloChatId`).
 17. **Zalo delivery cannot be tested without real OA credentials** — requires valid `ZALO_OA_ACCESS_TOKEN` and `ZALO_RECIPIENT_ID`.
 18. **No automated test suite yet** — CI validates build and typecheck only; no unit or E2E tests configured.
+19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
+20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
+21. **Production requires .env.production** — docker-compose will not start without this file.
+22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
