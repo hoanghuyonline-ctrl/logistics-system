@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VN Logistics - China to Vietnam Shipping",
-  description: "Professional logistics management system for China-to-Vietnam shipping",
+  title: "Bắc Trung Hải Logistics - Vận chuyển Trung Quốc Việt Nam",
+  description: "Công ty TNHH Bắc Trung Hải Logistics — Dịch vụ vận chuyển hàng hóa Trung Quốc - Việt Nam uy tín, nhanh chóng. Đối tác ESP. Hotline: 0989 711 888",
 };
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
 const vi: Record<string, string> = {
   // Common
-  "common.appName": "VN Logistics",
+  "common.appName": "Bắc Trung Hải Logistics",
   "common.tagline": "Vận chuyển Trung Quốc → Việt Nam",
   "common.signIn": "Đăng nhập",
   "common.signOut": "Đăng xuất",
@@ -19,7 +19,7 @@ const vi: Record<string, string> = {
   "common.total": "Tổng cộng",
   "common.submit": "Gửi",
   "common.back": "Quay lại",
-  "common.copyright": "© 2026 VN Logistics. Bảo lưu mọi quyền.",
+  "common.copyright": "© 2026 CÔNG TY TNHH BẮC TRUNG HẢI LOGISTICS. Bảo lưu mọi quyền.",
 
   // Auth
   "auth.welcomeBack": "Chào mừng trở lại",
@@ -72,7 +72,7 @@ const vi: Record<string, string> = {
   "role.ACCOUNTANT": "Kế toán",
 
   // Landing page
-  "landing.badge": "Được 2.000+ doanh nghiệp Việt Nam tin dùng",
+  "landing.badge": "Đối tác ESP — Vận chuyển Trung - Việt uy tín",
   "landing.heroTitle1": "Vận chuyển Trung Quốc",
   "landing.heroTitle2": "đến Việt Nam dễ dàng",
   "landing.heroDesc": "Đặt hàng từ Taobao, 1688, Tmall — chúng tôi xử lý mua hàng, kho bãi, vận chuyển quốc tế và giao hàng tận nơi tại Việt Nam.",
@@ -103,7 +103,7 @@ const vi: Record<string, string> = {
   "landing.step04": "Giao hàng tận nơi",
   "landing.step04Desc": "Nhận hàng tại cửa nhà bạn ở Việt Nam, theo dõi đầy đủ",
   "landing.readyToStart": "Sẵn sàng bắt đầu vận chuyển?",
-  "landing.readyToStartDesc": "Tham gia cùng hàng ngàn doanh nghiệp sử dụng VN Logistics để vận chuyển Trung Quốc-Việt Nam đáng tin cậy.",
+  "landing.readyToStartDesc": "Tham gia cùng hàng ngàn khách hàng sử dụng Bắc Trung Hải Logistics để vận chuyển Trung Quốc-Việt Nam đáng tin cậy.",
   "landing.createFreeAccount": "Tạo tài khoản miễn phí",
 
   // Dashboard

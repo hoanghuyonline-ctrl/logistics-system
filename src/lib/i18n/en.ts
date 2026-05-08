@@ -1,6 +1,6 @@
 const en: Record<string, string> = {
   // Common
-  "common.appName": "VN Logistics",
+  "common.appName": "Bắc Trung Hải Logistics",
   "common.tagline": "China → Vietnam Shipping",
   "common.signIn": "Sign In",
   "common.signOut": "Sign Out",
@@ -19,7 +19,7 @@ const en: Record<string, string> = {
   "common.total": "Total",
   "common.submit": "Submit",
   "common.back": "Back",
-  "common.copyright": "© 2026 VN Logistics. All rights reserved.",
+  "common.copyright": "© 2026 BAC TRUNG HAI LOGISTICS CO., LTD. All rights reserved.",
 
   // Auth
   "auth.welcomeBack": "Welcome back",
@@ -72,7 +72,7 @@ const en: Record<string, string> = {
   "role.ACCOUNTANT": "Accountant",
 
   // Landing page
-  "landing.badge": "Trusted by 2,000+ businesses in Vietnam",
+  "landing.badge": "ESP Partner — Trusted China-Vietnam Shipping",
   "landing.heroTitle1": "China to Vietnam",
   "landing.heroTitle2": "Shipping Made Easy",
   "landing.heroDesc": "Order from Taobao, 1688, Tmall — we handle purchasing, warehousing, cross-border shipping, and last-mile delivery to your door in Vietnam.",
@@ -103,7 +103,7 @@ const en: Record<string, string> = {
   "landing.step04": "Delivered to You",
   "landing.step04Desc": "Receive your goods at your door in Vietnam, fully tracked",
   "landing.readyToStart": "Ready to start shipping?",
-  "landing.readyToStartDesc": "Join thousands of businesses using VN Logistics for reliable China-to-Vietnam shipping.",
+  "landing.readyToStartDesc": "Join thousands of customers using Bắc Trung Hải Logistics for reliable China-to-Vietnam shipping.",
   "landing.createFreeAccount": "Create Free Account",
 
   // Dashboard

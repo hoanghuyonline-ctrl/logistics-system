@@ -1,6 +1,6 @@
 const zh: Record<string, string> = {
   // Common
-  "common.appName": "VN Logistics",
+  "common.appName": "Bắc Trung Hải Logistics",
   "common.tagline": "中国 → 越南 物流",
   "common.signIn": "登录",
   "common.signOut": "退出",
@@ -19,7 +19,7 @@ const zh: Record<string, string> = {
   "common.total": "合计",
   "common.submit": "提交",
   "common.back": "返回",
-  "common.copyright": "© 2026 VN Logistics. 保留所有权利。",
+  "common.copyright": "© 2026 BAC TRUNG HAI LOGISTICS CO., LTD. 保留所有权利。",
 
   // Auth
   "auth.welcomeBack": "欢迎回来",
@@ -72,7 +72,7 @@ const zh: Record<string, string> = {
   "role.ACCOUNTANT": "会计",
 
   // Landing page
-  "landing.badge": "越南2,000+企业信赖之选",
+  "landing.badge": "ESP合作伙伴 — 中越物流值得信赖",
   "landing.heroTitle1": "中国到越南",
   "landing.heroTitle2": "运输更轻松",
   "landing.heroDesc": "从淘宝、1688、天猫下单——我们负责采购、仓储、跨境运输和送货上门。",
@@ -103,7 +103,7 @@ const zh: Record<string, string> = {
   "landing.step04": "送货上门",
   "landing.step04Desc": "在越南您的家门口收货，全程可追踪",
   "landing.readyToStart": "准备开始运输？",
-  "landing.readyToStartDesc": "加入数千家使用VN Logistics进行中越物流的企业。",
+  "landing.readyToStartDesc": "加入数千名使用Bắc Trung Hải Logistics进行中越物流的客户。",
   "landing.createFreeAccount": "免费创建账户",
 
   // Dashboard

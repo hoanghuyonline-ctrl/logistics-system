@@ -11,6 +11,9 @@
   --warning: #d97706;
   --danger: #dc2626;
   --sidebar-width: 260px;
+  --brand-navy: #1B2A6B;
+  --brand-blue: #2B4CB8;
+  --brand-sky: #4A90D9;
 }
 
 @theme inline {
