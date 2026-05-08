@@ -184,6 +184,12 @@ const zh: Record<string, string> = {
   "scan.markShipping": "标记为运输中",
   "scan.markArrivedVN": "标记为到达越南",
   "scan.markDelivered": "标记为已送达",
+  "scan.cameraStart": "启动相机",
+  "scan.cameraStop": "关闭相机",
+  "scan.cameraHint": "将相机对准条码",
+  "scan.cameraPermissionDenied": "相机权限被拒绝。请在浏览器设置中允许访问相机。",
+  "scan.cameraNotFound": "未找到相机设备。",
+  "scan.cameraError": "无法启动相机。",
   "nav.scan": "扫描",
 
   // Language

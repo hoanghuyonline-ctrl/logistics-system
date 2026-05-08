@@ -184,6 +184,12 @@ const en: Record<string, string> = {
   "scan.markShipping": "Mark as Shipping",
   "scan.markArrivedVN": "Mark as Arrived VN",
   "scan.markDelivered": "Mark as Delivered",
+  "scan.cameraStart": "Start Camera",
+  "scan.cameraStop": "Stop Camera",
+  "scan.cameraHint": "Point camera at barcode",
+  "scan.cameraPermissionDenied": "Camera permission denied. Please allow camera access in your browser settings.",
+  "scan.cameraNotFound": "No camera found on this device.",
+  "scan.cameraError": "Failed to start camera.",
   "nav.scan": "Scan",
 
   // Language
