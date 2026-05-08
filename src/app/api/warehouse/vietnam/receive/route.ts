@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   auditLog({
     action: "WAREHOUSE_RECEIVE_VN",
     actorId: user.id,
-    actorEmail: user.email,
+    actorEmail: user.email || "",
     actorRole: user.role,
     entityType: "order",
     entityId: order.id,

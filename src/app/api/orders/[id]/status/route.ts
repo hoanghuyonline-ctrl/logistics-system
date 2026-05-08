@@ -114,7 +114,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
   auditLog({
     action: "ORDER_STATUS_CHANGE",
     actorId: user.id,
-    actorEmail: user.email,
+    actorEmail: user.email || "",
     actorRole: user.role,
     entityType: "order",
     entityId: order.id,

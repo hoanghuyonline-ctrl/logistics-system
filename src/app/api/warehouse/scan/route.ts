@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     auditLog({
       action: "WAREHOUSE_SCAN_UPDATE",
       actorId: user.id,
-      actorEmail: user.email,
+      actorEmail: user.email || "",
       actorRole: user.role,
       entityType: "package",
       entityId: pkg.id,
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
   auditLog({
     action: "WAREHOUSE_SCAN_LOOKUP",
     actorId: user.id,
-    actorEmail: user.email,
+    actorEmail: user.email || "",
     actorRole: user.role,
     entityType: "package",
     entityId: pkg.id,

@@ -8,6 +8,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import { useI18n } from "@/lib/i18n";
+import type { OrderStatus } from "@prisma/client";
 
 interface AuditLogEntry {
   id: string;
@@ -57,7 +58,7 @@ export default function AdminAuditLogPage() {
 
       <Card noPadding>
         {logs.length === 0 ? (
-          <EmptyState message={t("audit.empty")} />
+          <EmptyState title={t("audit.empty")} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -88,10 +89,10 @@ export default function AdminAuditLogPage() {
                       <div className="text-xs text-slate-400">{log.order.productName}</div>
                     </td>
                     <td className="px-6 py-3.5 text-sm">
-                      {log.fromStatus ? <StatusBadge status={log.fromStatus} /> : <span className="text-slate-300">—</span>}
+                      {log.fromStatus ? <StatusBadge status={log.fromStatus as OrderStatus} /> : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-6 py-3.5 text-sm">
-                      <StatusBadge status={log.toStatus} />
+                      <StatusBadge status={log.toStatus as OrderStatus} />
                     </td>
                     <td className="px-6 py-3.5 text-sm text-slate-500 max-w-[200px] truncate">{log.note || "—"}</td>
                   </tr>
