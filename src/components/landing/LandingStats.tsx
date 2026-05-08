@@ -15,10 +15,10 @@ export default function LandingStats() {
   return (
     <section className="border-y border-slate-100 bg-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <p className="text-3xl font-bold text-slate-900">{s.value}</p>
+        <div className="animate-fade-up grid grid-cols-2 lg:grid-cols-4 gap-8">
+          {stats.map((s, i) => (
+            <div key={s.label} className={`text-center ${i < stats.length - 1 ? "lg:border-r lg:border-slate-200" : ""}`}>
+              <p className="text-3xl font-bold" style={{ color: "var(--brand-navy)" }}>{s.value}</p>
               <p className="text-sm text-slate-500 mt-1">{s.label}</p>
             </div>
           ))}
