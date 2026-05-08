@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `37c9cb0`
+**Latest stable commit:** `9538b00`
 
 ---
 
@@ -31,6 +31,10 @@
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
 - **Production Deployment Foundation** — Dockerfile, Docker Compose with PostgreSQL/nginx, healthcheck endpoint, uploads volume persistence, .env.production.example, DEPLOYMENT.md
 - **Accountant Dashboard** — Dedicated `(accountant)` route group with role guard, financial KPIs (revenue, profit, debt, deposits, pending payments), recent transactions table, order status summary, `/api/accountant/dashboard` API, VI/EN/ZH translations
+- **Accountant Profit API Access** — ACCOUNTANT role added to `/api/analytics/profit` role check, unlocking finance page for accountants
+- **Order Detail i18n** — Customer and admin order detail pages fully translated with `useI18n()`, 50 `orderDetail.*` keys added to VI/EN/ZH
+- **Storage Abstraction Layer** — `StorageProvider` interface with `LocalStorageProvider`, package image upload/delete routed through abstraction, `STORAGE_PROVIDER` env var for future S3/R2/MinIO swap
+- **Vitest Test Infrastructure** — Vitest configured with `@/` path alias, `npm test` / `npm run test:watch` scripts, 5 smoke tests for `LocalStorageProvider` (upload, delete, missing file, nested dirs, URL format)
 
 ## Stack
 
@@ -43,6 +47,7 @@
 | Database | PostgreSQL |
 | Auth | NextAuth.js |
 | Barcode | bwip-js |
+| Testing | Vitest |
 | Infra | Docker Compose |
 
 ## Important API Routes
@@ -88,8 +93,9 @@
 - Production Telegram bot/chat configuration
 - Production SMTP configuration
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
-- Order notes/history log UI
-- Comprehensive E2E test suite
+- Cloud storage provider (S3/R2/MinIO) — abstraction layer ready, needs provider implementation
+- API route smoke tests (orders, warehouse scan, status transitions)
+- Comprehensive E2E test suite (Playwright)
 
 ## Known Risks / Issues
 
@@ -106,11 +112,11 @@
 11. **Camera scanning requires real-device testing** — cannot be tested without a physical camera; 3-second duplicate-scan cooldown may need tuning.
 12. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
 13. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
-14. **Package images stored locally** — stored under `public/uploads/packages/`, not suitable for multi-instance production deployment yet.
+14. **Package images stored locally** — stored under `public/uploads/packages/` via `LocalStorageProvider`; swap to S3/R2/MinIO by implementing `StorageProvider` interface and setting `STORAGE_PROVIDER` env var.
 15. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
 16. **Zalo delivery uses one global fallback recipient ID** — per-user Zalo delivery needs schema changes (e.g., `User.zaloChatId`).
 17. **Zalo delivery cannot be tested without real OA credentials** — requires valid `ZALO_OA_ACCESS_TOKEN` and `ZALO_RECIPIENT_ID`.
-18. **No automated test suite yet** — CI validates build and typecheck only; no unit or E2E tests configured.
+18. **Smoke tests cover storage only** — 5 Vitest tests for `LocalStorageProvider`; API route and E2E tests not yet implemented.
 19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
