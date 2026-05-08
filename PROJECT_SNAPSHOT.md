@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `ab6b4ff`
+**Latest stable commit:** `37c9cb0`
 
 ---
 
@@ -30,6 +30,7 @@
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
 - **Production Deployment Foundation** — Dockerfile, Docker Compose with PostgreSQL/nginx, healthcheck endpoint, uploads volume persistence, .env.production.example, DEPLOYMENT.md
+- **Accountant Dashboard** — Dedicated `(accountant)` route group with role guard, financial KPIs (revenue, profit, debt, deposits, pending payments), recent transactions table, order status summary, `/api/accountant/dashboard` API, VI/EN/ZH translations
 
 ## Stack
 
@@ -65,6 +66,7 @@
 | `/api/packages/[id]/images` | GET/POST/DELETE | Package image upload/list/delete (validated) |
 | `/api/admin/audit-log` | GET | Paginated audit log (OrderStatusLog) |
 | `/api/analytics` | GET | Dashboard analytics |
+| `/api/accountant/dashboard` | GET | Accountant financial KPIs and recent transactions |
 
 ## Important Prisma Models
 
@@ -85,7 +87,7 @@
 
 - Production Telegram bot/chat configuration
 - Production SMTP configuration
-- Accountant role pages (role exists, no dedicated UI)
+- Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
 - Order notes/history log UI
 - Comprehensive E2E test suite
 
