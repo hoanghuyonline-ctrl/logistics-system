@@ -9,6 +9,17 @@ import { useToast } from "@/components/ui/Toast";
 export default function SettingsPage() {
   const { toast } = useToast();
   const [zaloSending, setZaloSending] = useState(false);
+  const [notifConfig, setNotifConfig] = useState<{
+    zalo: { sendEnabled: boolean; accessTokenSet: boolean; recipientIdSet: boolean };
+    email: { smtpHostSet: boolean; smtpUserSet: boolean; smtpFromSet: boolean };
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/notification-config")
+      .then((r) => r.json())
+      .then(setNotifConfig)
+      .catch(() => {});
+  }, []);
 
   const sendTestZalo = useCallback(async () => {
     setZaloSending(true);
@@ -101,6 +112,66 @@ export default function SettingsPage() {
           </button>
         </form>
       </Card>
+
+      {notifConfig && (
+        <Card title="Notification Configuration Status">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 mb-2">Zalo OA</h3>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${notifConfig.zalo.sendEnabled ? "bg-green-500" : "bg-slate-300"}`} />
+                  <span className="text-slate-600">ZALO_SEND_ENABLED:</span>
+                  <span className={`font-medium ${notifConfig.zalo.sendEnabled ? "text-green-700" : "text-slate-400"}`}>
+                    {notifConfig.zalo.sendEnabled ? "true" : "false"}
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${notifConfig.zalo.accessTokenSet ? "bg-green-500" : "bg-red-400"}`} />
+                  <span className="text-slate-600">ZALO_OA_ACCESS_TOKEN:</span>
+                  <span className={`font-medium ${notifConfig.zalo.accessTokenSet ? "text-green-700" : "text-red-600"}`}>
+                    {notifConfig.zalo.accessTokenSet ? "Set" : "Missing"}
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${notifConfig.zalo.recipientIdSet ? "bg-green-500" : "bg-red-400"}`} />
+                  <span className="text-slate-600">ZALO_RECIPIENT_ID:</span>
+                  <span className={`font-medium ${notifConfig.zalo.recipientIdSet ? "text-green-700" : "text-red-600"}`}>
+                    {notifConfig.zalo.recipientIdSet ? "Set" : "Missing"}
+                  </span>
+                </li>
+              </ul>
+            </div>
+            <hr className="border-slate-200" />
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 mb-2">Email (SMTP)</h3>
+              <ul className="space-y-1.5 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${notifConfig.email.smtpHostSet ? "bg-green-500" : "bg-red-400"}`} />
+                  <span className="text-slate-600">SMTP_HOST:</span>
+                  <span className={`font-medium ${notifConfig.email.smtpHostSet ? "text-green-700" : "text-red-600"}`}>
+                    {notifConfig.email.smtpHostSet ? "Set" : "Missing"}
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${notifConfig.email.smtpUserSet ? "bg-green-500" : "bg-red-400"}`} />
+                  <span className="text-slate-600">SMTP_USER:</span>
+                  <span className={`font-medium ${notifConfig.email.smtpUserSet ? "text-green-700" : "text-red-600"}`}>
+                    {notifConfig.email.smtpUserSet ? "Set" : "Missing"}
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${notifConfig.email.smtpFromSet ? "bg-green-500" : "bg-red-400"}`} />
+                  <span className="text-slate-600">SMTP_FROM:</span>
+                  <span className={`font-medium ${notifConfig.email.smtpFromSet ? "text-green-700" : "text-red-600"}`}>
+                    {notifConfig.email.smtpFromSet ? "Set" : "Missing"}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card title="Zalo OA Notification Test">
         <p className="text-sm text-slate-500 mb-4">
