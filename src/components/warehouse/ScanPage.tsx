@@ -6,7 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
-import type { PackageStatus } from "@prisma/client";
+import type { PackageStatus, OrderStatus } from "@prisma/client";
 
 interface PackageOrder {
   id: string;
@@ -165,7 +165,7 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
               </div>
               <div>
                 <p className="text-xs text-slate-400 font-medium">{t("scan.status")}</p>
-                <StatusBadge status={pkg.status} />
+                <StatusBadge status={pkg.status as unknown as OrderStatus} />
               </div>
               <div>
                 <p className="text-xs text-slate-400 font-medium">{t("scan.weight")}</p>
@@ -193,7 +193,7 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-500">{o.user.fullName}</span>
-                        <StatusBadge status={o.status} />
+                        <StatusBadge status={o.status as OrderStatus} />
                       </div>
                     </div>
                   ))}
