@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-08
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `fb9ceba`
+**Latest stable commit:** `a1b50a5`
 
 ---
 
@@ -25,7 +25,7 @@
 - **Telegram Notification Delivery** — Telegram Bot API channel using `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, integrated with notification service
 - **Warehouse Scan Workflow** — Barcode/packageCode scan pages for China and Vietnam warehouses, server-validated status transitions, USB scanner/manual input support, VI/EN/ZH translations
 - **Audit Log System** — Centralized audit helper, warehouse scan/order status logging, admin read-only audit log page, VI/EN/ZH translations
-- **Package Image Upload** — Upload/view/delete package images (JPG/PNG/WebP, 5 MB limit), admin package detail page with image gallery, filename sanitization, local file storage
+- **Package Image Upload** — Warehouse/admin upload, local image storage, package image viewing/deletion, JPG/PNG/WebP validation
 
 ## Stack
 
@@ -100,4 +100,5 @@
 9. **Scan workflow uses web input only** — no camera scanning or mobile offline mode yet.
 10. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
 11. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
-12. **Package images stored locally** — `public/uploads/packages/` directory; not suitable for multi-instance deployments without migration to external storage.
+12. **Package images stored locally** — stored under `public/uploads/packages/`, not suitable for multi-instance production deployment yet.
+13. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
