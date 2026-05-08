@@ -192,6 +192,32 @@ const en: Record<string, string> = {
   "scan.cameraError": "Failed to start camera.",
   "nav.scan": "Scan",
 
+  // Accountant
+  "accountant.dashboard": "Accountant Dashboard",
+  "accountant.dashboardSubtitle": "Financial overview and transaction summary",
+  "accountant.totalRevenue": "Total Revenue",
+  "accountant.estimatedProfit": "Estimated Profit",
+  "accountant.serviceFees": "Service fees",
+  "accountant.completedOrders": "completed orders",
+  "accountant.pendingPayments": "Pending Payments",
+  "accountant.awaitingPayment": "Orders awaiting payment",
+  "accountant.totalDebt": "Total Debt",
+  "accountant.outstandingDebt": "Outstanding customer debt",
+  "accountant.totalDeposits": "Total Deposits",
+  "accountant.monthDeposits": "Deposits This Month",
+  "accountant.thisMonth": "this month",
+  "accountant.transactions": "transactions",
+  "accountant.recentTransactions": "Recent Transactions",
+  "accountant.noTransactions": "No transactions yet",
+  "accountant.orderStatusSummary": "Order Status Summary",
+  "accountant.noOrders": "No orders yet",
+  "accountant.type": "Type",
+  "accountant.user": "User",
+  "accountant.tx.DEPOSIT": "Deposit",
+  "accountant.tx.ORDER_PAYMENT": "Payment",
+  "accountant.tx.REFUND": "Refund",
+  "accountant.tx.ADJUSTMENT": "Adjustment",
+
   // Language
   "language.label": "Language",
 };

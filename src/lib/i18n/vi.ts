@@ -192,6 +192,32 @@ const vi: Record<string, string> = {
   "scan.cameraError": "Không thể khởi động camera.",
   "nav.scan": "Quét hàng",
 
+  // Accountant
+  "accountant.dashboard": "Bảng điều khiển kế toán",
+  "accountant.dashboardSubtitle": "Tổng quan tài chính và tóm tắt giao dịch",
+  "accountant.totalRevenue": "Tổng doanh thu",
+  "accountant.estimatedProfit": "Lợi nhuận ước tính",
+  "accountant.serviceFees": "Phí dịch vụ",
+  "accountant.completedOrders": "đơn hoàn thành",
+  "accountant.pendingPayments": "Thanh toán chờ",
+  "accountant.awaitingPayment": "Đơn hàng chờ thanh toán",
+  "accountant.totalDebt": "Tổng nợ",
+  "accountant.outstandingDebt": "Nợ khách hàng chưa thanh toán",
+  "accountant.totalDeposits": "Tổng nạp tiền",
+  "accountant.monthDeposits": "Nạp tiền tháng này",
+  "accountant.thisMonth": "tháng này",
+  "accountant.transactions": "giao dịch",
+  "accountant.recentTransactions": "Giao dịch gần đây",
+  "accountant.noTransactions": "Chưa có giao dịch nào",
+  "accountant.orderStatusSummary": "Tóm tắt trạng thái đơn hàng",
+  "accountant.noOrders": "Chưa có đơn hàng nào",
+  "accountant.type": "Loại",
+  "accountant.user": "Người dùng",
+  "accountant.tx.DEPOSIT": "Nạp tiền",
+  "accountant.tx.ORDER_PAYMENT": "Thanh toán",
+  "accountant.tx.REFUND": "Hoàn tiền",
+  "accountant.tx.ADJUSTMENT": "Điều chỉnh",
+
   // Language
   "language.label": "Ngôn ngữ",
 };
