@@ -50,7 +50,7 @@ const warehouseVNNav: NavItem[] = [
 ];
 
 const accountantNav: NavItem[] = [
-  { labelKey: "nav.dashboard", href: "/admin/dashboard", icon: "📊" },
+  { labelKey: "nav.dashboard", href: "/accountant/dashboard", icon: "📊" },
   { labelKey: "nav.finance", href: "/admin/finance", icon: "💰" },
   { labelKey: "nav.analytics", href: "/admin/analytics", icon: "📈" },
 ];

@@ -192,6 +192,32 @@ const zh: Record<string, string> = {
   "scan.cameraError": "无法启动相机。",
   "nav.scan": "扫描",
 
+  // Accountant
+  "accountant.dashboard": "会计仪表板",
+  "accountant.dashboardSubtitle": "财务概览与交易汇总",
+  "accountant.totalRevenue": "总收入",
+  "accountant.estimatedProfit": "预估利润",
+  "accountant.serviceFees": "服务费",
+  "accountant.completedOrders": "已完成订单",
+  "accountant.pendingPayments": "待付款",
+  "accountant.awaitingPayment": "等待付款的订单",
+  "accountant.totalDebt": "总欠款",
+  "accountant.outstandingDebt": "客户未结清欠款",
+  "accountant.totalDeposits": "总充值",
+  "accountant.monthDeposits": "本月充值",
+  "accountant.thisMonth": "本月",
+  "accountant.transactions": "笔交易",
+  "accountant.recentTransactions": "最近交易",
+  "accountant.noTransactions": "暂无交易记录",
+  "accountant.orderStatusSummary": "订单状态汇总",
+  "accountant.noOrders": "暂无订单",
+  "accountant.type": "类型",
+  "accountant.user": "用户",
+  "accountant.tx.DEPOSIT": "充值",
+  "accountant.tx.ORDER_PAYMENT": "付款",
+  "accountant.tx.REFUND": "退款",
+  "accountant.tx.ADJUSTMENT": "调整",
+
   // Language
   "language.label": "语言",
 };
