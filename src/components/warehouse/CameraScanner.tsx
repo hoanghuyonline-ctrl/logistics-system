@@ -13,7 +13,9 @@ export default function CameraScanner({ onDetected }: CameraScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastDetectedRef = useRef<{ code: string; time: number } | null>(null);
   const containerId = "camera-scanner-container";
+  const COOLDOWN_MS = 3000;
 
   const stopScanner = useCallback(async () => {
     try {
@@ -49,6 +51,12 @@ export default function CameraScanner({ onDetected }: CameraScannerProps) {
           qrbox: { width: 300, height: 150 },
         },
         (decodedText) => {
+          const now = Date.now();
+          const last = lastDetectedRef.current;
+          if (last && last.code === decodedText && now - last.time < COOLDOWN_MS) {
+            return;
+          }
+          lastDetectedRef.current = { code: decodedText, time: now };
           onDetected(decodedText);
         },
         () => {
