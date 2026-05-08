@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       amount: depositAmount,
       balanceBefore: currentBalance,
       balanceAfter: newBalance,
-      description: description || "Wallet deposit",
+      description: description || "Nạp tiền vào ví",
       createdBy: user.id,
     },
   });

@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
           balanceBefore: currentBalance,
           balanceAfter: newBalance < 0 ? 0 : newBalance,
           orderId: order.id,
-          description: `Payment for order ${order.orderCode}`,
+          description: `Thanh toán đơn hàng ${order.orderCode}`,
           createdBy: user.id,
         },
       });
@@ -103,7 +103,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
             balanceBefore: currentBalance,
             balanceAfter: currentBalance + refundAmount,
             orderId: order.id,
-            description: `Refund for cancelled order ${order.orderCode}`,
+            description: `Hoàn tiền đơn hàng đã hủy ${order.orderCode}`,
             createdBy: user.id,
           },
         });

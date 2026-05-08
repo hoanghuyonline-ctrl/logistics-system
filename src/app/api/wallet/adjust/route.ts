@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       amount: adjustAmount,
       balanceBefore: currentBalance,
       balanceAfter: newBalance < 0 ? 0 : newBalance,
-      description: description || "Manual adjustment",
+      description: description || "Điều chỉnh thủ công",
       createdBy: user.id,
     },
   });
