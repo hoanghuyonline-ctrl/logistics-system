@@ -7,7 +7,7 @@ export interface StorageProvider {
   getUrl(key: string): string;
 }
 
-class LocalStorageProvider implements StorageProvider {
+export class LocalStorageProvider implements StorageProvider {
   private basePath: string;
   private urlPrefix: string;
 
