@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import { OrderStatus } from "@prisma/client";
 import { STATUS_LABELS } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 interface OrderDetail {
   id: string;
@@ -49,6 +50,7 @@ interface OrderDetail {
 }
 
 export default function OrderDetailPage() {
+  const { t } = useI18n();
   const params = useParams();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ export default function OrderDetailPage() {
     setOrder(await res.json());
   }
 
-  if (loading || !order) return <LoadingSpinner text="Loading order details..." />;
+  if (loading || !order) return <LoadingSpinner text={t("orderDetail.loading")} />;
 
   const fmt = (v: string) => parseFloat(v).toLocaleString();
 
@@ -88,71 +90,71 @@ export default function OrderDetailPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card title="Product Information">
+        <Card title={t("orderDetail.productInfo")}>
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between items-start">
-              <dt className="text-slate-500">Product</dt>
+              <dt className="text-slate-500">{t("orderDetail.product")}</dt>
               <dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Link</dt>
-              <dd><a href={order.productLink} target="_blank" className="text-blue-600 hover:text-blue-700 font-medium">View Product →</a></dd>
+              <dt className="text-slate-500">{t("orderDetail.link")}</dt>
+              <dd><a href={order.productLink} target="_blank" className="text-blue-600 hover:text-blue-700 font-medium">{t("orderDetail.viewProduct")}</a></dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Quantity</dt>
+              <dt className="text-slate-500">{t("orderDetail.quantity")}</dt>
               <dd className="font-medium text-slate-900">{order.quantity}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Unit Price</dt>
+              <dt className="text-slate-500">{t("orderDetail.unitPrice")}</dt>
               <dd className="font-medium text-slate-900">&yen;{fmt(order.unitPriceCNY)} CNY</dd>
             </div>
             {order.weightKg && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Weight</dt>
+                <dt className="text-slate-500">{t("orderDetail.weight")}</dt>
                 <dd className="font-medium text-slate-900">{order.weightKg} kg</dd>
               </div>
             )}
             {order.notes && (
               <div className="flex justify-between items-start">
-                <dt className="text-slate-500">Notes</dt>
+                <dt className="text-slate-500">{t("orderDetail.notes")}</dt>
                 <dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd>
               </div>
             )}
           </dl>
         </Card>
 
-        <Card title="Cost Breakdown">
+        <Card title={t("orderDetail.costBreakdown")}>
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-slate-500">Product Cost (CNY)</dt>
+              <dt className="text-slate-500">{t("orderDetail.productCostCNY")}</dt>
               <dd className="font-medium text-slate-900">&yen;{fmt(order.totalPriceCNY)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Exchange Rate</dt>
+              <dt className="text-slate-500">{t("orderDetail.exchangeRate")}</dt>
               <dd className="font-medium text-slate-900">1 CNY = {fmt(order.exchangeRate)} VND</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Product Cost (VND)</dt>
+              <dt className="text-slate-500">{t("orderDetail.productCostVND")}</dt>
               <dd className="font-medium text-slate-900">{fmt(order.totalPriceVND)} VND</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Service Fee ({order.serviceFeePercent}%)</dt>
+              <dt className="text-slate-500">{t("orderDetail.serviceFee")} ({order.serviceFeePercent}%)</dt>
               <dd className="font-medium text-slate-900">{fmt(order.serviceFeeVND)} VND</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">China Shipping</dt>
+              <dt className="text-slate-500">{t("orderDetail.chinaShipping")}</dt>
               <dd className="font-medium text-slate-900">{fmt(order.chinaShippingFee)} VND</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">International Shipping</dt>
+              <dt className="text-slate-500">{t("orderDetail.intlShipping")}</dt>
               <dd className="font-medium text-slate-900">{fmt(order.internationalShippingFee)} VND</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Vietnam Delivery</dt>
+              <dt className="text-slate-500">{t("orderDetail.vnDelivery")}</dt>
               <dd className="font-medium text-slate-900">{fmt(order.vietnamDeliveryFee)} VND</dd>
             </div>
             <div className="flex justify-between items-end pt-3 border-t border-slate-100">
-              <dt className="font-bold text-slate-900">TOTAL</dt>
+              <dt className="font-bold text-slate-900">{t("orderDetail.total")}</dt>
               <dd className="text-xl font-bold text-blue-600">{fmt(order.totalCostVND)} VND</dd>
             </div>
           </dl>
@@ -160,17 +162,17 @@ export default function OrderDetailPage() {
       </div>
 
       {(order.trackingCodeChina || order.trackingCodeIntl) && (
-        <Card title="Tracking Information">
+        <Card title={t("orderDetail.trackingInfo")}>
           <dl className="space-y-3 text-sm">
             {order.trackingCodeChina && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">China Tracking</dt>
+                <dt className="text-slate-500">{t("orderDetail.chinaTracking")}</dt>
                 <dd className="font-mono text-sm bg-slate-50 px-3 py-1 rounded-lg text-slate-900">{order.trackingCodeChina}</dd>
               </div>
             )}
             {order.trackingCodeIntl && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">International Tracking</dt>
+                <dt className="text-slate-500">{t("orderDetail.intlTracking")}</dt>
                 <dd className="font-mono text-sm bg-slate-50 px-3 py-1 rounded-lg text-slate-900">{order.trackingCodeIntl}</dd>
               </div>
             )}
@@ -178,7 +180,7 @@ export default function OrderDetailPage() {
         </Card>
       )}
 
-      <Card title="Status Timeline">
+      <Card title={t("orderDetail.statusTimeline")}>
         <div className="space-y-1">
           {order.statusLogs.map((log, i) => (
             <div key={log.id} className="flex gap-4">
@@ -200,7 +202,7 @@ export default function OrderDetailPage() {
         </div>
       </Card>
 
-      <Card title="Notes">
+      <Card title={t("orderDetail.notes")}>
         <div className="space-y-3 mb-5">
           {order.orderNotes.map((note) => (
             <div key={note.id} className="bg-slate-50 rounded-xl p-4">
@@ -211,7 +213,7 @@ export default function OrderDetailPage() {
             </div>
           ))}
           {order.orderNotes.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-4">No notes yet</p>
+            <p className="text-sm text-slate-400 text-center py-4">{t("orderDetail.noNotes")}</p>
           )}
         </div>
         <div className="flex gap-3">
@@ -219,11 +221,11 @@ export default function OrderDetailPage() {
             type="text"
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Add a note..."
+            placeholder={t("orderDetail.addNotePlaceholder")}
             className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           />
           <button onClick={addNote} className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-            Add
+            {t("orderDetail.addNote")}
           </button>
         </div>
       </Card>
