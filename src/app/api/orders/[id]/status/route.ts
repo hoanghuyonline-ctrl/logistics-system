@@ -7,6 +7,20 @@ import { InvalidTransitionError, toShipmentStatus, isValidTransition } from "@/l
 import { OrderStatus } from "@prisma/client";
 import type { NextRequest } from "next/server";
 import { auditLog } from "@/lib/audit";
+import { sendZalo } from "@/lib/notifications/channels/zalo";
+
+const ZALO_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Chờ xử lý",
+  PURCHASED: "Đã mua",
+  SELLER_SHIPPED: "Người bán đã gửi",
+  ARRIVED_CHINA_WH: "Đến kho TQ",
+  PACKING: "Đang đóng gói",
+  SHIPPING_TO_VIETNAM: "Đang vận chuyển về VN",
+  ARRIVED_VIETNAM_WH: "Đến kho VN",
+  OUT_FOR_DELIVERY: "Đang giao hàng",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
+};
 
 export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/status">) {
   const user = await getCurrentUser();
@@ -140,6 +154,13 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
     .catch((err) => {
       console.error("[notifications] onShipmentStatusChanged failed:", err);
     });
+
+  const zaloStatusLabel = ZALO_STATUS_LABELS[status] || status;
+  sendZalo({
+    text: `Đơn hàng ${order.orderCode} đã chuyển sang trạng thái: ${zaloStatusLabel}`,
+  }).catch((err) => {
+    console.error("[zalo] Order status notification failed:", err);
+  });
 
   return jsonResponse(updated);
 }
