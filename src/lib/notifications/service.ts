@@ -35,7 +35,7 @@ async function sendToChannel(
       }
 
       case "ZALO": {
-        await sendZalo({ text: `${payload.title}\n${payload.message}` });
+        await sendZalo({ text: `${payload.title}\n${payload.message}`, orderCode: payload.orderCode });
         return { channel, success: true };
       }
 
