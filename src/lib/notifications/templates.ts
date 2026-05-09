@@ -29,7 +29,7 @@ export function orderCreatedTemplate(params: {
       `<p>Chào ${name},</p>`,
       `<p>Đơn hàng <strong>${params.orderCode}</strong> đã được tiếp nhận và đang xử lý.</p>`,
       `<p>Bạn sẽ nhận thông báo ngay khi đơn hàng có cập nhật mới.</p>`,
-      `<p>— Bắc Trung Hải Logistics</p>`,
+      `<p>— Nam Trung Hải Logistics</p>`,
     ].join("\n"),
   };
 }
@@ -49,7 +49,7 @@ export function shipmentStatusChangedTemplate(params: {
       `<p>Chào ${name},</p>`,
       `<p>Đơn hàng <strong>${params.orderCode}</strong> vừa được cập nhật:</p>`,
       `<p>${statusLabel(params.fromStatus)} → <strong>${to}</strong></p>`,
-      `<p>— Bắc Trung Hải Logistics</p>`,
+      `<p>— Nam Trung Hải Logistics</p>`,
     ].join("\n"),
   };
 }
