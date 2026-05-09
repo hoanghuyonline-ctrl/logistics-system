@@ -52,7 +52,7 @@ export async function POST() {
 
   try {
     const result = await sendZalo({
-      text: `Bac Trung Hai Logistics — Tin nhắn thử nghiệm gửi lúc ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`,
+      text: `Nam Trung Hải Logistics — Tin nhắn thử nghiệm gửi lúc ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`,
     });
     return jsonResponse({
       success: true,
