@@ -36,26 +36,26 @@ export default function NotificationsPage() {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
   }
 
-  if (loading) return <LoadingSpinner text="Loading notifications..." />;
+  if (loading) return <LoadingSpinner text="Đang tải thông báo..." />;
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <div>
       <PageHeader
-        title="Notifications"
-        subtitle={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All caught up"}
+        title="Thông báo"
+        subtitle={unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Đã đọc hết"}
         action={
           unreadCount > 0 ? (
             <button onClick={markAllRead} className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
-              Mark all as read
+              Đánh dấu tất cả đã đọc
             </button>
           ) : undefined
         }
       />
 
       {notifications.length === 0 ? (
-        <EmptyState icon="🔔" title="No notifications" description="You'll receive notifications when your order status changes" />
+        <EmptyState icon="🔔" title="Chưa có thông báo" description="Bạn sẽ nhận thông báo khi đơn hàng có cập nhật mới" />
       ) : (
         <div className="space-y-2">
           {notifications.map((n) => (

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
   const estimatedCost = parseFloat(cost.totalCostVND.toString());
   if (parseFloat(wallet.balance.toString()) < estimatedCost) {
-    return errorResponse("Insufficient wallet balance. Please deposit funds first.");
+    return errorResponse("Số dư ví không đủ. Vui lòng nạp thêm tiền trước khi đặt hàng.");
   }
 
   const order = await prisma.order.create({
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
         create: {
           toStatus: "PENDING",
           changedBy: user.id,
-          note: "Order created",
+          note: "Đơn hàng đã được tạo",
         },
       },
     },

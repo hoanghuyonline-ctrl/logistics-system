@@ -126,9 +126,9 @@ async function main() {
       vietnamDeliveryFee: 30000,
       totalCostVND: 355625,
       status: "PENDING",
-      notes: "Please check quality before shipping",
+      notes: "Kiểm tra chất lượng trước khi gửi",
       statusLogs: {
-        create: { toStatus: "PENDING", changedBy: customer1.id, note: "Order created" },
+        create: { toStatus: "PENDING", changedBy: customer1.id, note: "Đơn hàng đã được tạo" },
       },
     },
   });
@@ -156,10 +156,10 @@ async function main() {
       trackingCodeChina: "SF1234567890",
       statusLogs: {
         create: [
-          { toStatus: "PENDING", changedBy: customer1.id, note: "Order created" },
-          { fromStatus: "PENDING", toStatus: "PURCHASED", changedBy: admin.id, note: "Purchased from seller" },
-          { fromStatus: "PURCHASED", toStatus: "SELLER_SHIPPED", changedBy: admin.id, note: "Seller shipped" },
-          { fromStatus: "SELLER_SHIPPED", toStatus: "ARRIVED_CHINA_WH", changedBy: whChina.id, note: "Received at China WH" },
+          { toStatus: "PENDING", changedBy: customer1.id, note: "Đơn hàng đã được tạo" },
+          { fromStatus: "PENDING", toStatus: "PURCHASED", changedBy: admin.id, note: "Đã đặt mua từ người bán" },
+          { fromStatus: "PURCHASED", toStatus: "SELLER_SHIPPED", changedBy: admin.id, note: "Người bán đã gửi hàng" },
+          { fromStatus: "SELLER_SHIPPED", toStatus: "ARRIVED_CHINA_WH", changedBy: whChina.id, note: "Đã nhận tại kho Trung Quốc" },
         ],
       },
     },
@@ -224,8 +224,8 @@ async function main() {
       status: "PURCHASED",
       statusLogs: {
         create: [
-          { toStatus: "PENDING", changedBy: customer2.id, note: "Order created" },
-          { fromStatus: "PENDING", toStatus: "PURCHASED", changedBy: admin.id, note: "Bought from seller" },
+          { toStatus: "PENDING", changedBy: customer2.id, note: "Đơn hàng đã được tạo" },
+          { fromStatus: "PENDING", toStatus: "PURCHASED", changedBy: admin.id, note: "Đã đặt mua từ người bán" },
         ],
       },
     },
@@ -287,8 +287,8 @@ async function main() {
       status: "CANCELLED",
       statusLogs: {
         create: [
-          { toStatus: "PENDING", changedBy: customer2.id, note: "Order created" },
-          { fromStatus: "PENDING", toStatus: "CANCELLED", changedBy: admin.id, note: "Customer requested cancellation" },
+          { toStatus: "PENDING", changedBy: customer2.id, note: "Đơn hàng đã được tạo" },
+          { fromStatus: "PENDING", toStatus: "CANCELLED", changedBy: admin.id, note: "Khách yêu cầu huỷ đơn" },
         ],
       },
     },
@@ -320,7 +320,7 @@ async function main() {
         amount: 50000000,
         balanceBefore: 0,
         balanceAfter: 50000000,
-        description: "Initial deposit",
+        description: "Nạp tiền lần đầu",
         createdBy: admin.id,
       },
       {
@@ -329,7 +329,7 @@ async function main() {
         amount: 30000000,
         balanceBefore: 0,
         balanceAfter: 30000000,
-        description: "Initial deposit",
+        description: "Nạp tiền lần đầu",
         createdBy: admin.id,
       },
       {
@@ -339,7 +339,7 @@ async function main() {
         balanceBefore: 50000000,
         balanceAfter: 48779175,
         orderId: order3.id,
-        description: `Payment for order ${order3.orderCode}`,
+        description: `Thanh toán đơn hàng ${order3.orderCode}`,
         createdBy: admin.id,
       },
     ],
@@ -349,22 +349,22 @@ async function main() {
     data: [
       {
         userId: customer1.id,
-        title: "Welcome!",
-        message: "Welcome to our logistics platform. Start by creating your first order.",
+        title: "Chào mừng bạn!",
+        message: "Chào mừng bạn đến với Bắc Trung Hải Logistics. Hãy tạo đơn hàng đầu tiên nhé!",
         type: "SYSTEM",
       },
       {
         userId: customer1.id,
-        title: `Order ${order3.orderCode} - Completed`,
-        message: "Your order has been delivered successfully.",
+        title: `Đơn ${order3.orderCode} — Đã giao thành công`,
+        message: "Đơn hàng của bạn đã được giao thành công.",
         type: "SYSTEM",
         orderId: order3.id,
         isRead: true,
       },
       {
         userId: customer2.id,
-        title: "Welcome!",
-        message: "Welcome to our logistics platform.",
+        title: "Chào mừng bạn!",
+        message: "Chào mừng bạn đến với Bắc Trung Hải Logistics.",
         type: "SYSTEM",
       },
     ],

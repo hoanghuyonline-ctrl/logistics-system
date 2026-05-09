@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         fromStatus: order.status,
         toStatus: "ARRIVED_CHINA_WH",
         changedBy: user.id,
-        note: note || "Goods received at China warehouse",
+        note: note || "Đã nhận hàng tại kho Trung Quốc",
       },
     },
   };

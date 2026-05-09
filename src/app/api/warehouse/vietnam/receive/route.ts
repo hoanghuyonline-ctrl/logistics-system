@@ -34,7 +34,7 @@ export async function POST(request: Request) {
           fromStatus: order.status,
           toStatus: "ARRIVED_VIETNAM_WH",
           changedBy: user.id,
-          note: note || "Goods received at Vietnam warehouse",
+          note: note || "Đã nhận hàng tại kho Việt Nam",
         },
       },
     },

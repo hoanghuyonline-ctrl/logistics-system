@@ -80,24 +80,24 @@ export default function SettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
     });
-    toast(res.ok ? "Settings saved successfully" : "Failed to save settings", res.ok ? "success" : "error");
+    toast(res.ok ? "Đã lưu cài đặt thành công" : "Không thể lưu cài đặt", res.ok ? "success" : "error");
   }
 
-  if (loading) return <LoadingSpinner text="Loading settings..." />;
+  if (loading) return <LoadingSpinner text="Đang tải cài đặt..." />;
 
   const fields = [
-    { key: "exchange_rate", label: "Exchange Rate (1 CNY = ? VND)", unit: "VND", desc: "Current CNY to VND conversion rate" },
-    { key: "service_fee_percent", label: "Service Fee", unit: "%", desc: "Percentage charged on product cost" },
-    { key: "china_domestic_shipping_default", label: "China Domestic Shipping (default)", unit: "VND", desc: "Default domestic shipping fee within China" },
-    { key: "international_shipping_rate", label: "International Shipping (per kg)", unit: "VND/kg", desc: "Rate per kilogram for China to Vietnam shipping" },
-    { key: "vietnam_delivery_fee_default", label: "Vietnam Delivery Fee (default)", unit: "VND", desc: "Default last-mile delivery fee in Vietnam" },
+    { key: "exchange_rate", label: "Tỷ giá (1 CNY = ? VND)", unit: "VND", desc: "Tỷ giá quy đổi Nhân dân tệ sang Việt Nam đồng" },
+    { key: "service_fee_percent", label: "Phí dịch vụ", unit: "%", desc: "Phần trăm tính trên giá sản phẩm" },
+    { key: "china_domestic_shipping_default", label: "Phí vận chuyển nội địa Trung Quốc (mặc định)", unit: "VND", desc: "Phí ship nội địa Trung Quốc mặc định" },
+    { key: "international_shipping_rate", label: "Phí vận chuyển quốc tế (theo kg)", unit: "VND/kg", desc: "Giá mỗi kg từ Trung Quốc về Việt Nam" },
+    { key: "vietnam_delivery_fee_default", label: "Phí giao hàng Việt Nam (mặc định)", unit: "VND", desc: "Phí giao hàng chặng cuối tại Việt Nam" },
   ] as const;
 
   return (
     <div className="max-w-2xl">
-      <PageHeader title="System Settings" subtitle="Configure fees, exchange rates, and shipping costs" />
+      <PageHeader title="Cài đặt hệ thống" subtitle="Cấu hình phí, tỷ giá và cước vận chuyển" />
 
-      <Card title="Fee Configuration">
+      <Card title="Cấu hình phí">
         <form onSubmit={save} className="space-y-6">
           {fields.map((f) => (
             <div key={f.key}>
@@ -117,7 +117,7 @@ export default function SettingsPage() {
             </div>
           ))}
           <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm">
-            Save Settings
+            Lưu cài đặt
           </button>
         </form>
       </Card>
