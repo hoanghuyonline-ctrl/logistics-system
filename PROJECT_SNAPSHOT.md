@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-08
+**Date:** 2026-05-09
 **Branch:** `devin/1777960233-logistics-system-implementation`
-**Latest stable commit:** `c46bf2c`
+**Latest stable commit:** `6260400`
 
 ---
 
@@ -32,6 +32,7 @@
 - **Vietnamese System Notifications** (PR #34) — Customer-facing bell-dropdown notifications converted to Vietnamese-first wording (9 status messages + title + fallback)
 - **Vietnamese Notification Templates** (PR #35) — Email/Telegram notification templates converted to Vietnamese-first: 10 STATUS_LABELS, orderCreatedTemplate, shipmentStatusChangedTemplate, sign-off updated to "Công ty TNHH Bắc Trung Hải Logistics"
 - **Vietnamese Wallet & Order Notifications** (PR #36) — Wallet deposit notification ("Nạp tiền thành công") and new order admin notification ("Đơn hàng mới") converted to Vietnamese-first wording
+- **Full Vietnamese-First Customer Text** (PR #42) — All remaining English customer-facing text converted to natural Vietnamese: notifications page (title, subtitle, empty state, mark-all-read), admin settings (header, fee labels, descriptions, save button, toasts), API error messages, warehouse status logs, seed data notifications/transactions
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
 - **Production Deployment Foundation** — Dockerfile, Docker Compose with PostgreSQL/nginx, healthcheck endpoint, uploads volume persistence, .env.production.example, DEPLOYMENT.md
