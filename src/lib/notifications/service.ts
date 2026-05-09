@@ -64,18 +64,17 @@ export async function sendNotification(
     },
   });
 
+  const nonSystemChannels = channels.filter((ch) => ch !== "SYSTEM");
   const results = await Promise.allSettled(
-    channels
-      .filter((ch) => ch !== "SYSTEM")
-      .map((ch) => sendToChannel(ch, payload)),
+    nonSystemChannels.map((ch) => sendToChannel(ch, payload)),
   );
 
   const channelResults: ChannelSendResult[] = [
     { channel: "SYSTEM", success: true },
-    ...results.map((r) =>
+    ...results.map((r, i) =>
       r.status === "fulfilled"
         ? r.value
-        : { channel: "EMAIL" as const, success: false, error: String(r.reason) },
+        : { channel: nonSystemChannels[i], success: false, error: String(r.reason) },
     ),
   ];
 

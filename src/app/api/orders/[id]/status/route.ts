@@ -135,6 +135,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
         orderCode: order.orderCode,
         fromStatus: order.status,
         toStatus: status,
+        channels: ["SYSTEM", "TELEGRAM"],
       }),
     )
     .catch((err) => {

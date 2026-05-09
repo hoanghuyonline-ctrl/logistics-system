@@ -136,6 +136,7 @@ export async function POST(request: Request) {
     userName: order.user.fullName,
     orderId: order.id,
     orderCode: order.orderCode,
+    channels: ["SYSTEM", "TELEGRAM"],
   }).catch((err) => {
     console.error("[notifications] onOrderCreated failed:", err);
   });
