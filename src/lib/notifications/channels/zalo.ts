@@ -2,9 +2,8 @@
 // TODO: Implement OAuth refresh flow for long-lived access tokens
 // TODO: Add webhook handling for delivery receipts
 
-const OA_ACCESS_TOKEN = process.env.ZALO_OA_ACCESS_TOKEN || "";
-const RECIPIENT_ID = process.env.ZALO_RECIPIENT_ID || "";
-const SEND_ENABLED = process.env.ZALO_SEND_ENABLED === "true";
+import { getNotificationConfig } from "@/lib/notification-config";
+
 const API_URL = "https://openapi.zalo.me/v3.0/oa/message/cs";
 
 export type ZaloFailureCategory =
@@ -80,9 +79,10 @@ function logZaloSend(log: ZaloSendLog): void {
 
 export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
   const timestamp = new Date().toISOString();
-  const recipientId = options.recipientId || RECIPIENT_ID;
+  const recipientId = options.recipientId || (await getNotificationConfig("zalo_recipient_id"));
+  const sendEnabled = (await getNotificationConfig("zalo_send_enabled")) === "true";
 
-  if (!SEND_ENABLED) {
+  if (!sendEnabled) {
     const log: ZaloSendLog = {
       timestamp, orderCode: options.orderCode, recipientId: recipientId || "(chưa đặt)",
       success: false, failureCategory: "CONFIG_MISSING", errorReason: "ZALO_SEND_ENABLED chưa bật",
@@ -91,7 +91,7 @@ export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
     return log;
   }
 
-  const token = OA_ACCESS_TOKEN;
+  const token = await getNotificationConfig("zalo_oa_access_token");
   if (!token) {
     const log: ZaloSendLog = {
       timestamp, orderCode: options.orderCode, recipientId: recipientId || "(chưa đặt)",

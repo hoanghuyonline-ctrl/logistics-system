@@ -1,5 +1,5 @@
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
+import { getNotificationConfig } from "@/lib/notification-config";
+
 const API_BASE = "https://api.telegram.org/bot";
 
 export interface TelegramOptions {
@@ -8,12 +8,12 @@ export interface TelegramOptions {
 }
 
 export async function sendTelegram(options: TelegramOptions): Promise<void> {
-  const token = BOT_TOKEN;
+  const token = await getNotificationConfig("telegram_bot_token");
   if (!token) {
     throw new Error("TELEGRAM_BOT_TOKEN is not configured");
   }
 
-  const chatId = options.chatId || CHAT_ID;
+  const chatId = options.chatId || (await getNotificationConfig("telegram_chat_id"));
   if (!chatId) {
     throw new Error("TELEGRAM_CHAT_ID is not configured");
   }
