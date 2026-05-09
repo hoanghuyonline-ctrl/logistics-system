@@ -28,6 +28,7 @@
 - **Package Image Upload** — Warehouse/admin upload, local image storage, package image viewing/deletion, JPG/PNG/WebP validation
 - **Zalo OA Notification Foundation** — Basic OA text message delivery channel, env-configured, integrated with notification service
 - **Zalo Order Status Notification** (PR #33) — Fire-and-forget Vietnamese Zalo notification on order status change, reuses existing `sendZalo()`, gated by `ZALO_SEND_ENABLED`
+- **Zalo Diagnostics & Vietnamese UX** (PR #41) — Structured Zalo send logs (timestamp, orderCode, recipientId, success/failure, failureCategory, errorReason), failure classification into 6 categories (TOKEN_EXPIRED, INVALID_RECIPIENT, PERMISSION_DENIED, NETWORK_ERROR, CONFIG_MISSING, UNKNOWN) with Vietnamese labels, improved admin test UI (clearer config status, last test timestamp), natural Vietnamese notification wording
 - **Vietnamese System Notifications** (PR #34) — Customer-facing bell-dropdown notifications converted to Vietnamese-first wording (9 status messages + title + fallback)
 - **Vietnamese Notification Templates** (PR #35) — Email/Telegram notification templates converted to Vietnamese-first: 10 STATUS_LABELS, orderCreatedTemplate, shipmentStatusChangedTemplate, sign-off updated to "Nam Trung Hải Logistics"
 - **Vietnamese Wallet & Order Notifications** (PR #36) — Wallet deposit notification ("Nạp tiền thành công") and new order admin notification ("Đơn hàng mới") converted to Vietnamese-first wording
