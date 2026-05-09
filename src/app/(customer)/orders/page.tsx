@@ -30,7 +30,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (status) params.set("status", status);
     if (search) params.set("search", search);
@@ -38,10 +38,12 @@ export default function OrdersPage() {
     fetch(`/api/orders?${params}`)
       .then((r) => r.json())
       .then((d) => {
+        if (cancelled) return;
         setOrders(d.orders || []);
         setTotalPages(d.totalPages || 1);
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, [page, status, search]);
 
   return (

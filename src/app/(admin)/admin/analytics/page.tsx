@@ -16,15 +16,17 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     Promise.all([
       fetch(`/api/analytics/orders?days=${days}`).then((r) => r.json()),
       fetch(`/api/analytics/revenue?days=${days}`).then((r) => r.json()),
     ]).then(([o, r]) => {
+      if (cancelled) return;
       setOrdersData(o.data || []);
       setRevenueData(r.data || []);
       setLoading(false);
     });
+    return () => { cancelled = true; };
   }, [days]);
 
   if (loading) return <LoadingSpinner text={t("analytics.loading")} />;

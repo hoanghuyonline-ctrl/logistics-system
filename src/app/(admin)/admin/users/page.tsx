@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
@@ -38,8 +38,7 @@ export default function UsersPage() {
   const [newUser, setNewUser] = useState({ email: "", password: "", fullName: "", phone: "", role: "CUSTOMER" });
   const [createError, setCreateError] = useState("");
 
-  function loadUsers() {
-    setLoading(true);
+  const loadUsers = useCallback(() => {
     const params = new URLSearchParams({ page: String(page), limit: "15" });
     if (roleFilter) params.set("role", roleFilter);
     if (search) params.set("search", search);
@@ -51,9 +50,24 @@ export default function UsersPage() {
         setTotalPages(d.totalPages || 1);
         setLoading(false);
       });
-  }
+  }, [page, roleFilter, search]);
 
-  useEffect(() => { loadUsers(); }, [page, roleFilter, search]);
+  useEffect(() => {
+    let cancelled = false;
+    const params = new URLSearchParams({ page: String(page), limit: "15" });
+    if (roleFilter) params.set("role", roleFilter);
+    if (search) params.set("search", search);
+
+    fetch(`/api/users?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        setUsers(d.users || []);
+        setTotalPages(d.totalPages || 1);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [page, roleFilter, search]);
 
   async function createUser(e: React.FormEvent) {
     e.preventDefault();

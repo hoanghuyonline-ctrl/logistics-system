@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -63,7 +63,7 @@ export default function AdminOrderDetailPage() {
   const [weight, setWeight] = useState("");
   const [statusNote, setStatusNote] = useState("");
 
-  function loadOrder() {
+  const loadOrder = useCallback(() => {
     fetch(`/api/orders/${params.id}`)
       .then((r) => r.json())
       .then((d) => {
@@ -72,9 +72,21 @@ export default function AdminOrderDetailPage() {
         setWeight(d.weightKg || "");
         setLoading(false);
       });
-  }
+  }, [params.id]);
 
-  useEffect(() => { loadOrder(); }, [params.id]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/orders/${params.id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        setOrder(d);
+        setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
+        setWeight(d.weightKg || "");
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [params.id]);
 
   async function updateStatus(newStatus: string) {
     const res = await fetch(`/api/orders/${params.id}/status`, {

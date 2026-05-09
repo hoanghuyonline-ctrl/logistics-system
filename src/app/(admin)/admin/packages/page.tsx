@@ -58,8 +58,7 @@ export default function PackagesPage() {
     printWindow.document.close();
   }, [t]);
 
-  function loadPackages() {
-    setLoading(true);
+  const loadPackages = useCallback(() => {
     fetch(`/api/packages?page=${page}&limit=15`)
       .then((r) => r.json())
       .then((d) => {
@@ -67,9 +66,20 @@ export default function PackagesPage() {
         setTotalPages(d.totalPages || 1);
         setLoading(false);
       });
-  }
+  }, [page]);
 
-  useEffect(() => { loadPackages(); }, [page]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/packages?page=${page}&limit=15`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        setPackages(d.packages || []);
+        setTotalPages(d.totalPages || 1);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [page]);
 
   async function createPackage(e: React.FormEvent) {
     e.preventDefault();

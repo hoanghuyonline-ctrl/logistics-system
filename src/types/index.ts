@@ -1,8 +1,10 @@
 import type { Role } from "@prisma/client";
-import { OrderStatus, ShipmentStatus } from "@/lib/shipment-status";
+import type { OrderStatus } from "@/lib/shipment-status";
+import { ShipmentStatus } from "@/lib/shipment-status";
 
 export type { Role };
-export { OrderStatus, ShipmentStatus };
+export type { OrderStatus };
+export { ShipmentStatus };
 
 // Re-export centralized shipment status helpers for convenience
 export {

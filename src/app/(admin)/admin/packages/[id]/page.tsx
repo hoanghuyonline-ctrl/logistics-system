@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
@@ -65,7 +66,7 @@ export default function PackageDetailPage() {
         }
         setLoading(false);
       });
-  }, [pkgId, toast, t]);
+  }, [pkgId, toast]);
 
   useEffect(() => {
     loadPackage();
@@ -140,9 +141,9 @@ export default function PackageDetailPage() {
         title={`${t("packages.package")} ${pkg.packageCode}`}
         subtitle={`${t("packages.createdBy")} ${pkg.creator.fullName} · ${new Date(pkg.createdAt).toLocaleDateString()}`}
         action={
-          <a href="/admin/packages" className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+          <Link href="/admin/packages" className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
             &larr; {t("packages.backToPackages")}
-          </a>
+          </Link>
         }
       />
 

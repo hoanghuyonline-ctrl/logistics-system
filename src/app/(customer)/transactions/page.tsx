@@ -26,14 +26,16 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     fetch(`/api/transactions?page=${page}&limit=20`)
       .then((r) => r.json())
       .then((d) => {
+        if (cancelled) return;
         setTransactions(d.transactions || []);
         setTotalPages(d.totalPages || 1);
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, [page]);
 
   if (loading) return <LoadingSpinner text={t("transactions.loading")} />;

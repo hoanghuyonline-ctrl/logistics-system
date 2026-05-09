@@ -1,26 +1,19 @@
-export enum OrderStatus {
-  PENDING = "PENDING",
-  PURCHASED = "PURCHASED",
-  SELLER_SHIPPED = "SELLER_SHIPPED",
-  ARRIVED_CHINA_WH = "ARRIVED_CHINA_WH",
-  PACKING = "PACKING",
-  SHIPPING_TO_VIETNAM = "SHIPPING_TO_VIETNAM",
-  ARRIVED_VIETNAM_WH = "ARRIVED_VIETNAM_WH",
-  OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
-}
+import type { OrderStatus as PrismaOrderStatus } from "@prisma/client";
 
-export enum ShipmentStatus {
-  PENDING = "PENDING",
-  RECEIVED_CHINA = "RECEIVED_CHINA",
-  IN_CHINA_WAREHOUSE = "IN_CHINA_WAREHOUSE",
-  SHIPPED_TO_VN = "SHIPPED_TO_VN",
-  IN_VN_WAREHOUSE = "IN_VN_WAREHOUSE",
-  OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY",
-  DELIVERED = "DELIVERED",
-  CANCELLED = "CANCELLED",
-}
+export type OrderStatus = `${PrismaOrderStatus}`;
+
+export const ShipmentStatus = {
+  PENDING: "PENDING",
+  RECEIVED_CHINA: "RECEIVED_CHINA",
+  IN_CHINA_WAREHOUSE: "IN_CHINA_WAREHOUSE",
+  SHIPPED_TO_VN: "SHIPPED_TO_VN",
+  IN_VN_WAREHOUSE: "IN_VN_WAREHOUSE",
+  OUT_FOR_DELIVERY: "OUT_FOR_DELIVERY",
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type ShipmentStatus = (typeof ShipmentStatus)[keyof typeof ShipmentStatus];
 
 /**
  * Centralized shipment status workflow.
@@ -94,14 +87,14 @@ const ORDER_TO_SHIPMENT: Record<OrderStatus, ShipmentStatus> = {
 };
 
 const SHIPMENT_TO_ORDER: Record<ShipmentStatus, OrderStatus> = {
-  PENDING:              OrderStatus.PENDING,
-  RECEIVED_CHINA:       OrderStatus.ARRIVED_CHINA_WH,
-  IN_CHINA_WAREHOUSE:   OrderStatus.PACKING,
-  SHIPPED_TO_VN:        OrderStatus.SHIPPING_TO_VIETNAM,
-  IN_VN_WAREHOUSE:      OrderStatus.ARRIVED_VIETNAM_WH,
-  OUT_FOR_DELIVERY:     OrderStatus.OUT_FOR_DELIVERY,
-  DELIVERED:            OrderStatus.COMPLETED,
-  CANCELLED:            OrderStatus.CANCELLED,
+  PENDING:              "PENDING",
+  RECEIVED_CHINA:       "ARRIVED_CHINA_WH",
+  IN_CHINA_WAREHOUSE:   "PACKING",
+  SHIPPED_TO_VN:        "SHIPPING_TO_VIETNAM",
+  IN_VN_WAREHOUSE:      "ARRIVED_VIETNAM_WH",
+  OUT_FOR_DELIVERY:     "OUT_FOR_DELIVERY",
+  DELIVERED:            "COMPLETED",
+  CANCELLED:            "CANCELLED",
 };
 
 export function toShipmentStatus(orderStatus: OrderStatus): ShipmentStatus {
