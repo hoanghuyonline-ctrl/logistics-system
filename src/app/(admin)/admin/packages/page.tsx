@@ -5,6 +5,7 @@ import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import { useI18n } from "@/lib/i18n";
 
 interface Package {
   id: string;
@@ -29,6 +30,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function PackagesPage() {
+  const { t } = useI18n();
   const [packages, setPackages] = useState<Package[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -41,7 +43,7 @@ export default function PackagesPage() {
   const printLabel = useCallback((pkgId: string, packageCode: string, barcode: string) => {
     const printWindow = window.open("", "_blank", "width=420,height=340");
     if (!printWindow) return;
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Label - ${packageCode}</title>
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>${t("packages.label")} - ${packageCode}</title>
       <style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:system-ui,sans-serif}
       .label{text-align:center;padding:24px;border:2px solid #000;width:360px}
       .code{font-size:18px;font-weight:700;margin-bottom:8px}
@@ -50,11 +52,11 @@ export default function PackagesPage() {
       @media print{body{margin:0}.label{border:none}}</style></head>
       <body><div class="label">
       <div class="code">${packageCode}</div>
-      <img src="/api/packages/${pkgId}/barcode?format=png" alt="barcode" onload="window.print()"/>
+      <img src="/api/packages/${pkgId}/barcode?format=png" alt="${t("scan.barcode")}" onload="window.print()"/>
       <div class="barcode-text">${barcode}</div>
       </div></body></html>`);
     printWindow.document.close();
-  }, []);
+  }, [t]);
 
   function loadPackages() {
     setLoading(true);
@@ -87,69 +89,69 @@ export default function PackagesPage() {
   return (
     <div>
       <PageHeader
-        title="Package Management"
-        subtitle="Create and manage shipping packages"
+        title={t("packages.title")}
+        subtitle={t("packages.subtitle")}
         action={
           <button onClick={() => setShowCreate(!showCreate)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-            + Create Package
+            + {t("packages.createPackage")}
           </button>
         }
       />
 
       {showCreate && (
         <Card className="mb-6">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">Create New Package</h2>
+          <h2 className="text-base font-semibold text-slate-900 mb-4">{t("packages.createNewPackage")}</h2>
           <form onSubmit={createPackage} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Order IDs (comma-separated)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("packages.orderIds")}</label>
               <input type="text" value={orderIds} onChange={(e) => setOrderIds(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="uuid1, uuid2, ..." required />
+                placeholder={t("packages.orderIdsPlaceholder")} required />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Weight (kg)</label>
+                <label className="block text-xs text-slate-500 mb-1">{t("orderDetail.weightKg")}</label>
                 <input type="number" step="0.001" placeholder="0.000" value={pkgWeight} onChange={(e) => setPkgWeight(e.target.value)}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Length (cm)</label>
+                <label className="block text-xs text-slate-500 mb-1">{t("packages.lengthCm")}</label>
                 <input type="number" step="0.01" placeholder="0.00" value={dims.lengthCm} onChange={(e) => setDims({ ...dims, lengthCm: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Width (cm)</label>
+                <label className="block text-xs text-slate-500 mb-1">{t("packages.widthCm")}</label>
                 <input type="number" step="0.01" placeholder="0.00" value={dims.widthCm} onChange={(e) => setDims({ ...dims, widthCm: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Height (cm)</label>
+                <label className="block text-xs text-slate-500 mb-1">{t("packages.heightCm")}</label>
                 <input type="number" step="0.01" placeholder="0.00" value={dims.heightCm} onChange={(e) => setDims({ ...dims, heightCm: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
               </div>
             </div>
             <button type="submit" className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors shadow-sm">
-              Create Package
+              {t("packages.createPackage")}
             </button>
           </form>
         </Card>
       )}
 
-      {loading ? <LoadingSpinner text="Loading packages..." /> : (
+      {loading ? <LoadingSpinner text={t("packages.loading")} /> : (
         <Card noPadding>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Package Code</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Barcode</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Orders</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Weight</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Images</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Label</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("packages.packageCode")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("scan.barcode")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("scan.orders")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("scan.weight")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("packages.created")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("packages.images")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("packages.label")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -163,7 +165,7 @@ export default function PackagesPage() {
                     <td className="px-6 py-4 text-sm text-slate-700">{p.totalWeightKg || "—"} kg</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${statusColors[p.status] || "bg-slate-100 text-slate-700"}`}>
-                        {p.status.replace(/_/g, " ")}
+                        {t(`packageStatus.${p.status}`, p.status.replace(/_/g, " "))}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</td>
@@ -173,7 +175,7 @@ export default function PackagesPage() {
                         onClick={() => printLabel(p.id, p.packageCode, p.barcode)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                       >
-                        Print Label
+                        {t("packages.printLabel")}
                       </button>
                     </td>
                     <td className="px-6 py-4">
@@ -181,7 +183,7 @@ export default function PackagesPage() {
                         href={`/admin/packages/${p.id}`}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
                       >
-                        View
+                        {t("common.view")}
                       </a>
                     </td>
                   </tr>

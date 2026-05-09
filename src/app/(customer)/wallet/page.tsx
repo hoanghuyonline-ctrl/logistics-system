@@ -5,6 +5,7 @@ import KPICard from "@/components/ui/KPICard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
+import { useI18n } from "@/lib/i18n";
 
 interface Wallet {
   balance: string;
@@ -23,6 +24,7 @@ interface Transaction {
 }
 
 export default function WalletPage() {
+  const { t } = useI18n();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,37 +40,37 @@ export default function WalletPage() {
     });
   }, []);
 
-  if (loading) return <LoadingSpinner text="Loading wallet..." />;
+  if (loading) return <LoadingSpinner text={t("wallet.loading")} />;
 
   return (
     <div>
-      <PageHeader title="My Wallet" subtitle="Manage your balance and view recent transactions" />
+      <PageHeader title={t("wallet.title")} subtitle={t("wallet.subtitle")} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
         <KPICard
-          title="Available Balance"
+          title={t("wallet.availableBalance")}
           value={`${parseFloat(wallet?.balance || "0").toLocaleString()} VND`}
           icon={<span>💰</span>}
           color="green"
         />
         <KPICard
-          title="Outstanding Debt"
+          title={t("wallet.outstandingDebt")}
           value={`${parseFloat(wallet?.debt || "0").toLocaleString()} VND`}
           icon={<span>📊</span>}
           color="red"
         />
       </div>
 
-      <Card title="Recent Transactions" noPadding>
+      <Card title={t("wallet.recentTransactions")} noPadding>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Balance After</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("transactions.type")}</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("transactions.description")}</th>
+                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.amount")}</th>
+                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("transactions.balanceAfter")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -82,7 +84,7 @@ export default function WalletPage() {
                       tx.type === "ORDER_PAYMENT" ? "bg-red-50 text-red-700" :
                       "bg-slate-100 text-slate-700"
                     }`}>
-                      {tx.type.replace(/_/g, " ")}
+                      {t(`transactions.tx.${tx.type}`, tx.type.replace(/_/g, " "))}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-700">{tx.description}</td>
@@ -97,7 +99,7 @@ export default function WalletPage() {
                   <td colSpan={5} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-3xl">💳</span>
-                      <p className="text-sm text-slate-500">No transactions yet</p>
+                      <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
                     </div>
                   </td>
                 </tr>
@@ -111,9 +113,9 @@ export default function WalletPage() {
         <div className="flex items-start gap-3">
           <span className="text-lg">💡</span>
           <div>
-            <p className="text-sm font-medium text-amber-900">How to deposit funds</p>
+            <p className="text-sm font-medium text-amber-900">{t("wallet.depositHelpTitle")}</p>
             <p className="text-sm text-amber-700 mt-1">
-              Transfer to the company bank account and your deposit will be confirmed by our team within 24 hours.
+              {t("wallet.depositHelpText")}
             </p>
           </div>
         </div>

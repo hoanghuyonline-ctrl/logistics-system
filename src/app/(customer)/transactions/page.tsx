@@ -5,6 +5,7 @@ import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import { useI18n } from "@/lib/i18n";
 
 interface Transaction {
   id: string;
@@ -18,6 +19,7 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
+  const { t } = useI18n();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -34,23 +36,23 @@ export default function TransactionsPage() {
       });
   }, [page]);
 
-  if (loading) return <LoadingSpinner text="Loading transactions..." />;
+  if (loading) return <LoadingSpinner text={t("transactions.loading")} />;
 
   return (
     <div>
-      <PageHeader title="Transaction History" subtitle="Complete record of all your financial transactions" />
+      <PageHeader title={t("transactions.title")} subtitle={t("transactions.subtitle")} />
 
       <Card noPadding>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Balance</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("transactions.type")}</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("transactions.order")}</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("transactions.description")}</th>
+                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.amount")}</th>
+                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("transactions.balance")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -63,7 +65,7 @@ export default function TransactionsPage() {
                       tx.type === "REFUND" ? "bg-blue-50 text-blue-700" :
                       tx.type === "ORDER_PAYMENT" ? "bg-red-50 text-red-700" :
                       "bg-slate-100 text-slate-700"
-                    }`}>{tx.type.replace(/_/g, " ")}</span>
+                    }`}>{t(`transactions.tx.${tx.type}`, tx.type.replace(/_/g, " "))}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-700 font-medium">{tx.order?.orderCode || "—"}</td>
                   <td className="px-6 py-4 text-sm text-slate-600">{tx.description}</td>
@@ -78,7 +80,7 @@ export default function TransactionsPage() {
                   <td colSpan={6} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-3xl">📋</span>
-                      <p className="text-sm text-slate-500">No transactions yet</p>
+                      <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
                     </div>
                   </td>
                 </tr>

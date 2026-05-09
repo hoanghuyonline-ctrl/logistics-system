@@ -6,8 +6,6 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
-import { OrderStatus } from "@prisma/client";
-import { STATUS_LABELS } from "@/types";
 import { useI18n } from "@/lib/i18n";
 
 interface OrderDetail {
@@ -28,7 +26,7 @@ interface OrderDetail {
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
   totalCostVND: string;
-  status: OrderStatus;
+  status: string;
   trackingCodeChina: string | null;
   trackingCodeIntl: string | null;
   notes: string | null;
@@ -84,8 +82,8 @@ export default function OrderDetailPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <PageHeader
-        title={`Order ${order.orderCode}`}
-        subtitle={`Created on ${new Date(order.createdAt).toLocaleDateString()}`}
+        title={`${t("orders.order")} ${order.orderCode}`}
+        subtitle={`${t("orders.createdOn")} ${new Date(order.createdAt).toLocaleDateString()}`}
         action={<StatusBadge status={order.status} />}
       />
 
@@ -190,7 +188,7 @@ export default function OrderDetailPage() {
               </div>
               <div className="pb-6">
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={log.toStatus as OrderStatus} />
+                  <StatusBadge status={log.toStatus} />
                 </div>
                 {log.note && <p className="text-sm text-slate-500 mt-1.5">{log.note}</p>}
                 <p className="text-xs text-slate-400 mt-1">
@@ -208,7 +206,7 @@ export default function OrderDetailPage() {
             <div key={note.id} className="bg-slate-50 rounded-xl p-4">
               <p className="text-sm text-slate-700">{note.content}</p>
               <p className="text-xs text-slate-400 mt-2">
-                {note.user.fullName} ({note.user.role}) — {new Date(note.createdAt).toLocaleString()}
+                {note.user.fullName} ({t(`role.${note.user.role}`, note.user.role)}) — {new Date(note.createdAt).toLocaleString()}
               </p>
             </div>
           ))}

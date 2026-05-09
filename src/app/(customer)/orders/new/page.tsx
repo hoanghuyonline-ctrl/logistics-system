@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import { useI18n } from "@/lib/i18n";
 
 export default function NewOrderPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [form, setForm] = useState({
     productName: "",
     productLink: "",
@@ -40,7 +42,7 @@ export default function NewOrderPage() {
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error || "Failed to create order");
+      setError(data.error || t("newOrder.createFailed"));
       setLoading(false);
       return;
     }
@@ -51,7 +53,7 @@ export default function NewOrderPage() {
 
   return (
     <div className="max-w-3xl">
-      <PageHeader title="Create New Order" subtitle="Submit a product from Taobao, 1688, or Tmall" />
+      <PageHeader title={t("newOrder.title")} subtitle={t("newOrder.subtitle")} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -65,32 +67,32 @@ export default function NewOrderPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Product Name *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("newOrder.productName")} *</label>
                 <input
                   type="text"
                   value={form.productName}
                   onChange={(e) => setForm({ ...form, productName: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="e.g., Wireless Earbuds TWS"
+                  placeholder={t("newOrder.productNamePlaceholder")}
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Product Link *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("newOrder.productLink")} *</label>
                 <input
                   type="url"
                   value={form.productLink}
                   onChange={(e) => setForm({ ...form, productLink: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="https://item.taobao.com/..."
+                  placeholder={t("newOrder.productLinkPlaceholder")}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Quantity *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("orderDetail.quantity")} *</label>
                   <input
                     type="number"
                     min="1"
@@ -101,7 +103,7 @@ export default function NewOrderPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Unit Price (CNY) *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("newOrder.unitPriceCny")} *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -115,13 +117,13 @@ export default function NewOrderPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Notes</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("orderDetail.notes")}</label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   rows={3}
-                  placeholder="Any special instructions..."
+                  placeholder={t("newOrder.notesPlaceholder")}
                 />
               </div>
 
@@ -133,9 +135,9 @@ export default function NewOrderPage() {
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating order...
+                    {t("newOrder.creating")}
                   </span>
-                ) : "Create Order"}
+                ) : t("newOrder.createOrder")}
               </button>
             </form>
           </Card>
@@ -144,25 +146,25 @@ export default function NewOrderPage() {
         {/* Cost estimate sidebar */}
         <div>
           <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white sticky top-8">
-            <h3 className="font-semibold mb-4 text-blue-100 text-sm uppercase tracking-wider">Estimated Cost</h3>
+            <h3 className="font-semibold mb-4 text-blue-100 text-sm uppercase tracking-wider">{t("newOrder.estimatedCost")}</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-blue-200">Product Total</span>
+                <span className="text-blue-200">{t("newOrder.productTotal")}</span>
                 <span className="font-semibold">&yen;{estimatedCNY.toFixed(2)} CNY</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-200">Exchange Rate</span>
+                <span className="text-blue-200">{t("orderDetail.exchangeRate")}</span>
                 <span className="font-semibold">1 CNY = {exchangeRate.toLocaleString()} VND</span>
               </div>
               <div className="border-t border-white/20 pt-3 mt-3">
                 <div className="flex justify-between items-end">
-                  <span className="text-blue-100 font-medium">Estimated Total</span>
+                  <span className="text-blue-100 font-medium">{t("newOrder.estimatedTotal")}</span>
                   <span className="text-xl font-bold">{estimatedVND.toLocaleString()} VND</span>
                 </div>
               </div>
             </div>
             <p className="text-xs text-blue-200 mt-4 leading-relaxed">
-              Final cost includes service fee, China shipping, international shipping (by weight), and Vietnam delivery.
+              {t("newOrder.finalCostNote")}
             </p>
           </div>
         </div>

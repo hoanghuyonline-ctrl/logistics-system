@@ -55,11 +55,11 @@ export default function CustomerDashboard() {
   return (
     <div>
       <PageHeader
-        title={`${t("dashboard.welcome")}, ${session?.user?.name || "User"}`}
+        title={`${t("dashboard.welcome")}, ${session?.user?.name || t("common.user")}`}
         subtitle={t("common.tagline")}
         action={
           <Link href="/orders/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-            + New Order
+            + {t("orders.newOrder")}
           </Link>
         }
       />
@@ -74,7 +74,7 @@ export default function CustomerDashboard() {
         title={t("dashboard.recentOrders")}
         action={
           <Link href="/orders" className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
-            View all →
+            {t("common.viewAll")} →
           </Link>
         }
         noPadding
@@ -92,11 +92,11 @@ export default function CustomerDashboard() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Code</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.orderCode")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -109,7 +109,7 @@ export default function CustomerDashboard() {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-700">{order.productName}</td>
                     <td className="px-6 py-4">
-                      <StatusBadge status={order.status as import("@prisma/client").OrderStatus} />
+                      <StatusBadge status={order.status} />
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>

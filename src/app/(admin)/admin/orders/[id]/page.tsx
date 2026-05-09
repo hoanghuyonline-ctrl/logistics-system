@@ -6,8 +6,6 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
-import { OrderStatus } from "@prisma/client";
-import { STATUS_LABELS } from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
 
@@ -40,7 +38,7 @@ interface OrderDetail {
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
   totalCostVND: string;
-  status: OrderStatus;
+  status: string;
   trackingCodeChina: string | null;
   trackingCodeIntl: string | null;
   createdAt: string;
@@ -125,8 +123,8 @@ export default function AdminOrderDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Order ${order.orderCode}`}
-        subtitle={`Customer: ${order.user.fullName} · ${new Date(order.createdAt).toLocaleDateString()}`}
+        title={`${t("orders.order")} ${order.orderCode}`}
+        subtitle={`${t("orders.customer")}: ${order.user.fullName} · ${new Date(order.createdAt).toLocaleDateString()}`}
         action={<StatusBadge status={order.status} />}
       />
 
@@ -143,7 +141,7 @@ export default function AdminOrderDetailPage() {
                   className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors shadow-sm ${
                     s === "CANCELLED" ? "bg-red-600 text-white hover:bg-red-700" : "bg-blue-600 text-white hover:bg-blue-700"
                   }`}>
-                  → {STATUS_LABELS[s as keyof typeof STATUS_LABELS] || s}
+                  → {t(`status.${s}`, s)}
                 </button>
               ))}
             </div>
@@ -224,7 +222,7 @@ export default function AdminOrderDetailPage() {
                 {i < order.statusLogs.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 my-1" />}
               </div>
               <div className="pb-6">
-                <StatusBadge status={log.toStatus as OrderStatus} />
+                <StatusBadge status={log.toStatus} />
                 {log.note && <p className="text-sm text-slate-500 mt-1.5">{log.note}</p>}
                 <p className="text-xs text-slate-400 mt-1">{log.changer.fullName} — {new Date(log.createdAt).toLocaleString()}</p>
               </div>

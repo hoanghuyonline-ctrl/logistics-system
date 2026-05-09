@@ -8,7 +8,6 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import { useI18n } from "@/lib/i18n";
-import type { OrderStatus } from "@prisma/client";
 
 interface AuditLogEntry {
   id: string;
@@ -82,17 +81,17 @@ export default function AdminAuditLogPage() {
                       <div className="text-xs text-slate-400">{log.changer.email}</div>
                     </td>
                     <td className="px-6 py-3.5 text-sm">
-                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{log.changer.role}</span>
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{t(`role.${log.changer.role}`, log.changer.role)}</span>
                     </td>
                     <td className="px-6 py-3.5 text-sm">
                       <div className="font-medium text-slate-900">{log.order.orderCode}</div>
                       <div className="text-xs text-slate-400">{log.order.productName}</div>
                     </td>
                     <td className="px-6 py-3.5 text-sm">
-                      {log.fromStatus ? <StatusBadge status={log.fromStatus as OrderStatus} /> : <span className="text-slate-300">—</span>}
+                      {log.fromStatus ? <StatusBadge status={log.fromStatus} /> : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-6 py-3.5 text-sm">
-                      <StatusBadge status={log.toStatus as OrderStatus} />
+                      <StatusBadge status={log.toStatus} />
                     </td>
                     <td className="px-6 py-3.5 text-sm text-slate-500 max-w-[200px] truncate">{log.note || "—"}</td>
                   </tr>

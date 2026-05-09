@@ -6,6 +6,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { useI18n } from "@/lib/i18n";
 
 interface PackageImage {
   id: string;
@@ -47,6 +48,7 @@ export default function PackageDetailPage() {
   const params = useParams();
   const pkgId = params.id as string;
   const { toast } = useToast();
+  const { t } = useI18n();
   const [pkg, setPkg] = useState<PackageDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -63,7 +65,7 @@ export default function PackageDetailPage() {
         }
         setLoading(false);
       });
-  }, [pkgId, toast]);
+  }, [pkgId, toast, t]);
 
   useEffect(() => {
     loadPackage();
@@ -75,13 +77,13 @@ export default function PackageDetailPage() {
 
     const allowed = ["image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) {
-      toast("Only JPG, PNG, and WebP images are allowed", "error");
+      toast(t("packages.imageTypeError"), "error");
       e.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast("Image must be smaller than 5 MB", "error");
+      toast(t("packages.imageSizeError"), "error");
       e.target.value = "";
       return;
     }
@@ -97,13 +99,13 @@ export default function PackageDetailPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast("Image uploaded successfully", "success");
+        toast(t("packages.imageUploaded"), "success");
         loadPackage();
       } else {
-        toast(data.error || "Upload failed", "error");
+        toast(data.error || t("packages.uploadFailed"), "error");
       }
     } catch {
-      toast("Upload failed", "error");
+      toast(t("packages.uploadFailed"), "error");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -111,76 +113,76 @@ export default function PackageDetailPage() {
   }
 
   async function handleDelete(imageId: string) {
-    if (!confirm("Delete this image?")) return;
+    if (!confirm(t("packages.deleteImageConfirm"))) return;
 
     try {
       const res = await fetch(`/api/packages/${pkgId}/images?imageId=${imageId}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        toast("Image deleted", "success");
+        toast(t("packages.imageDeleted"), "success");
         loadPackage();
       } else {
         const data = await res.json();
-        toast(data.error || "Delete failed", "error");
+        toast(data.error || t("packages.deleteFailed"), "error");
       }
     } catch {
-      toast("Delete failed", "error");
+      toast(t("packages.deleteFailed"), "error");
     }
   }
 
-  if (loading) return <LoadingSpinner text="Loading package..." />;
-  if (!pkg) return <div className="text-center text-slate-500 py-12">Package not found</div>;
+  if (loading) return <LoadingSpinner text={t("packages.loadingDetail")} />;
+  if (!pkg) return <div className="text-center text-slate-500 py-12">{t("packages.notFound")}</div>;
 
   return (
     <div>
       <PageHeader
-        title={`Package ${pkg.packageCode}`}
-        subtitle={`Created by ${pkg.creator.fullName} on ${new Date(pkg.createdAt).toLocaleDateString()}`}
+        title={`${t("packages.package")} ${pkg.packageCode}`}
+        subtitle={`${t("packages.createdBy")} ${pkg.creator.fullName} · ${new Date(pkg.createdAt).toLocaleDateString()}`}
         action={
           <a href="/admin/packages" className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-            &larr; Back to Packages
+            &larr; {t("packages.backToPackages")}
           </a>
         }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <Card title="Package Info">
+        <Card title={t("packages.packageInfo")}>
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-slate-500">Status</dt>
+              <dt className="text-slate-500">{t("common.status")}</dt>
               <dd>
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${statusColors[pkg.status] || "bg-slate-100 text-slate-700"}`}>
-                  {pkg.status.replace(/_/g, " ")}
+                  {t(`packageStatus.${pkg.status}`, pkg.status.replace(/_/g, " "))}
                 </span>
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Barcode</dt>
+              <dt className="text-slate-500">{t("scan.barcode")}</dt>
               <dd className="font-mono text-xs bg-slate-50 px-2 py-1 rounded-lg">{pkg.barcode}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Weight</dt>
+              <dt className="text-slate-500">{t("scan.weight")}</dt>
               <dd className="text-slate-900 font-medium">{pkg.totalWeightKg ? `${pkg.totalWeightKg} kg` : "—"}</dd>
             </div>
             {(pkg.lengthCm || pkg.widthCm || pkg.heightCm) && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Dimensions</dt>
+                <dt className="text-slate-500">{t("packages.dimensions")}</dt>
                 <dd className="text-slate-900">{pkg.lengthCm || "—"} x {pkg.widthCm || "—"} x {pkg.heightCm || "—"} cm</dd>
               </div>
             )}
           </dl>
         </Card>
 
-        <Card title={`Orders (${pkg.orders.length})`} className="lg:col-span-2" noPadding>
+        <Card title={`${t("scan.orders")} (${pkg.orders.length})`} className="lg:col-span-2" noPadding>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Weight</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.order")}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.customer")}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("scan.weight")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -199,10 +201,10 @@ export default function PackageDetailPage() {
       </div>
 
       <Card
-        title={`Images (${pkg.images.length})`}
+        title={`${t("packages.images")} (${pkg.images.length})`}
         action={
           <label className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl cursor-pointer transition-colors shadow-sm ${uploading ? "bg-slate-300 text-slate-500" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
-            {uploading ? "Uploading..." : "Upload Image"}
+            {uploading ? t("packages.uploading") : t("packages.uploadImage")}
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -214,14 +216,14 @@ export default function PackageDetailPage() {
         }
       >
         {pkg.images.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-8">No images uploaded yet</p>
+          <p className="text-sm text-slate-400 text-center py-8">{t("packages.noImages")}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {pkg.images.map((img) => (
               <div key={img.id} className="group relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
                 <img
                   src={img.imageUrl}
-                  alt="Package"
+                  alt={t("packages.packageImageAlt")}
                   className="w-full h-40 object-cover cursor-pointer"
                   onClick={() => setPreviewUrl(img.imageUrl)}
                 />
@@ -229,7 +231,7 @@ export default function PackageDetailPage() {
                   <button
                     onClick={() => handleDelete(img.id)}
                     className="w-7 h-7 bg-red-600 text-white rounded-lg flex items-center justify-center text-xs hover:bg-red-700 shadow-sm"
-                    title="Delete image"
+                    title={t("packages.deleteImage")}
                   >
                     &times;
                   </button>
@@ -249,7 +251,7 @@ export default function PackageDetailPage() {
           onClick={() => setPreviewUrl(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh]">
-            <img src={previewUrl} alt="Preview" className="max-w-full max-h-[85vh] rounded-xl shadow-2xl" />
+            <img src={previewUrl} alt={t("packages.previewAlt")} className="max-w-full max-h-[85vh] rounded-xl shadow-2xl" />
             <button
               onClick={() => setPreviewUrl(null)}
               className="absolute -top-3 -right-3 w-8 h-8 bg-white text-slate-700 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-100 text-lg font-bold"
