@@ -12,6 +12,46 @@ const CONFIG_LABELS: Record<string, { ready: string; missing: string }> = {
   ZALO_RECIPIENT_ID: { ready: "Đã có ID người nhận", missing: "Chưa có — cần ID user Zalo" },
 };
 
+interface NotifConfig {
+  key: string;
+  value: string;
+  configured: boolean;
+  source: "db" | "env" | "none";
+}
+
+const NOTIF_FIELD_META: Record<string, { label: string; desc: string; secret: boolean; placeholder: string }> = {
+  telegram_bot_token: {
+    label: "Telegram Bot Token",
+    desc: "Token từ @BotFather trên Telegram",
+    secret: true,
+    placeholder: "Nhập bot token mới...",
+  },
+  telegram_chat_id: {
+    label: "Telegram Chat ID",
+    desc: "ID chat/group nhận thông báo",
+    secret: false,
+    placeholder: "Ví dụ: -1001234567890",
+  },
+  zalo_send_enabled: {
+    label: "Bật gửi Zalo",
+    desc: "Đặt true để kích hoạt gửi tin nhắn Zalo OA",
+    secret: false,
+    placeholder: "true hoặc false",
+  },
+  zalo_oa_access_token: {
+    label: "Zalo OA Access Token",
+    desc: "Access token từ trang quản trị Zalo OA",
+    secret: true,
+    placeholder: "Nhập access token mới...",
+  },
+  zalo_recipient_id: {
+    label: "Zalo Recipient ID",
+    desc: "ID người nhận tin nhắn thử Zalo",
+    secret: false,
+    placeholder: "Ví dụ: 1234567890",
+  },
+};
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [zaloSending, setZaloSending] = useState(false);
@@ -58,6 +98,25 @@ export default function SettingsPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const [notifConfigs, setNotifConfigs] = useState<NotifConfig[]>([]);
+  const [notifLoading, setNotifLoading] = useState(true);
+  const [notifEdits, setNotifEdits] = useState<Record<string, string>>({});
+  const [notifSaving, setNotifSaving] = useState(false);
+
+  const loadNotifConfigs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/notification-config");
+      if (res.ok) {
+        const data = await res.json();
+        setNotifConfigs(data);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setNotifLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
@@ -71,7 +130,8 @@ export default function SettingsPage() {
         });
         setLoading(false);
       });
-  }, []);
+    loadNotifConfigs();
+  }, [loadNotifConfigs]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -81,6 +141,39 @@ export default function SettingsPage() {
       body: JSON.stringify(settings),
     });
     toast(res.ok ? "Đã lưu cài đặt thành công" : "Không thể lưu cài đặt", res.ok ? "success" : "error");
+  }
+
+  async function saveNotifConfig(key: string) {
+    const value = notifEdits[key];
+    if (value === undefined || value === "") {
+      toast("Vui lòng nhập giá trị", "error");
+      return;
+    }
+    setNotifSaving(true);
+    try {
+      const res = await fetch("/api/admin/notification-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifConfigs(data.configs);
+        setNotifEdits((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+        toast("Đã cập nhật thành công", "success");
+      } else {
+        const data = await res.json();
+        toast(data.error || "Không thể cập nhật", "error");
+      }
+    } catch {
+      toast("Mất kết nối — không gọi được tới server", "error");
+    } finally {
+      setNotifSaving(false);
+    }
   }
 
   if (loading) return <LoadingSpinner text="Đang tải cài đặt..." />;
@@ -93,9 +186,85 @@ export default function SettingsPage() {
     { key: "vietnam_delivery_fee_default", label: "Phí giao hàng Việt Nam (mặc định)", unit: "VND", desc: "Phí giao hàng chặng cuối tại Việt Nam" },
   ] as const;
 
+  const telegramKeys = ["telegram_bot_token", "telegram_chat_id"];
+  const zaloKeys = ["zalo_send_enabled", "zalo_oa_access_token", "zalo_recipient_id"];
+
+  function renderNotifField(cfg: NotifConfig) {
+    const meta = NOTIF_FIELD_META[cfg.key];
+    if (!meta) return null;
+    const isEditing = cfg.key in notifEdits;
+    const sourceLabel = cfg.source === "db" ? "Cơ sở dữ liệu" : cfg.source === "env" ? "Biến môi trường (.env)" : "";
+
+    return (
+      <div key={cfg.key} className="py-3 border-b border-slate-100 last:border-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-slate-700">{meta.label}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{meta.desc}</p>
+            {cfg.configured ? (
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                <span className="text-sm text-green-700 font-mono">
+                  {cfg.value ? `Đã cấu hình ${cfg.value}` : "Đã cấu hình"}
+                </span>
+                {sourceLabel && (
+                  <span className="text-xs text-slate-400">({sourceLabel})</span>
+                )}
+              </div>
+            ) : (
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                <span className="text-sm text-red-600">Chưa cấu hình</span>
+              </div>
+            )}
+          </div>
+          {!isEditing && (
+            <button
+              type="button"
+              onClick={() => setNotifEdits((prev) => ({ ...prev, [cfg.key]: "" }))}
+              className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
+            >
+              {cfg.configured ? "Thay đổi" : "Thêm"}
+            </button>
+          )}
+        </div>
+        {isEditing && (
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type={meta.secret ? "password" : "text"}
+              value={notifEdits[cfg.key] || ""}
+              onChange={(e) => setNotifEdits((prev) => ({ ...prev, [cfg.key]: e.target.value }))}
+              placeholder={meta.placeholder}
+              className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => saveNotifConfig(cfg.key)}
+              disabled={notifSaving}
+              className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              Lưu
+            </button>
+            <button
+              type="button"
+              onClick={() => setNotifEdits((prev) => {
+                const next = { ...prev };
+                delete next[cfg.key];
+                return next;
+              })}
+              className="px-3 py-2 border border-slate-300 text-sm rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Huỷ
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl">
-      <PageHeader title="Cài đặt hệ thống" subtitle="Cấu hình phí, tỷ giá và cước vận chuyển" />
+      <PageHeader title="Cài đặt hệ thống" subtitle="Cấu hình phí, tỷ giá, cước vận chuyển và kênh thông báo" />
 
       <Card title="Cấu hình phí">
         <form onSubmit={save} className="space-y-6">
@@ -120,6 +289,46 @@ export default function SettingsPage() {
             Lưu cài đặt
           </button>
         </form>
+      </Card>
+
+      <Card title="Cấu hình Telegram">
+        {notifLoading ? (
+          <p className="text-sm text-slate-400">Đang tải...</p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-500 mb-3">
+              Cấu hình kênh Telegram để gửi thông báo đơn hàng tự động.
+            </p>
+            {telegramKeys.map((key) => {
+              const cfg = notifConfigs.find((c) => c.key === key);
+              if (!cfg) return null;
+              return renderNotifField(cfg);
+            })}
+            <p className="text-xs text-slate-400 mt-3">
+              Giá trị trong cơ sở dữ liệu được ưu tiên hơn biến môi trường (.env).
+            </p>
+          </>
+        )}
+      </Card>
+
+      <Card title="Cấu hình Zalo OA">
+        {notifLoading ? (
+          <p className="text-sm text-slate-400">Đang tải...</p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-500 mb-3">
+              Cấu hình kênh Zalo OA để gửi thông báo cho khách hàng.
+            </p>
+            {zaloKeys.map((key) => {
+              const cfg = notifConfigs.find((c) => c.key === key);
+              if (!cfg) return null;
+              return renderNotifField(cfg);
+            })}
+            <p className="text-xs text-amber-600 mt-3">
+              Access token Zalo có thời hạn ngắn, cần làm mới thường xuyên. Hệ thống chưa hỗ trợ tự động làm mới.
+            </p>
+          </>
+        )}
       </Card>
 
       <Card title="Gửi thử Zalo OA">
@@ -170,18 +379,6 @@ export default function SettingsPage() {
             )}
           </div>
         )}
-
-        <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-          <p className="text-xs font-medium text-slate-600 mb-2">Cần thêm vào file .env:</p>
-          <ul className="text-xs text-slate-500 space-y-1 font-mono">
-            <li>ZALO_SEND_ENABLED=true</li>
-            <li>ZALO_OA_ACCESS_TOKEN=&lt;lấy từ trang quản trị Zalo OA&gt;</li>
-            <li>ZALO_RECIPIENT_ID=&lt;ID Zalo của người nhận thử&gt;</li>
-          </ul>
-          <p className="text-xs text-amber-600 mt-2">
-            Access token có thời hạn ngắn, cần làm mới thường xuyên. Hệ thống chưa hỗ trợ tự động làm mới.
-          </p>
-        </div>
       </Card>
     </div>
   );
