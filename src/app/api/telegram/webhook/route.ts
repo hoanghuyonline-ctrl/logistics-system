@@ -71,10 +71,17 @@ async function handleHelpCommand(chatId: number): Promise<void> {
 
 async function handleStartCommand(chatId: number): Promise<void> {
   const text =
-    "Xin chào! 👋 Cảm ơn bạn đã liên hệ <b>Bắc Trung Hải Logistics</b>.\n\n" +
-    "Bạn có thể gửi <b>mã đơn hàng</b> để tra cứu trạng thái giao hàng.\n" +
-    "Ví dụ: <code>ORD-20260505-K1L2</code>\n\n" +
-    "Nếu cần hỗ trợ thêm, vui lòng liên hệ bộ phận chăm sóc khách hàng.";
+    "👋 Chào mừng đến với <b>Bắc Trung Hải Logistics</b>\n\n" +
+    "Bot hỗ trợ:\n" +
+    "• Tra cứu trạng thái đơn hàng\n" +
+    "• Hướng dẫn sử dụng nhanh\n\n" +
+    "📦 Gửi trực tiếp mã đơn hàng để tra cứu\n" +
+    "Ví dụ:\n" +
+    "<code>BTH123456</code>\n\n" +
+    "📚 Các lệnh hỗ trợ:\n" +
+    "/help — Hướng dẫn sử dụng\n" +
+    "/status — Hướng dẫn tra cứu đơn hàng\n\n" +
+    "Cảm ơn quý khách đã sử dụng dịch vụ.";
   await replyToChat(chatId, text);
 }
 
