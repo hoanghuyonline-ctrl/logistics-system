@@ -44,6 +44,7 @@
 - **Storage Abstraction Layer** — `StorageProvider` interface with `LocalStorageProvider`, package image upload/delete routed through abstraction, `STORAGE_PROVIDER` env var for future S3/R2/MinIO swap
 - **Vitest Test Infrastructure** — Vitest configured with `@/` path alias, `npm test` / `npm run test:watch` scripts, 5 smoke tests for `LocalStorageProvider` (upload, delete, missing file, nested dirs, URL format)
 - **Telegram Chatbot Basic** (PR #47, #48) — `POST /api/telegram/webhook` for Telegram Bot API webhook; `/start` welcome message (including `/start@bot` and `/start payload` variants); order code lookup with Vietnamese status labels; graceful error handling; public route bypass in proxy.ts; unrecognized bot commands skipped; production webhook verified on `https://thue.eu.cc`
+- **Telegram Help Command** (PR #56) — `/help` and `/help@bactrunghai_bot` return Vietnamese usage instructions, command list, and order code lookup example
 - **Public Landing Page Redesign** — Complete 5-PR series (PRs #22–#26):
   - **Brand Identity Update** (PR #22) — Company name, logo, brand colors (navy #1B2A6B, royal blue #2B4CB8, sky #4A90D9), contact info, SEO metadata
   - **Component Extraction** (PR #23) — Monolithic `page.tsx` (235 lines) refactored into 7 reusable components under `src/components/landing/` with barrel export
