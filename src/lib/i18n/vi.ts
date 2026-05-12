@@ -125,6 +125,16 @@ const vi: Record<string, string> = {
   "landing.footerBankName": "Vietinbank CN Lạng Sơn",
   "landing.footerAccountNumber": "Số tài khoản",
   "landing.footerQuickLinks": "Liên kết",
+  "landing.trackingTitle": "Tra cứu đơn hàng",
+  "landing.trackingDesc": "Nhập mã đơn hàng để kiểm tra trạng thái vận chuyển",
+  "landing.trackingPlaceholder": "Nhập mã đơn hàng, ví dụ: ORD-20260502-C3D4",
+  "landing.trackingButton": "Tra cứu",
+  "landing.trackingNotFound": "Không tìm thấy đơn hàng với mã này. Vui lòng kiểm tra lại mã đơn hàng hoặc liên hệ Bắc Trung Hải Logistics.",
+  "landing.trackingError": "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+  "landing.trackingOrderCode": "Mã đơn hàng:",
+  "landing.trackingStatus": "Trạng thái:",
+  "landing.trackingWeight": "Khối lượng:",
+  "landing.trackingCost": "Tổng tiền:",
 
   // Dashboard
   "dashboard.title": "Bảng điều khiển",

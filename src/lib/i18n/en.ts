@@ -125,6 +125,16 @@ const en: Record<string, string> = {
   "landing.footerBankName": "Vietinbank CN Lạng Sơn",
   "landing.footerAccountNumber": "Account No.",
   "landing.footerQuickLinks": "Quick Links",
+  "landing.trackingTitle": "Track Your Order",
+  "landing.trackingDesc": "Enter your order code to check shipping status",
+  "landing.trackingPlaceholder": "Enter order code, e.g.: ORD-20260502-C3D4",
+  "landing.trackingButton": "Track",
+  "landing.trackingNotFound": "No order found with this code. Please check the order code or contact Bắc Trung Hải Logistics.",
+  "landing.trackingError": "An error occurred. Please try again later.",
+  "landing.trackingOrderCode": "Order Code:",
+  "landing.trackingStatus": "Status:",
+  "landing.trackingWeight": "Weight:",
+  "landing.trackingCost": "Total Cost:",
 
   // Dashboard
   "dashboard.title": "Dashboard",
