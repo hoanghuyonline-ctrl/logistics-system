@@ -48,6 +48,15 @@ function statusLabel(status: string): string {
   return STATUS_LABELS[status] || status;
 }
 
+async function handleStatusCommand(chatId: number): Promise<void> {
+  const text =
+    "Để tra cứu trạng thái đơn hàng, vui lòng gửi mã đơn hàng.\n\n" +
+    "Ví dụ:\n" +
+    "<code>BTH123456</code>\n\n" +
+    "Bot sẽ tự động kiểm tra trạng thái vận chuyển hiện tại.";
+  await replyToChat(chatId, text);
+}
+
 async function handleHelpCommand(chatId: number): Promise<void> {
   const text =
     "📖 <b>Hướng dẫn sử dụng Bot Bắc Trung Hải Logistics</b>\n\n" +
@@ -117,6 +126,8 @@ export async function POST(request: Request) {
       await handleStartCommand(chatId);
     } else if (text === "/help" || text.startsWith("/help@") || text.startsWith("/help ")) {
       await handleHelpCommand(chatId);
+    } else if (text === "/status" || text.startsWith("/status@") || text.startsWith("/status ")) {
+      await handleStatusCommand(chatId);
     } else if (text.startsWith("/")) {
       // Ignore unrecognized bot commands
     } else {
