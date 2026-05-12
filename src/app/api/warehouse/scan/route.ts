@@ -10,53 +10,28 @@ const VALID_TRANSITIONS: Record<string, PackageStatus[]> = {
 };
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
-    return errorResponse("Forbidden", 403);
-  }
-
-  const body = await request.json();
-  const { barcode, action, newStatus } = body as {
-    barcode?: string;
-    action?: "lookup" | "update";
-    newStatus?: PackageStatus;
-  };
-
-  if (!barcode) return errorResponse("Barcode is required");
-
-  const pkg = await prisma.package.findFirst({
-    where: {
-      OR: [
-        { barcode: barcode },
-        { packageCode: barcode },
-      ],
-    },
-    include: {
-      orders: {
-        select: {
-          id: true,
-          orderCode: true,
-          productName: true,
-          quantity: true,
-          status: true,
-          user: { select: { fullName: true } },
-        },
-      },
-      creator: { select: { fullName: true } },
-    },
-  });
-
-  if (!pkg) return errorResponse("Package not found", 404);
-
-  if (action === "update" && newStatus) {
-    const allowed = VALID_TRANSITIONS[pkg.status] || [];
-    if (!allowed.includes(newStatus)) {
-      return errorResponse(`Cannot transition from ${pkg.status} to ${newStatus}`);
+  try {
+    const user = await getCurrentUser();
+    if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
+      return errorResponse("Bạn không có quyền thực hiện thao tác này", 403);
     }
 
-    const updated = await prisma.package.update({
-      where: { id: pkg.id },
-      data: { status: newStatus },
+    const body = await request.json();
+    const { barcode, action, newStatus } = body as {
+      barcode?: string;
+      action?: "lookup" | "update";
+      newStatus?: PackageStatus;
+    };
+
+    if (!barcode) return errorResponse("Mã vạch là bắt buộc");
+
+    const pkg = await prisma.package.findFirst({
+      where: {
+        OR: [
+          { barcode: barcode },
+          { packageCode: barcode },
+        ],
+      },
       include: {
         orders: {
           select: {
@@ -72,29 +47,59 @@ export async function POST(request: Request) {
       },
     });
 
+    if (!pkg) return errorResponse("Không tìm thấy kiện hàng", 404);
+
+    if (action === "update" && newStatus) {
+      const allowed = VALID_TRANSITIONS[pkg.status] || [];
+      if (!allowed.includes(newStatus)) {
+        return errorResponse("Không thể chuyển trạng thái đơn hàng hiện tại");
+      }
+
+      const updated = await prisma.package.update({
+        where: { id: pkg.id },
+        data: { status: newStatus },
+        include: {
+          orders: {
+            select: {
+              id: true,
+              orderCode: true,
+              productName: true,
+              quantity: true,
+              status: true,
+              user: { select: { fullName: true } },
+            },
+          },
+          creator: { select: { fullName: true } },
+        },
+      });
+
+      auditLog({
+        action: "WAREHOUSE_SCAN_UPDATE",
+        actorId: user.id,
+        actorEmail: user.email || "",
+        actorRole: user.role,
+        entityType: "package",
+        entityId: pkg.id,
+        entityCode: pkg.packageCode,
+        details: { fromStatus: pkg.status, toStatus: newStatus },
+      });
+
+      return jsonResponse({ package: updated, transitioned: true });
+    }
+
     auditLog({
-      action: "WAREHOUSE_SCAN_UPDATE",
+      action: "WAREHOUSE_SCAN_LOOKUP",
       actorId: user.id,
       actorEmail: user.email || "",
       actorRole: user.role,
       entityType: "package",
       entityId: pkg.id,
       entityCode: pkg.packageCode,
-      details: { fromStatus: pkg.status, toStatus: newStatus },
     });
 
-    return jsonResponse({ package: updated, transitioned: true });
+    return jsonResponse({ package: pkg, transitioned: false });
+  } catch (error) {
+    console.error("[warehouse/scan] Error:", error);
+    return errorResponse("Đã xảy ra lỗi hệ thống, vui lòng thử lại", 500);
   }
-
-  auditLog({
-    action: "WAREHOUSE_SCAN_LOOKUP",
-    actorId: user.id,
-    actorEmail: user.email || "",
-    actorRole: user.role,
-    entityType: "package",
-    entityId: pkg.id,
-    entityCode: pkg.packageCode,
-  });
-
-  return jsonResponse({ package: pkg, transitioned: false });
 }

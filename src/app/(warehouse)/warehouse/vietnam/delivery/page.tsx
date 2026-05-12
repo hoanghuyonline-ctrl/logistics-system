@@ -6,6 +6,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { useI18n } from "@/lib/i18n";
 import { OrderStatus } from "@prisma/client";
 
 interface Order {
@@ -18,6 +19,7 @@ interface Order {
 }
 
 export default function VietnamDeliveryPage() {
+  const { t } = useI18n();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [outForDelivery, setOutForDelivery] = useState<Order[]>([]);
@@ -44,30 +46,30 @@ export default function VietnamDeliveryPage() {
       body: JSON.stringify({ status, note: `Status updated to ${status.replace(/_/g, " ")}` }),
     });
     if (res.ok) {
-      toast("Order updated successfully!", "success");
+      toast(t("warehouse.updateSuccess"), "success");
       loadOrders();
     } else {
-      toast("Failed to update order", "error");
+      toast(t("warehouse.updateFailed"), "error");
     }
   }
 
-  if (loading) return <LoadingSpinner text="Loading delivery queue..." />;
+  if (loading) return <LoadingSpinner text={t("warehouse.loadingDelivery")} />;
 
   return (
     <div>
-      <PageHeader title="Delivery Management" subtitle="Dispatch and complete deliveries" />
+      <PageHeader title={t("warehouse.deliveryTitle")} subtitle={t("warehouse.deliverySubtitle")} />
 
       <div className="space-y-6">
-        <Card title={`Ready for Dispatch (${orders.length})`} noPadding>
+        <Card title={`${t("warehouse.readyForDispatch")} (${orders.length})`} noPadding>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colOrder")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colProduct")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colCustomer")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colTotal")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colAction")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -80,7 +82,7 @@ export default function VietnamDeliveryPage() {
                     <td className="px-6 py-4">
                       <button onClick={() => updateDelivery(o.id, "OUT_FOR_DELIVERY")}
                         className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm">
-                        Dispatch
+                        {t("warehouse.dispatchBtn")}
                       </button>
                     </td>
                   </tr>
@@ -89,7 +91,7 @@ export default function VietnamDeliveryPage() {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
                       <span className="text-2xl">📦</span>
-                      <p className="text-sm text-slate-500 mt-2">No orders ready for dispatch</p>
+                      <p className="text-sm text-slate-500 mt-2">{t("warehouse.noDispatch")}</p>
                     </td>
                   </tr>
                 )}
@@ -98,16 +100,16 @@ export default function VietnamDeliveryPage() {
           </div>
         </Card>
 
-        <Card title={`Out for Delivery (${outForDelivery.length})`} noPadding>
+        <Card title={`${t("warehouse.outForDelivery")} (${outForDelivery.length})`} noPadding>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colOrder")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colProduct")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colCustomer")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colStatus")}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("warehouse.colAction")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -120,7 +122,7 @@ export default function VietnamDeliveryPage() {
                     <td className="px-6 py-4">
                       <button onClick={() => updateDelivery(o.id, "COMPLETED")}
                         className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
-                        Complete
+                        {t("warehouse.completeBtn")}
                       </button>
                     </td>
                   </tr>
@@ -129,7 +131,7 @@ export default function VietnamDeliveryPage() {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
                       <span className="text-2xl">🚚</span>
-                      <p className="text-sm text-slate-500 mt-2">No orders currently out for delivery</p>
+                      <p className="text-sm text-slate-500 mt-2">{t("warehouse.noDelivery")}</p>
                     </td>
                   </tr>
                 )}
