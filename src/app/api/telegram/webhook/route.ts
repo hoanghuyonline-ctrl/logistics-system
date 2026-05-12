@@ -92,8 +92,10 @@ export async function POST(request: Request) {
     const chatId = message.chat.id;
     const text = message.text.trim();
 
-    if (text === "/start") {
+    if (text === "/start" || text.startsWith("/start@") || text.startsWith("/start ")) {
       await handleStartCommand(chatId);
+    } else if (text.startsWith("/")) {
+      // Ignore unrecognized bot commands
     } else {
       await handleOrderLookup(chatId, text);
     }
