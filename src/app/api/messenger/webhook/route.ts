@@ -2,6 +2,32 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
+const WELCOME_MESSAGE =
+  "Chào mừng đến với Bắc Trung Hải Logistics.\n\n" +
+  "Vui lòng gửi mã đơn hàng để tra cứu trạng thái vận chuyển.\n\n" +
+  "Ví dụ:\nORD-20260504-I9J0";
+
+async function sendMessage(recipientId: string, text: string): Promise<void> {
+  const token = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
+  if (!token) {
+    console.warn("[messenger/webhook] MESSENGER_PAGE_ACCESS_TOKEN not configured — skipping reply");
+    return;
+  }
+
+  try {
+    await fetch(`https://graph.facebook.com/v21.0/me/messages?access_token=${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text },
+      }),
+    });
+  } catch (err) {
+    console.error("[messenger/webhook] Failed to send message:", err);
+  }
+}
+
 /**
  * GET — Meta webhook verification challenge.
  * Meta sends hub.mode, hub.verify_token, hub.challenge as query params.
@@ -69,6 +95,7 @@ export async function POST(request: Request) {
             console.log(
               `[messenger/webhook] Text message from ${senderId} at ${timestamp}: "${event.message.text}"`
             );
+            await sendMessage(senderId, WELCOME_MESSAGE);
           } else if (event.postback) {
             console.log(
               `[messenger/webhook] Postback from ${senderId} at ${timestamp}: "${event.postback.payload}"`
