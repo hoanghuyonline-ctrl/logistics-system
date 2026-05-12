@@ -87,7 +87,8 @@ async function handleOrderLookup(chatId: number, text: string): Promise<void> {
       orderCode: true,
       productName: true,
       status: true,
-      createdAt: true,
+      weightKg: true,
+      totalCostVND: true,
     },
   });
 
@@ -101,14 +102,23 @@ async function handleOrderLookup(chatId: number, text: string): Promise<void> {
     return;
   }
 
-  const reply =
-    `📦 <b>Thông tin đơn hàng</b>\n\n` +
-    `🔖 Mã đơn: <code>${order.orderCode}</code>\n` +
-    `📋 Sản phẩm: ${order.productName}\n` +
-    `📍 Trạng thái: <b>${statusLabel(order.status)}</b>\n` +
-    `📅 Ngày tạo: ${order.createdAt.toLocaleDateString("vi-VN")}\n\n` +
-    `Nếu cần hỗ trợ, vui lòng liên hệ bộ phận chăm sóc khách hàng.`;
-  await replyToChat(chatId, reply);
+  const lines: string[] = [
+    `📦 Đơn hàng: <code>${order.orderCode}</code>`,
+    `📌 Trạng thái: <b>${statusLabel(order.status)}</b>`,
+  ];
+
+  if (order.weightKg !== null && order.weightKg !== undefined) {
+    lines.push(`⚖️ Khối lượng: ${Number(order.weightKg)}kg`);
+  }
+
+  const cost = Number(order.totalCostVND);
+  if (cost > 0) {
+    lines.push(`💰 Tổng tiền: ${cost.toLocaleString("vi-VN")}đ`);
+  }
+
+  lines.push("", "Cảm ơn quý khách đã sử dụng Bắc Trung Hải Logistics.");
+
+  await replyToChat(chatId, lines.join("\n"));
 }
 
 export async function POST(request: Request) {
