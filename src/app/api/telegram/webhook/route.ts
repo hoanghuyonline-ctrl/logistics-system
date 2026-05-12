@@ -137,8 +137,15 @@ export async function POST(request: Request) {
         "/status — Hướng dẫn tra cứu trạng thái đơn hàng\n\n" +
         "Hoặc gửi trực tiếp mã đơn hàng để tra cứu.";
       await replyToChat(chatId, reply);
-    } else {
+    } else if (/\d/.test(text) && !/\s/.test(text)) {
       await handleOrderLookup(chatId, text);
+    } else {
+      const reply =
+        "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
+        "Ví dụ:\n" +
+        "<code>BTH123456</code>\n\n" +
+        "Bạn cũng có thể dùng /help để xem hướng dẫn.";
+      await replyToChat(chatId, reply);
     }
 
     return Response.json({ ok: true });
