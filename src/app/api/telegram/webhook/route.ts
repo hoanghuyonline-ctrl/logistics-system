@@ -129,7 +129,14 @@ export async function POST(request: Request) {
     } else if (text === "/status" || text.startsWith("/status@") || text.startsWith("/status ")) {
       await handleStatusCommand(chatId);
     } else if (text.startsWith("/")) {
-      // Ignore unrecognized bot commands
+      const reply =
+        "Bot chưa hỗ trợ lệnh này.\n\n" +
+        "Bạn có thể dùng:\n" +
+        "/start — Bắt đầu sử dụng bot\n" +
+        "/help — Xem hướng dẫn\n" +
+        "/status — Hướng dẫn tra cứu trạng thái đơn hàng\n\n" +
+        "Hoặc gửi trực tiếp mã đơn hàng để tra cứu.";
+      await replyToChat(chatId, reply);
     } else {
       await handleOrderLookup(chatId, text);
     }
