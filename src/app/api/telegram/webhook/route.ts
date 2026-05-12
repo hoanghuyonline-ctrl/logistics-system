@@ -94,10 +94,10 @@ async function handleOrderLookup(chatId: number, text: string): Promise<void> {
 
   if (!order) {
     const reply =
-      "Không tìm thấy đơn hàng với mã này.\n" +
-      "Vui lòng kiểm tra lại mã đơn hàng của bạn.\n\n" +
-      "Định dạng mã đơn: <code>ORD-XXXXXXXX-XXXX</code>\n" +
-      "Ví dụ: <code>ORD-20260505-K1L2</code>";
+      "Không tìm thấy đơn hàng với mã này.\n\n" +
+      "Vui lòng kiểm tra lại mã đơn hàng, ví dụ:\n" +
+      "<code>BTH123456</code>\n\n" +
+      "Nếu mã đúng nhưng vẫn không tra được, vui lòng liên hệ Bắc Trung Hải Logistics để được hỗ trợ.";
     await replyToChat(chatId, reply);
     return;
   }
