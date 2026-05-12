@@ -52,6 +52,7 @@
 - **Telegram Order Not Found Guidance** (PR #66) — Valid-looking but unmatched order codes now return clearer Vietnamese guidance with order code example and support instruction
 - **Telegram Start Menu UX** (PR #68) — `/start` now shows a clearer Vietnamese quick command menu with order lookup example and available commands
 - **Telegram Command Tests** (PR #70) — Minimal tests added for Telegram command parsing/handling covering `/start`, `/help`, `/status`, bot username suffix variants, unknown slash commands, and invalid normal text
+- **Telegram Order Lookup Reply Tests** (PR #72) — Minimal tests added for successful Telegram order lookup formatting, not-found guidance, and graceful handling of missing optional order fields
 - **Public Landing Page Redesign** — Complete 5-PR series (PRs #22–#26):
   - **Brand Identity Update** (PR #22) — Company name, logo, brand colors (navy #1B2A6B, royal blue #2B4CB8, sky #4A90D9), contact info, SEO metadata
   - **Component Extraction** (PR #23) — Monolithic `page.tsx` (235 lines) refactored into 7 reusable components under `src/components/landing/` with barrel export
