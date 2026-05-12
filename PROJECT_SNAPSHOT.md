@@ -48,6 +48,7 @@
 - **Telegram Status Command** (PR #58) — `/status` and `/status@bactrunghai_bot` return Vietnamese guidance for checking order status by sending an order code
 - **Telegram Unknown Command Guidance** (PR #60) — Unknown Telegram slash commands now return Vietnamese guidance with supported commands (`/start`, `/help`, `/status`) and order lookup instructions
 - **Telegram Invalid Text Guidance** (PR #62) — Normal text that is not a valid order code now returns Vietnamese guidance with correct order code example and `/help` suggestion
+- **Telegram Order Lookup Formatting** (PR #64) — Successful Telegram order lookup replies now use cleaner Vietnamese mobile-friendly formatting with order code, status, weight/cost when available, and Bắc Trung Hải Logistics sign-off
 - **Public Landing Page Redesign** — Complete 5-PR series (PRs #22–#26):
   - **Brand Identity Update** (PR #22) — Company name, logo, brand colors (navy #1B2A6B, royal blue #2B4CB8, sky #4A90D9), contact info, SEO metadata
   - **Component Extraction** (PR #23) — Monolithic `page.tsx` (235 lines) refactored into 7 reusable components under `src/components/landing/` with barrel export
