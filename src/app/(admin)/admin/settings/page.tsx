@@ -69,6 +69,36 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [zaloSending, setZaloSending] = useState(false);
   const [lastTestTime, setLastTestTime] = useState<string | null>(null);
+
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    timestamp?: string;
+  } | null>(null);
+
+  const sendTestEmail = useCallback(async () => {
+    setEmailSending(true);
+    setEmailResult(null);
+    try {
+      const res = await fetch("/api/admin/test-email", { method: "POST" });
+      const data = await res.json();
+      if (res.status === 403) {
+        toast("Chỉ admin mới có quyền gửi thử", "error");
+        return;
+      }
+      setEmailResult(data);
+      toast(
+        data.success ? data.message : data.error,
+        data.success ? "success" : "error",
+      );
+    } catch {
+      toast("Mất kết nối — không gọi được tới server", "error");
+    } finally {
+      setEmailSending(false);
+    }
+  }, [toast]);
   const [zaloResult, setZaloResult] = useState<{
     success: boolean;
     message?: string;
@@ -373,6 +403,32 @@ export default function SettingsPage() {
             <p className="text-xs text-slate-400 mt-3">
               Cấu hình SMTP qua biến môi trường (.env) trên máy chủ.
             </p>
+
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <p className="text-sm text-slate-500 mb-3">
+                Gửi email thử nghiệm đến địa chỉ email của bạn để kiểm tra kết nối SMTP.
+              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <button
+                  type="button"
+                  onClick={sendTestEmail}
+                  disabled={emailSending}
+                  className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {emailSending ? "Đang gửi…" : "Gửi thử Email"}
+                </button>
+              </div>
+              {emailResult && (
+                <div className={`mt-3 p-4 rounded-xl text-sm ${emailResult.success ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
+                  <p className={`font-semibold ${emailResult.success ? "text-green-700" : "text-red-700"}`}>
+                    {emailResult.success ? "Gửi thành công" : "Gửi không thành công"}
+                  </p>
+                  <p className={`mt-1 ${emailResult.success ? "text-green-600" : "text-red-600"}`}>
+                    {emailResult.success ? emailResult.message : emailResult.error}
+                  </p>
+                </div>
+              )}
+            </div>
           </>
         )}
       </Card>
