@@ -8,6 +8,7 @@ import {
   InvalidTransitionError,
   ShipmentStatus,
   SHIPMENT_TRANSITIONS,
+  type OrderStatus,
 } from "@/lib/shipment-status";
 import { ORDER_STATUS_TRANSITIONS } from "@/types";
 
@@ -47,7 +48,7 @@ describe("OrderStatus ↔ ShipmentStatus mapping", () => {
   it("maps all OrderStatus values to ShipmentStatus", () => {
     const orderStatuses = Object.keys(ORDER_STATUS_TRANSITIONS);
     for (const os of orderStatuses) {
-      const ss = toShipmentStatus(os);
+      const ss = toShipmentStatus(os as OrderStatus);
       expect(ss).toBeDefined();
     }
   });
