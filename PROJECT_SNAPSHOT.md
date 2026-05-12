@@ -66,6 +66,15 @@
 - **Facebook Messenger Webhook Foundation** (PR #81) — Public `/api/messenger/webhook` route with Meta verification challenge support (`hub.mode`/`hub.verify_token`/`hub.challenge`), incoming event logging (text messages, postbacks, non-text), public route registration in `proxy.ts`, env vars `MESSENGER_VERIFY_TOKEN` / `MESSENGER_PAGE_ACCESS_TOKEN`
 - **Messenger Basic Welcome Reply** (PR #84) — Incoming Messenger text messages receive a Vietnamese welcome/order lookup guidance reply, with graceful skip when `MESSENGER_PAGE_ACCESS_TOKEN` is missing
 - **Messenger Order Lookup MVP** (PR #85) — Messenger detects valid-looking order codes, looks up safe order fields, and replies in Vietnamese with status, optional weight/cost, or not-found guidance
+- **Messenger Send Diagnostic Logging** (PR #88) — Improved outbound send logging with Graph API response status, error body, and truncated token hint for production debugging
+- **Messenger Production Deployment** — Full Messenger MVP verified on production:
+  - Meta webhook verification PASS
+  - Facebook Page connected and subscribed
+  - Messenger auto-reply working (Vietnamese welcome message)
+  - Order lookup production-tested (valid code returns status, invalid code returns guidance)
+  - Vietnamese formatting verified on mobile Messenger
+  - PM2 production deploy stable
+  - Existing Telegram bot and web tracking unaffected
 
 ## Stack
 
