@@ -480,6 +480,53 @@ const zh: Record<string, string> = {
   "packageStatus.AT_VIETNAM_WH": "在越南仓库",
   "packageStatus.DELIVERED": "已送达",
 
+  // Warehouse receive
+  "warehouse.receiveTitle": "收货",
+  "warehouse.receiveSubtitleCN": "确认货物到达中国仓库",
+  "warehouse.receiveSubtitleVN": "确认货物到达越南仓库",
+  "warehouse.confirmReceipt": "确认收货",
+  "warehouse.selectOrder": "选择订单",
+  "warehouse.selectOrderPlaceholder": "— 选择订单 —",
+  "warehouse.weightKg": "重量 (kg)",
+  "warehouse.weightPlaceholder": "可选 — 可稍后添加",
+  "warehouse.note": "备注",
+  "warehouse.notePlaceholder": "收货备注...",
+  "warehouse.confirmReceiptBtn": "确认收货",
+  "warehouse.pendingOrders": "待处理订单",
+  "warehouse.incomingOrders": "即将到达订单",
+  "warehouse.receiveSuccessCN": "已在中国仓库收货！",
+  "warehouse.receiveSuccessVN": "已在越南仓库收货！",
+  "warehouse.receiveFailed": "收货失败",
+  "warehouse.loadingOrders": "加载订单中...",
+  "warehouse.colOrder": "订单",
+  "warehouse.colProduct": "产品",
+  "warehouse.colCustomer": "客户",
+  "warehouse.colStatus": "状态",
+  "warehouse.colTotal": "总额",
+  "warehouse.colAction": "操作",
+
+  // Warehouse delivery
+  "warehouse.deliveryTitle": "配送管理",
+  "warehouse.deliverySubtitle": "发货和完成配送",
+  "warehouse.readyForDispatch": "待发货",
+  "warehouse.outForDelivery": "配送中",
+  "warehouse.dispatchBtn": "发货",
+  "warehouse.completeBtn": "完成",
+  "warehouse.updateSuccess": "订单更新成功！",
+  "warehouse.updateFailed": "订单更新失败",
+  "warehouse.noDispatch": "没有待发货订单",
+  "warehouse.noDelivery": "没有配送中的订单",
+  "warehouse.loadingDelivery": "加载配送列表...",
+
+  // Warehouse API errors
+  "warehouse.errorForbidden": "您没有权限执行此操作",
+  "warehouse.errorOrderIdRequired": "订单ID为必填项",
+  "warehouse.errorOrderNotFound": "未找到订单",
+  "warehouse.errorBarcodeRequired": "条码为必填项",
+  "warehouse.errorPackageNotFound": "未找到包裹",
+  "warehouse.errorInvalidTransition": "无法从当前状态更新订单",
+  "warehouse.errorServerError": "系统错误，请重试",
+
   // Language
   "language.label": "语言",
 };

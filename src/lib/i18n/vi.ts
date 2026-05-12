@@ -480,6 +480,53 @@ const vi: Record<string, string> = {
   "packageStatus.AT_VIETNAM_WH": "Đang ở kho Việt Nam",
   "packageStatus.DELIVERED": "Đã giao",
 
+  // Warehouse receive
+  "warehouse.receiveTitle": "Nhận hàng",
+  "warehouse.receiveSubtitleCN": "Xác nhận hàng đến kho Trung Quốc",
+  "warehouse.receiveSubtitleVN": "Xác nhận hàng đến kho Việt Nam",
+  "warehouse.confirmReceipt": "Xác nhận nhận hàng",
+  "warehouse.selectOrder": "Chọn đơn hàng",
+  "warehouse.selectOrderPlaceholder": "— Chọn đơn hàng —",
+  "warehouse.weightKg": "Trọng lượng (kg)",
+  "warehouse.weightPlaceholder": "Tùy chọn — có thể thêm sau",
+  "warehouse.note": "Ghi chú",
+  "warehouse.notePlaceholder": "Ghi chú về hàng nhận...",
+  "warehouse.confirmReceiptBtn": "Xác nhận nhận hàng",
+  "warehouse.pendingOrders": "Đơn hàng chờ xử lý",
+  "warehouse.incomingOrders": "Đơn hàng đang đến",
+  "warehouse.receiveSuccessCN": "Đã nhận hàng tại kho Trung Quốc!",
+  "warehouse.receiveSuccessVN": "Đã nhận hàng tại kho Việt Nam!",
+  "warehouse.receiveFailed": "Không thể nhận hàng",
+  "warehouse.loadingOrders": "Đang tải đơn hàng...",
+  "warehouse.colOrder": "Đơn hàng",
+  "warehouse.colProduct": "Sản phẩm",
+  "warehouse.colCustomer": "Khách hàng",
+  "warehouse.colStatus": "Trạng thái",
+  "warehouse.colTotal": "Tổng tiền",
+  "warehouse.colAction": "Thao tác",
+
+  // Warehouse delivery
+  "warehouse.deliveryTitle": "Quản lý giao hàng",
+  "warehouse.deliverySubtitle": "Xuất kho và hoàn tất giao hàng",
+  "warehouse.readyForDispatch": "Sẵn sàng xuất kho",
+  "warehouse.outForDelivery": "Đang giao hàng",
+  "warehouse.dispatchBtn": "Xuất kho",
+  "warehouse.completeBtn": "Hoàn tất",
+  "warehouse.updateSuccess": "Cập nhật đơn hàng thành công!",
+  "warehouse.updateFailed": "Không thể cập nhật đơn hàng",
+  "warehouse.noDispatch": "Không có đơn hàng sẵn sàng xuất kho",
+  "warehouse.noDelivery": "Không có đơn hàng đang giao",
+  "warehouse.loadingDelivery": "Đang tải danh sách giao hàng...",
+
+  // Warehouse API errors
+  "warehouse.errorForbidden": "Bạn không có quyền thực hiện thao tác này",
+  "warehouse.errorOrderIdRequired": "Mã đơn hàng là bắt buộc",
+  "warehouse.errorOrderNotFound": "Không tìm thấy đơn hàng",
+  "warehouse.errorBarcodeRequired": "Mã vạch là bắt buộc",
+  "warehouse.errorPackageNotFound": "Không tìm thấy kiện hàng",
+  "warehouse.errorInvalidTransition": "Không thể chuyển trạng thái đơn hàng hiện tại",
+  "warehouse.errorServerError": "Đã xảy ra lỗi hệ thống, vui lòng thử lại",
+
   // Language
   "language.label": "Ngôn ngữ",
 };

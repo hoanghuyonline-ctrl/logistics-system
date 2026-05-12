@@ -5,53 +5,56 @@ import { toShipmentStatus, isValidTransition, ShipmentStatus } from "@/lib/shipm
 import { auditLog } from "@/lib/audit";
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_VN"])) {
-    return errorResponse("Forbidden", 403);
-  }
+  try {
+    const user = await getCurrentUser();
+    if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_VN"])) {
+      return errorResponse("Bạn không có quyền thực hiện thao tác này", 403);
+    }
 
-  const body = await request.json();
-  const { orderId, note } = body;
+    const body = await request.json();
+    const { orderId, note } = body;
 
-  if (!orderId) return errorResponse("Order ID is required");
+    if (!orderId) return errorResponse("Mã đơn hàng là bắt buộc");
 
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) return errorResponse("Order not found", 404);
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) return errorResponse("Không tìm thấy đơn hàng", 404);
 
-  const currentShipment = toShipmentStatus(order.status);
-  if (!isValidTransition(currentShipment, ShipmentStatus.IN_VN_WAREHOUSE)) {
-    return errorResponse(
-      `Cannot receive order: current status ${order.status} does not allow transition to IN_VN_WAREHOUSE`,
-    );
-  }
+    const currentShipment = toShipmentStatus(order.status);
+    if (!isValidTransition(currentShipment, ShipmentStatus.IN_VN_WAREHOUSE)) {
+      return errorResponse("Không thể chuyển trạng thái đơn hàng hiện tại");
+    }
 
-  const updated = await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: "ARRIVED_VIETNAM_WH",
-      statusLogs: {
-        create: {
-          fromStatus: order.status,
-          toStatus: "ARRIVED_VIETNAM_WH",
-          changedBy: user.id,
-          note: note || "Đã nhận hàng tại kho Việt Nam",
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: "ARRIVED_VIETNAM_WH",
+        statusLogs: {
+          create: {
+            fromStatus: order.status,
+            toStatus: "ARRIVED_VIETNAM_WH",
+            changedBy: user.id,
+            note: note || "Đã nhận hàng tại kho Việt Nam",
+          },
         },
       },
-    },
-  });
+    });
 
-  auditLog({
-    action: "WAREHOUSE_RECEIVE_VN",
-    actorId: user.id,
-    actorEmail: user.email || "",
-    actorRole: user.role,
-    entityType: "order",
-    entityId: order.id,
-    entityCode: order.orderCode,
-    details: { fromStatus: order.status, toStatus: "ARRIVED_VIETNAM_WH" },
-  });
+    auditLog({
+      action: "WAREHOUSE_RECEIVE_VN",
+      actorId: user.id,
+      actorEmail: user.email || "",
+      actorRole: user.role,
+      entityType: "order",
+      entityId: order.id,
+      entityCode: order.orderCode,
+      details: { fromStatus: order.status, toStatus: "ARRIVED_VIETNAM_WH" },
+    });
 
-  await notifyOrderStatusChange(order.userId, order.id, order.orderCode, "ARRIVED_VIETNAM_WH");
+    await notifyOrderStatusChange(order.userId, order.id, order.orderCode, "ARRIVED_VIETNAM_WH");
 
-  return jsonResponse(updated);
+    return jsonResponse(updated);
+  } catch (error) {
+    console.error("[warehouse/vietnam/receive] Error:", error);
+    return errorResponse("Đã xảy ra lỗi hệ thống, vui lòng thử lại", 500);
+  }
 }

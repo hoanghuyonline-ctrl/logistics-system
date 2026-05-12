@@ -480,6 +480,53 @@ const en: Record<string, string> = {
   "packageStatus.AT_VIETNAM_WH": "At Vietnam Warehouse",
   "packageStatus.DELIVERED": "Delivered",
 
+  // Warehouse receive
+  "warehouse.receiveTitle": "Receive Goods",
+  "warehouse.receiveSubtitleCN": "Confirm goods arrival at China warehouse",
+  "warehouse.receiveSubtitleVN": "Confirm goods arrival at Vietnam warehouse",
+  "warehouse.confirmReceipt": "Confirm Goods Receipt",
+  "warehouse.selectOrder": "Select Order",
+  "warehouse.selectOrderPlaceholder": "— Select an order —",
+  "warehouse.weightKg": "Weight (kg)",
+  "warehouse.weightPlaceholder": "Optional — can be added later",
+  "warehouse.note": "Note",
+  "warehouse.notePlaceholder": "Any notes about the received goods...",
+  "warehouse.confirmReceiptBtn": "Confirm Receipt",
+  "warehouse.pendingOrders": "Pending Orders",
+  "warehouse.incomingOrders": "Incoming Orders",
+  "warehouse.receiveSuccessCN": "Order received at China warehouse!",
+  "warehouse.receiveSuccessVN": "Order received at Vietnam warehouse!",
+  "warehouse.receiveFailed": "Failed to receive order",
+  "warehouse.loadingOrders": "Loading orders...",
+  "warehouse.colOrder": "Order",
+  "warehouse.colProduct": "Product",
+  "warehouse.colCustomer": "Customer",
+  "warehouse.colStatus": "Status",
+  "warehouse.colTotal": "Total",
+  "warehouse.colAction": "Action",
+
+  // Warehouse delivery
+  "warehouse.deliveryTitle": "Delivery Management",
+  "warehouse.deliverySubtitle": "Dispatch and complete deliveries",
+  "warehouse.readyForDispatch": "Ready for Dispatch",
+  "warehouse.outForDelivery": "Out for Delivery",
+  "warehouse.dispatchBtn": "Dispatch",
+  "warehouse.completeBtn": "Complete",
+  "warehouse.updateSuccess": "Order updated successfully!",
+  "warehouse.updateFailed": "Failed to update order",
+  "warehouse.noDispatch": "No orders ready for dispatch",
+  "warehouse.noDelivery": "No orders currently out for delivery",
+  "warehouse.loadingDelivery": "Loading delivery queue...",
+
+  // Warehouse API errors
+  "warehouse.errorForbidden": "You do not have permission to perform this action",
+  "warehouse.errorOrderIdRequired": "Order ID is required",
+  "warehouse.errorOrderNotFound": "Order not found",
+  "warehouse.errorBarcodeRequired": "Barcode is required",
+  "warehouse.errorPackageNotFound": "Package not found",
+  "warehouse.errorInvalidTransition": "Cannot update order from current status",
+  "warehouse.errorServerError": "A system error occurred, please try again",
+
   // Language
   "language.label": "Language",
 };
