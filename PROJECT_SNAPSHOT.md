@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-12
 **Branch:** `main`
-**Latest stable commit:** `7f014c5`
+**Latest stable commit:** `df6316b`
 
 ---
 
@@ -37,6 +37,7 @@
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
 - **Production Deployment Foundation** — Dockerfile, Docker Compose with PostgreSQL/nginx, healthcheck endpoint, uploads volume persistence, .env.production.example, DEPLOYMENT.md
+- **PM2 Production Setup** (PR #50) — `ecosystem.config.js` for PM2 process management on Windows server; production `next start` instead of `npm run dev`; auto-restart on crash/reboot via `pm2-windows-startup`; structured logging to `logs/`; DEPLOYMENT_PM2.md with full command reference
 - **Accountant Dashboard** — Dedicated `(accountant)` route group with role guard, financial KPIs (revenue, profit, debt, deposits, pending payments), recent transactions table, order status summary, `/api/accountant/dashboard` API, VI/EN/ZH translations
 - **Accountant Profit API Access** — ACCOUNTANT role added to `/api/analytics/profit` role check, unlocking finance page for accountants
 - **Order Detail i18n** — Customer and admin order detail pages fully translated with `useI18n()`, 50 `orderDetail.*` keys added to VI/EN/ZH
@@ -65,7 +66,7 @@
 | Auth | NextAuth.js |
 | Barcode | bwip-js |
 | Testing | Vitest |
-| Infra | Docker Compose |
+| Infra | Docker Compose, PM2 |
 
 ## Important API Routes
 
