@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-09
+**Date:** 2026-05-12
 **Branch:** `main`
-**Latest stable commit:** `49cd789`
+**Latest stable commit:** `35112ec`
 
 ---
 
@@ -42,6 +42,7 @@
 - **Order Detail i18n** — Customer and admin order detail pages fully translated with `useI18n()`, 50 `orderDetail.*` keys added to VI/EN/ZH
 - **Storage Abstraction Layer** — `StorageProvider` interface with `LocalStorageProvider`, package image upload/delete routed through abstraction, `STORAGE_PROVIDER` env var for future S3/R2/MinIO swap
 - **Vitest Test Infrastructure** — Vitest configured with `@/` path alias, `npm test` / `npm run test:watch` scripts, 5 smoke tests for `LocalStorageProvider` (upload, delete, missing file, nested dirs, URL format)
+- **Telegram Chatbot Basic** (PR #47) — `POST /api/telegram/webhook` for Telegram Bot API webhook; `/start` welcome message; order code lookup with Vietnamese status labels; graceful error handling; public route bypass in proxy.ts
 - **Public Landing Page Redesign** — Complete 5-PR series (PRs #22–#26):
   - **Brand Identity Update** (PR #22) — Company name, logo, brand colors (navy #1B2A6B, royal blue #2B4CB8, sky #4A90D9), contact info, SEO metadata
   - **Component Extraction** (PR #23) — Monolithic `page.tsx` (235 lines) refactored into 7 reusable components under `src/components/landing/` with barrel export
@@ -88,6 +89,7 @@
 | `/api/admin/audit-log` | GET | Paginated audit log (OrderStatusLog) |
 | `/api/analytics` | GET | Dashboard analytics |
 | `/api/accountant/dashboard` | GET | Accountant financial KPIs and recent transactions |
+| `/api/telegram/webhook` | POST | Telegram chatbot webhook (public, no auth) |
 
 ## Important Prisma Models
 
@@ -108,7 +110,7 @@
 
 - Public landing page visual testing across all 3 locales (VI/EN/ZH)
 - Dashboard redesign (not started — landing page complete)
-- Production Telegram bot/chat configuration
+- Production Telegram bot/chat configuration (webhook registered, bot token set)
 - Production SMTP configuration
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
 - Cloud storage provider (S3/R2/MinIO) — abstraction layer ready, needs provider implementation

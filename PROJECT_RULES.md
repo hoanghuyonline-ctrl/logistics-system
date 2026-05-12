@@ -31,6 +31,10 @@
 - Update PROJECT_SNAPSHOT.md after major features
 - Push GitHub after stable checkpoints
 
+## Webhook / Public Routes
+- `/api/telegram/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
+- Any new external webhook must also be added to `publicPaths` in `src/proxy.ts`
+
 ## Current Priorities
 1. Vietnamese default locale
 2. Scan workflow
