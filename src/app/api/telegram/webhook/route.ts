@@ -50,8 +50,10 @@ function statusLabel(status: string): string {
 
 async function handleStartCommand(chatId: number): Promise<void> {
   const text =
-    "Chào mừng bạn đến với Bắc Trung Hải Logistics.\n" +
-    "Bạn có thể gửi mã đơn hàng để tra cứu trạng thái.";
+    "Xin chào! 👋 Cảm ơn bạn đã liên hệ <b>Bắc Trung Hải Logistics</b>.\n\n" +
+    "Bạn có thể gửi <b>mã đơn hàng</b> để tra cứu trạng thái giao hàng.\n" +
+    "Ví dụ: <code>ORD-20260505-K1L2</code>\n\n" +
+    "Nếu cần hỗ trợ thêm, vui lòng liên hệ bộ phận chăm sóc khách hàng.";
   await replyToChat(chatId, text);
 }
 
@@ -69,15 +71,22 @@ async function handleOrderLookup(chatId: number, text: string): Promise<void> {
   });
 
   if (!order) {
-    await replyToChat(chatId, "Không tìm thấy đơn hàng");
+    const reply =
+      "Không tìm thấy đơn hàng với mã này.\n" +
+      "Vui lòng kiểm tra lại mã đơn hàng của bạn.\n\n" +
+      "Định dạng mã đơn: <code>ORD-XXXXXXXX-XXXX</code>\n" +
+      "Ví dụ: <code>ORD-20260505-K1L2</code>";
+    await replyToChat(chatId, reply);
     return;
   }
 
   const reply =
-    `<b>Đơn hàng: ${order.orderCode}</b>\n` +
-    `Sản phẩm: ${order.productName}\n` +
-    `Trạng thái: ${statusLabel(order.status)}\n` +
-    `Ngày tạo: ${order.createdAt.toLocaleDateString("vi-VN")}`;
+    `📦 <b>Thông tin đơn hàng</b>\n\n` +
+    `🔖 Mã đơn: <code>${order.orderCode}</code>\n` +
+    `📋 Sản phẩm: ${order.productName}\n` +
+    `📍 Trạng thái: <b>${statusLabel(order.status)}</b>\n` +
+    `📅 Ngày tạo: ${order.createdAt.toLocaleDateString("vi-VN")}\n\n` +
+    `Nếu cần hỗ trợ, vui lòng liên hệ bộ phận chăm sóc khách hàng.`;
   await replyToChat(chatId, reply);
 }
 
