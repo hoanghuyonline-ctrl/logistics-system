@@ -1,6 +1,20 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "Đang chờ xử lý",
+  PURCHASED: "Đã đặt mua",
+  SELLER_SHIPPED: "Shop đã gửi hàng",
+  ARRIVED_CHINA_WH: "Đã tới kho Trung Quốc",
+  PACKING: "Đang đóng gói tại kho",
+  SHIPPING_TO_VIETNAM: "Đang trên đường về Việt Nam",
+  ARRIVED_VIETNAM_WH: "Đã tới kho Việt Nam",
+  OUT_FOR_DELIVERY: "Đang giao đến bạn",
+  COMPLETED: "Đã giao thành công",
+  CANCELLED: "Đã huỷ",
+};
 
 const WELCOME_MESSAGE =
   "Chào mừng đến với Bắc Trung Hải Logistics.\n\n" +
@@ -26,6 +40,49 @@ async function sendMessage(recipientId: string, text: string): Promise<void> {
   } catch (err) {
     console.error("[messenger/webhook] Failed to send message:", err);
   }
+}
+
+async function handleOrderLookup(senderId: string, text: string): Promise<void> {
+  const orderCode = text.trim();
+
+  const order = await prisma.order.findUnique({
+    where: { orderCode },
+    select: {
+      orderCode: true,
+      status: true,
+      weightKg: true,
+      totalCostVND: true,
+    },
+  });
+
+  if (!order) {
+    const reply =
+      "Không tìm thấy đơn hàng với mã này.\n\n" +
+      "Vui lòng kiểm tra lại mã đơn hàng, ví dụ:\n" +
+      "ORD-20260504-I9J0\n\n" +
+      "Nếu mã đúng nhưng vẫn không tra được, vui lòng liên hệ Bắc Trung Hải Logistics để được hỗ trợ.";
+    await sendMessage(senderId, reply);
+    return;
+  }
+
+  const statusLabel = STATUS_LABELS[order.status] || order.status;
+  const lines: string[] = [
+    `📦 Đơn hàng: ${order.orderCode}`,
+    `📌 Trạng thái: ${statusLabel}`,
+  ];
+
+  if (order.weightKg !== null && order.weightKg !== undefined) {
+    lines.push(`⚖️ Khối lượng: ${Number(order.weightKg)}kg`);
+  }
+
+  const cost = Number(order.totalCostVND);
+  if (cost > 0) {
+    lines.push(`💰 Tổng tiền: ${cost.toLocaleString("vi-VN")}đ`);
+  }
+
+  lines.push("", "Cảm ơn quý khách đã sử dụng Bắc Trung Hải Logistics.");
+
+  await sendMessage(senderId, lines.join("\n"));
 }
 
 /**
@@ -92,10 +149,16 @@ export async function POST(request: Request) {
           const timestamp = event.timestamp;
 
           if (event.message?.text) {
+            const text = event.message.text.trim();
             console.log(
-              `[messenger/webhook] Text message from ${senderId} at ${timestamp}: "${event.message.text}"`
+              `[messenger/webhook] Text message from ${senderId} at ${timestamp}: "${text}"`
             );
-            await sendMessage(senderId, WELCOME_MESSAGE);
+
+            if (/\d/.test(text) && !/\s/.test(text)) {
+              await handleOrderLookup(senderId, text);
+            } else {
+              await sendMessage(senderId, WELCOME_MESSAGE);
+            }
           } else if (event.postback) {
             console.log(
               `[messenger/webhook] Postback from ${senderId} at ${timestamp}: "${event.postback.payload}"`
