@@ -19,6 +19,19 @@ interface NotifConfig {
   source: "db" | "env" | "none";
 }
 
+interface SmtpStatus {
+  key: string;
+  configured: boolean;
+}
+
+const SMTP_LABELS: Record<string, string> = {
+  SMTP_HOST: "Máy chủ SMTP",
+  SMTP_PORT: "Cổng SMTP",
+  SMTP_USER: "Tài khoản SMTP",
+  SMTP_PASS: "Mật khẩu SMTP",
+  SMTP_FROM: "Địa chỉ gửi",
+};
+
 const NOTIF_FIELD_META: Record<string, { label: string; desc: string; secret: boolean; placeholder: string }> = {
   telegram_bot_token: {
     label: "Telegram Bot Token",
@@ -100,6 +113,9 @@ export default function SettingsPage() {
 
   const [notifConfigs, setNotifConfigs] = useState<NotifConfig[]>([]);
   const [notifLoading, setNotifLoading] = useState(true);
+
+  const [smtpStatus, setSmtpStatus] = useState<SmtpStatus[]>([]);
+  const [smtpLoading, setSmtpLoading] = useState(true);
   const [notifEdits, setNotifEdits] = useState<Record<string, string>>({});
   const [notifSaving, setNotifSaving] = useState(false);
 
@@ -131,6 +147,11 @@ export default function SettingsPage() {
         setLoading(false);
       });
     loadNotifConfigs();
+    fetch("/api/admin/smtp-diagnostics")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setSmtpStatus(d))
+      .catch(() => {})
+      .finally(() => setSmtpLoading(false));
   }, [loadNotifConfigs]);
 
   async function save(e: React.FormEvent) {
@@ -326,6 +347,31 @@ export default function SettingsPage() {
             })}
             <p className="text-xs text-amber-600 mt-3">
               Access token Zalo có thời hạn ngắn, cần làm mới thường xuyên. Hệ thống chưa hỗ trợ tự động làm mới.
+            </p>
+          </>
+        )}
+      </Card>
+
+      <Card title="Cấu hình Email (SMTP)">
+        {smtpLoading ? (
+          <p className="text-sm text-slate-400">Đang tải...</p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-500 mb-3">
+              Tình trạng cấu hình SMTP để gửi email thông báo.
+            </p>
+            {smtpStatus.map((item) => (
+              <div key={item.key} className="py-2 border-b border-slate-100 last:border-0 flex items-center gap-2">
+                <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${item.configured ? "bg-green-500" : "bg-red-400"}`} />
+                <code className="text-xs text-slate-600 w-28">{item.key}</code>
+                <span className={`text-sm ${item.configured ? "text-green-700" : "text-red-600"}`}>
+                  {item.configured ? "Đã cấu hình" : "Chưa cấu hình"}
+                </span>
+                <span className="text-xs text-slate-400 ml-auto">{SMTP_LABELS[item.key] || item.key}</span>
+              </div>
+            ))}
+            <p className="text-xs text-slate-400 mt-3">
+              Cấu hình SMTP qua biến môi trường (.env) trên máy chủ.
             </p>
           </>
         )}
