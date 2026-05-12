@@ -82,15 +82,8 @@ npx prisma generate
 npx prisma db push
 
 # Build Next.js for production
-# (postbuild hook automatically copies .next/static and public into .next/standalone)
 npm run build
 ```
-
-> **Note:** `npm run build` now runs a `postbuild` step that copies `.next/static` → `.next/standalone/.next/static` and `public` → `.next/standalone/public`. This is required because `output: "standalone"` does not bundle static assets. If you need to re-copy manually:
->
-> ```powershell
-> node scripts/copy-standalone-assets.js
-> ```
 
 ---
 
@@ -198,7 +191,7 @@ npx prisma generate
 # 4. Push schema changes (if any)
 npx prisma db push
 
-# 5. Rebuild (postbuild auto-copies static assets into standalone)
+# 5. Rebuild
 npm run build
 
 # 6. Restart PM2
@@ -217,7 +210,7 @@ pm2 logs logistics-system --lines 20
   Windows Server
   ├── PM2 (process manager)
   │   └── logistics-system (Next.js)    :3000
-  │       ├── node .next/standalone/server.js
+  │       ├── next start (production)
   │       └── Prisma ORM → PostgreSQL
   │
   ├── Docker Desktop
@@ -257,7 +250,6 @@ docker exec -i logistics-postgres psql -U postgres logistics_db < backup.sql
 | Build fails | Run `npm run build` manually to see errors |
 | PM2 not starting on reboot | Run `pm2 save` after starting the app, verify `pm2-startup status` |
 | `next: not found` | Ensure `npm install` was run and `node_modules` exists |
-| CSS/Tailwind missing (raw HTML) | Run `node scripts/copy-standalone-assets.js` to copy static assets into standalone |
 | Prisma schema out of sync | Run `npx prisma generate && npx prisma db push` |
 | Memory issues | Check `pm2 monit`, consider increasing Node.js memory: add `--max-old-space-size=2048` to args |
 
