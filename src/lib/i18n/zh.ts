@@ -125,6 +125,16 @@ const zh: Record<string, string> = {
   "landing.footerBankName": "Vietinbank CN Lạng Sơn",
   "landing.footerAccountNumber": "账号",
   "landing.footerQuickLinks": "快捷链接",
+  "landing.trackingTitle": "查询订单",
+  "landing.trackingDesc": "输入订单编号查看运输状态",
+  "landing.trackingPlaceholder": "输入订单编号，例如：ORD-20260502-C3D4",
+  "landing.trackingButton": "查询",
+  "landing.trackingNotFound": "未找到此编号的订单。请检查订单编号或联系Bắc Trung Hải Logistics。",
+  "landing.trackingError": "发生错误，请稍后重试。",
+  "landing.trackingOrderCode": "订单编号：",
+  "landing.trackingStatus": "状态：",
+  "landing.trackingWeight": "重量：",
+  "landing.trackingCost": "总费用：",
 
   // Dashboard
   "dashboard.title": "仪表板",

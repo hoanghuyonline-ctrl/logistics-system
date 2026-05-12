@@ -6,6 +6,7 @@ import {
   LandingStats,
   LandingServices,
   LandingHowItWorks,
+  LandingOrderTracking,
   LandingLocations,
   LandingCTA,
   LandingFooter,
@@ -19,6 +20,7 @@ export default function Home() {
       <LandingStats />
       <LandingServices />
       <LandingHowItWorks />
+      <LandingOrderTracking />
       <LandingLocations />
       <LandingCTA />
       <LandingFooter />
