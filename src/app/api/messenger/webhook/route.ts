@@ -28,8 +28,11 @@ async function sendMessage(recipientId: string, text: string): Promise<void> {
     return;
   }
 
+  const tokenHint = token.slice(0, 6) + "***";
+  console.log(`[messenger/webhook] Sending reply to ${recipientId} (token: ${tokenHint})`);
+
   try {
-    await fetch(`https://graph.facebook.com/v21.0/me/messages?access_token=${token}`, {
+    const res = await fetch(`https://graph.facebook.com/v21.0/me/messages?access_token=${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -37,8 +40,18 @@ async function sendMessage(recipientId: string, text: string): Promise<void> {
         message: { text },
       }),
     });
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error(
+        `[messenger/webhook] Graph API error — status: ${res.status}, body: ${errorBody}`
+      );
+      return;
+    }
+
+    console.log(`[messenger/webhook] Reply sent successfully to ${recipientId} (status: ${res.status})`);
   } catch (err) {
-    console.error("[messenger/webhook] Failed to send message:", err);
+    console.error("[messenger/webhook] Network error sending message:", err);
   }
 }
 
