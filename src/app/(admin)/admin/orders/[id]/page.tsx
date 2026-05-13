@@ -62,7 +62,6 @@ export default function AdminOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tracking, setTracking] = useState({ trackingCodeChina: "", trackingCodeIntl: "" });
   const [weight, setWeight] = useState("");
-  const [statusNote, setStatusNote] = useState("");
   const [customNote, setCustomNote] = useState("");
   const [customNoteEditing, setCustomNoteEditing] = useState(false);
   const [customNoteSaving, setCustomNoteSaving] = useState(false);
@@ -98,11 +97,10 @@ export default function AdminOrderDetailPage() {
     const res = await fetch(`/api/orders/${params.id}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus, note: statusNote }),
+      body: JSON.stringify({ status: newStatus }),
     });
     if (res.ok) {
       toast(t("orderDetail.statusUpdated"), "success");
-      setStatusNote("");
       loadOrder();
     } else {
       const data = await res.json();
@@ -184,20 +182,15 @@ export default function AdminOrderDetailPage() {
       {/* Status transition */}
       {nextStatuses.length > 0 && (
         <Card title={t("orderDetail.updateStatus")}>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input type="text" placeholder={t("orderDetail.statusNotePlaceholder")} value={statusNote}
-              onChange={(e) => setStatusNote(e.target.value)}
-              className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
-            <div className="flex gap-2 flex-wrap">
-              {nextStatuses.map((s) => (
-                <button key={s} onClick={() => updateStatus(s)}
-                  className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors shadow-sm ${
-                    s === "CANCELLED" ? "bg-red-600 text-white hover:bg-red-700" : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}>
-                  → {t(`status.${s}`, s)}
-                </button>
-              ))}
-            </div>
+          <div className="flex gap-2 flex-wrap">
+            {nextStatuses.map((s) => (
+              <button key={s} onClick={() => updateStatus(s)}
+                className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors shadow-sm ${
+                  s === "CANCELLED" ? "bg-red-600 text-white hover:bg-red-700" : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}>
+                → {t(`status.${s}`, s)}
+              </button>
+            ))}
           </div>
         </Card>
       )}
