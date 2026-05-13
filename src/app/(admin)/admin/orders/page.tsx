@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -26,13 +27,34 @@ interface Order {
 
 export default function AdminOrdersPage() {
   const { t } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => parseInt(searchParams.get("page") || "1"));
   const [totalPages, setTotalPages] = useState(1);
-  const [status, setStatus] = useState("");
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("");
+  const [status, setStatus] = useState(() => searchParams.get("status") || "");
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [filter, setFilter] = useState(() => searchParams.get("filter") || "");
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams();
+    if (page > 1) urlParams.set("page", String(page));
+    if (status) urlParams.set("status", status);
+    if (search) urlParams.set("search", search);
+    if (filter) urlParams.set("filter", filter);
+    const qs = urlParams.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [page, status, search, filter]);
+
+  const handleRowClick = useCallback((e: React.MouseEvent, orderId: string) => {
+    const url = `/admin/orders/${orderId}`;
+    if (e.ctrlKey || e.metaKey || e.button === 1) {
+      window.open(url, "_blank");
+    } else {
+      router.push(url);
+    }
+  }, [router]);
 
   const filters = [
     { key: "hasNotes", label: "Có ghi chú", icon: "📝" },
@@ -139,10 +161,10 @@ export default function AdminOrdersPage() {
                       const hasCustomNote = !!order.customStatusNote;
 
                       return (
-                      <tr key={order.id} className={`transition-colors ${isCancelled ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50/50"}`}>
+                      <tr key={order.id} className={`transition-colors cursor-pointer ${isCancelled ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50/50"}`} onClick={(e) => handleRowClick(e, order.id)} onAuxClick={(e) => { if (e.button === 1) handleRowClick(e, order.id); }}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5">
-                            <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                            <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700" onClick={(e) => e.stopPropagation()}>
                               {order.orderCode}
                             </Link>
                             {hasNotes && (
