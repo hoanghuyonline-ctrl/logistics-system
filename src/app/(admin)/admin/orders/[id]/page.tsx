@@ -219,16 +219,33 @@ export default function AdminOrderDetailPage() {
       )}
 
       <Card title="Link sản phẩm">
-        {order.productLink ? (
-          <a
-            href={order.productLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
-          >
-            {order.productLink}
-          </a>
-        ) : (
+        {order.productLink ? (() => {
+          const domainLabels: Record<string, string> = {
+            "taobao.com": "Taobao",
+            "1688.com": "1688",
+            "tmall.com": "Tmall",
+            "alibaba.com": "Alibaba",
+          };
+          let hostname = "";
+          try { hostname = new URL(order.productLink).hostname; } catch {}
+          const matched = Object.entries(domainLabels).find(([d]) => hostname.includes(d));
+          const label = matched ? `Mở link ${matched[1]}` : "Mở sản phẩm";
+          return (
+            <div>
+              <a
+                href={order.productLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                🔗 {label} ↗
+              </a>
+              <p className="text-xs text-slate-400 mt-1 truncate max-w-full" title={order.productLink}>
+                {hostname || order.productLink}
+              </p>
+            </div>
+          );
+        })() : (
           <p className="text-sm text-slate-400">Chưa có link sản phẩm</p>
         )}
       </Card>
