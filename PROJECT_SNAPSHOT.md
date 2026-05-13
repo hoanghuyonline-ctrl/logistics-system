@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-13
 **Branch:** `main`
-**Latest stable commit:** PR #146 merged
+**Latest stable commit:** PR #148 merged
 
 ---
 
@@ -116,6 +116,7 @@
 - **PRs #130–#140 Reconciliation** (PR #144) — Clean merge of 11 PRs (#130–#140) that existed on a branch but were not on main; zero conflicts; brought in keywords field, bulk import, test box, template importer, Telegram/Messenger knowledge fallback, unanswered question logging/grouping/filters/categories, knowledge usage tracking, and 4 new Prisma migrations
 - **"Tạo tri thức" Shortcut Enhancement** (PR #145) — Enhanced existing "Tạo tri thức" button on unanswered question groups; prefills content with `Khách hỏi: "[question]"\nTrả lời:` template; auto-extracts up to 6 keywords from question text; emerald button style with tooltip; reuses existing knowledge create form
 - **Knowledge Match Diagnostics Logging** (PR #146) — Enhanced chatbot knowledge match logs with `score` (match confidence), `candidates` (number of entries scoring > 0), `keywords` (matched entry's keywords), and `channel` (ZALO/TELEGRAM/MESSENGER); consistent structured format across all 3 webhooks; exported `KnowledgeAnswerResult` interface; no behavior changes — logging only
+- **Unanswered Questions Quick Filters** (PR #148) — 5 toggle chips above unanswered question groups list: "Chưa có tri thức" (unresolved only), "Hỏi nhiều nhất" (sort by count), "Mới nhất" (sort by time), "Đã phân loại" (has category); helps admin find chatbot knowledge gaps faster; client-side only, works alongside existing search/channel/status/category filters; no schema or API changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
