@@ -41,6 +41,7 @@ export default function SupportKnowledgePage() {
   const [showTestBox, setShowTestBox] = useState(false);
   const [testQuery, setTestQuery] = useState("");
   const [testing, setTesting] = useState(false);
+  const [creatingTemplates, setCreatingTemplates] = useState(false);
   const [testResult, setTestResult] = useState<{
     matched: boolean;
     title?: string;
@@ -217,6 +218,35 @@ export default function SupportKnowledgePage() {
           className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
         >
           {showTestBox ? "Ẩn thử câu hỏi" : "🔍 Thử câu hỏi chatbot"}
+        </button>
+        <button
+          disabled={creatingTemplates}
+          onClick={async () => {
+            setCreatingTemplates(true);
+            try {
+              const res = await fetch("/api/admin/support-knowledge/templates", {
+                method: "POST",
+              });
+              if (res.ok) {
+                const data = await res.json();
+                toast(
+                  `Đã tạo ${data.created} mục tri thức mẫu, bỏ qua ${data.skipped} mục đã có.`,
+                  data.created > 0 ? "success" : "info",
+                );
+                loadEntries();
+              } else {
+                const data = await res.json();
+                toast(data.error || "Không thể tạo tri thức mẫu", "error");
+              }
+            } catch {
+              toast("Mất kết nối — không gọi được tới server", "error");
+            } finally {
+              setCreatingTemplates(false);
+            }
+          }}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 disabled:opacity-50 transition-colors"
+        >
+          {creatingTemplates ? "Đang tạo..." : "📄 Tạo tri thức mẫu"}
         </button>
       </div>
 
