@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { createNotification } from "@/lib/notifications";
 import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/notes">) {
@@ -43,6 +44,15 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/orders/[id]
     },
     include: { user: { select: { fullName: true, role: true } } },
   });
+
+  if (!hasRole(user.role, ["CUSTOMER"])) {
+    createNotification({
+      userId: order.userId,
+      title: `Đơn hàng ${order.orderCode} - Cập nhật từ kho vận`,
+      message: body.content,
+      orderId: order.id,
+    }).catch(() => {});
+  }
 
   return jsonResponse(note, 201);
 }

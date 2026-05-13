@@ -52,6 +52,12 @@ interface OrderDetail {
     createdAt: string;
     changer: { fullName: string; role: string };
   }>;
+  orderNotes: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    user: { fullName: string; role: string };
+  }>;
 }
 
 export default function AdminOrderDetailPage() {
@@ -65,6 +71,7 @@ export default function AdminOrderDetailPage() {
   const [customNote, setCustomNote] = useState("");
   const [customNoteEditing, setCustomNoteEditing] = useState(false);
   const [customNoteSaving, setCustomNoteSaving] = useState(false);
+  const [newNote, setNewNote] = useState("");
 
   const loadOrder = useCallback(() => {
     fetch(`/api/orders/${params.id}`)
@@ -150,6 +157,22 @@ export default function AdminOrderDetailPage() {
       toast("Không thể xoá ghi chú", "error");
     }
     setCustomNoteSaving(false);
+  }
+
+  async function sendNote() {
+    if (!newNote.trim()) return;
+    const res = await fetch(`/api/orders/${params.id}/notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: newNote.trim() }),
+    });
+    if (res.ok) {
+      toast("Đã gửi cập nhật cho khách", "success");
+      setNewNote("");
+      loadOrder();
+    } else {
+      toast("Không thể gửi cập nhật", "error");
+    }
   }
 
   async function saveWeight() {
@@ -320,6 +343,34 @@ export default function AdminOrderDetailPage() {
           </div>
         </Card>
       </div>
+
+      <Card title="Cập nhật cho khách hàng">
+        <div className="space-y-3 mb-4">
+          {order.orderNotes.map((note) => (
+            <div key={note.id} className="bg-slate-50 rounded-xl p-4">
+              <p className="text-sm text-slate-700">{note.content}</p>
+              <p className="text-xs text-slate-400 mt-2">
+                {note.user.fullName} ({t(`role.${note.user.role}`, note.user.role)}) — {new Date(note.createdAt).toLocaleString()}
+              </p>
+            </div>
+          ))}
+          {order.orderNotes.length === 0 && (
+            <p className="text-sm text-slate-400 text-center py-2">Chưa có cập nhật nào cho khách</p>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Nhập nội dung cập nhật cho khách..."
+            className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          />
+          <button onClick={sendNote} className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap">
+            Gửi cập nhật cho khách
+          </button>
+        </div>
+      </Card>
 
       <Card title={t("orderDetail.statusTimeline")}>
         <div className="space-y-1">
