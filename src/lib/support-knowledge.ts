@@ -110,3 +110,50 @@ export async function findSupportKnowledgeAnswer(
 
   return { id: best.id, title: best.title, content, matchSource: best.matchSource };
 }
+
+export async function testSupportKnowledgeMatch(
+  messageText: string,
+): Promise<{
+  matched: boolean;
+  id?: string;
+  title?: string;
+  content?: string;
+  matchSource: string;
+  score: number;
+}> {
+  const entries = await prisma.supportKnowledge.findMany({
+    where: { isActive: true },
+  });
+
+  if (entries.length === 0) {
+    return { matched: false, matchSource: "none", score: 0 };
+  }
+
+  const matches = entries
+    .map((entry) => {
+      const result = scoreMatch(messageText, entry.title, entry.content, entry.category, entry.keywords);
+      return {
+        id: entry.id,
+        title: entry.title,
+        content: entry.content,
+        score: result.score,
+        matchSource: result.matchSource === "none" ? "content" as const : result.matchSource,
+      };
+    })
+    .filter((m) => m.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (matches.length === 0) {
+    return { matched: false, matchSource: "none", score: 0 };
+  }
+
+  const best = matches[0];
+  return {
+    matched: true,
+    id: best.id,
+    title: best.title,
+    content: best.content,
+    matchSource: best.matchSource,
+    score: best.score,
+  };
+}
