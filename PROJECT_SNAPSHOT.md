@@ -100,6 +100,7 @@
 - **Quick Status Actions** (PR #126) — "Thao tác" column in admin order list with quick transition buttons (e.g. "→ Đã mua"); reuses existing `PATCH /api/orders/[id]/status` for audit logs and notifications; CANCELLED excluded from quick actions; optimistic UI update with toast feedback
 
 - **Admin Support Knowledge Base Foundation** (PR #128) — New `SupportKnowledge` Prisma model (title, content, category, isActive); admin-only CRUD API (`GET/POST /api/admin/support-knowledge`, `PATCH/DELETE /api/admin/support-knowledge/[id]`); "Trung tâm tri thức" admin page with add/edit/delete/toggle UI grouped by category; sidebar nav link with VI/EN/ZH i18n; 6 default seed entries (giờ làm việc, tạo đơn, kiểm tra trạng thái, nạp tiền, tính phí, liên hệ); migration `20260513080000_add_support_knowledge`; no chatbot integration yet — foundation only
+- **Zalo Knowledge Base Lookup** (PR #129) — Zalo webhook fallback now searches active `SupportKnowledge` entries before returning default guidance; `findSupportKnowledgeAnswer()` helper with case-insensitive keyword matching against title/category/content; structured `[zalo/knowledge]` logging (matched=true/false, entry id/title); reply truncated to 500 chars; existing order lookup and sender auto-bind preserved; 9 Vitest tests for `scoreMatch` pure function; no AI/LLM integration
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getNotificationConfig } from "@/lib/notification-config";
+import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -206,7 +207,22 @@ export async function POST(request: Request) {
             if (/\d/.test(text) && !/\s/.test(text)) {
               await handleOrderLookup(userId, text);
             } else {
-              await replyToUser(userId, WELCOME_MESSAGE);
+              const match = await findSupportKnowledgeAnswer(text);
+              if (match) {
+                console.log(
+                  `[zalo/knowledge] matched=true | id=${match.id} title="${match.title}" query="${text}"`
+                );
+                const reply =
+                  `📦 Bắc Trung Hải Logistics\n\n` +
+                  `${match.content}\n\n` +
+                  `Nếu cần hỗ trợ thêm, quý khách có thể liên hệ nhân viên.`;
+                await replyToUser(userId, reply);
+              } else {
+                console.log(
+                  `[zalo/knowledge] matched=false | query="${text}"`
+                );
+                await replyToUser(userId, WELCOME_MESSAGE);
+              }
             }
           } catch (err) {
             console.error("[zalo/webhook] Error handling user_send_text:", err);
