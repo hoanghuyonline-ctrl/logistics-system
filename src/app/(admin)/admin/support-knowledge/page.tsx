@@ -34,6 +34,10 @@ export default function SupportKnowledgePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importCategory, setImportCategory] = useState(CATEGORIES[0]);
+  const [importing, setImporting] = useState(false);
 
   const loadEntries = useCallback(async () => {
     try {
@@ -166,6 +170,103 @@ export default function SupportKnowledgePage() {
           </button>
         }
       />
+
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setShowImport(!showImport)}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showImport ? "Ẩn nhập hàng loạt" : "📋 Nhập hàng loạt"}
+        </button>
+      </div>
+
+      {showImport && (
+        <Card title="Nhập tri thức hàng loạt" className="mb-6">
+          <p className="text-sm text-slate-500 mb-4">
+            Dán nội dung hướng dẫn, chính sách, bảng giá hoặc thông tin công ty.
+            Hệ thống sẽ tách thành nhiều mục tri thức để chatbot sử dụng.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Danh mục cho các mục nhập
+              </label>
+              <select
+                value={importCategory}
+                onChange={(e) => setImportCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Nội dung
+              </label>
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                rows={10}
+                placeholder={"Ví dụ:\n# Giờ làm việc\nCông ty làm việc từ 8:00 đến 17:30...\n\n# Cách nạp tiền\nKhách hàng có thể nạp tiền bằng chuyển khoản..."}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y font-mono"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Dùng dấu # hoặc ## hoặc dòng kết thúc bằng : để phân tách các mục.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  if (!importText.trim()) {
+                    toast("Vui lòng dán nội dung cần nhập", "error");
+                    return;
+                  }
+                  setImporting(true);
+                  try {
+                    const res = await fetch("/api/admin/support-knowledge/import", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ text: importText, category: importCategory }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      toast(`Đã nhập ${data.count} mục tri thức`, "success");
+                      setImportText("");
+                      setShowImport(false);
+                      loadEntries();
+                    } else {
+                      toast(data.error || "Không thể nhập dữ liệu", "error");
+                    }
+                  } catch {
+                    toast("Mất kết nối — không gọi được tới server", "error");
+                  } finally {
+                    setImporting(false);
+                  }
+                }}
+                disabled={importing}
+                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+              >
+                {importing ? "Đang nhập..." : "Nhập vào Trung tâm tri thức"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowImport(false);
+                  setImportText("");
+                }}
+                className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {showForm && (
         <Card title={editingId ? "Chỉnh sửa mục tri thức" : "Thêm mục tri thức mới"} className="mb-6">
