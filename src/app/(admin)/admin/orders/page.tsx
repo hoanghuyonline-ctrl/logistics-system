@@ -9,7 +9,19 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
+
+const TRANSITIONS: Record<string, string[]> = {
+  PENDING: ["PURCHASED", "CANCELLED"],
+  PURCHASED: ["SELLER_SHIPPED", "CANCELLED"],
+  SELLER_SHIPPED: ["ARRIVED_CHINA_WH"],
+  ARRIVED_CHINA_WH: ["PACKING"],
+  PACKING: ["SHIPPING_TO_VIETNAM"],
+  SHIPPING_TO_VIETNAM: ["ARRIVED_VIETNAM_WH"],
+  ARRIVED_VIETNAM_WH: ["OUT_FOR_DELIVERY"],
+  OUT_FOR_DELIVERY: ["COMPLETED"],
+};
 
 interface Order {
   id: string;
@@ -41,6 +53,7 @@ export default function AdminOrdersPage() {
 
 function AdminOrdersContent() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();  
   const [orders, setOrders] = useState<Order[]>([]);
@@ -51,6 +64,7 @@ function AdminOrdersContent() {
   const [filter, setFilter] = useState(() => searchParams.get("filter") || "");
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<{ statusCounts: Record<string, number>; urgentCount: number } | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams();
@@ -61,6 +75,23 @@ function AdminOrdersContent() {
     const qs = urlParams.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
   }, [page, status, search, filter]);
+
+  const quickUpdateStatus = useCallback(async (orderId: string, newStatus: string) => {
+    setUpdatingId(orderId);
+    const res = await fetch(`/api/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) {
+      toast(`Đã chuyển trạng thái`, "success");
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
+    } else {
+      const data = await res.json();
+      toast(data.error || "Không thể cập nhật", "error");
+    }
+    setUpdatingId(null);
+  }, [toast]);
 
   const handleRowClick = useCallback((e: React.MouseEvent, orderId: string) => {
     const url = `/admin/orders/${orderId}`;
@@ -194,6 +225,7 @@ function AdminOrdersContent() {
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hoạt động</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -254,6 +286,23 @@ function AdminOrdersContent() {
                             const ago = Math.floor((Date.now() - latest.at.getTime()) / 60000);
                             const timeStr = ago < 1 ? "vừa xong" : ago < 60 ? `${ago} phút trước` : ago < 1440 ? `${Math.floor(ago / 60)} giờ trước` : `${Math.floor(ago / 1440)} ngày trước`;
                             return <span className="truncate block" title={`${latest.name} • ${latest.at.toLocaleString()}`}>{roleLabels[latest.role] || latest.role} • {timeStr}</span>;
+                          })()}
+                        </td>
+                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                          {(() => {
+                            const nextStatuses = (TRANSITIONS[order.status] || []).filter((s) => s !== "CANCELLED");
+                            if (nextStatuses.length === 0) return <span className="text-slate-300 text-xs">—</span>;
+                            const isUpdating = updatingId === order.id;
+                            return (
+                              <div className="flex gap-1 flex-wrap">
+                                {nextStatuses.map((s) => (
+                                  <button key={s} disabled={isUpdating} onClick={() => quickUpdateStatus(order.id, s)}
+                                    className="px-2 py-1 text-[11px] font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50">
+                                    {isUpdating ? "…" : `→ ${t(`status.${s}`, s)}`}
+                                  </button>
+                                ))}
+                              </div>
+                            );
                           })()}
                         </td>
                       </tr>
