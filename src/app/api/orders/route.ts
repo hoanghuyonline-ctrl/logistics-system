@@ -24,10 +24,18 @@ export async function GET(request: Request) {
 
   if (status) where.status = status;
   if (search) {
-    where.OR = [
+    const searchConditions: Record<string, unknown>[] = [
       { orderCode: { contains: search, mode: "insensitive" } },
       { productName: { contains: search, mode: "insensitive" } },
     ];
+    if (!hasRole(user.role, ["CUSTOMER"])) {
+      searchConditions.push(
+        { package: { packageCode: { contains: search, mode: "insensitive" } } },
+        { package: { barcode: { contains: search, mode: "insensitive" } } },
+        { user: { phone: { contains: search, mode: "insensitive" } } },
+      );
+    }
+    where.OR = searchConditions;
   }
 
   const [orders, total] = await Promise.all([

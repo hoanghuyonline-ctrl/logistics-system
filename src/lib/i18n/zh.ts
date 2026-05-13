@@ -316,6 +316,7 @@ const zh: Record<string, string> = {
   "orders.adminSubtitle": "查看和管理所有客户订单",
   "orders.newOrder": "新建订单",
   "orders.searchPlaceholder": "搜索订单...",
+  "orders.adminSearchPlaceholder": "订单号、包裹号、条码、电话...",
   "orders.allStatuses": "所有状态",
   "orders.loading": "正在加载订单...",
   "orders.empty": "未找到订单",

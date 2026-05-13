@@ -316,6 +316,7 @@ const vi: Record<string, string> = {
   "orders.adminSubtitle": "Theo dõi và xử lý đơn hàng của khách",
   "orders.newOrder": "Tạo đơn hàng",
   "orders.searchPlaceholder": "Tìm kiếm đơn hàng...",
+  "orders.adminSearchPlaceholder": "Mã đơn, mã kiện, barcode, SĐT...",
   "orders.allStatuses": "Tất cả trạng thái",
   "orders.loading": "Đang tải đơn hàng...",
   "orders.empty": "Không tìm thấy đơn hàng",
