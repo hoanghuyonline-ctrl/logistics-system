@@ -17,6 +17,21 @@ interface KnowledgeEntry {
   updatedAt: string;
 }
 
+interface UnansweredQuestion {
+  id: string;
+  channel: string;
+  question: string;
+  senderId: string | null;
+  resolved: boolean;
+  createdAt: string;
+}
+
+const CHANNEL_LABELS: Record<string, string> = {
+  ZALO: "Zalo",
+  TELEGRAM: "Telegram",
+  MESSENGER: "Messenger",
+};
+
 const CATEGORIES = [
   "Thông tin chung",
   "Hướng dẫn sử dụng",
@@ -42,6 +57,8 @@ export default function SupportKnowledgePage() {
   const [testQuery, setTestQuery] = useState("");
   const [testing, setTesting] = useState(false);
   const [creatingTemplates, setCreatingTemplates] = useState(false);
+  const [unanswered, setUnanswered] = useState<UnansweredQuestion[]>([]);
+  const [showUnanswered, setShowUnanswered] = useState(false);
   const [testResult, setTestResult] = useState<{
     matched: boolean;
     title?: string;
@@ -64,13 +81,26 @@ export default function SupportKnowledgePage() {
     }
   }, [toast]);
 
+  const loadUnanswered = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/unanswered-questions");
+      if (res.ok) {
+        const data = await res.json();
+        setUnanswered(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetch("/api/admin/support-knowledge")
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setEntries(d))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+    loadUnanswered();
+  }, [loadUnanswered]);
 
   function openCreate() {
     setEditingId(null);
@@ -605,6 +635,104 @@ export default function SupportKnowledgePage() {
           )}
         </>
       )}
+
+      {/* Unanswered Questions Section */}
+      <div className="mt-8">
+        <button
+          onClick={() => setShowUnanswered(!showUnanswered)}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showUnanswered ? "Ẩn câu hỏi chưa trả lời" : `❓ Câu hỏi chưa có câu trả lời (${unanswered.filter((q) => !q.resolved).length})`}
+        </button>
+
+        {showUnanswered && (
+          <Card className="mt-4">
+            <h3 className="text-lg font-semibold text-slate-800 mb-1">
+              Câu hỏi chưa có câu trả lời
+            </h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Các câu hỏi khách hàng gửi qua chatbot mà chưa tìm thấy câu trả lời trong Trung tâm tri thức.
+            </p>
+
+            {unanswered.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">Chưa có câu hỏi nào.</p>
+            ) : (
+              <div className="space-y-2">
+                {unanswered.map((q) => (
+                  <div
+                    key={q.id}
+                    className={`flex items-start justify-between gap-4 p-3 rounded-lg border ${
+                      q.resolved
+                        ? "bg-slate-50 border-slate-200 opacity-60"
+                        : "bg-white border-amber-200"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                          {CHANNEL_LABELS[q.channel] || q.channel}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {new Date(q.createdAt).toLocaleString("vi-VN")}
+                        </span>
+                        {q.resolved && (
+                          <span className="text-xs text-green-600 font-medium">Đã xử lý</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-700">{q.question}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {!q.resolved && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setForm({
+                                title: q.question,
+                                content: "",
+                                category: CATEGORIES[0],
+                                keywords: "",
+                              });
+                              setEditingId(null);
+                              setShowForm(true);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                          >
+                            Tạo tri thức
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(
+                                  `/api/admin/unanswered-questions/${q.id}`,
+                                  {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ resolved: true }),
+                                  },
+                                );
+                                if (res.ok) {
+                                  toast("Đã đánh dấu xử lý", "success");
+                                  loadUnanswered();
+                                }
+                              } catch {
+                                toast("Mất kết nối", "error");
+                              }
+                            }}
+                            className="px-2.5 py-1 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                          >
+                            Đã xử lý
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+      </div>
     </>
   );
 }

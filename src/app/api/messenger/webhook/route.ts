@@ -186,6 +186,9 @@ export async function POST(request: Request) {
                   console.log(
                     `[messenger/knowledge] matched=false | matchSource=none query="${text}"`
                   );
+                  prisma.chatbotUnansweredQuestion.create({
+                    data: { channel: "MESSENGER", question: text, senderId },
+                  }).catch((e: unknown) => console.error("[messenger/unanswered] save error:", e));
                   await sendMessage(senderId, WELCOME_MESSAGE);
                 }
               } catch (err) {

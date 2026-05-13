@@ -252,3 +252,12 @@ model SupportKnowledge {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model ChatbotUnansweredQuestion {
+  id        String   @id @default(uuid())
+  channel   String
+  question  String
+  senderId  String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
