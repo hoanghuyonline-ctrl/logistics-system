@@ -13,6 +13,11 @@ interface KnowledgeEntry {
   category: string;
   keywords: string | null;
   isActive: boolean;
+  matchCount: number;
+  matchCountZalo: number;
+  matchCountTelegram: number;
+  matchCountMessenger: number;
+  lastMatchedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -84,6 +89,7 @@ export default function SupportKnowledgePage() {
   const [uqChannel, setUqChannel] = useState("ALL");
   const [uqStatus, setUqStatus] = useState<"unresolved" | "resolved" | "all">("unresolved");
   const [uqCategory, setUqCategory] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"default" | "most_used" | "recently_matched">("default");
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -252,9 +258,16 @@ export default function SupportKnowledgePage() {
 
   if (loading) return <LoadingSpinner text="Đang tải tri thức hỗ trợ..." />;
 
+  const sortedEntries = sortBy === "default" ? entries : [...entries].sort((a, b) => {
+    if (sortBy === "most_used") return b.matchCount - a.matchCount;
+    const aTime = a.lastMatchedAt ? new Date(a.lastMatchedAt).getTime() : 0;
+    const bTime = b.lastMatchedAt ? new Date(b.lastMatchedAt).getTime() : 0;
+    return bTime - aTime;
+  });
+
   const grouped = CATEGORIES.map((cat) => ({
     category: cat,
-    items: entries.filter((e) => e.category === cat),
+    items: sortedEntries.filter((e) => e.category === cat),
   })).filter((g) => g.items.length > 0);
 
   const uncategorized = entries.filter(
@@ -631,6 +644,18 @@ export default function SupportKnowledgePage() {
         </Card>
       ) : (
         <>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-slate-500">Sắp xếp:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "default" | "most_used" | "recently_matched")}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="default">Mặc định</option>
+              <option value="most_used">Dùng nhiều nhất</option>
+              <option value="recently_matched">Mới sử dụng gần đây</option>
+            </select>
+          </div>
           {grouped.map((group) => (
             <Card key={group.category} title={group.category} className="mb-6">
               <div className="divide-y divide-slate-100">
@@ -652,11 +677,28 @@ export default function SupportKnowledgePage() {
                             {entry.isActive ? "Đang bật" : "Đã tắt"}
                           </span>
                         </div>
-                        {entry.keywords && (
-                          <p className="text-xs text-slate-400 mt-1">
-                            Từ khóa: {entry.keywords}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-3 mt-1">
+                          {entry.keywords && (
+                            <span className="text-xs text-slate-400">
+                              Từ khóa: {entry.keywords}
+                            </span>
+                          )}
+                          {entry.matchCount > 0 && (
+                            <span className="text-xs text-indigo-600">
+                              Đã dùng {entry.matchCount} lần
+                              {(entry.matchCountZalo > 0 || entry.matchCountTelegram > 0 || entry.matchCountMessenger > 0) && (
+                                <span className="text-slate-400 ml-1">
+                                  ({[entry.matchCountZalo > 0 && `Z:${entry.matchCountZalo}`, entry.matchCountTelegram > 0 && `T:${entry.matchCountTelegram}`, entry.matchCountMessenger > 0 && `M:${entry.matchCountMessenger}`].filter(Boolean).join(" ")})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {entry.lastMatchedAt && (
+                            <span className="text-xs text-slate-400">
+                              Lần cuối: {new Date(entry.lastMatchedAt).toLocaleString("vi-VN")}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-600 whitespace-pre-wrap mt-1">
                           {entry.content}
                         </p>
@@ -713,11 +755,28 @@ export default function SupportKnowledgePage() {
                             {entry.isActive ? "Đang bật" : "Đã tắt"}
                           </span>
                         </div>
-                        {entry.keywords && (
-                          <p className="text-xs text-slate-400 mt-1">
-                            Từ khóa: {entry.keywords}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-3 mt-1">
+                          {entry.keywords && (
+                            <span className="text-xs text-slate-400">
+                              Từ khóa: {entry.keywords}
+                            </span>
+                          )}
+                          {entry.matchCount > 0 && (
+                            <span className="text-xs text-indigo-600">
+                              Đã dùng {entry.matchCount} lần
+                              {(entry.matchCountZalo > 0 || entry.matchCountTelegram > 0 || entry.matchCountMessenger > 0) && (
+                                <span className="text-slate-400 ml-1">
+                                  ({[entry.matchCountZalo > 0 && `Z:${entry.matchCountZalo}`, entry.matchCountTelegram > 0 && `T:${entry.matchCountTelegram}`, entry.matchCountMessenger > 0 && `M:${entry.matchCountMessenger}`].filter(Boolean).join(" ")})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {entry.lastMatchedAt && (
+                            <span className="text-xs text-slate-400">
+                              Lần cuối: {new Date(entry.lastMatchedAt).toLocaleString("vi-VN")}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-600 whitespace-pre-wrap mt-1">
                           {entry.content}
                         </p>

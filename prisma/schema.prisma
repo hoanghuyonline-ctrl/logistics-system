@@ -243,14 +243,19 @@ model NotificationFailure {
 }
 
 model SupportKnowledge {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  category  String
-  keywords  String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String    @id @default(uuid())
+  title          String
+  content        String
+  category       String
+  keywords       String?
+  isActive       Boolean   @default(true)
+  matchCount     Int       @default(0)
+  matchCountZalo Int       @default(0)
+  matchCountTelegram Int   @default(0)
+  matchCountMessenger Int  @default(0)
+  lastMatchedAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model ChatbotUnansweredQuestion {

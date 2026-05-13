@@ -207,7 +207,7 @@ export async function POST(request: Request) {
             if (/\d/.test(text) && !/\s/.test(text)) {
               await handleOrderLookup(userId, text);
             } else {
-              const match = await findSupportKnowledgeAnswer(text);
+              const match = await findSupportKnowledgeAnswer(text, "ZALO");
               if (match) {
                 console.log(
                   `[zalo/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
