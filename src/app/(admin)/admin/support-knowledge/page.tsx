@@ -17,13 +17,14 @@ interface KnowledgeEntry {
   updatedAt: string;
 }
 
-interface UnansweredQuestion {
-  id: string;
-  channel: string;
-  question: string;
-  senderId: string | null;
-  resolved: boolean;
-  createdAt: string;
+interface UnansweredGroup {
+  normalized: string;
+  displayQuestion: string;
+  ids: string[];
+  count: number;
+  channels: string[];
+  latestAt: string;
+  unresolvedCount: number;
 }
 
 const CHANNEL_LABELS: Record<string, string> = {
@@ -66,7 +67,7 @@ export default function SupportKnowledgePage() {
   const [testQuery, setTestQuery] = useState("");
   const [testing, setTesting] = useState(false);
   const [creatingTemplates, setCreatingTemplates] = useState(false);
-  const [unanswered, setUnanswered] = useState<UnansweredQuestion[]>([]);
+  const [unanswered, setUnanswered] = useState<UnansweredGroup[]>([]);
   const [showUnanswered, setShowUnanswered] = useState(false);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -745,7 +746,7 @@ export default function SupportKnowledgePage() {
           onClick={() => setShowUnanswered(!showUnanswered)}
           className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
         >
-          {showUnanswered ? "Ẩn câu hỏi chưa trả lời" : `❓ Câu hỏi chưa có câu trả lời (${unanswered.filter((q) => !q.resolved).length})`}
+          {showUnanswered ? "Ẩn câu hỏi chưa trả lời" : `❓ Câu hỏi chưa có câu trả lời (${unanswered.reduce((sum, g) => sum + g.unresolvedCount, 0)})`}
         </button>
 
         {showUnanswered && (
@@ -761,36 +762,46 @@ export default function SupportKnowledgePage() {
               <p className="text-sm text-slate-400 italic">Chưa có câu hỏi nào.</p>
             ) : (
               <div className="space-y-2">
-                {unanswered.map((q) => (
+                {unanswered.map((g) => (
                   <div
-                    key={q.id}
+                    key={g.normalized}
                     className={`flex items-start justify-between gap-4 p-3 rounded-lg border ${
-                      q.resolved
+                      g.unresolvedCount === 0
                         ? "bg-slate-50 border-slate-200 opacity-60"
                         : "bg-white border-amber-200"
                     }`}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                          {CHANNEL_LABELS[q.channel] || q.channel}
-                        </span>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        {g.channels.map((ch) => (
+                          <span key={ch} className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            {CHANNEL_LABELS[ch] || ch}
+                          </span>
+                        ))}
+                        {g.count > 1 && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                            {g.count} lần
+                          </span>
+                        )}
                         <span className="text-xs text-slate-400">
-                          {new Date(q.createdAt).toLocaleString("vi-VN")}
+                          {new Date(g.latestAt).toLocaleString("vi-VN")}
                         </span>
-                        {q.resolved && (
+                        {g.unresolvedCount === 0 && (
                           <span className="text-xs text-green-600 font-medium">Đã xử lý</span>
                         )}
+                        {g.unresolvedCount > 0 && g.unresolvedCount < g.count && (
+                          <span className="text-xs text-amber-600">{g.unresolvedCount} chưa xử lý</span>
+                        )}
                       </div>
-                      <p className="text-sm text-slate-700">{q.question}</p>
+                      <p className="text-sm text-slate-700">{g.displayQuestion}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      {!q.resolved && (
+                      {g.unresolvedCount > 0 && (
                         <>
                           <button
                             onClick={() => {
                               setForm({
-                                title: q.question,
+                                title: g.displayQuestion,
                                 content: "",
                                 category: CATEGORIES[0],
                                 keywords: "",
@@ -807,16 +818,17 @@ export default function SupportKnowledgePage() {
                             onClick={async () => {
                               try {
                                 const res = await fetch(
-                                  `/api/admin/unanswered-questions/${q.id}`,
+                                  "/api/admin/unanswered-questions",
                                   {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ resolved: true }),
+                                    body: JSON.stringify({ ids: g.ids }),
                                   },
                                 );
                                 if (res.ok) {
-                                  toast("Đã đánh dấu xử lý", "success");
+                                  toast(`Đã đánh dấu nhóm đã xử lý (${g.count} câu hỏi)`, "success");
                                   loadUnanswered();
+                                  loadAnalytics();
                                 }
                               } catch {
                                 toast("Mất kết nối", "error");
@@ -824,7 +836,7 @@ export default function SupportKnowledgePage() {
                             }}
                             className="px-2.5 py-1 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
                           >
-                            Đã xử lý
+                            Đã xử lý nhóm
                           </button>
                         </>
                       )}
