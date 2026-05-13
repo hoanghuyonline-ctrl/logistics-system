@@ -86,6 +86,9 @@
 - **Admin Order Detail UI Fix** (PR #104) — Separated custom status note ("Ghi chú trạng thái") input into its own Card below customer/cost section; "Cập nhật trạng thái" card now contains only status transition buttons, fixing layout overlap that made buttons unclickable
 - **Status Update Method Fix** (PR #105) — Changed admin order detail `updateStatus()` from `PUT` to `PATCH` to match the `/api/orders/[id]/status` route handler, fixing 405 errors on all status transitions
 - **Product Link Display Polish** (PR #110) — Admin order detail now shows clean domain-based labels ("Mở link Taobao", "Mở link 1688", etc.) instead of raw URLs; full product URL remains clickable and opens in a new tab; no schema change
+- **Copy-to-Clipboard Buttons** (PR #112) — Admin order detail copy buttons for order code, package code, barcode, and tracking fields; "Đã sao chép" toast on click; no schema change
+- **Expanded Admin Order Search** (PR #113) — Admin order search now supports order code, package code, barcode, and customer phone; additive OR conditions for non-customer roles; admin-specific placeholder in VI/EN/ZH
+- **Order Note Preview in Admin List** (PR #114) — Admin order list shows latest note snippet in "Ghi chú" column; truncated with hover tooltip; single-query via Prisma `take: 1`; no schema change
 
 ## Stack
 
