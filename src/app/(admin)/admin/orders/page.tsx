@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -32,9 +32,17 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 };
 
 export default function AdminOrdersPage() {
+  return (
+    <Suspense>
+      <AdminOrdersContent />
+    </Suspense>
+  );
+}
+
+function AdminOrdersContent() {
   const { t } = useI18n();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams();  
   const [orders, setOrders] = useState<Order[]>([]);
   const [page, setPage] = useState(() => parseInt(searchParams.get("page") || "1"));
   const [totalPages, setTotalPages] = useState(1);
