@@ -46,6 +46,9 @@ export async function GET(request: Request) {
       case "notCompleted":
         where.status = { notIn: ["COMPLETED", "CANCELLED"] };
         break;
+      case "urgent":
+        where.priority = "URGENT";
+        break;
     }
   }
   if (search) {
@@ -63,7 +66,12 @@ export async function GET(request: Request) {
     where.OR = searchConditions;
   }
 
-  const [orders, total] = await Promise.all([
+  const includeSummary = url.searchParams.get("summary") === "1" && !hasRole(user.role, ["CUSTOMER"]);
+
+  const baseWhere: Record<string, unknown> = {};
+  if (hasRole(user.role, ["CUSTOMER"])) baseWhere.userId = user.id;
+
+  const queries: [Promise<unknown>, Promise<number>, Promise<unknown[]>?, Promise<number>?] = [
     prisma.order.findMany({
       where,
       skip: (page - 1) * limit,
@@ -84,9 +92,27 @@ export async function GET(request: Request) {
       },
     }),
     prisma.order.count({ where }),
-  ]);
+  ];
 
-  return jsonResponse({ orders, total, page, totalPages: Math.ceil(total / limit) });
+  if (includeSummary) {
+    queries.push(
+      prisma.order.groupBy({ by: ["status"], where: baseWhere, _count: { status: true } }),
+      prisma.order.count({ where: { ...baseWhere, priority: "URGENT" } }),
+    );
+  }
+
+  const results = await Promise.all(queries);
+  const [orders, total] = results as [unknown, number, unknown[]?, number?];
+
+  const response: Record<string, unknown> = { orders, total, page, totalPages: Math.ceil(total / limit) };
+
+  if (includeSummary) {
+    const statusCounts = (results[2] as Array<{ status: string; _count: { status: number } }>)
+      .reduce((acc, g) => { acc[g.status] = g._count.status; return acc; }, {} as Record<string, number>);
+    response.summary = { statusCounts, urgentCount: results[3] as number };
+  }
+
+  return jsonResponse(response);
 }
 
 export async function POST(request: Request) {
