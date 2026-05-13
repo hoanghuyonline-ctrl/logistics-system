@@ -181,8 +181,54 @@ export default function AdminOrderDetailPage() {
         action={<StatusBadge status={order.status} />}
       />
 
-      {/* Custom status note */}
-      <Card title="Trạng thái ghi chú">
+      {/* Status transition */}
+      {nextStatuses.length > 0 && (
+        <Card title={t("orderDetail.updateStatus")}>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input type="text" placeholder={t("orderDetail.statusNotePlaceholder")} value={statusNote}
+              onChange={(e) => setStatusNote(e.target.value)}
+              className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            <div className="flex gap-2 flex-wrap">
+              {nextStatuses.map((s) => (
+                <button key={s} onClick={() => updateStatus(s)}
+                  className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors shadow-sm ${
+                    s === "CANCELLED" ? "bg-red-600 text-white hover:bg-red-700" : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}>
+                  → {t(`status.${s}`, s)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card title={t("orderDetail.customerInfo")}>
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.name")}</dt><dd className="font-medium text-slate-900">{order.user.fullName}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.email")}</dt><dd className="font-medium text-slate-900">{order.user.email}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.phone")}</dt><dd className="font-medium text-slate-900">{order.user.phone || "—"}</dd></div>
+            <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.address")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.user.address || "—"}</dd></div>
+          </dl>
+        </Card>
+
+        <Card title={t("orderDetail.costBreakdown")}>
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.product")}</dt><dd className="font-medium text-slate-900">&yen;{fmt(order.totalPriceCNY)} = {fmt(order.totalPriceVND)} VND</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.serviceFee")}</dt><dd className="font-medium text-slate-900">{fmt(order.serviceFeeVND)} VND</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.cnShipping")}</dt><dd className="font-medium text-slate-900">{fmt(order.chinaShippingFee)} VND</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.intlShippingShort")}</dt><dd className="font-medium text-slate-900">{fmt(order.internationalShippingFee)} VND</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.vnDeliveryShort")}</dt><dd className="font-medium text-slate-900">{fmt(order.vietnamDeliveryFee)} VND</dd></div>
+            <div className="flex justify-between items-end pt-3 border-t border-slate-100">
+              <dt className="font-bold text-slate-900">{t("orderDetail.total")}</dt>
+              <dd className="text-xl font-bold text-blue-600">{fmt(order.totalCostVND)} VND</dd>
+            </div>
+          </dl>
+        </Card>
+      </div>
+
+      {/* Custom status note — separate from system status */}
+      <Card title="Ghi chú trạng thái">
         {!customNoteEditing ? (
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
@@ -242,52 +288,6 @@ export default function AdminOrderDetailPage() {
           </div>
         )}
       </Card>
-
-      {/* Status transition */}
-      {nextStatuses.length > 0 && (
-        <Card title={t("orderDetail.updateStatus")}>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input type="text" placeholder={t("orderDetail.statusNotePlaceholder")} value={statusNote}
-              onChange={(e) => setStatusNote(e.target.value)}
-              className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
-            <div className="flex gap-2 flex-wrap">
-              {nextStatuses.map((s) => (
-                <button key={s} onClick={() => updateStatus(s)}
-                  className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors shadow-sm ${
-                    s === "CANCELLED" ? "bg-red-600 text-white hover:bg-red-700" : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}>
-                  → {t(`status.${s}`, s)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card title={t("orderDetail.customerInfo")}>
-          <dl className="space-y-3 text-sm">
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.name")}</dt><dd className="font-medium text-slate-900">{order.user.fullName}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.email")}</dt><dd className="font-medium text-slate-900">{order.user.email}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.phone")}</dt><dd className="font-medium text-slate-900">{order.user.phone || "—"}</dd></div>
-            <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.address")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.user.address || "—"}</dd></div>
-          </dl>
-        </Card>
-
-        <Card title={t("orderDetail.costBreakdown")}>
-          <dl className="space-y-3 text-sm">
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.product")}</dt><dd className="font-medium text-slate-900">&yen;{fmt(order.totalPriceCNY)} = {fmt(order.totalPriceVND)} VND</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.serviceFee")}</dt><dd className="font-medium text-slate-900">{fmt(order.serviceFeeVND)} VND</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.cnShipping")}</dt><dd className="font-medium text-slate-900">{fmt(order.chinaShippingFee)} VND</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.intlShippingShort")}</dt><dd className="font-medium text-slate-900">{fmt(order.internationalShippingFee)} VND</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.vnDeliveryShort")}</dt><dd className="font-medium text-slate-900">{fmt(order.vietnamDeliveryFee)} VND</dd></div>
-            <div className="flex justify-between items-end pt-3 border-t border-slate-100">
-              <dt className="font-bold text-slate-900">{t("orderDetail.total")}</dt>
-              <dd className="text-xl font-bold text-blue-600">{fmt(order.totalCostVND)} VND</dd>
-            </div>
-          </dl>
-        </Card>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.trackingCodes")}>
