@@ -11,6 +11,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow Zalo domain verifier files
+  if (pathname.startsWith("/zalo_verifier") && pathname.endsWith(".html")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/api/settings/exchange-rate")) {
     return NextResponse.next();
   }
