@@ -221,6 +221,9 @@ export async function POST(request: Request) {
                 console.log(
                   `[zalo/knowledge] matched=false | matchSource=none query="${text}"`
                 );
+                prisma.chatbotUnansweredQuestion.create({
+                  data: { channel: "ZALO", question: text, senderId: userId },
+                }).catch((e: unknown) => console.error("[zalo/unanswered] save error:", e));
                 await replyToUser(userId, WELCOME_MESSAGE);
               }
             }

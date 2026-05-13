@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { getNotificationConfig } from "@/lib/notification-config";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 
+const FALLBACK_GUIDANCE =
+  "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
+  "Ví dụ:\n" +
+  "<code>BTH123456</code>\n\n" +
+  "Bạn cũng có thể dùng /help để xem hướng dẫn.";
+
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
   PURCHASED: "Đã đặt mua",
@@ -173,21 +179,14 @@ export async function POST(request: Request) {
           console.log(
             `[telegram/knowledge] matched=false | matchSource=none query="${text}"`
           );
-          const reply =
-            "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
-            "Ví dụ:\n" +
-            "<code>BTH123456</code>\n\n" +
-            "Bạn cũng có thể dùng /help để xem hướng dẫn.";
-          await replyToChat(chatId, reply);
+          prisma.chatbotUnansweredQuestion.create({
+            data: { channel: "TELEGRAM", question: text, senderId: String(chatId) },
+          }).catch((e: unknown) => console.error("[telegram/unanswered] save error:", e));
+          await replyToChat(chatId, FALLBACK_GUIDANCE);
         }
       } catch (err) {
         console.error("[telegram/knowledge] Error:", err);
-        const reply =
-          "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
-          "Ví dụ:\n" +
-          "<code>BTH123456</code>\n\n" +
-          "Bạn cũng có thể dùng /help để xem hướng dẫn.";
-        await replyToChat(chatId, reply);
+        await replyToChat(chatId, FALLBACK_GUIDANCE);
       }
     }
 
