@@ -15,6 +15,7 @@ export async function GET(request: Request) {
   const limit = parseInt(url.searchParams.get("limit") || "20");
   const status = url.searchParams.get("status");
   const search = url.searchParams.get("search");
+  const filter = url.searchParams.get("filter");
 
   const where: Record<string, unknown> = {};
 
@@ -23,6 +24,30 @@ export async function GET(request: Request) {
   }
 
   if (status) where.status = status;
+
+  if (filter && !hasRole(user.role, ["CUSTOMER"])) {
+    switch (filter) {
+      case "hasNotes":
+        where.orderNotes = { some: {} };
+        break;
+      case "hasCustomNote":
+        where.customStatusNote = { not: null };
+        break;
+      case "longPending":
+        where.status = "PENDING";
+        where.createdAt = { lte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) };
+        break;
+      case "cancelled":
+        where.status = "CANCELLED";
+        break;
+      case "today":
+        where.createdAt = { gte: new Date(new Date().setHours(0, 0, 0, 0)) };
+        break;
+      case "notCompleted":
+        where.status = { notIn: ["COMPLETED", "CANCELLED"] };
+        break;
+    }
+  }
   if (search) {
     const searchConditions: Record<string, unknown>[] = [
       { orderCode: { contains: search, mode: "insensitive" } },
