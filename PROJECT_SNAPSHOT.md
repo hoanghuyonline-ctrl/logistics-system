@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-13
 **Branch:** `main`
-**Latest stable commit:** `24ff718`
+**Latest stable commit:** PR #146 merged
 
 ---
 
@@ -112,6 +112,10 @@
 - **Unanswered Questions Search & Filters** (PR #138) — Client-side search and filters for grouped unanswered questions; search input "Tìm câu hỏi..." filters by question text; channel dropdown (Tất cả/Zalo/Telegram/Messenger) filters by any channel in group; status dropdown (Chưa xử lý/Đã xử lý/Tất cả) filters by resolved state; defaults to showing unresolved only; compact inline filter bar; existing grouping/batch resolve/create knowledge actions preserved
 - **Unanswered Question Category Tagging** (PR #139) — Optional `category` field on `ChatbotUnansweredQuestion` model; 7 predefined categories (Phí vận chuyển, Giờ làm việc, Nạp tiền, Khiếu nại, Kho hàng, Tạo đơn, Khác); admin can assign/change category per group via inline dropdown; category badge (purple) displayed on each group; category filter dropdown in filter bar; "Tạo tri thức" pre-fills matching knowledge category when available; `PATCH /api/admin/unanswered-questions` extended to accept `category` field; migration `20260513110000_add_unanswered_question_category`; backward compatible — existing questions have null category
 - **Knowledge Match Usage Tracking** (PR #140) — `matchCount`, `matchCountZalo`, `matchCountTelegram`, `matchCountMessenger`, `lastMatchedAt` fields on `SupportKnowledge` model; fire-and-forget tracking in `findSupportKnowledgeAnswer()` (does not block chatbot reply); Zalo/Telegram/Messenger webhooks pass channel name; admin knowledge list shows per-entry usage: "Đã dùng X lần" with per-channel breakdown (Z:/T:/M:) and "Lần cuối: ..." timestamp; sort dropdown: Mặc định / Dùng nhiều nhất / Mới sử dụng gần đây; migration `20260513120000_add_knowledge_usage_tracking`; backward compatible
+- **Vietnamese Support Knowledge Seed Data** (PRs #141, #143) — 133 real Vietnamese support knowledge entries (10 in PR #141 + 123 in PR #143) covering 40 categories of daily customer questions; extracted to `prisma/support-knowledge-data.ts` with typed `KnowledgeEntry` interface; seed logic inserts only when `existingCount === 0`; natural CSKH Vietnamese wording suitable for Zalo/Telegram/Messenger auto-reply
+- **PRs #130–#140 Reconciliation** (PR #144) — Clean merge of 11 PRs (#130–#140) that existed on a branch but were not on main; zero conflicts; brought in keywords field, bulk import, test box, template importer, Telegram/Messenger knowledge fallback, unanswered question logging/grouping/filters/categories, knowledge usage tracking, and 4 new Prisma migrations
+- **"Tạo tri thức" Shortcut Enhancement** (PR #145) — Enhanced existing "Tạo tri thức" button on unanswered question groups; prefills content with `Khách hỏi: "[question]"\nTrả lời:` template; auto-extracts up to 6 keywords from question text; emerald button style with tooltip; reuses existing knowledge create form
+- **Knowledge Match Diagnostics Logging** (PR #146) — Enhanced chatbot knowledge match logs with `score` (match confidence), `candidates` (number of entries scoring > 0), `keywords` (matched entry's keywords), and `channel` (ZALO/TELEGRAM/MESSENGER); consistent structured format across all 3 webhooks; exported `KnowledgeAnswerResult` interface; no behavior changes — logging only
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
@@ -169,7 +173,8 @@
 | **OrderStatusLog** | orderId, fromStatus, toStatus, changedBy |
 | **SystemConfig** | key/value pairs (exchange_rate, service_fee_percent, shipping rates) |
 | **Notification** | userId, title, message, isRead |
-| **SupportKnowledge** | id, title, content, category, isActive |
+| **SupportKnowledge** | id, title, content, category, keywords, isActive, matchCount, matchCountZalo, matchCountTelegram, matchCountMessenger, lastMatchedAt |
+| **ChatbotUnansweredQuestion** | id, channel, question, senderId, resolved, category |
 
 **Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType
 
