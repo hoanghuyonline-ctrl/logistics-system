@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-13
 **Branch:** `main`
-**Latest stable commit:** `07e843c`
+**Latest stable commit:** `d0aa32a`
 
 ---
 
@@ -35,6 +35,8 @@
 - **Zalo Reply Formatting** (PR #94) — Polished Vietnamese mobile-friendly formatting with company header (📦 Bắc Trung Hải Logistics), emoji icons, actual order code in not-found replies, company sign-off
 - **Zalo Automatic Status Notifications** (PR #95) — Shipment status changes automatically push Vietnamese Zalo notifications to bound customers; 9 status templates with emoji icons; structured `[zalo/status]` logging; only sends when customer has `zaloRecipientId` and `ZALO_SEND_ENABLED=true`
 - **Zalo Auto-Bind Sender ID** (PR #96) — First-time order lookup via Zalo OA automatically binds sender ID to customer account (`User.zaloRecipientId`); conflict safety (never overwrites existing different binding); structured `[zalo/bind]` logging; Vietnamese confirmation reply on successful bind
+- **Notification Channel Delivery Logs & Health API** (PR #98) — Standardized `[notify/channel]` structured logs for SYSTEM, TELEGRAM, ZALO, EMAIL delivery results (orderCode, customerId, recipient, success/failure, reason); admin-only `GET /api/admin/notifications/health` returns channel readiness (telegram/zalo/email/messenger enabled/disabled)
+- **Admin Notification Health Card** (PR #99) — Compact Vietnamese "Trạng thái kênh thông báo" card on Admin Settings page showing Telegram, Zalo OA, Email, Messenger, and App channel readiness at a glance; no secrets exposed
 - **Vietnamese System Notifications** (PR #34) — Customer-facing bell-dropdown notifications converted to Vietnamese-first wording (9 status messages + title + fallback)
 - **Vietnamese Notification Templates** (PR #35) — Email/Telegram notification templates converted to Vietnamese-first: 10 STATUS_LABELS, orderCreatedTemplate, shipmentStatusChangedTemplate, sign-off updated to "Công ty TNHH Bắc Trung Hải Logistics"
 - **Vietnamese Wallet & Order Notifications** (PR #36) — Wallet deposit notification ("Nạp tiền thành công") and new order admin notification ("Đơn hàng mới") converted to Vietnamese-first wording
@@ -120,6 +122,7 @@
 | `/api/accountant/dashboard` | GET | Accountant financial KPIs and recent transactions |
 | `/api/telegram/webhook` | POST | Telegram chatbot webhook (public, no auth) |
 | `/api/zalo/webhook` | POST | Zalo OA webhook — auto-reply, order lookup, sender ID binding (public, no auth) |
+| `/api/admin/notifications/health` | GET | Notification channel readiness status (ADMIN-only) |
 
 ## Important Prisma Models
 
