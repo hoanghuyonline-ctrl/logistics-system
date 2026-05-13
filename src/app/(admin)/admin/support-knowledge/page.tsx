@@ -11,9 +11,51 @@ interface KnowledgeEntry {
   title: string;
   content: string;
   category: string;
+  keywords: string | null;
   isActive: boolean;
+  matchCount: number;
+  matchCountZalo: number;
+  matchCountTelegram: number;
+  matchCountMessenger: number;
+  lastMatchedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+interface UnansweredGroup {
+  normalized: string;
+  displayQuestion: string;
+  ids: string[];
+  count: number;
+  channels: string[];
+  latestAt: string;
+  unresolvedCount: number;
+  category: string | null;
+}
+
+const UQ_CATEGORIES = [
+  "Phí vận chuyển",
+  "Giờ làm việc",
+  "Nạp tiền",
+  "Khiếu nại",
+  "Kho hàng",
+  "Tạo đơn",
+  "Khác",
+];
+
+const CHANNEL_LABELS: Record<string, string> = {
+  ZALO: "Zalo",
+  TELEGRAM: "Telegram",
+  MESSENGER: "Messenger",
+};
+
+interface AnalyticsSummary {
+  total: number;
+  unresolved: number;
+  resolved: number;
+  byChannel: Record<string, { total: number; unresolved: number }>;
+  latestUnresolved: { question: string; channel: string; createdAt: string } | null;
+  topRepeated: { question: string; count: number }[];
 }
 
 const CATEGORIES = [
@@ -23,7 +65,7 @@ const CATEGORIES = [
   "Liên hệ & hỗ trợ",
 ];
 
-const EMPTY_FORM = { title: "", content: "", category: CATEGORIES[0] };
+const EMPTY_FORM = { title: "", content: "", category: CATEGORIES[0], keywords: "" };
 
 export default function SupportKnowledgePage() {
   const { toast } = useToast();
@@ -33,6 +75,30 @@ export default function SupportKnowledgePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importCategory, setImportCategory] = useState(CATEGORIES[0]);
+  const [importing, setImporting] = useState(false);
+  const [showTestBox, setShowTestBox] = useState(false);
+  const [testQuery, setTestQuery] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [creatingTemplates, setCreatingTemplates] = useState(false);
+  const [unanswered, setUnanswered] = useState<UnansweredGroup[]>([]);
+  const [showUnanswered, setShowUnanswered] = useState(false);
+  const [uqSearch, setUqSearch] = useState("");
+  const [uqChannel, setUqChannel] = useState("ALL");
+  const [uqStatus, setUqStatus] = useState<"unresolved" | "resolved" | "all">("unresolved");
+  const [uqCategory, setUqCategory] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"default" | "most_used" | "recently_matched">("default");
+  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    matched: boolean;
+    title?: string;
+    content?: string;
+    matchSource: string;
+    score: number;
+  } | null>(null);
 
   const loadEntries = useCallback(async () => {
     try {
@@ -48,13 +114,39 @@ export default function SupportKnowledgePage() {
     }
   }, [toast]);
 
+  const loadUnanswered = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/unanswered-questions");
+      if (res.ok) {
+        const data = await res.json();
+        setUnanswered(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/support-knowledge/unanswered/summary");
+      if (res.ok) {
+        const data = await res.json();
+        setAnalytics(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetch("/api/admin/support-knowledge")
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setEntries(d))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+    loadUnanswered();
+    loadAnalytics();
+  }, [loadUnanswered, loadAnalytics]);
 
   function openCreate() {
     setEditingId(null);
@@ -64,7 +156,7 @@ export default function SupportKnowledgePage() {
 
   function openEdit(entry: KnowledgeEntry) {
     setEditingId(entry.id);
-    setForm({ title: entry.title, content: entry.content, category: entry.category });
+    setForm({ title: entry.title, content: entry.content, category: entry.category, keywords: entry.keywords || "" });
     setShowForm(true);
   }
 
@@ -140,11 +232,42 @@ export default function SupportKnowledgePage() {
     }
   }
 
+  async function runTest() {
+    if (!testQuery.trim()) return;
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/admin/support-knowledge/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: testQuery.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTestResult(data);
+      } else {
+        const data = await res.json();
+        toast(data.error || "Không thể kiểm tra", "error");
+      }
+    } catch {
+      toast("Mất kết nối — không gọi được tới server", "error");
+    } finally {
+      setTesting(false);
+    }
+  }
+
   if (loading) return <LoadingSpinner text="Đang tải tri thức hỗ trợ..." />;
+
+  const sortedEntries = sortBy === "default" ? entries : [...entries].sort((a, b) => {
+    if (sortBy === "most_used") return b.matchCount - a.matchCount;
+    const aTime = a.lastMatchedAt ? new Date(a.lastMatchedAt).getTime() : 0;
+    const bTime = b.lastMatchedAt ? new Date(b.lastMatchedAt).getTime() : 0;
+    return bTime - aTime;
+  });
 
   const grouped = CATEGORIES.map((cat) => ({
     category: cat,
-    items: entries.filter((e) => e.category === cat),
+    items: sortedEntries.filter((e) => e.category === cat),
   })).filter((g) => g.items.length > 0);
 
   const uncategorized = entries.filter(
@@ -165,6 +288,270 @@ export default function SupportKnowledgePage() {
           </button>
         }
       />
+
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setShowImport(!showImport)}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showImport ? "Ẩn nhập hàng loạt" : "📋 Nhập hàng loạt"}
+        </button>
+        <button
+          onClick={() => { setShowTestBox(!showTestBox); setTestResult(null); }}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showTestBox ? "Ẩn thử câu hỏi" : "🔍 Thử câu hỏi chatbot"}
+        </button>
+        <button
+          disabled={creatingTemplates}
+          onClick={async () => {
+            setCreatingTemplates(true);
+            try {
+              const res = await fetch("/api/admin/support-knowledge/templates", {
+                method: "POST",
+              });
+              if (res.ok) {
+                const data = await res.json();
+                toast(
+                  `Đã tạo ${data.created} mục tri thức mẫu, bỏ qua ${data.skipped} mục đã có.`,
+                  data.created > 0 ? "success" : "info",
+                );
+                loadEntries();
+              } else {
+                const data = await res.json();
+                toast(data.error || "Không thể tạo tri thức mẫu", "error");
+              }
+            } catch {
+              toast("Mất kết nối — không gọi được tới server", "error");
+            } finally {
+              setCreatingTemplates(false);
+            }
+          }}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 disabled:opacity-50 transition-colors"
+        >
+          {creatingTemplates ? "Đang tạo..." : "📄 Tạo tri thức mẫu"}
+        </button>
+        <button
+          onClick={() => { setShowAnalytics(!showAnalytics); if (!showAnalytics) loadAnalytics(); }}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showAnalytics ? "Ẩn thống kê" : "📊 Hiệu quả chatbot"}
+        </button>
+      </div>
+
+      {/* Analytics Card */}
+      {showAnalytics && analytics && (
+        <Card className="mb-6">
+          <h3 className="text-lg font-semibold text-slate-800 mb-3">Hiệu quả chatbot</h3>
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="text-center p-3 bg-slate-50 rounded-lg">
+              <p className="text-2xl font-bold text-slate-800">{analytics.total}</p>
+              <p className="text-xs text-slate-500">Tổng câu hỏi</p>
+            </div>
+            <div className="text-center p-3 bg-amber-50 rounded-lg">
+              <p className="text-2xl font-bold text-amber-700">{analytics.unresolved}</p>
+              <p className="text-xs text-amber-600">Chưa xử lý</p>
+            </div>
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <p className="text-2xl font-bold text-green-700">{analytics.resolved}</p>
+              <p className="text-xs text-green-600">Đã xử lý</p>
+            </div>
+          </div>
+
+          {Object.keys(analytics.byChannel).length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm font-medium text-slate-600 mb-2">Theo kênh:</p>
+              <div className="flex gap-3">
+                {Object.entries(analytics.byChannel).map(([channel, data]) => (
+                  <div key={channel} className="flex items-center gap-2 text-sm">
+                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                      {CHANNEL_LABELS[channel] || channel}
+                    </span>
+                    <span className="text-slate-600">{data.total}</span>
+                    {data.unresolved > 0 && (
+                      <span className="text-amber-600 text-xs">({data.unresolved} chưa xử lý)</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {analytics.latestUnresolved && (
+            <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-xs font-medium text-amber-700 mb-1">Câu hỏi chưa xử lý gần nhất:</p>
+              <p className="text-sm text-slate-700">
+                <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 mr-2">
+                  {CHANNEL_LABELS[analytics.latestUnresolved.channel] || analytics.latestUnresolved.channel}
+                </span>
+                {analytics.latestUnresolved.question}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                {new Date(analytics.latestUnresolved.createdAt).toLocaleString("vi-VN")}
+              </p>
+            </div>
+          )}
+
+          {analytics.topRepeated.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Top câu hỏi lặp lại nhiều nhất:</p>
+              <div className="space-y-1">
+                {analytics.topRepeated.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm p-2 bg-slate-50 rounded">
+                    <span className="text-slate-700 truncate mr-2">{item.question}</span>
+                    <span className="text-xs font-medium text-slate-500 shrink-0">{item.count} lần</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {analytics.total === 0 && (
+            <p className="text-sm text-slate-400 italic">Chưa có dữ liệu câu hỏi chưa trả lời.</p>
+          )}
+        </Card>
+      )}
+
+      {showImport && (
+        <Card title="Nhập tri thức hàng loạt" className="mb-6">
+          <p className="text-sm text-slate-500 mb-4">
+            Dán nội dung hướng dẫn, chính sách, bảng giá hoặc thông tin công ty.
+            Hệ thống sẽ tách thành nhiều mục tri thức để chatbot sử dụng.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Danh mục cho các mục nhập
+              </label>
+              <select
+                value={importCategory}
+                onChange={(e) => setImportCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Nội dung
+              </label>
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                rows={10}
+                placeholder={"Ví dụ:\n# Giờ làm việc\nCông ty làm việc từ 8:00 đến 17:30...\n\n# Cách nạp tiền\nKhách hàng có thể nạp tiền bằng chuyển khoản..."}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y font-mono"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Dùng dấu # hoặc ## hoặc dòng kết thúc bằng : để phân tách các mục.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  if (!importText.trim()) {
+                    toast("Vui lòng dán nội dung cần nhập", "error");
+                    return;
+                  }
+                  setImporting(true);
+                  try {
+                    const res = await fetch("/api/admin/support-knowledge/import", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ text: importText, category: importCategory }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      toast(`Đã nhập ${data.count} mục tri thức`, "success");
+                      setImportText("");
+                      setShowImport(false);
+                      loadEntries();
+                    } else {
+                      toast(data.error || "Không thể nhập dữ liệu", "error");
+                    }
+                  } catch {
+                    toast("Mất kết nối — không gọi được tới server", "error");
+                  } finally {
+                    setImporting(false);
+                  }
+                }}
+                disabled={importing}
+                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+              >
+                {importing ? "Đang nhập..." : "Nhập vào Trung tâm tri thức"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowImport(false);
+                  setImportText("");
+                }}
+                className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {showTestBox && (
+        <Card title="Thử câu hỏi chatbot" className="mb-6">
+          <p className="text-sm text-slate-500 mb-4">
+            Nhập câu hỏi giống như khách hàng hỏi qua Zalo để kiểm tra câu trả lời từ Trung tâm tri thức.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                value={testQuery}
+                onChange={(e) => setTestQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && testQuery.trim() && !testing) {
+                    e.preventDefault();
+                    runTest();
+                  }
+                }}
+                placeholder="Ví dụ: bên mình mấy giờ làm việc?"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              onClick={runTest}
+              disabled={testing || !testQuery.trim()}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {testing ? "Đang kiểm tra..." : "Kiểm tra câu trả lời"}
+            </button>
+
+            {testResult && (
+              testResult.matched ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-green-600 font-semibold text-sm">Tìm thấy câu trả lời</span>
+                    <span className="text-xs text-slate-400">
+                      (nguồn: {testResult.matchSource} • điểm: {testResult.score})
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-800 mb-1">{testResult.title}</h4>
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap">{testResult.content}</p>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-700">
+                    Chưa tìm thấy câu trả lời phù hợp. Hãy bổ sung từ khóa hoặc thêm mục tri thức mới.
+                  </p>
+                </div>
+              )
+            )}
+          </div>
+        </Card>
+      )}
 
       {showForm && (
         <Card title={editingId ? "Chỉnh sửa mục tri thức" : "Thêm mục tri thức mới"} className="mb-6">
@@ -197,6 +584,22 @@ export default function SupportKnowledgePage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Từ khóa
+              </label>
+              <input
+                type="text"
+                value={form.keywords}
+                onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+                placeholder="giờ làm việc, thời gian mở cửa, mấy giờ làm"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Nhập các cụm từ khách hàng hay hỏi, cách nhau bằng dấu phẩy.
+              </p>
             </div>
 
             <div>
@@ -241,6 +644,18 @@ export default function SupportKnowledgePage() {
         </Card>
       ) : (
         <>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-slate-500">Sắp xếp:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "default" | "most_used" | "recently_matched")}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="default">Mặc định</option>
+              <option value="most_used">Dùng nhiều nhất</option>
+              <option value="recently_matched">Mới sử dụng gần đây</option>
+            </select>
+          </div>
           {grouped.map((group) => (
             <Card key={group.category} title={group.category} className="mb-6">
               <div className="divide-y divide-slate-100">
@@ -262,7 +677,29 @@ export default function SupportKnowledgePage() {
                             {entry.isActive ? "Đang bật" : "Đã tắt"}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                        <div className="flex items-center gap-3 mt-1">
+                          {entry.keywords && (
+                            <span className="text-xs text-slate-400">
+                              Từ khóa: {entry.keywords}
+                            </span>
+                          )}
+                          {entry.matchCount > 0 && (
+                            <span className="text-xs text-indigo-600">
+                              Đã dùng {entry.matchCount} lần
+                              {(entry.matchCountZalo > 0 || entry.matchCountTelegram > 0 || entry.matchCountMessenger > 0) && (
+                                <span className="text-slate-400 ml-1">
+                                  ({[entry.matchCountZalo > 0 && `Z:${entry.matchCountZalo}`, entry.matchCountTelegram > 0 && `T:${entry.matchCountTelegram}`, entry.matchCountMessenger > 0 && `M:${entry.matchCountMessenger}`].filter(Boolean).join(" ")})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {entry.lastMatchedAt && (
+                            <span className="text-xs text-slate-400">
+                              Lần cuối: {new Date(entry.lastMatchedAt).toLocaleString("vi-VN")}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-600 whitespace-pre-wrap mt-1">
                           {entry.content}
                         </p>
                       </div>
@@ -318,7 +755,29 @@ export default function SupportKnowledgePage() {
                             {entry.isActive ? "Đang bật" : "Đã tắt"}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                        <div className="flex items-center gap-3 mt-1">
+                          {entry.keywords && (
+                            <span className="text-xs text-slate-400">
+                              Từ khóa: {entry.keywords}
+                            </span>
+                          )}
+                          {entry.matchCount > 0 && (
+                            <span className="text-xs text-indigo-600">
+                              Đã dùng {entry.matchCount} lần
+                              {(entry.matchCountZalo > 0 || entry.matchCountTelegram > 0 || entry.matchCountMessenger > 0) && (
+                                <span className="text-slate-400 ml-1">
+                                  ({[entry.matchCountZalo > 0 && `Z:${entry.matchCountZalo}`, entry.matchCountTelegram > 0 && `T:${entry.matchCountTelegram}`, entry.matchCountMessenger > 0 && `M:${entry.matchCountMessenger}`].filter(Boolean).join(" ")})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {entry.lastMatchedAt && (
+                            <span className="text-xs text-slate-400">
+                              Lần cuối: {new Date(entry.lastMatchedAt).toLocaleString("vi-VN")}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-600 whitespace-pre-wrap mt-1">
                           {entry.content}
                         </p>
                       </div>
@@ -354,6 +813,199 @@ export default function SupportKnowledgePage() {
           )}
         </>
       )}
+
+      {/* Unanswered Questions Section */}
+      <div className="mt-8">
+        <button
+          onClick={() => setShowUnanswered(!showUnanswered)}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showUnanswered ? "Ẩn câu hỏi chưa trả lời" : `❓ Câu hỏi chưa có câu trả lời (${unanswered.reduce((sum, g) => sum + g.unresolvedCount, 0)})`}
+        </button>
+
+        {showUnanswered && (
+          <Card className="mt-4">
+            <h3 className="text-lg font-semibold text-slate-800 mb-1">
+              Câu hỏi chưa có câu trả lời
+            </h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Các câu hỏi khách hàng gửi qua chatbot mà chưa tìm thấy câu trả lời trong Trung tâm tri thức.
+            </p>
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              <input
+                type="text"
+                value={uqSearch}
+                onChange={(e) => setUqSearch(e.target.value)}
+                placeholder="Tìm câu hỏi..."
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+              />
+              <select
+                value={uqChannel}
+                onChange={(e) => setUqChannel(e.target.value)}
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">Tất cả kênh</option>
+                <option value="ZALO">Zalo</option>
+                <option value="TELEGRAM">Telegram</option>
+                <option value="MESSENGER">Messenger</option>
+              </select>
+              <select
+                value={uqStatus}
+                onChange={(e) => setUqStatus(e.target.value as "unresolved" | "resolved" | "all")}
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="unresolved">Chưa xử lý</option>
+                <option value="resolved">Đã xử lý</option>
+                <option value="all">Tất cả</option>
+              </select>
+              <select
+                value={uqCategory}
+                onChange={(e) => setUqCategory(e.target.value)}
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">Tất cả danh mục</option>
+                <option value="NONE">Chưa phân loại</option>
+                {UQ_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            {(() => {
+              const filtered = unanswered.filter((g) => {
+                if (uqSearch && !g.displayQuestion.toLowerCase().includes(uqSearch.toLowerCase())) return false;
+                if (uqChannel !== "ALL" && !g.channels.includes(uqChannel)) return false;
+                if (uqStatus === "unresolved" && g.unresolvedCount === 0) return false;
+                if (uqStatus === "resolved" && g.unresolvedCount > 0) return false;
+                if (uqCategory === "NONE" && g.category) return false;
+                if (uqCategory !== "ALL" && uqCategory !== "NONE" && g.category !== uqCategory) return false;
+                return true;
+              });
+              return filtered.length === 0 ? (
+                <p className="text-sm text-slate-400 italic">Không tìm thấy câu hỏi phù hợp.</p>
+              ) : (
+                <div className="space-y-2">
+                  {filtered.map((g) => (
+                  <div
+                    key={g.normalized}
+                    className={`flex items-start justify-between gap-4 p-3 rounded-lg border ${
+                      g.unresolvedCount === 0
+                        ? "bg-slate-50 border-slate-200 opacity-60"
+                        : "bg-white border-amber-200"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        {g.channels.map((ch) => (
+                          <span key={ch} className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            {CHANNEL_LABELS[ch] || ch}
+                          </span>
+                        ))}
+                        {g.count > 1 && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                            {g.count} lần
+                          </span>
+                        )}
+                        <span className="text-xs text-slate-400">
+                          {new Date(g.latestAt).toLocaleString("vi-VN")}
+                        </span>
+                        {g.unresolvedCount === 0 && (
+                          <span className="text-xs text-green-600 font-medium">Đã xử lý</span>
+                        )}
+                        {g.unresolvedCount > 0 && g.unresolvedCount < g.count && (
+                          <span className="text-xs text-amber-600">{g.unresolvedCount} chưa xử lý</span>
+                        )}
+                        {g.category && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            {g.category}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-700">{g.displayQuestion}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <select
+                        value={g.category || ""}
+                        onChange={async (e) => {
+                          const val = e.target.value;
+                          try {
+                            const res = await fetch("/api/admin/unanswered-questions", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ ids: g.ids, category: val }),
+                            });
+                            if (res.ok) {
+                              toast(val ? `Đã gán danh mục: ${val}` : "Đã xóa danh mục", "success");
+                              loadUnanswered();
+                            }
+                          } catch {
+                            toast("Mất kết nối", "error");
+                          }
+                        }}
+                        className="px-2 py-1 text-xs border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">-- Danh mục --</option>
+                        {UQ_CATEGORIES.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                      {g.unresolvedCount > 0 && (
+                        <>
+                          <button
+                            onClick={() => {
+                              const matchedKnowledgeCategory = CATEGORIES.find(
+                                (c) => c.toLowerCase().includes((g.category || "").toLowerCase())
+                              );
+                              setForm({
+                                title: g.displayQuestion,
+                                content: "",
+                                category: matchedKnowledgeCategory || CATEGORIES[0],
+                                keywords: "",
+                              });
+                              setEditingId(null);
+                              setShowForm(true);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                          >
+                            Tạo tri thức
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(
+                                  "/api/admin/unanswered-questions",
+                                  {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ ids: g.ids }),
+                                  },
+                                );
+                                if (res.ok) {
+                                  toast(`Đã đánh dấu nhóm đã xử lý (${g.count} câu hỏi)`, "success");
+                                  loadUnanswered();
+                                  loadAnalytics();
+                                }
+                              } catch {
+                                toast("Mất kết nối", "error");
+                              }
+                            }}
+                            className="px-2.5 py-1 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                          >
+                            Đã xử lý nhóm
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              );
+            })()}
+          </Card>
+        )}
+      </div>
     </>
   );
 }
