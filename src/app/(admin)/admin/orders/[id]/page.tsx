@@ -95,7 +95,7 @@ export default function AdminOrderDetailPage() {
 
   async function updateStatus(newStatus: string) {
     const res = await fetch(`/api/orders/${params.id}/status`, {
-      method: "PUT",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
