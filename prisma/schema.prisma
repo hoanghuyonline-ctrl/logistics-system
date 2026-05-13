@@ -259,5 +259,6 @@ model ChatbotUnansweredQuestion {
   question  String
   senderId  String?
   resolved  Boolean  @default(false)
+  category  String?
   createdAt DateTime @default(now())
 }

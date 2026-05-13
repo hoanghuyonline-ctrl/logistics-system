@@ -25,6 +25,7 @@ export async function GET() {
     channels: string[];
     latestAt: string;
     unresolvedCount: number;
+    category: string | null;
   }> = {};
 
   for (const q of questions) {
@@ -38,6 +39,7 @@ export async function GET() {
         channels: [],
         latestAt: q.createdAt.toISOString(),
         unresolvedCount: 0,
+        category: null,
       };
     }
     groups[key].ids.push(q.id);
@@ -45,6 +47,9 @@ export async function GET() {
     if (!q.resolved) groups[key].unresolvedCount++;
     if (!groups[key].channels.includes(q.channel)) {
       groups[key].channels.push(q.channel);
+    }
+    if (q.category && !groups[key].category) {
+      groups[key].category = q.category;
     }
     const ts = q.createdAt.toISOString();
     if (ts > groups[key].latestAt) {
@@ -66,15 +71,22 @@ export async function PATCH(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { ids } = body as { ids?: string[] };
+  const { ids, category } = body as { ids?: string[]; category?: string };
 
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     return errorResponse("Thiếu danh sách ID", 400);
   }
 
+  const data: { resolved?: boolean; category?: string | null } = {};
+  if (category !== undefined) {
+    data.category = category || null;
+  } else {
+    data.resolved = true;
+  }
+
   const result = await prisma.chatbotUnansweredQuestion.updateMany({
     where: { id: { in: ids } },
-    data: { resolved: true },
+    data,
   });
 
   return jsonResponse({ updated: result.count });
