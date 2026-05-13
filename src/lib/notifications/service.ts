@@ -8,6 +8,16 @@ import type {
   ChannelSendResult,
 } from "./types";
 
+function classifyFailure(error: string): string {
+  const lower = error.toLowerCase();
+  if (lower.includes("token") && (lower.includes("expired") || lower.includes("invalid"))) return "TOKEN_EXPIRED";
+  if (lower.includes("recipient") || lower.includes("user not found") || lower.includes("not found")) return "INVALID_RECIPIENT";
+  if (lower.includes("permission") || lower.includes("forbidden") || lower.includes("403")) return "PERMISSION_DENIED";
+  if (lower.includes("network") || lower.includes("fetch") || lower.includes("timeout") || lower.includes("econnrefused")) return "NETWORK_ERROR";
+  if (lower.includes("not configured") || lower.includes("missing") || lower.includes("no email")) return "CONFIG_MISSING";
+  return "UNKNOWN";
+}
+
 function logChannelResult(
   channel: string,
   payload: NotificationPayload,
@@ -29,6 +39,27 @@ function logChannelResult(
   }
 }
 
+function persistFailure(
+  channel: string,
+  payload: NotificationPayload,
+  error: string,
+  recipient?: string,
+): void {
+  prisma.notificationFailure
+    .create({
+      data: {
+        channel,
+        orderCode: payload.orderCode ?? null,
+        customerId: payload.userId,
+        recipient: recipient ?? null,
+        failureCategory: classifyFailure(error),
+        shortReason: error.slice(0, 500),
+        payloadSummary: `${payload.title}: ${payload.message}`.slice(0, 500),
+      },
+    })
+    .catch((e) => console.error("[notify/failure] persist error:", e instanceof Error ? e.message : String(e)));
+}
+
 async function sendToChannel(
   channel: NotificationPayload["channels"][number],
   payload: NotificationPayload,
@@ -42,6 +73,7 @@ async function sendToChannel(
       case "EMAIL": {
         if (!payload.userEmail) {
           logChannelResult(channel, payload, false, undefined, "No email address");
+          persistFailure(channel, payload, "No email address");
           return { channel, success: false, error: "No email address" };
         }
         await sendEmail({
@@ -81,6 +113,7 @@ async function sendToChannel(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     logChannelResult(channel, payload, false, undefined, message);
+    persistFailure(channel, payload, message);
     return { channel, success: false, error: message };
   }
 }

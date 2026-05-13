@@ -221,3 +221,15 @@ model Notification {
   user  User   @relation(fields: [userId], references: [id])
   order Order? @relation(fields: [orderId], references: [id])
 }
+
+model NotificationFailure {
+  id              String   @id @default(uuid())
+  channel         String
+  orderCode       String?
+  customerId      String?
+  recipient       String?
+  failureCategory String?
+  shortReason     String?
+  payloadSummary  String?
+  createdAt       DateTime @default(now())
+}
