@@ -99,6 +99,8 @@
 - **Status Summary Counters** (PR #125) — Compact status chips above admin order list showing order counts by status (Chờ mua, Đã mua, Đang vận chuyển, Tới kho VN, Hoàn thành) + Khẩn cấp count; clickable to filter; opt-in `summary=1` API param with `groupBy` query; new `urgent` filter case
 - **Quick Status Actions** (PR #126) — "Thao tác" column in admin order list with quick transition buttons (e.g. "→ Đã mua"); reuses existing `PATCH /api/orders/[id]/status` for audit logs and notifications; CANCELLED excluded from quick actions; optimistic UI update with toast feedback
 
+- **Admin Support Knowledge Base Foundation** (PR #128) — New `SupportKnowledge` Prisma model (title, content, category, isActive); admin-only CRUD API (`GET/POST /api/admin/support-knowledge`, `PATCH/DELETE /api/admin/support-knowledge/[id]`); "Trung tâm tri thức" admin page with add/edit/delete/toggle UI grouped by category; sidebar nav link with VI/EN/ZH i18n; 6 default seed entries (giờ làm việc, tạo đơn, kiểm tra trạng thái, nạp tiền, tính phí, liên hệ); migration `20260513080000_add_support_knowledge`; no chatbot integration yet — foundation only
+
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
 ## Stack
@@ -140,6 +142,8 @@
 | `/api/telegram/webhook` | POST | Telegram chatbot webhook (public, no auth) |
 | `/api/zalo/webhook` | POST | Zalo OA webhook — auto-reply, order lookup, sender ID binding (public, no auth) |
 | `/api/admin/notifications/health` | GET | Notification channel readiness status (ADMIN-only) |
+| `/api/admin/support-knowledge` | GET/POST | List/create support knowledge entries (ADMIN-only) |
+| `/api/admin/support-knowledge/[id]` | PATCH/DELETE | Update/delete support knowledge entry (ADMIN-only) |
 
 ## Important Prisma Models
 
@@ -153,6 +157,7 @@
 | **OrderStatusLog** | orderId, fromStatus, toStatus, changedBy |
 | **SystemConfig** | key/value pairs (exchange_rate, service_fee_percent, shipping rates) |
 | **Notification** | userId, title, message, isRead |
+| **SupportKnowledge** | id, title, content, category, isActive |
 
 **Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType
 

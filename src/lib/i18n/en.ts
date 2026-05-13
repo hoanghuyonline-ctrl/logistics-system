@@ -189,6 +189,7 @@ const en: Record<string, string> = {
   "audit.to": "To",
   "audit.note": "Note",
   "nav.auditLog": "Audit Log",
+  "nav.supportKnowledge": "Support Knowledge",
 
   // Warehouse scan
   "scan.title": "Scan Package",

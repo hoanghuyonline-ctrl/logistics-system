@@ -241,3 +241,13 @@ model NotificationFailure {
   payloadSummary  String?
   createdAt       DateTime @default(now())
 }
+
+model SupportKnowledge {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  category  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
