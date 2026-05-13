@@ -89,6 +89,7 @@ export default function SupportKnowledgePage() {
   const [uqChannel, setUqChannel] = useState("ALL");
   const [uqStatus, setUqStatus] = useState<"unresolved" | "resolved" | "all">("unresolved");
   const [uqCategory, setUqCategory] = useState("ALL");
+  const [uqQuickFilter, setUqQuickFilter] = useState<"none" | "unresolved" | "most_asked" | "newest" | "categorized">("none");
   const [sortBy, setSortBy] = useState<"default" | "most_used" | "recently_matched">("default");
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -872,16 +873,45 @@ export default function SupportKnowledgePage() {
               </select>
             </div>
 
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {([
+                { key: "none" as const, label: "Tất cả" },
+                { key: "unresolved" as const, label: "Chưa có tri thức" },
+                { key: "most_asked" as const, label: "Hỏi nhiều nhất" },
+                { key: "newest" as const, label: "Mới nhất" },
+                { key: "categorized" as const, label: "Đã phân loại" },
+              ]).map((chip) => (
+                <button
+                  key={chip.key}
+                  onClick={() => setUqQuickFilter(uqQuickFilter === chip.key ? "none" : chip.key)}
+                  className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+                    uqQuickFilter === chip.key
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+
             {(() => {
-              const filtered = unanswered.filter((g) => {
+              let filtered = unanswered.filter((g) => {
                 if (uqSearch && !g.displayQuestion.toLowerCase().includes(uqSearch.toLowerCase())) return false;
                 if (uqChannel !== "ALL" && !g.channels.includes(uqChannel)) return false;
                 if (uqStatus === "unresolved" && g.unresolvedCount === 0) return false;
                 if (uqStatus === "resolved" && g.unresolvedCount > 0) return false;
                 if (uqCategory === "NONE" && g.category) return false;
                 if (uqCategory !== "ALL" && uqCategory !== "NONE" && g.category !== uqCategory) return false;
+                if (uqQuickFilter === "unresolved" && g.unresolvedCount === 0) return false;
+                if (uqQuickFilter === "categorized" && !g.category) return false;
                 return true;
               });
+              if (uqQuickFilter === "most_asked") {
+                filtered = [...filtered].sort((a, b) => b.count - a.count);
+              } else if (uqQuickFilter === "newest") {
+                filtered = [...filtered].sort((a, b) => new Date(b.latestAt).getTime() - new Date(a.latestAt).getTime());
+              }
               return filtered.length === 0 ? (
                 <p className="text-sm text-slate-400 italic">Không tìm thấy câu hỏi phù hợp.</p>
               ) : (
