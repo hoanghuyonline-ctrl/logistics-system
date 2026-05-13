@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -170,7 +171,30 @@ export async function POST(request: Request) {
             if (/\d/.test(text) && !/\s/.test(text)) {
               await handleOrderLookup(senderId, text);
             } else {
-              await sendMessage(senderId, WELCOME_MESSAGE);
+              try {
+                const match = await findSupportKnowledgeAnswer(text, "MESSENGER");
+                if (match) {
+                  console.log(
+                    `[messenger/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
+                  );
+                  const reply =
+                    `📦 Bắc Trung Hải Logistics\n\n` +
+                    `${match.content}\n\n` +
+                    `Nếu cần hỗ trợ thêm, quý khách có thể liên hệ nhân viên.`;
+                  await sendMessage(senderId, reply);
+                } else {
+                  console.log(
+                    `[messenger/knowledge] matched=false | matchSource=none query="${text}"`
+                  );
+                  prisma.chatbotUnansweredQuestion.create({
+                    data: { channel: "MESSENGER", question: text, senderId },
+                  }).catch((e: unknown) => console.error("[messenger/unanswered] save error:", e));
+                  await sendMessage(senderId, WELCOME_MESSAGE);
+                }
+              } catch (err) {
+                console.error("[messenger/knowledge] Error:", err);
+                await sendMessage(senderId, WELCOME_MESSAGE);
+              }
             }
           } else if (event.postback) {
             console.log(

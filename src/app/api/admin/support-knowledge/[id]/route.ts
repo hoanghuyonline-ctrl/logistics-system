@@ -13,7 +13,7 @@ export async function PATCH(
 
   const { id } = await ctx.params;
   const body = await req.json();
-  const { title, content, category, isActive } = body;
+  const { title, content, category, isActive, keywords } = body;
 
   const existing = await prisma.supportKnowledge.findUnique({ where: { id } });
   if (!existing) {
@@ -27,6 +27,9 @@ export async function PATCH(
       ...(content !== undefined && { content }),
       ...(category !== undefined && { category }),
       ...(isActive !== undefined && { isActive }),
+      ...(keywords !== undefined && {
+        keywords: typeof keywords === "string" ? keywords.trim() || null : null,
+      }),
     },
   });
 
