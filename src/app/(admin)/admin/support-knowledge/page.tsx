@@ -957,19 +957,27 @@ export default function SupportKnowledgePage() {
                               const matchedKnowledgeCategory = CATEGORIES.find(
                                 (c) => c.toLowerCase().includes((g.category || "").toLowerCase())
                               );
+                              const questionText = g.displayQuestion;
                               setForm({
-                                title: g.displayQuestion,
-                                content: "",
+                                title: questionText,
+                                content: `Khách hỏi: "${questionText}"\n\nTrả lời:\n`,
                                 category: matchedKnowledgeCategory || CATEGORIES[0],
-                                keywords: "",
+                                keywords: questionText
+                                  .toLowerCase()
+                                  .replace(/[?,!.]/g, "")
+                                  .split(/\s+/)
+                                  .filter((w) => w.length > 1)
+                                  .slice(0, 6)
+                                  .join(", "),
                               });
                               setEditingId(null);
                               setShowForm(true);
                               window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
-                            className="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                            className="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                            title="Tạo mục tri thức mới từ câu hỏi này"
                           >
-                            Tạo tri thức
+                            + Tạo tri thức
                           </button>
                           <button
                             onClick={async () => {
