@@ -19,6 +19,20 @@ interface NotifConfig {
   source: "db" | "env" | "none";
 }
 
+interface ChannelHealth {
+  telegram: "enabled" | "disabled";
+  zalo: "enabled" | "disabled";
+  email: "enabled" | "disabled";
+  messenger: "enabled" | "disabled";
+}
+
+const CHANNEL_LABELS: { key: keyof ChannelHealth; label: string; icon: string }[] = [
+  { key: "telegram", label: "Telegram", icon: "💬" },
+  { key: "zalo", label: "Zalo OA", icon: "📱" },
+  { key: "email", label: "Email (SMTP)", icon: "📧" },
+  { key: "messenger", label: "Messenger", icon: "💭" },
+];
+
 interface SmtpStatus {
   key: string;
   configured: boolean;
@@ -147,6 +161,8 @@ export default function SettingsPage() {
   const [smtpStatus, setSmtpStatus] = useState<SmtpStatus[]>([]);
   const [smtpLoading, setSmtpLoading] = useState(true);
   const [notifEdits, setNotifEdits] = useState<Record<string, string>>({});
+  const [channelHealth, setChannelHealth] = useState<ChannelHealth | null>(null);
+  const [healthLoading, setHealthLoading] = useState(true);
   const [notifSaving, setNotifSaving] = useState(false);
 
   const loadNotifConfigs = useCallback(async () => {
@@ -177,6 +193,11 @@ export default function SettingsPage() {
         setLoading(false);
       });
     loadNotifConfigs();
+    fetch("/api/admin/notifications/health")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setChannelHealth(d))
+      .catch(() => {})
+      .finally(() => setHealthLoading(false));
     fetch("/api/admin/smtp-diagnostics")
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setSmtpStatus(d))
@@ -316,6 +337,59 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl">
       <PageHeader title="Cài đặt hệ thống" subtitle="Cấu hình phí, tỷ giá, cước vận chuyển và kênh thông báo" />
+
+      <Card title="Trạng thái kênh thông báo">
+        {healthLoading ? (
+          <p className="text-sm text-slate-400">Đang tải...</p>
+        ) : !channelHealth ? (
+          <p className="text-sm text-red-500">Không thể tải trạng thái kênh thông báo.</p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-500 mb-3">
+              Tổng quan trạng thái sẵn sàng của các kênh gửi thông báo.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {CHANNEL_LABELS.map(({ key, label, icon }) => {
+                const status = channelHealth[key];
+                const isEnabled = status === "enabled";
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-center gap-3 p-3 rounded-xl border ${
+                      isEnabled
+                        ? "border-green-200 bg-green-50"
+                        : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <span className="text-lg">{icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-700">{label}</p>
+                      <p className={`text-xs font-medium ${
+                        isEnabled ? "text-green-600" : "text-slate-400"
+                      }`}>
+                        {isEnabled ? "Sẵn sàng" : "Thiếu cấu hình"}
+                      </p>
+                    </div>
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${
+                      isEnabled ? "bg-green-500" : "bg-slate-300"
+                    }`} />
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 border border-blue-200 flex-1">
+                <span className="text-sm">🔔</span>
+                <div>
+                  <p className="text-sm font-medium text-blue-700">App (Hệ thống)</p>
+                  <p className="text-xs font-medium text-blue-600">Đang bật</p>
+                </div>
+                <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0 bg-blue-500 ml-auto" />
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
 
       <Card title="Cấu hình phí">
         <form onSubmit={save} className="space-y-6">
