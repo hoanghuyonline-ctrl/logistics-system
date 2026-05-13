@@ -46,6 +46,11 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, fullName: true, email: true } },
+        orderNotes: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { content: true },
+        },
       },
     }),
     prisma.order.count({ where }),
