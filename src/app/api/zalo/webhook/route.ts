@@ -210,7 +210,7 @@ export async function POST(request: Request) {
               const match = await findSupportKnowledgeAnswer(text);
               if (match) {
                 console.log(
-                  `[zalo/knowledge] matched=true | id=${match.id} title="${match.title}" query="${text}"`
+                  `[zalo/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
                 );
                 const reply =
                   `📦 Bắc Trung Hải Logistics\n\n` +
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
                 await replyToUser(userId, reply);
               } else {
                 console.log(
-                  `[zalo/knowledge] matched=false | query="${text}"`
+                  `[zalo/knowledge] matched=false | matchSource=none query="${text}"`
                 );
                 await replyToUser(userId, WELCOME_MESSAGE);
               }

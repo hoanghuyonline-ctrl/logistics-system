@@ -247,6 +247,7 @@ model SupportKnowledge {
   title     String
   content   String
   category  String
+  keywords  String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

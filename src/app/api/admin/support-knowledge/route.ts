@@ -26,14 +26,16 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, content, category } = body;
+  const { title, content, category, keywords } = body;
 
   if (!title || !content || !category) {
     return errorResponse("Tiêu đề, nội dung và danh mục là bắt buộc", 400);
   }
 
+  const trimmedKeywords = typeof keywords === "string" ? keywords.trim() || null : null;
+
   const entry = await prisma.supportKnowledge.create({
-    data: { title, content, category },
+    data: { title, content, category, keywords: trimmedKeywords },
   });
 
   return jsonResponse(entry, 201);

@@ -5,6 +5,7 @@ interface KnowledgeMatch {
   title: string;
   content: string;
   score: number;
+  matchSource: "keywords" | "title" | "category" | "content";
 }
 
 const MAX_REPLY_LENGTH = 500;
@@ -19,35 +20,66 @@ function tokenize(text: string): string[] {
     .filter((w) => w.length >= 2);
 }
 
-export function scoreMatch(query: string, title: string, content: string, category: string): number {
+export function scoreMatch(
+  query: string,
+  title: string,
+  content: string,
+  category: string,
+  keywords?: string | null,
+): { score: number; matchSource: "keywords" | "title" | "category" | "content" | "none" } {
   const normalizedQuery = normalize(query);
   const tokens = tokenize(query);
 
-  if (tokens.length === 0) return 0;
+  if (tokens.length === 0) return { score: 0, matchSource: "none" };
 
   let score = 0;
+  let keywordsScore = 0;
+  let titleScore = 0;
+  let categoryScore = 0;
+  let contentScore = 0;
+
+  // Keywords matching (highest priority)
+  if (keywords) {
+    const kwList = keywords.split(",").map((k) => normalize(k.trim())).filter((k) => k.length >= 2);
+    for (const kw of kwList) {
+      if (normalizedQuery.includes(kw)) keywordsScore += 15;
+      for (const token of tokens) {
+        if (kw.includes(token)) keywordsScore += 5;
+      }
+    }
+    score += keywordsScore;
+  }
+
   const normalizedTitle = normalize(title);
   const normalizedContent = normalize(content);
   const normalizedCategory = normalize(category);
 
-  // Exact substring match in title (highest weight)
+  // Exact substring match in title
   if (normalizedTitle.includes(normalizedQuery)) {
-    score += 10;
+    titleScore += 10;
   }
 
   // Token-level matching
   for (const token of tokens) {
-    if (normalizedTitle.includes(token)) score += 3;
-    if (normalizedCategory.includes(token)) score += 2;
-    if (normalizedContent.includes(token)) score += 1;
+    if (normalizedTitle.includes(token)) titleScore += 3;
+    if (normalizedCategory.includes(token)) categoryScore += 2;
+    if (normalizedContent.includes(token)) contentScore += 1;
   }
 
-  return score;
+  score += titleScore + categoryScore + contentScore;
+
+  let matchSource: "keywords" | "title" | "category" | "content" | "none" = "none";
+  if (keywordsScore > 0) matchSource = "keywords";
+  else if (titleScore > 0) matchSource = "title";
+  else if (categoryScore > 0) matchSource = "category";
+  else if (contentScore > 0) matchSource = "content";
+
+  return { score, matchSource };
 }
 
 export async function findSupportKnowledgeAnswer(
   messageText: string,
-): Promise<{ id: string; title: string; content: string } | null> {
+): Promise<{ id: string; title: string; content: string; matchSource: string } | null> {
   const entries = await prisma.supportKnowledge.findMany({
     where: { isActive: true },
   });
@@ -55,12 +87,16 @@ export async function findSupportKnowledgeAnswer(
   if (entries.length === 0) return null;
 
   const matches: KnowledgeMatch[] = entries
-    .map((entry) => ({
-      id: entry.id,
-      title: entry.title,
-      content: entry.content,
-      score: scoreMatch(messageText, entry.title, entry.content, entry.category),
-    }))
+    .map((entry) => {
+      const result = scoreMatch(messageText, entry.title, entry.content, entry.category, entry.keywords);
+      return {
+        id: entry.id,
+        title: entry.title,
+        content: entry.content,
+        score: result.score,
+        matchSource: result.matchSource === "none" ? "content" : result.matchSource,
+      };
+    })
     .filter((m) => m.score > 0)
     .sort((a, b) => b.score - a.score);
 
@@ -72,5 +108,5 @@ export async function findSupportKnowledgeAnswer(
       ? best.content.slice(0, MAX_REPLY_LENGTH) + "..."
       : best.content;
 
-  return { id: best.id, title: best.title, content };
+  return { id: best.id, title: best.title, content, matchSource: best.matchSource };
 }

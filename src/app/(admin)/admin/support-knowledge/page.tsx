@@ -11,6 +11,7 @@ interface KnowledgeEntry {
   title: string;
   content: string;
   category: string;
+  keywords: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -23,7 +24,7 @@ const CATEGORIES = [
   "Liên hệ & hỗ trợ",
 ];
 
-const EMPTY_FORM = { title: "", content: "", category: CATEGORIES[0] };
+const EMPTY_FORM = { title: "", content: "", category: CATEGORIES[0], keywords: "" };
 
 export default function SupportKnowledgePage() {
   const { toast } = useToast();
@@ -64,7 +65,7 @@ export default function SupportKnowledgePage() {
 
   function openEdit(entry: KnowledgeEntry) {
     setEditingId(entry.id);
-    setForm({ title: entry.title, content: entry.content, category: entry.category });
+    setForm({ title: entry.title, content: entry.content, category: entry.category, keywords: entry.keywords || "" });
     setShowForm(true);
   }
 
@@ -201,6 +202,22 @@ export default function SupportKnowledgePage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
+                Từ khóa
+              </label>
+              <input
+                type="text"
+                value={form.keywords}
+                onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+                placeholder="giờ làm việc, thời gian mở cửa, mấy giờ làm"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Nhập các cụm từ khách hàng hay hỏi, cách nhau bằng dấu phẩy.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Nội dung trả lời
               </label>
               <textarea
@@ -262,7 +279,12 @@ export default function SupportKnowledgePage() {
                             {entry.isActive ? "Đang bật" : "Đã tắt"}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                        {entry.keywords && (
+                          <p className="text-xs text-slate-400 mt-1">
+                            Từ khóa: {entry.keywords}
+                          </p>
+                        )}
+                        <p className="text-sm text-slate-600 whitespace-pre-wrap mt-1">
                           {entry.content}
                         </p>
                       </div>
@@ -318,7 +340,12 @@ export default function SupportKnowledgePage() {
                             {entry.isActive ? "Đang bật" : "Đã tắt"}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                        {entry.keywords && (
+                          <p className="text-xs text-slate-400 mt-1">
+                            Từ khóa: {entry.keywords}
+                          </p>
+                        )}
+                        <p className="text-sm text-slate-600 whitespace-pre-wrap mt-1">
                           {entry.content}
                         </p>
                       </div>
