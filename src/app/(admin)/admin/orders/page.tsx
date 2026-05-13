@@ -50,6 +50,7 @@ function AdminOrdersContent() {
   const [search, setSearch] = useState(() => searchParams.get("search") || "");
   const [filter, setFilter] = useState(() => searchParams.get("filter") || "");
   const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<{ statusCounts: Record<string, number>; urgentCount: number } | null>(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams();
@@ -86,12 +87,14 @@ function AdminOrdersContent() {
     if (search) params.set("search", search);
     if (filter) params.set("filter", filter);
 
+    params.set("summary", "1");
     fetch(`/api/orders?${params}`)
       .then((r) => r.json())
       .then((d) => {
         if (cancelled) return;
         setOrders(d.orders || []);
         setTotalPages(d.totalPages || 1);
+        if (d.summary) setSummary(d.summary);
         setLoading(false);
       });
     return () => { cancelled = true; };
@@ -100,6 +103,33 @@ function AdminOrdersContent() {
   return (
     <div>
       <PageHeader title={t("orders.adminTitle")} subtitle={t("orders.adminSubtitle")} />
+
+      {summary && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {([
+            { key: "PENDING", label: "Chờ mua", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+            { key: "PURCHASED", label: "Đã mua", color: "bg-blue-50 text-blue-700 border-blue-200" },
+            { key: "SHIPPING_TO_VIETNAM", label: "Đang vận chuyển", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+            { key: "ARRIVED_VIETNAM_WH", label: "Tới kho VN", color: "bg-teal-50 text-teal-700 border-teal-200" },
+            { key: "COMPLETED", label: "Hoàn thành", color: "bg-green-50 text-green-700 border-green-200" },
+          ] as const).map((s) => {
+            const count = summary.statusCounts[s.key] || 0;
+            const isActive = status === s.key;
+            return (
+              <button key={s.key} onClick={() => { setStatus(isActive ? "" : s.key); setPage(1); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${isActive ? "ring-2 ring-offset-1 ring-blue-400" : ""} ${s.color}`}>
+                {s.label} <span className="font-bold">{count}</span>
+              </button>
+            );
+          })}
+          {summary.urgentCount > 0 && (
+            <button onClick={() => { setFilter(filter === "urgent" ? "" : "urgent"); setPage(1); }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors bg-red-50 text-red-700 border-red-200 ${filter === "urgent" ? "ring-2 ring-offset-1 ring-red-400" : ""}`}>
+              Khẩn cấp <span className="font-bold">{summary.urgentCount}</span>
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => (
