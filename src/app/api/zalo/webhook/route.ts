@@ -20,6 +20,54 @@ const WELCOME_MESSAGE =
   "Xin chào, Bắc Trung Hải Logistics đã nhận được tin nhắn của quý khách.\n\n" +
   "Quý khách có thể gửi mã đơn hàng để tra cứu trạng thái.";
 
+const BIND_SUCCESS_MESSAGE =
+  "✅ Zalo đã được liên kết với tài khoản của quý khách.\n" +
+  "Các cập nhật vận chuyển sẽ được gửi tự động qua Zalo.";
+
+async function tryBindZaloRecipient(
+  senderId: string,
+  matchedUserId: string,
+  orderCode: string,
+): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: matchedUserId },
+    select: { zaloRecipientId: true },
+  });
+
+  if (!user) {
+    console.log(
+      `[zalo/bind] SKIP — user not found | senderId=${senderId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+    );
+    return false;
+  }
+
+  // Already bound to the same sender — no action needed
+  if (user.zaloRecipientId === senderId) {
+    console.log(
+      `[zalo/bind] SKIP — already bound | senderId=${senderId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+    );
+    return false;
+  }
+
+  // Conflict: another Zalo account already bound to this customer
+  if (user.zaloRecipientId && user.zaloRecipientId !== senderId) {
+    console.warn(
+      `[zalo/bind] CONFLICT — user already has different zaloRecipientId | senderId=${senderId} existing=${user.zaloRecipientId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+    );
+    return false;
+  }
+
+  // First-time bind
+  await prisma.user.update({
+    where: { id: matchedUserId },
+    data: { zaloRecipientId: senderId },
+  });
+  console.log(
+    `[zalo/bind] OK — bound | senderId=${senderId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+  );
+  return true;
+}
+
 async function replyToUser(userId: string, text: string): Promise<void> {
   const token = await getNotificationConfig("zalo_oa_access_token");
   if (!token) {
@@ -89,14 +137,15 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
     return;
   }
 
-  // Save Zalo sender ID on the order's user for future notification delivery
-  prisma.user
-    .update({
-      where: { id: order.userId },
-      data: { zaloRecipientId: userId },
-    })
-    .then(() => console.log(`[zalo/webhook] Saved zaloRecipientId=${userId} for user=${order.userId}`))
-    .catch((err: unknown) => console.error("[zalo/webhook] Failed to save zaloRecipientId:", err));
+  // Auto-bind Zalo sender ID to the order's customer account
+  try {
+    const bound = await tryBindZaloRecipient(userId, order.userId, orderCode);
+    if (bound) {
+      await replyToUser(userId, BIND_SUCCESS_MESSAGE);
+    }
+  } catch (err) {
+    console.error("[zalo/bind] FAIL | senderId=" + userId + " orderCode=" + orderCode, err);
+  }
 
   const statusLabel = STATUS_LABELS[order.status] || order.status;
   const lines: string[] = [
