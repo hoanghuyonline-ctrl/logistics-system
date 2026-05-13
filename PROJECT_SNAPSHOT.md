@@ -96,6 +96,9 @@
 - **Priority Tagging** (PR #122) — New `OrderPriority` enum (NORMAL/HIGH/URGENT) with `priority` field on Order; admin can set priority from order detail ("Độ ưu tiên" card); colored badge in admin order list (amber for Ưu tiên, red for Khẩn cấp); new `PUT /api/orders/[id]/priority` endpoint; migration `20260513060000_add_order_priority`
 - **Suspense Build Fix** (PR #123) — Wrapped `useSearchParams` in `<Suspense>` boundary for `/admin/orders` to fix Next.js production build error; split into `AdminOrdersPage` wrapper + `AdminOrdersContent` inner component
 
+- **Status Summary Counters** (PR #125) — Compact status chips above admin order list showing order counts by status (Chờ mua, Đã mua, Đang vận chuyển, Tới kho VN, Hoàn thành) + Khẩn cấp count; clickable to filter; opt-in `summary=1` API param with `groupBy` query; new `urgent` filter case
+- **Quick Status Actions** (PR #126) — "Thao tác" column in admin order list with quick transition buttons (e.g. "→ Đã mua"); reuses existing `PATCH /api/orders/[id]/status` for audit logs and notifications; CANCELLED excluded from quick actions; optimistic UI update with toast feedback
+
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
 ## Stack
