@@ -370,6 +370,53 @@ async function main() {
     ],
   });
 
+  // Support knowledge base default entries
+  const knowledgeEntries = [
+    {
+      title: "Giờ làm việc",
+      category: "Thông tin chung",
+      content:
+        "Bắc Trung Hải Logistics làm việc từ Thứ 2 đến Thứ 7, 8:00 - 17:30.\nChủ nhật và ngày lễ nghỉ. Liên hệ hotline nếu cần hỗ trợ ngoài giờ.",
+    },
+    {
+      title: "Cách tạo đơn hàng",
+      category: "Hướng dẫn sử dụng",
+      content:
+        "Đăng nhập → Tạo đơn hàng → Dán link sản phẩm từ Taobao/1688/Tmall → Nhập số lượng → Hệ thống tự động tính chi phí → Xác nhận đặt hàng.",
+    },
+    {
+      title: "Cách kiểm tra trạng thái đơn",
+      category: "Hướng dẫn sử dụng",
+      content:
+        "Đăng nhập vào hệ thống → Đơn hàng của tôi → Xem trạng thái đơn hàng.\nHoặc gửi mã đơn hàng qua Zalo/Telegram để tra cứu nhanh.",
+    },
+    {
+      title: "Cách nạp tiền",
+      category: "Hướng dẫn sử dụng",
+      content:
+        "Chuyển khoản đến tài khoản Vietinbank CN Lạng Sơn: 110003049134.\nGhi nội dung: [Mã khách hàng] nạp tiền.\nSố dư sẽ được cập nhật trong vòng 15 phút trong giờ làm việc.",
+    },
+    {
+      title: "Cách tính phí vận chuyển",
+      category: "Chính sách & phí",
+      content:
+        "Tổng chi phí = (Giá CNY × Tỷ giá) + Phí dịch vụ (%) + Phí ship nội địa TQ + Phí vận chuyển quốc tế (kg × đơn giá) + Phí giao hàng VN.\nTỷ giá và phí được cập nhật tại mục Cài đặt.",
+    },
+    {
+      title: "Thông tin liên hệ",
+      category: "Liên hệ & hỗ trợ",
+      content:
+        "Công ty TNHH Bắc Trung Hải Logistics\nGiám đốc: Phạm Văn Tuấn\nHotline: 0901 234 567\nEmail: support@bactrunghai.vn\nĐịa chỉ: Lạng Sơn, Việt Nam",
+    },
+  ];
+
+  const existingCount = await prisma.supportKnowledge.count();
+  if (existingCount === 0) {
+    for (const entry of knowledgeEntries) {
+      await prisma.supportKnowledge.create({ data: entry });
+    }
+  }
+
   console.log("Seed completed successfully!");
   console.log("Test accounts:");
   console.log("  admin@logistics.vn / admin123");
