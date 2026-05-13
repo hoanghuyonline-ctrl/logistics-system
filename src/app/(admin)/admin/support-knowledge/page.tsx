@@ -38,6 +38,16 @@ export default function SupportKnowledgePage() {
   const [importText, setImportText] = useState("");
   const [importCategory, setImportCategory] = useState(CATEGORIES[0]);
   const [importing, setImporting] = useState(false);
+  const [showTestBox, setShowTestBox] = useState(false);
+  const [testQuery, setTestQuery] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    matched: boolean;
+    title?: string;
+    content?: string;
+    matchSource: string;
+    score: number;
+  } | null>(null);
 
   const loadEntries = useCallback(async () => {
     try {
@@ -145,6 +155,30 @@ export default function SupportKnowledgePage() {
     }
   }
 
+  async function runTest() {
+    if (!testQuery.trim()) return;
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/admin/support-knowledge/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: testQuery.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTestResult(data);
+      } else {
+        const data = await res.json();
+        toast(data.error || "Không thể kiểm tra", "error");
+      }
+    } catch {
+      toast("Mất kết nối — không gọi được tới server", "error");
+    } finally {
+      setTesting(false);
+    }
+  }
+
   if (loading) return <LoadingSpinner text="Đang tải tri thức hỗ trợ..." />;
 
   const grouped = CATEGORIES.map((cat) => ({
@@ -177,6 +211,12 @@ export default function SupportKnowledgePage() {
           className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
         >
           {showImport ? "Ẩn nhập hàng loạt" : "📋 Nhập hàng loạt"}
+        </button>
+        <button
+          onClick={() => { setShowTestBox(!showTestBox); setTestResult(null); }}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showTestBox ? "Ẩn thử câu hỏi" : "🔍 Thử câu hỏi chatbot"}
         </button>
       </div>
 
@@ -264,6 +304,59 @@ export default function SupportKnowledgePage() {
                 Hủy
               </button>
             </div>
+          </div>
+        </Card>
+      )}
+
+      {showTestBox && (
+        <Card title="Thử câu hỏi chatbot" className="mb-6">
+          <p className="text-sm text-slate-500 mb-4">
+            Nhập câu hỏi giống như khách hàng hỏi qua Zalo để kiểm tra câu trả lời từ Trung tâm tri thức.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                value={testQuery}
+                onChange={(e) => setTestQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && testQuery.trim() && !testing) {
+                    e.preventDefault();
+                    runTest();
+                  }
+                }}
+                placeholder="Ví dụ: bên mình mấy giờ làm việc?"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              onClick={runTest}
+              disabled={testing || !testQuery.trim()}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {testing ? "Đang kiểm tra..." : "Kiểm tra câu trả lời"}
+            </button>
+
+            {testResult && (
+              testResult.matched ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-green-600 font-semibold text-sm">Tìm thấy câu trả lời</span>
+                    <span className="text-xs text-slate-400">
+                      (nguồn: {testResult.matchSource} • điểm: {testResult.score})
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-800 mb-1">{testResult.title}</h4>
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap">{testResult.content}</p>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-700">
+                    Chưa tìm thấy câu trả lời phù hợp. Hãy bổ sung từ khóa hoặc thêm mục tri thức mới.
+                  </p>
+                </div>
+              )
+            )}
           </div>
         </Card>
       )}
