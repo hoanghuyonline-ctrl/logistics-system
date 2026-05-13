@@ -55,7 +55,7 @@ export default function AdminOrdersPage() {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1 max-w-sm">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
-          <input type="text" placeholder={t("orders.searchPlaceholder")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          <input type="text" placeholder={t("orders.adminSearchPlaceholder")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
         </div>
         <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}

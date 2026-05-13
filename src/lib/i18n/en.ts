@@ -316,6 +316,7 @@ const en: Record<string, string> = {
   "orders.adminSubtitle": "View and manage all customer orders",
   "orders.newOrder": "New Order",
   "orders.searchPlaceholder": "Search orders...",
+  "orders.adminSearchPlaceholder": "Order code, package code, barcode, phone...",
   "orders.allStatuses": "All Statuses",
   "orders.loading": "Loading orders...",
   "orders.empty": "No orders found",
