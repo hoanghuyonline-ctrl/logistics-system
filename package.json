@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "seed": "npx tsx prisma/seed.ts",
+    "seed:knowledge": "npx tsx prisma/seed-support-knowledge.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
