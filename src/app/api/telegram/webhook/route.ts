@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getNotificationConfig } from "@/lib/notification-config";
+import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -157,12 +158,37 @@ export async function POST(request: Request) {
     } else if (/\d/.test(text) && !/\s/.test(text)) {
       await handleOrderLookup(chatId, text);
     } else {
-      const reply =
-        "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
-        "Ví dụ:\n" +
-        "<code>BTH123456</code>\n\n" +
-        "Bạn cũng có thể dùng /help để xem hướng dẫn.";
-      await replyToChat(chatId, reply);
+      try {
+        const match = await findSupportKnowledgeAnswer(text);
+        if (match) {
+          console.log(
+            `[telegram/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
+          );
+          const reply =
+            `📦 Bắc Trung Hải Logistics\n\n` +
+            `${match.content}\n\n` +
+            `Nếu cần hỗ trợ thêm, quý khách có thể liên hệ nhân viên.`;
+          await replyToChat(chatId, reply);
+        } else {
+          console.log(
+            `[telegram/knowledge] matched=false | matchSource=none query="${text}"`
+          );
+          const reply =
+            "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
+            "Ví dụ:\n" +
+            "<code>BTH123456</code>\n\n" +
+            "Bạn cũng có thể dùng /help để xem hướng dẫn.";
+          await replyToChat(chatId, reply);
+        }
+      } catch (err) {
+        console.error("[telegram/knowledge] Error:", err);
+        const reply =
+          "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
+          "Ví dụ:\n" +
+          "<code>BTH123456</code>\n\n" +
+          "Bạn cũng có thể dùng /help để xem hướng dẫn.";
+        await replyToChat(chatId, reply);
+      }
     }
 
     return Response.json({ ok: true });
