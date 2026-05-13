@@ -27,6 +27,12 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum OrderPriority {
+  NORMAL
+  HIGH
+  URGENT
+}
+
 enum ShipmentStatus {
   PENDING
   RECEIVED_CHINA
@@ -116,6 +122,7 @@ model Order {
   vietnamDeliveryFee        Decimal     @default(0) @db.Decimal(15, 2)
   totalCostVND              Decimal     @db.Decimal(15, 2)
   status                    OrderStatus @default(PENDING)
+  priority                  OrderPriority @default(NORMAL)
   trackingCodeChina         String?
   trackingCodeIntl          String?
   notes                     String?
