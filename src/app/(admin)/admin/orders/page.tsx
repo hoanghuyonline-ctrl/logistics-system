@@ -20,7 +20,8 @@ interface Order {
   totalCostVND: string;
   createdAt: string;
   user: { fullName: string; email: string };
-  orderNotes: Array<{ content: string }>;
+  orderNotes: Array<{ content: string; createdAt: string; user: { fullName: string; role: string } }>;
+  statusLogs: Array<{ createdAt: string; toStatus: string; changer: { fullName: string; role: string } }>;
 }
 
 export default function AdminOrdersPage() {
@@ -126,7 +127,7 @@ export default function AdminOrdersPage() {
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ghi chú</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hoạt động</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -171,11 +172,18 @@ export default function AdminOrdersPage() {
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
                         <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
                         <td className="px-6 py-4 text-sm text-slate-500 max-w-[200px]">
-                          {order.orderNotes.length > 0 ? (
-                            <span className="truncate block" title={order.orderNotes[0].content}>{order.orderNotes[0].content}</span>
-                          ) : (
-                            <span className="text-slate-300">—</span>
-                          )}
+                          {(() => {
+                            const noteActivity = order.orderNotes[0] ? { at: new Date(order.orderNotes[0].createdAt), name: order.orderNotes[0].user.fullName, role: order.orderNotes[0].user.role } : null;
+                            const logActivity = order.statusLogs[0] ? { at: new Date(order.statusLogs[0].createdAt), name: order.statusLogs[0].changer.fullName, role: order.statusLogs[0].changer.role } : null;
+                            const latest = noteActivity && logActivity
+                              ? (noteActivity.at > logActivity.at ? noteActivity : logActivity)
+                              : noteActivity || logActivity;
+                            if (!latest) return <span className="text-slate-300">—</span>;
+                            const roleLabels: Record<string, string> = { ADMIN: "Admin", CUSTOMER: "KH", WAREHOUSE_CN: "Kho TQ", WAREHOUSE_VN: "Kho VN", ACCOUNTANT: "Kế toán" };
+                            const ago = Math.floor((Date.now() - latest.at.getTime()) / 60000);
+                            const timeStr = ago < 1 ? "vừa xong" : ago < 60 ? `${ago} phút trước` : ago < 1440 ? `${Math.floor(ago / 60)} giờ trước` : `${Math.floor(ago / 1440)} ngày trước`;
+                            return <span className="truncate block" title={`${latest.name} • ${latest.at.toLocaleString()}`}>{roleLabels[latest.role] || latest.role} • {timeStr}</span>;
+                          })()}
                         </td>
                       </tr>
                       );

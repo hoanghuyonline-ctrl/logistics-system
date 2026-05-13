@@ -74,7 +74,12 @@ export async function GET(request: Request) {
         orderNotes: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          select: { content: true },
+          select: { content: true, createdAt: true, user: { select: { fullName: true, role: true } } },
+        },
+        statusLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true, toStatus: true, changer: { select: { fullName: true, role: true } } },
         },
       },
     }),
