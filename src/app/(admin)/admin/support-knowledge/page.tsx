@@ -69,6 +69,9 @@ export default function SupportKnowledgePage() {
   const [creatingTemplates, setCreatingTemplates] = useState(false);
   const [unanswered, setUnanswered] = useState<UnansweredGroup[]>([]);
   const [showUnanswered, setShowUnanswered] = useState(false);
+  const [uqSearch, setUqSearch] = useState("");
+  const [uqChannel, setUqChannel] = useState("ALL");
+  const [uqStatus, setUqStatus] = useState<"unresolved" | "resolved" | "all">("unresolved");
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -758,11 +761,48 @@ export default function SupportKnowledgePage() {
               Các câu hỏi khách hàng gửi qua chatbot mà chưa tìm thấy câu trả lời trong Trung tâm tri thức.
             </p>
 
-            {unanswered.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">Chưa có câu hỏi nào.</p>
-            ) : (
-              <div className="space-y-2">
-                {unanswered.map((g) => (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <input
+                type="text"
+                value={uqSearch}
+                onChange={(e) => setUqSearch(e.target.value)}
+                placeholder="Tìm câu hỏi..."
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+              />
+              <select
+                value={uqChannel}
+                onChange={(e) => setUqChannel(e.target.value)}
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">Tất cả kênh</option>
+                <option value="ZALO">Zalo</option>
+                <option value="TELEGRAM">Telegram</option>
+                <option value="MESSENGER">Messenger</option>
+              </select>
+              <select
+                value={uqStatus}
+                onChange={(e) => setUqStatus(e.target.value as "unresolved" | "resolved" | "all")}
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="unresolved">Chưa xử lý</option>
+                <option value="resolved">Đã xử lý</option>
+                <option value="all">Tất cả</option>
+              </select>
+            </div>
+
+            {(() => {
+              const filtered = unanswered.filter((g) => {
+                if (uqSearch && !g.displayQuestion.toLowerCase().includes(uqSearch.toLowerCase())) return false;
+                if (uqChannel !== "ALL" && !g.channels.includes(uqChannel)) return false;
+                if (uqStatus === "unresolved" && g.unresolvedCount === 0) return false;
+                if (uqStatus === "resolved" && g.unresolvedCount > 0) return false;
+                return true;
+              });
+              return filtered.length === 0 ? (
+                <p className="text-sm text-slate-400 italic">Không tìm thấy câu hỏi phù hợp.</p>
+              ) : (
+                <div className="space-y-2">
+                  {filtered.map((g) => (
                   <div
                     key={g.normalized}
                     className={`flex items-start justify-between gap-4 p-3 rounded-lg border ${
@@ -844,7 +884,8 @@ export default function SupportKnowledgePage() {
                   </div>
                 ))}
               </div>
-            )}
+              );
+            })()}
           </Card>
         )}
       </div>
