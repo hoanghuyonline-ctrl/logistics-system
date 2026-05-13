@@ -20,10 +20,16 @@ interface Order {
   customStatusNote: string | null;
   totalCostVND: string;
   createdAt: string;
+  priority: string;
   user: { fullName: string; email: string };
   orderNotes: Array<{ content: string; createdAt: string; user: { fullName: string; role: string } }>;
   statusLogs: Array<{ createdAt: string; toStatus: string; changer: { fullName: string; role: string } }>;
 }
+
+const priorityConfig: Record<string, { label: string; className: string }> = {
+  HIGH: { label: "Ưu tiên", className: "bg-amber-100 text-amber-700 border-amber-200" },
+  URGENT: { label: "Khẩn cấp", className: "bg-red-100 text-red-700 border-red-200" },
+};
 
 export default function AdminOrdersPage() {
   const { t } = useI18n();
@@ -167,6 +173,11 @@ export default function AdminOrdersPage() {
                             <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700" onClick={(e) => e.stopPropagation()}>
                               {order.orderCode}
                             </Link>
+                            {priorityConfig[order.priority] && (
+                              <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded border ${priorityConfig[order.priority].className}`}>
+                                {priorityConfig[order.priority].label}
+                              </span>
+                            )}
                             {hasNotes && (
                               <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" title="Có ghi chú" />
                             )}

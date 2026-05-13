@@ -39,6 +39,7 @@ interface OrderDetail {
   vietnamDeliveryFee: string;
   totalCostVND: string;
   status: string;
+  priority: string;
   trackingCodeChina: string | null;
   trackingCodeIntl: string | null;
   customStatusNote: string | null;
@@ -182,6 +183,20 @@ export default function AdminOrderDetailPage() {
     }
   }
 
+  async function updatePriority(newPriority: string) {
+    const res = await fetch(`/api/orders/${params.id}/priority`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priority: newPriority }),
+    });
+    if (res.ok) {
+      toast("Đã cập nhật độ ưu tiên", "success");
+      loadOrder();
+    } else {
+      toast("Không thể cập nhật độ ưu tiên", "error");
+    }
+  }
+
   async function saveWeight() {
     const res = await fetch(`/api/orders/${params.id}/weight`, {
       method: "PUT",
@@ -223,6 +238,27 @@ export default function AdminOrderDetailPage() {
         subtitle={`${t("orders.customer")}: ${order.user.fullName} · ${new Date(order.createdAt).toLocaleDateString()}`}
         action={<StatusBadge status={order.status} />}
       />
+
+      {/* Priority */}
+      <Card title="Độ ưu tiên">
+        <div className="flex gap-2 flex-wrap">
+          {(["NORMAL", "HIGH", "URGENT"] as const).map((p) => {
+            const config: Record<string, { label: string; active: string; inactive: string }> = {
+              NORMAL: { label: "Bình thường", active: "bg-slate-600 text-white", inactive: "bg-white text-slate-600 border-slate-300 hover:bg-slate-50" },
+              HIGH: { label: "Ưu tiên", active: "bg-amber-500 text-white", inactive: "bg-white text-amber-600 border-amber-300 hover:bg-amber-50" },
+              URGENT: { label: "Khẩn cấp", active: "bg-red-600 text-white", inactive: "bg-white text-red-600 border-red-300 hover:bg-red-50" },
+            };
+            const c = config[p];
+            const isActive = order.priority === p;
+            return (
+              <button key={p} onClick={() => updatePriority(p)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${isActive ? c.active : c.inactive}`}>
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
 
       {/* Status transition */}
       {nextStatuses.length > 0 && (
