@@ -20,6 +20,7 @@ interface Order {
   totalCostVND: string;
   createdAt: string;
   user: { fullName: string; email: string };
+  orderNotes: Array<{ content: string }>;
 }
 
 export default function AdminOrdersPage() {
@@ -89,6 +90,7 @@ export default function AdminOrdersPage() {
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ghi chú</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -112,6 +114,13 @@ export default function AdminOrdersPage() {
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
                         <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500 max-w-[200px]">
+                          {order.orderNotes.length > 0 ? (
+                            <span className="truncate block" title={order.orderNotes[0].content}>{order.orderNotes[0].content}</span>
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
