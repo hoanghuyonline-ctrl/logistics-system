@@ -32,6 +32,15 @@ const CHANNEL_LABELS: Record<string, string> = {
   MESSENGER: "Messenger",
 };
 
+interface AnalyticsSummary {
+  total: number;
+  unresolved: number;
+  resolved: number;
+  byChannel: Record<string, { total: number; unresolved: number }>;
+  latestUnresolved: { question: string; channel: string; createdAt: string } | null;
+  topRepeated: { question: string; count: number }[];
+}
+
 const CATEGORIES = [
   "Thông tin chung",
   "Hướng dẫn sử dụng",
@@ -59,6 +68,8 @@ export default function SupportKnowledgePage() {
   const [creatingTemplates, setCreatingTemplates] = useState(false);
   const [unanswered, setUnanswered] = useState<UnansweredQuestion[]>([]);
   const [showUnanswered, setShowUnanswered] = useState(false);
+  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [testResult, setTestResult] = useState<{
     matched: boolean;
     title?: string;
@@ -93,6 +104,18 @@ export default function SupportKnowledgePage() {
     }
   }, []);
 
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/support-knowledge/unanswered/summary");
+      if (res.ok) {
+        const data = await res.json();
+        setAnalytics(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetch("/api/admin/support-knowledge")
       .then((r) => (r.ok ? r.json() : []))
@@ -100,7 +123,8 @@ export default function SupportKnowledgePage() {
       .catch(() => {})
       .finally(() => setLoading(false));
     loadUnanswered();
-  }, [loadUnanswered]);
+    loadAnalytics();
+  }, [loadUnanswered, loadAnalytics]);
 
   function openCreate() {
     setEditingId(null);
@@ -278,7 +302,86 @@ export default function SupportKnowledgePage() {
         >
           {creatingTemplates ? "Đang tạo..." : "📄 Tạo tri thức mẫu"}
         </button>
+        <button
+          onClick={() => { setShowAnalytics(!showAnalytics); if (!showAnalytics) loadAnalytics(); }}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+        >
+          {showAnalytics ? "Ẩn thống kê" : "📊 Hiệu quả chatbot"}
+        </button>
       </div>
+
+      {/* Analytics Card */}
+      {showAnalytics && analytics && (
+        <Card className="mb-6">
+          <h3 className="text-lg font-semibold text-slate-800 mb-3">Hiệu quả chatbot</h3>
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="text-center p-3 bg-slate-50 rounded-lg">
+              <p className="text-2xl font-bold text-slate-800">{analytics.total}</p>
+              <p className="text-xs text-slate-500">Tổng câu hỏi</p>
+            </div>
+            <div className="text-center p-3 bg-amber-50 rounded-lg">
+              <p className="text-2xl font-bold text-amber-700">{analytics.unresolved}</p>
+              <p className="text-xs text-amber-600">Chưa xử lý</p>
+            </div>
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <p className="text-2xl font-bold text-green-700">{analytics.resolved}</p>
+              <p className="text-xs text-green-600">Đã xử lý</p>
+            </div>
+          </div>
+
+          {Object.keys(analytics.byChannel).length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm font-medium text-slate-600 mb-2">Theo kênh:</p>
+              <div className="flex gap-3">
+                {Object.entries(analytics.byChannel).map(([channel, data]) => (
+                  <div key={channel} className="flex items-center gap-2 text-sm">
+                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                      {CHANNEL_LABELS[channel] || channel}
+                    </span>
+                    <span className="text-slate-600">{data.total}</span>
+                    {data.unresolved > 0 && (
+                      <span className="text-amber-600 text-xs">({data.unresolved} chưa xử lý)</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {analytics.latestUnresolved && (
+            <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-xs font-medium text-amber-700 mb-1">Câu hỏi chưa xử lý gần nhất:</p>
+              <p className="text-sm text-slate-700">
+                <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 mr-2">
+                  {CHANNEL_LABELS[analytics.latestUnresolved.channel] || analytics.latestUnresolved.channel}
+                </span>
+                {analytics.latestUnresolved.question}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                {new Date(analytics.latestUnresolved.createdAt).toLocaleString("vi-VN")}
+              </p>
+            </div>
+          )}
+
+          {analytics.topRepeated.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Top câu hỏi lặp lại nhiều nhất:</p>
+              <div className="space-y-1">
+                {analytics.topRepeated.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm p-2 bg-slate-50 rounded">
+                    <span className="text-slate-700 truncate mr-2">{item.question}</span>
+                    <span className="text-xs font-medium text-slate-500 shrink-0">{item.count} lần</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {analytics.total === 0 && (
+            <p className="text-sm text-slate-400 italic">Chưa có dữ liệu câu hỏi chưa trả lời.</p>
+          )}
+        </Card>
+      )}
 
       {showImport && (
         <Card title="Nhập tri thức hàng loạt" className="mb-6">
