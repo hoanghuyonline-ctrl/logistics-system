@@ -81,9 +81,10 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
 
   if (!order) {
     const reply =
-      "Không tìm thấy đơn hàng với mã này.\n\n" +
-      "Vui lòng kiểm tra lại mã đơn hàng.\n\n" +
-      "Nếu cần hỗ trợ, vui lòng liên hệ Bắc Trung Hải Logistics.";
+      `📦 Bắc Trung Hải Logistics\n` +
+      `Không tìm thấy đơn hàng với mã: ${orderCode}\n\n` +
+      `Vui lòng kiểm tra lại mã đơn hàng.\n` +
+      `Nếu cần hỗ trợ, quý khách có thể liên hệ nhân viên Bắc Trung Hải Logistics.`;
     await replyToUser(userId, reply);
     return;
   }
@@ -99,20 +100,27 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
 
   const statusLabel = STATUS_LABELS[order.status] || order.status;
   const lines: string[] = [
+    `📦 Bắc Trung Hải Logistics`,
+    ``,
     `Đơn hàng: ${order.orderCode}`,
-    `Trạng thái: ${statusLabel}`,
+    `📌 Trạng thái: ${statusLabel}`,
   ];
 
   if (order.weightKg !== null && order.weightKg !== undefined) {
-    lines.push(`Khối lượng: ${Number(order.weightKg)}kg`);
+    lines.push(`⚖️ Khối lượng: ${Number(order.weightKg)}kg`);
   }
 
   const cost = Number(order.totalCostVND);
   if (cost > 0) {
-    lines.push(`Tổng tiền: ${cost.toLocaleString("vi-VN")}đ`);
+    lines.push(`💰 Tổng tiền: ${cost.toLocaleString("vi-VN")}đ`);
   }
 
-  lines.push("", "Cảm ơn quý khách đã sử dụng Bắc Trung Hải Logistics.");
+  lines.push(
+    ``,
+    `Nếu cần hỗ trợ thêm, quý khách có thể gửi mã đơn hàng khác hoặc liên hệ nhân viên.`,
+    ``,
+    `Cảm ơn quý khách đã sử dụng dịch vụ Bắc Trung Hải Logistics.`,
+  );
 
   await replyToUser(userId, lines.join("\n"));
 }
