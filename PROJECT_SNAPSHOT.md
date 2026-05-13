@@ -91,6 +91,8 @@
 - **Order Note Preview in Admin List** (PR #114) — Admin order list shows latest note snippet in "Ghi chú" column; truncated with hover tooltip; single-query via Prisma `take: 1`; no schema change
 - **Admin Order List Visual Indicators** (PR #116) — Blue dot for orders with notes, amber dot for custom status notes, ⏳ for PENDING ≥ 3 days, red row tint for cancelled; all computed client-side from existing data
 - **Quick Filter Chips** (PR #117) — Six filter chips above admin order list: Có ghi chú, Có cập nhật khách hàng, Đang chờ lâu, Đã huỷ, Hôm nay, Chưa hoàn thành; toggle behavior with "Xóa bộ lọc" clear button; server-side `filter` query param; combines with search and status dropdown
+- **Last Activity Info** (PR #119) — Replaced "Ghi chú" column with "Hoạt động" showing who last touched the order and when (e.g. "Admin • 5 phút trước"); compares latest statusLog vs orderNote; role labels in Vietnamese
+- **Order List Navigation** (PR #120) — Clickable rows with Ctrl/Cmd+click and middle-click new-tab support; URL state persistence for search, filter, status, and page via `useSearchParams` + `history.replaceState`
 
 ## Stack
 
