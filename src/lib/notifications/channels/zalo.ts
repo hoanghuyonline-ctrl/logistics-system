@@ -3,6 +3,7 @@
 // TODO: Add webhook handling for delivery receipts
 
 import { getNotificationConfig } from "@/lib/notification-config";
+import { prisma } from "@/lib/prisma";
 
 const API_URL = "https://openapi.zalo.me/v3.0/oa/message/cs";
 
@@ -162,5 +163,71 @@ export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
     };
     logZaloSend(log);
     throw new Error(getFailureLabel(category));
+  }
+}
+
+const ZALO_STATUS_TEMPLATES: Record<string, (orderCode: string) => string> = {
+  PURCHASED: (c) => `🛒 Đơn hàng ${c} đã được đặt mua từ người bán.`,
+  SELLER_SHIPPED: (c) => `📤 Đơn hàng ${c} — người bán đã gửi hàng.`,
+  ARRIVED_CHINA_WH: (c) => `📦 Đơn hàng ${c} đã nhập kho Trung Quốc.`,
+  PACKING: (c) => `📦 Đơn hàng ${c} đang được đóng gói tại kho.`,
+  SHIPPING_TO_VIETNAM: (c) => `🚚 Đơn hàng ${c} đang vận chuyển về Việt Nam.`,
+  ARRIVED_VIETNAM_WH: (c) => `🇻🇳 Đơn hàng ${c} đã tới kho Việt Nam.`,
+  OUT_FOR_DELIVERY: (c) => `🚛 Đơn hàng ${c} đang được giao đến quý khách.`,
+  COMPLETED: (c) => `✅ Đơn hàng ${c} đã giao thành công.`,
+  CANCELLED: (c) => `❌ Đơn hàng ${c} đã bị huỷ.`,
+};
+
+export async function notifyZaloStatusChange(params: {
+  userId: string;
+  orderCode: string;
+  toStatus: string;
+}): Promise<void> {
+  const { userId, orderCode, toStatus } = params;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { zaloRecipientId: true },
+  });
+
+  if (!user?.zaloRecipientId) {
+    console.log(
+      `[zalo/status] Bỏ qua — khách hàng chưa có zaloRecipientId | đơn=${orderCode} customerId=${userId} status=${toStatus}`
+    );
+    return;
+  }
+
+  const templateFn = ZALO_STATUS_TEMPLATES[toStatus];
+  if (!templateFn) {
+    console.log(
+      `[zalo/status] Bỏ qua — không có template cho status=${toStatus} | đơn=${orderCode}`
+    );
+    return;
+  }
+
+  const statusLine = templateFn(orderCode);
+  const message = [
+    `📦 Bắc Trung Hải Logistics`,
+    ``,
+    statusLine,
+    ``,
+    `Quý khách có thể gửi mã đơn hàng để tra cứu chi tiết.`,
+    `Cảm ơn quý khách đã sử dụng dịch vụ Bắc Trung Hải Logistics.`,
+  ].join("\n");
+
+  try {
+    const result = await sendZalo({
+      text: message,
+      recipientId: user.zaloRecipientId,
+      orderCode,
+    });
+    console.log(
+      `[zalo/status] ${result.success ? "OK" : "FAIL"} | đơn=${orderCode} customerId=${userId} recipientId=${user.zaloRecipientId} status=${toStatus}`
+    );
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[zalo/status] FAIL | đơn=${orderCode} customerId=${userId} recipientId=${user.zaloRecipientId} status=${toStatus} | lý do: ${reason}`
+    );
   }
 }
