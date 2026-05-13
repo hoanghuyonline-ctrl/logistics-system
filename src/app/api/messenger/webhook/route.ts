@@ -175,7 +175,7 @@ export async function POST(request: Request) {
                 const match = await findSupportKnowledgeAnswer(text, "MESSENGER");
                 if (match) {
                   console.log(
-                    `[messenger/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
+                    `[messenger/knowledge] matched=true | channel=MESSENGER score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
                   );
                   const reply =
                     `📦 Bắc Trung Hải Logistics\n\n` +
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
                   await sendMessage(senderId, reply);
                 } else {
                   console.log(
-                    `[messenger/knowledge] matched=false | matchSource=none query="${text}"`
+                    `[messenger/knowledge] matched=false | channel=MESSENGER score=0 candidates=0 matchSource=none query="${text}"`
                   );
                   prisma.chatbotUnansweredQuestion.create({
                     data: { channel: "MESSENGER", question: text, senderId },

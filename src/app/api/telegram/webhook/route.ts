@@ -168,7 +168,7 @@ export async function POST(request: Request) {
         const match = await findSupportKnowledgeAnswer(text, "TELEGRAM");
         if (match) {
           console.log(
-            `[telegram/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
+            `[telegram/knowledge] matched=true | channel=TELEGRAM score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
           );
           const reply =
             `📦 Bắc Trung Hải Logistics\n\n` +
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
           await replyToChat(chatId, reply);
         } else {
           console.log(
-            `[telegram/knowledge] matched=false | matchSource=none query="${text}"`
+            `[telegram/knowledge] matched=false | channel=TELEGRAM score=0 candidates=0 matchSource=none query="${text}"`
           );
           prisma.chatbotUnansweredQuestion.create({
             data: { channel: "TELEGRAM", question: text, senderId: String(chatId) },

@@ -210,7 +210,7 @@ export async function POST(request: Request) {
               const match = await findSupportKnowledgeAnswer(text, "ZALO");
               if (match) {
                 console.log(
-                  `[zalo/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
+                  `[zalo/knowledge] matched=true | channel=ZALO score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
                 );
                 const reply =
                   `📦 Bắc Trung Hải Logistics\n\n` +
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
                 await replyToUser(userId, reply);
               } else {
                 console.log(
-                  `[zalo/knowledge] matched=false | matchSource=none query="${text}"`
+                  `[zalo/knowledge] matched=false | channel=ZALO score=0 candidates=0 matchSource=none query="${text}"`
                 );
                 prisma.chatbotUnansweredQuestion.create({
                   data: { channel: "ZALO", question: text, senderId: userId },
