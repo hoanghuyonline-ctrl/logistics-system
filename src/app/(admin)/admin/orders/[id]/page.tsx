@@ -44,6 +44,7 @@ interface OrderDetail {
   customStatusNote: string | null;
   createdAt: string;
   user: { fullName: string; email: string; phone: string; address: string };
+  package: { packageCode: string; barcode: string | null } | null;
   statusLogs: Array<{
     id: string;
     fromStatus: string | null;
@@ -72,6 +73,12 @@ export default function AdminOrderDetailPage() {
   const [customNoteEditing, setCustomNoteEditing] = useState(false);
   const [customNoteSaving, setCustomNoteSaving] = useState(false);
   const [newNote, setNewNote] = useState("");
+
+  function copyToClipboard(value: string) {
+    navigator.clipboard.writeText(value).then(() => {
+      toast("Đã sao chép", "success");
+    });
+  }
 
   const loadOrder = useCallback(() => {
     fetch(`/api/orders/${params.id}`)
@@ -197,7 +204,22 @@ export default function AdminOrderDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${t("orders.order")} ${order.orderCode}`}
+        title={
+          <span className="inline-flex items-center gap-2">
+            {t("orders.order")} {order.orderCode}
+            <button
+              type="button"
+              onClick={() => copyToClipboard(order.orderCode)}
+              className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              title="Sao chép mã đơn"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </button>
+          </span>
+        }
         subtitle={`${t("orders.customer")}: ${order.user.fullName} · ${new Date(order.createdAt).toLocaleDateString()}`}
         action={<StatusBadge status={order.status} />}
       />
@@ -249,6 +271,49 @@ export default function AdminOrderDetailPage() {
           <p className="text-sm text-slate-400">Chưa có link sản phẩm</p>
         )}
       </Card>
+
+      {order.package && (
+        <Card title="Kiện hàng">
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between items-center">
+              <dt className="text-slate-500">Mã kiện</dt>
+              <dd className="font-medium text-slate-900 inline-flex items-center gap-1.5">
+                {order.package.packageCode}
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(order.package!.packageCode)}
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  title="Sao chép mã kiện"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                </button>
+              </dd>
+            </div>
+            {order.package.barcode && (
+              <div className="flex justify-between items-center">
+                <dt className="text-slate-500">Barcode</dt>
+                <dd className="font-medium text-slate-900 inline-flex items-center gap-1.5">
+                  {order.package.barcode}
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(order.package!.barcode!)}
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                    title="Sao chép barcode"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+                </dd>
+              </div>
+            )}
+          </dl>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.customerInfo")}>
@@ -342,15 +407,45 @@ export default function AdminOrderDetailPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("orderDetail.chinaTracking")}</label>
-              <input type="text" placeholder={t("orderDetail.chinaTrackingPlaceholder")} value={tracking.trackingCodeChina}
-                onChange={(e) => setTracking({ ...tracking, trackingCodeChina: e.target.value })}
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+              <div className="flex gap-2">
+                <input type="text" placeholder={t("orderDetail.chinaTrackingPlaceholder")} value={tracking.trackingCodeChina}
+                  onChange={(e) => setTracking({ ...tracking, trackingCodeChina: e.target.value })}
+                  className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                {tracking.trackingCodeChina && (
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(tracking.trackingCodeChina)}
+                    className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-300 text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors shrink-0"
+                    title="Sao chép mã vận đơn TQ"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("orderDetail.intlTracking")}</label>
-              <input type="text" placeholder={t("orderDetail.intlTrackingPlaceholder")} value={tracking.trackingCodeIntl}
-                onChange={(e) => setTracking({ ...tracking, trackingCodeIntl: e.target.value })}
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+              <div className="flex gap-2">
+                <input type="text" placeholder={t("orderDetail.intlTrackingPlaceholder")} value={tracking.trackingCodeIntl}
+                  onChange={(e) => setTracking({ ...tracking, trackingCodeIntl: e.target.value })}
+                  className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                {tracking.trackingCodeIntl && (
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(tracking.trackingCodeIntl)}
+                    className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-300 text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors shrink-0"
+                    title="Sao chép mã vận đơn quốc tế"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
             <button onClick={saveTracking} className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
               {t("orderDetail.saveTracking")}
