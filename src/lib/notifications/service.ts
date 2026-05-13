@@ -8,6 +8,27 @@ import type {
   ChannelSendResult,
 } from "./types";
 
+function logChannelResult(
+  channel: string,
+  payload: NotificationPayload,
+  success: boolean,
+  recipient?: string,
+  error?: string,
+): void {
+  const parts = [
+    `[notify/${channel.toLowerCase()}] ${success ? "OK" : "FAIL"}`,
+    payload.orderCode ? `đơn=${payload.orderCode}` : null,
+    `customerId=${payload.userId}`,
+    recipient ? `recipient=${recipient}` : null,
+    error ? `reason=${error}` : null,
+  ].filter(Boolean);
+  if (success) {
+    console.log(parts.join(" | "));
+  } else {
+    console.error(parts.join(" | "));
+  }
+}
+
 async function sendToChannel(
   channel: NotificationPayload["channels"][number],
   payload: NotificationPayload,
@@ -15,10 +36,12 @@ async function sendToChannel(
   try {
     switch (channel) {
       case "SYSTEM":
+        logChannelResult(channel, payload, true);
         return { channel, success: true };
 
       case "EMAIL": {
         if (!payload.userEmail) {
+          logChannelResult(channel, payload, false, undefined, "No email address");
           return { channel, success: false, error: "No email address" };
         }
         await sendEmail({
@@ -26,11 +49,13 @@ async function sendToChannel(
           subject: payload.title,
           text: payload.message,
         });
+        logChannelResult(channel, payload, true, payload.userEmail);
         return { channel, success: true };
       }
 
       case "TELEGRAM": {
         await sendTelegram({ text: `<b>${payload.title}</b>\n${payload.message}` });
+        logChannelResult(channel, payload, true);
         return { channel, success: true };
       }
 
@@ -40,11 +65,13 @@ async function sendToChannel(
           where: { id: payload.userId },
           select: { zaloRecipientId: true },
         });
+        const recipientId = zaloUser?.zaloRecipientId ?? undefined;
         await sendZalo({
           text: `${payload.title}\n${payload.message}`,
           orderCode: payload.orderCode,
-          recipientId: zaloUser?.zaloRecipientId ?? undefined,
+          recipientId,
         });
+        logChannelResult(channel, payload, true, recipientId ?? "(fallback)");
         return { channel, success: true };
       }
 
@@ -53,7 +80,7 @@ async function sendToChannel(
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[notifications] ${channel} send failed:`, message);
+    logChannelResult(channel, payload, false, undefined, message);
     return { channel, success: false, error: message };
   }
 }
