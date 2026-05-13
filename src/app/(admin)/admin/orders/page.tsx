@@ -30,13 +30,24 @@ export default function AdminOrdersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const filters = [
+    { key: "hasNotes", label: "Có ghi chú", icon: "📝" },
+    { key: "hasCustomNote", label: "Có cập nhật khách hàng", icon: "📢" },
+    { key: "longPending", label: "Đang chờ lâu", icon: "⏳" },
+    { key: "cancelled", label: "Đã huỷ", icon: "❌" },
+    { key: "today", label: "Hôm nay", icon: "📅" },
+    { key: "notCompleted", label: "Chưa hoàn thành", icon: "📦" },
+  ];
 
   useEffect(() => {
     let cancelled = false;
     const params = new URLSearchParams({ page: String(page), limit: "15" });
     if (status) params.set("status", status);
     if (search) params.set("search", search);
+    if (filter) params.set("filter", filter);
 
     fetch(`/api/orders?${params}`)
       .then((r) => r.json())
@@ -47,11 +58,36 @@ export default function AdminOrdersPage() {
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [page, status, search]);
+  }, [page, status, search, filter]);
 
   return (
     <div>
       <PageHeader title={t("orders.adminTitle")} subtitle={t("orders.adminSubtitle")} />
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {filters.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => { setFilter(filter === f.key ? "" : f.key); setPage(1); }}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              filter === f.key
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+            }`}
+          >
+            <span>{f.icon}</span>
+            {f.label}
+          </button>
+        ))}
+        {filter && (
+          <button
+            onClick={() => { setFilter(""); setPage(1); }}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            Xóa bộ lọc
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1 max-w-sm">
