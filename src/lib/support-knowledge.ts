@@ -4,6 +4,7 @@ interface KnowledgeMatch {
   id: string;
   title: string;
   content: string;
+  keywords: string | null;
   score: number;
   matchSource: "keywords" | "title" | "category" | "content";
 }
@@ -94,10 +95,20 @@ export function scoreMatch(
   return { score, matchSource };
 }
 
+export interface KnowledgeAnswerResult {
+  id: string;
+  title: string;
+  content: string;
+  keywords: string | null;
+  matchSource: string;
+  score: number;
+  candidateCount: number;
+}
+
 export async function findSupportKnowledgeAnswer(
   messageText: string,
   channel?: string,
-): Promise<{ id: string; title: string; content: string; matchSource: string } | null> {
+): Promise<KnowledgeAnswerResult | null> {
   const entries = await prisma.supportKnowledge.findMany({
     where: { isActive: true },
   });
@@ -111,6 +122,7 @@ export async function findSupportKnowledgeAnswer(
         id: entry.id,
         title: entry.title,
         content: entry.content,
+        keywords: entry.keywords,
         score: result.score,
         matchSource: result.matchSource === "none" ? "content" : result.matchSource,
       };
@@ -128,7 +140,15 @@ export async function findSupportKnowledgeAnswer(
 
   trackKnowledgeMatch(best.id, channel);
 
-  return { id: best.id, title: best.title, content, matchSource: best.matchSource };
+  return {
+    id: best.id,
+    title: best.title,
+    content,
+    keywords: best.keywords,
+    matchSource: best.matchSource,
+    score: best.score,
+    candidateCount: matches.length,
+  };
 }
 
 export async function testSupportKnowledgeMatch(
