@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-12
+**Date:** 2026-05-13
 **Branch:** `main`
-**Latest stable commit:** `df6316b`
+**Latest stable commit:** `07e843c`
 
 ---
 
@@ -29,6 +29,12 @@
 - **Zalo OA Notification Foundation** — Basic OA text message delivery channel, env-configured, integrated with notification service
 - **Zalo Order Status Notification** (PR #33) — Fire-and-forget Vietnamese Zalo notification on order status change, reuses existing `sendZalo()`, gated by `ZALO_SEND_ENABLED`
 - **Zalo Diagnostics & Vietnamese UX** (PR #41) — Structured Zalo send logs (timestamp, orderCode, recipientId, success/failure, failureCategory, errorReason), failure classification into 6 categories (TOKEN_EXPIRED, INVALID_RECIPIENT, PERMISSION_DENIED, NETWORK_ERROR, CONFIG_MISSING, UNKNOWN) with Vietnamese labels, improved admin test UI (clearer config status, last test timestamp), natural Vietnamese notification wording
+- **Zalo Domain Verifier Public Access** (PR #90) — Whitelisted `/zalo_verifier*.html` in proxy auth bypass so Zalo OA domain verification returns 200 instead of redirecting to `/login`
+- **Zalo OA Webhook** (PR #91) — Public `POST /api/zalo/webhook` endpoint for receiving Zalo OA events, added to `publicPaths` in proxy.ts
+- **Zalo Webhook Auto-Reply** (PR #92) — `user_send_text` events trigger Vietnamese auto-reply with order lookup (order code → status/weight/cost) or guidance message; fire-and-forget pattern
+- **Zalo Reply Formatting** (PR #94) — Polished Vietnamese mobile-friendly formatting with company header (📦 Bắc Trung Hải Logistics), emoji icons, actual order code in not-found replies, company sign-off
+- **Zalo Automatic Status Notifications** (PR #95) — Shipment status changes automatically push Vietnamese Zalo notifications to bound customers; 9 status templates with emoji icons; structured `[zalo/status]` logging; only sends when customer has `zaloRecipientId` and `ZALO_SEND_ENABLED=true`
+- **Zalo Auto-Bind Sender ID** (PR #96) — First-time order lookup via Zalo OA automatically binds sender ID to customer account (`User.zaloRecipientId`); conflict safety (never overwrites existing different binding); structured `[zalo/bind]` logging; Vietnamese confirmation reply on successful bind
 - **Vietnamese System Notifications** (PR #34) — Customer-facing bell-dropdown notifications converted to Vietnamese-first wording (9 status messages + title + fallback)
 - **Vietnamese Notification Templates** (PR #35) — Email/Telegram notification templates converted to Vietnamese-first: 10 STATUS_LABELS, orderCreatedTemplate, shipmentStatusChangedTemplate, sign-off updated to "Công ty TNHH Bắc Trung Hải Logistics"
 - **Vietnamese Wallet & Order Notifications** (PR #36) — Wallet deposit notification ("Nạp tiền thành công") and new order admin notification ("Đơn hàng mới") converted to Vietnamese-first wording
@@ -113,12 +119,13 @@
 | `/api/analytics` | GET | Dashboard analytics |
 | `/api/accountant/dashboard` | GET | Accountant financial KPIs and recent transactions |
 | `/api/telegram/webhook` | POST | Telegram chatbot webhook (public, no auth) |
+| `/api/zalo/webhook` | POST | Zalo OA webhook — auto-reply, order lookup, sender ID binding (public, no auth) |
 
 ## Important Prisma Models
 
 | Model | Key Fields |
 |-------|-----------|
-| **User** | id, email, password, role (CUSTOMER/ADMIN/WAREHOUSE_CN/WAREHOUSE_VN/ACCOUNTANT) |
+| **User** | id, email, password, role (CUSTOMER/ADMIN/WAREHOUSE_CN/WAREHOUSE_VN/ACCOUNTANT), zaloRecipientId (nullable) |
 | **Order** | orderCode, status (OrderStatus enum), unitPriceCNY, totalCostVND, weightKg, packageId |
 | **Package** | packageCode, barcode, totalWeightKg, dimensions, status (PackageStatus) |
 | **Wallet** | userId, balance, debt |
@@ -147,7 +154,7 @@
 3. **bwip-js types** — local interface used because package types don't resolve under `moduleResolution: "bundler"`. Low risk.
 4. **CI lint step uses continue-on-error** — pre-existing lint warnings are not blocking; to be resolved incrementally.
 5. **Notification delivery is fire-and-forget** — failed sends are logged but do not block APIs.
-6. **Zalo OA access token is short-lived** — needs OAuth refresh flow for production use.
+6. **Zalo OA production integration complete** — webhook, auto-reply, order lookup, sender ID binding, and automatic status notifications all verified working.
 7. **Telegram delivery requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in production** — failures are logged and do not block APIs.
 8. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 9. **Camera scan requires HTTPS in production** — `getUserMedia` API is restricted to secure contexts by browsers.
@@ -157,8 +164,9 @@
 13. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
 14. **Package images stored locally** — stored under `public/uploads/packages/` via `LocalStorageProvider`; swap to S3/R2/MinIO by implementing `StorageProvider` interface and setting `STORAGE_PROVIDER` env var.
 15. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
-16. **Zalo delivery uses one global fallback recipient ID** — per-user Zalo delivery needs schema changes (e.g., `User.zaloChatId`).
-17. **Zalo delivery cannot be tested without real OA credentials** — requires valid `ZALO_OA_ACCESS_TOKEN` and `ZALO_RECIPIENT_ID`.
+16. **Zalo OA access token is short-lived** — current token works but needs OAuth refresh automation for long-term production use.
+17. **Zalo OA tier/package required** — API sending requires an active OA package (ZBS) with sufficient quota; free tier has limitations.
+18. **Zalo auto-bind requires customer initiative** — customers must message the OA at least once with a valid order code to bind their Zalo recipient ID; no admin-side manual binding yet.
 18. **Smoke tests cover storage only** — 5 Vitest tests for `LocalStorageProvider`; API route and E2E tests not yet implemented.
 19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
