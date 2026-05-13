@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-13
 **Branch:** `main`
-**Latest stable commit:** `24ff718`
+**Latest stable commit:** `aa27a39`
 
 ---
 
@@ -85,6 +85,7 @@
   - Existing Telegram bot and web tracking unaffected
 - **Admin Order Detail UI Fix** (PR #104) — Separated custom status note ("Ghi chú trạng thái") input into its own Card below customer/cost section; "Cập nhật trạng thái" card now contains only status transition buttons, fixing layout overlap that made buttons unclickable
 - **Status Update Method Fix** (PR #105) — Changed admin order detail `updateStatus()` from `PUT` to `PATCH` to match the `/api/orders/[id]/status` route handler, fixing 405 errors on all status transitions
+- **Admin Persistent Order Notes** (PR #107) — Admin can send free-form messages to customers via "Cập nhật cho khách hàng" card on order detail; notes persist as `OrderNote` records, display with author/role/timestamp, and trigger in-app notification to the customer; no schema change (reuses existing `OrderNote` model)
 - **Product Link Display Polish** (PR #110) — Admin order detail now shows clean domain-based labels ("Mở link Taobao", "Mở link 1688", etc.) instead of raw URLs; full product URL remains clickable and opens in a new tab; no schema change
 
 ## Stack
