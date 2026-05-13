@@ -165,7 +165,7 @@ export async function POST(request: Request) {
       await handleOrderLookup(chatId, text);
     } else {
       try {
-        const match = await findSupportKnowledgeAnswer(text);
+        const match = await findSupportKnowledgeAnswer(text, "TELEGRAM");
         if (match) {
           console.log(
             `[telegram/knowledge] matched=true | matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`

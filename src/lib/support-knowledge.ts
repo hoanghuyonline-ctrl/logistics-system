@@ -10,6 +10,23 @@ interface KnowledgeMatch {
 
 const MAX_REPLY_LENGTH = 500;
 
+const CHANNEL_COUNT_FIELD: Record<string, string> = {
+  ZALO: "matchCountZalo",
+  TELEGRAM: "matchCountTelegram",
+  MESSENGER: "matchCountMessenger",
+};
+
+export function trackKnowledgeMatch(entryId: string, channel?: string): void {
+  const incrementData: Record<string, unknown> = { matchCount: { increment: 1 } };
+  if (channel && CHANNEL_COUNT_FIELD[channel]) {
+    incrementData[CHANNEL_COUNT_FIELD[channel]] = { increment: 1 };
+  }
+  prisma.supportKnowledge.update({
+    where: { id: entryId },
+    data: { ...incrementData, lastMatchedAt: new Date() },
+  }).catch((e: unknown) => console.error("[knowledge/tracking] error:", e));
+}
+
 function normalize(text: string): string {
   return text.toLowerCase().trim();
 }
@@ -79,6 +96,7 @@ export function scoreMatch(
 
 export async function findSupportKnowledgeAnswer(
   messageText: string,
+  channel?: string,
 ): Promise<{ id: string; title: string; content: string; matchSource: string } | null> {
   const entries = await prisma.supportKnowledge.findMany({
     where: { isActive: true },
@@ -107,6 +125,8 @@ export async function findSupportKnowledgeAnswer(
     best.content.length > MAX_REPLY_LENGTH
       ? best.content.slice(0, MAX_REPLY_LENGTH) + "..."
       : best.content;
+
+  trackKnowledgeMatch(best.id, channel);
 
   return { id: best.id, title: best.title, content, matchSource: best.matchSource };
 }
