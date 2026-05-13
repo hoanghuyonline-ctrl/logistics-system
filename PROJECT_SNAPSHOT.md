@@ -89,6 +89,8 @@
 - **Copy-to-Clipboard Buttons** (PR #112) — Admin order detail copy buttons for order code, package code, barcode, and tracking fields; "Đã sao chép" toast on click; no schema change
 - **Expanded Admin Order Search** (PR #113) — Admin order search now supports order code, package code, barcode, and customer phone; additive OR conditions for non-customer roles; admin-specific placeholder in VI/EN/ZH
 - **Order Note Preview in Admin List** (PR #114) — Admin order list shows latest note snippet in "Ghi chú" column; truncated with hover tooltip; single-query via Prisma `take: 1`; no schema change
+- **Admin Order List Visual Indicators** (PR #116) — Blue dot for orders with notes, amber dot for custom status notes, ⏳ for PENDING ≥ 3 days, red row tint for cancelled; all computed client-side from existing data
+- **Quick Filter Chips** (PR #117) — Six filter chips above admin order list: Có ghi chú, Có cập nhật khách hàng, Đang chờ lâu, Đã huỷ, Hôm nay, Chưa hoàn thành; toggle behavior with "Xóa bộ lọc" clear button; server-side `filter` query param; combines with search and status dropdown
 
 ## Stack
 
