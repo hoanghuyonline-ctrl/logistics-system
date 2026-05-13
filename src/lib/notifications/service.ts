@@ -35,7 +35,16 @@ async function sendToChannel(
       }
 
       case "ZALO": {
-        await sendZalo({ text: `${payload.title}\n${payload.message}`, orderCode: payload.orderCode });
+        // Look up per-user Zalo recipient; fall back to global config in sendZalo
+        const zaloUser = await prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: { zaloRecipientId: true },
+        });
+        await sendZalo({
+          text: `${payload.title}\n${payload.message}`,
+          orderCode: payload.orderCode,
+          recipientId: zaloUser?.zaloRecipientId ?? undefined,
+        });
         return { channel, success: true };
       }
 

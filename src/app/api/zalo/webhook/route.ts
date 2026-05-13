@@ -72,6 +72,7 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
     where: { orderCode },
     select: {
       orderCode: true,
+      userId: true,
       status: true,
       weightKg: true,
       totalCostVND: true,
@@ -86,6 +87,15 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
     await replyToUser(userId, reply);
     return;
   }
+
+  // Save Zalo sender ID on the order's user for future notification delivery
+  prisma.user
+    .update({
+      where: { id: order.userId },
+      data: { zaloRecipientId: userId },
+    })
+    .then(() => console.log(`[zalo/webhook] Saved zaloRecipientId=${userId} for user=${order.userId}`))
+    .catch((err: unknown) => console.error("[zalo/webhook] Failed to save zaloRecipientId:", err));
 
   const statusLabel = STATUS_LABELS[order.status] || order.status;
   const lines: string[] = [
