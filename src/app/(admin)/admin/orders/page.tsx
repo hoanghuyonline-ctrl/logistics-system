@@ -16,6 +16,7 @@ interface Order {
   productName: string;
   quantity: number;
   status: string;
+  customStatusNote: string | null;
   totalCostVND: string;
   createdAt: string;
   user: { fullName: string; email: string };
@@ -103,7 +104,12 @@ export default function AdminOrdersPage() {
                           <div className="text-xs text-slate-400">{order.user.email}</div>
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">{order.productName}</td>
-                        <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
+                        <td className="px-6 py-4">
+                          <StatusBadge status={order.status} />
+                          {order.customStatusNote && (
+                            <p className="text-xs text-amber-600 mt-1 truncate max-w-[150px]" title={order.customStatusNote}>{order.customStatusNote}</p>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
                         <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
                       </tr>

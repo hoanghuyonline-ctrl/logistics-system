@@ -41,6 +41,7 @@ interface OrderDetail {
   status: string;
   trackingCodeChina: string | null;
   trackingCodeIntl: string | null;
+  customStatusNote: string | null;
   createdAt: string;
   user: { fullName: string; email: string; phone: string; address: string };
   statusLogs: Array<{
@@ -62,6 +63,9 @@ export default function AdminOrderDetailPage() {
   const [tracking, setTracking] = useState({ trackingCodeChina: "", trackingCodeIntl: "" });
   const [weight, setWeight] = useState("");
   const [statusNote, setStatusNote] = useState("");
+  const [customNote, setCustomNote] = useState("");
+  const [customNoteEditing, setCustomNoteEditing] = useState(false);
+  const [customNoteSaving, setCustomNoteSaving] = useState(false);
 
   const loadOrder = useCallback(() => {
     fetch(`/api/orders/${params.id}`)
@@ -70,6 +74,7 @@ export default function AdminOrderDetailPage() {
         setOrder(d);
         setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
         setWeight(d.weightKg || "");
+        setCustomNote(d.customStatusNote || "");
         setLoading(false);
       });
   }, [params.id]);
@@ -83,6 +88,7 @@ export default function AdminOrderDetailPage() {
         setOrder(d);
         setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
         setWeight(d.weightKg || "");
+        setCustomNote(d.customStatusNote || "");
         setLoading(false);
       });
     return () => { cancelled = true; };
@@ -113,6 +119,41 @@ export default function AdminOrderDetailPage() {
     toast(res.ok ? t("orderDetail.trackingSaved") : t("orderDetail.trackingSaveFailed"), res.ok ? "success" : "error");
   }
 
+  async function saveCustomNote() {
+    setCustomNoteSaving(true);
+    const res = await fetch(`/api/orders/${params.id}/custom-status-note`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customStatusNote: customNote }),
+    });
+    if (res.ok) {
+      toast("Đã lưu ghi chú trạng thái", "success");
+      setCustomNoteEditing(false);
+      loadOrder();
+    } else {
+      toast("Không thể lưu ghi chú", "error");
+    }
+    setCustomNoteSaving(false);
+  }
+
+  async function clearCustomNote() {
+    setCustomNoteSaving(true);
+    const res = await fetch(`/api/orders/${params.id}/custom-status-note`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customStatusNote: "" }),
+    });
+    if (res.ok) {
+      toast("Đã xoá ghi chú trạng thái", "success");
+      setCustomNote("");
+      setCustomNoteEditing(false);
+      loadOrder();
+    } else {
+      toast("Không thể xoá ghi chú", "error");
+    }
+    setCustomNoteSaving(false);
+  }
+
   async function saveWeight() {
     const res = await fetch(`/api/orders/${params.id}/weight`, {
       method: "PUT",
@@ -139,6 +180,68 @@ export default function AdminOrderDetailPage() {
         subtitle={`${t("orders.customer")}: ${order.user.fullName} · ${new Date(order.createdAt).toLocaleDateString()}`}
         action={<StatusBadge status={order.status} />}
       />
+
+      {/* Custom status note */}
+      <Card title="Trạng thái ghi chú">
+        {!customNoteEditing ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              {order.customStatusNote ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                  <span className="text-sm font-medium text-amber-700">{order.customStatusNote}</span>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400">Chưa có ghi chú trạng thái</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setCustomNoteEditing(true)}
+              className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
+            >
+              {order.customStatusNote ? "Sửa" : "Thêm"}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={customNote}
+              onChange={(e) => setCustomNote(e.target.value)}
+              placeholder="Ví dụ: Đang kiểm đếm, Chờ khách xác nhận, Hàng thiếu kiện..."
+              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={saveCustomNote}
+                disabled={customNoteSaving}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                Lưu
+              </button>
+              {order.customStatusNote && (
+                <button
+                  type="button"
+                  onClick={clearCustomNote}
+                  disabled={customNoteSaving}
+                  className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
+                >
+                  Xoá
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setCustomNoteEditing(false); setCustomNote(order.customStatusNote || ""); }}
+                className="px-4 py-2 border border-slate-300 text-sm rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Huỷ
+              </button>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Status transition */}
       {nextStatuses.length > 0 && (

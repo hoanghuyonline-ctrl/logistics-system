@@ -30,6 +30,7 @@ interface OrderDetail {
   trackingCodeChina: string | null;
   trackingCodeIntl: string | null;
   notes: string | null;
+  customStatusNote: string | null;
   createdAt: string;
   statusLogs: Array<{
     id: string;
@@ -86,6 +87,13 @@ export default function OrderDetailPage() {
         subtitle={`${t("orders.createdOn")} ${new Date(order.createdAt).toLocaleDateString()}`}
         action={<StatusBadge status={order.status} />}
       />
+
+      {order.customStatusNote && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+          <span className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+          <span className="text-sm font-medium text-amber-700">Ghi chú trạng thái: {order.customStatusNote}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.productInfo")}>
