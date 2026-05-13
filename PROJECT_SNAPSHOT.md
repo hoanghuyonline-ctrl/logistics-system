@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-13
 **Branch:** `main`
-**Latest stable commit:** `d0aa32a`
+**Latest stable commit:** `24ff718`
 
 ---
 
@@ -83,6 +83,8 @@
   - Vietnamese formatting verified on mobile Messenger
   - PM2 production deploy stable
   - Existing Telegram bot and web tracking unaffected
+- **Admin Order Detail UI Fix** (PR #104) — Separated custom status note ("Ghi chú trạng thái") input into its own Card below customer/cost section; "Cập nhật trạng thái" card now contains only status transition buttons, fixing layout overlap that made buttons unclickable
+- **Status Update Method Fix** (PR #105) — Changed admin order detail `updateStatus()` from `PUT` to `PATCH` to match the `/api/orders/[id]/status` route handler, fixing 405 errors on all status transitions
 
 ## Stack
 
