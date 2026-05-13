@@ -25,7 +25,18 @@ interface UnansweredGroup {
   channels: string[];
   latestAt: string;
   unresolvedCount: number;
+  category: string | null;
 }
+
+const UQ_CATEGORIES = [
+  "Phí vận chuyển",
+  "Giờ làm việc",
+  "Nạp tiền",
+  "Khiếu nại",
+  "Kho hàng",
+  "Tạo đơn",
+  "Khác",
+];
 
 const CHANNEL_LABELS: Record<string, string> = {
   ZALO: "Zalo",
@@ -72,6 +83,7 @@ export default function SupportKnowledgePage() {
   const [uqSearch, setUqSearch] = useState("");
   const [uqChannel, setUqChannel] = useState("ALL");
   const [uqStatus, setUqStatus] = useState<"unresolved" | "resolved" | "all">("unresolved");
+  const [uqCategory, setUqCategory] = useState("ALL");
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -788,6 +800,17 @@ export default function SupportKnowledgePage() {
                 <option value="resolved">Đã xử lý</option>
                 <option value="all">Tất cả</option>
               </select>
+              <select
+                value={uqCategory}
+                onChange={(e) => setUqCategory(e.target.value)}
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">Tất cả danh mục</option>
+                <option value="NONE">Chưa phân loại</option>
+                {UQ_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             {(() => {
@@ -796,6 +819,8 @@ export default function SupportKnowledgePage() {
                 if (uqChannel !== "ALL" && !g.channels.includes(uqChannel)) return false;
                 if (uqStatus === "unresolved" && g.unresolvedCount === 0) return false;
                 if (uqStatus === "resolved" && g.unresolvedCount > 0) return false;
+                if (uqCategory === "NONE" && g.category) return false;
+                if (uqCategory !== "ALL" && uqCategory !== "NONE" && g.category !== uqCategory) return false;
                 return true;
               });
               return filtered.length === 0 ? (
@@ -832,18 +857,51 @@ export default function SupportKnowledgePage() {
                         {g.unresolvedCount > 0 && g.unresolvedCount < g.count && (
                           <span className="text-xs text-amber-600">{g.unresolvedCount} chưa xử lý</span>
                         )}
+                        {g.category && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            {g.category}
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-slate-700">{g.displayQuestion}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
+                      <select
+                        value={g.category || ""}
+                        onChange={async (e) => {
+                          const val = e.target.value;
+                          try {
+                            const res = await fetch("/api/admin/unanswered-questions", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ ids: g.ids, category: val }),
+                            });
+                            if (res.ok) {
+                              toast(val ? `Đã gán danh mục: ${val}` : "Đã xóa danh mục", "success");
+                              loadUnanswered();
+                            }
+                          } catch {
+                            toast("Mất kết nối", "error");
+                          }
+                        }}
+                        className="px-2 py-1 text-xs border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">-- Danh mục --</option>
+                        {UQ_CATEGORIES.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
                       {g.unresolvedCount > 0 && (
                         <>
                           <button
                             onClick={() => {
+                              const matchedKnowledgeCategory = CATEGORIES.find(
+                                (c) => c.toLowerCase().includes((g.category || "").toLowerCase())
+                              );
                               setForm({
                                 title: g.displayQuestion,
                                 content: "",
-                                category: CATEGORIES[0],
+                                category: matchedKnowledgeCategory || CATEGORIES[0],
                                 keywords: "",
                               });
                               setEditingId(null);
