@@ -42,7 +42,7 @@
 - **Accountant Profit API Access** — ACCOUNTANT role added to `/api/analytics/profit` role check, unlocking finance page for accountants
 - **Order Detail i18n** — Customer and admin order detail pages fully translated with `useI18n()`, 50 `orderDetail.*` keys added to VI/EN/ZH
 - **Storage Abstraction Layer** — `StorageProvider` interface with `LocalStorageProvider`, package image upload/delete routed through abstraction, `STORAGE_PROVIDER` env var for future S3/R2/MinIO swap
-- **Vitest Test Infrastructure** — Vitest configured with `@/` path alias, `npm test` / `npm run test:watch` scripts, 5 smoke tests for `LocalStorageProvider` (upload, delete, missing file, nested dirs, URL format)
+- **Vitest Test Infrastructure** — Vitest configured with `@/` path alias, `npm test` / `npm run test:watch` scripts, 5 smoke tests for `LocalStorageProvider` (upload, delete, missing file, nested dirs, URL format), 32 API route smoke tests covering cost calculation (4), shipment/order status transitions (22), warehouse scan package transitions (7+4 utility)
 - **Telegram Chatbot Basic** (PR #47, #48) — `POST /api/telegram/webhook` for Telegram Bot API webhook; `/start` welcome message (including `/start@bot` and `/start payload` variants); order code lookup with Vietnamese status labels; graceful error handling; public route bypass in proxy.ts; unrecognized bot commands skipped; production webhook verified on `https://thue.eu.cc`
 - **Telegram Help Command** (PR #56) — `/help` and `/help@bactrunghai_bot` return Vietnamese usage instructions, command list, and order code lookup example
 - **Telegram Status Command** (PR #58) — `/status` and `/status@bactrunghai_bot` return Vietnamese guidance for checking order status by sending an order code
@@ -137,7 +137,7 @@
 - Production SMTP configuration
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
 - Cloud storage provider (S3/R2/MinIO) — abstraction layer ready, needs provider implementation
-- API route smoke tests (orders, warehouse scan, status transitions)
+- ~~API route smoke tests (orders, warehouse scan, status transitions)~~ ✓ 32 smoke tests for cost calc, status transitions, warehouse scan, utilities
 - Comprehensive E2E test suite (Playwright)
 
 ## Known Risks / Issues
@@ -159,7 +159,7 @@
 15. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
 16. **Zalo delivery uses one global fallback recipient ID** — per-user Zalo delivery needs schema changes (e.g., `User.zaloChatId`).
 17. **Zalo delivery cannot be tested without real OA credentials** — requires valid `ZALO_OA_ACCESS_TOKEN` and `ZALO_RECIPIENT_ID`.
-18. **Smoke tests cover storage only** — 5 Vitest tests for `LocalStorageProvider`; API route and E2E tests not yet implemented.
+18. **Smoke tests cover storage + API route logic** — 37 Vitest tests total (5 storage, 4 cost calculator, 22 status transitions, 11 warehouse scan/utilities); E2E tests not yet implemented.
 19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
