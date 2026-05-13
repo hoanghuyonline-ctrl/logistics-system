@@ -94,12 +94,27 @@ export default function AdminOrdersPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                    {orders.map((order) => {
+                      const isCancelled = order.status === "CANCELLED";
+                      const daysSinceCreated = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                      const isLongPending = order.status === "PENDING" && daysSinceCreated >= 3;
+                      const hasNotes = order.orderNotes.length > 0;
+                      const hasCustomNote = !!order.customStatusNote;
+
+                      return (
+                      <tr key={order.id} className={`transition-colors ${isCancelled ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50/50"}`}>
                         <td className="px-6 py-4">
-                          <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
-                            {order.orderCode}
-                          </Link>
+                          <div className="flex items-center gap-1.5">
+                            <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                              {order.orderCode}
+                            </Link>
+                            {hasNotes && (
+                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" title="Có ghi chú" />
+                            )}
+                            {hasCustomNote && (
+                              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Có ghi chú trạng thái" />
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-slate-900">{order.user.fullName}</div>
@@ -107,7 +122,12 @@ export default function AdminOrdersPage() {
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">{order.productName}</td>
                         <td className="px-6 py-4">
-                          <StatusBadge status={order.status} />
+                          <div className="flex items-center gap-1.5">
+                            <StatusBadge status={order.status} />
+                            {isLongPending && (
+                              <span className="text-amber-500 text-xs" title={`Chờ xử lý ${daysSinceCreated} ngày`}>⏳</span>
+                            )}
+                          </div>
                           {order.customStatusNote && (
                             <p className="text-xs text-amber-600 mt-1 truncate max-w-[150px]" title={order.customStatusNote}>{order.customStatusNote}</p>
                           )}
@@ -122,7 +142,8 @@ export default function AdminOrdersPage() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
