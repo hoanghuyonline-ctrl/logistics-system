@@ -376,7 +376,7 @@ async function main() {
       title: "Giờ làm việc",
       category: "Thông tin chung",
       content:
-        "Bắc Trung Hải Logistics làm việc từ Thứ 2 đến Thứ 7, 8:00 - 17:30.\nChủ nhật và ngày lễ nghỉ. Liên hệ hotline nếu cần hỗ trợ ngoài giờ.",
+        "Thứ 2 → Thứ 7: 8:00 - 17:30\nChủ nhật và ngày lễ: Nghỉ\nNgoài giờ làm việc, bạn vẫn có thể tra cứu đơn hàng qua chatbot Zalo/Telegram. Nhân viên sẽ phản hồi tin nhắn hỗ trợ vào ngày làm việc tiếp theo.",
     },
     {
       title: "Cách tạo đơn hàng",
@@ -407,6 +407,60 @@ async function main() {
       category: "Liên hệ & hỗ trợ",
       content:
         "Công ty TNHH Bắc Trung Hải Logistics\nGiám đốc: Phạm Văn Tuấn\nHotline: 0901 234 567\nEmail: support@bactrunghai.vn\nĐịa chỉ: Lạng Sơn, Việt Nam",
+    },
+    {
+      title: "Cách gửi mã đơn để tra cứu",
+      category: "Hướng dẫn sử dụng",
+      content:
+        "Bạn chỉ cần gửi mã đơn hàng (ví dụ: BTH123456) qua Zalo, Telegram hoặc Messenger — hệ thống sẽ tự động tra cứu và trả lời trạng thái đơn cho bạn ngay. Không cần đăng nhập!",
+    },
+    {
+      title: "Hàng về kho Trung Quốc nghĩa là gì",
+      category: "Giải thích trạng thái",
+      content:
+        "Trạng thái 'Về kho Trung Quốc' nghĩa là hàng của bạn đã được người bán gửi đến và kho bên Trung Quốc đã nhận được. Nhân viên sẽ kiểm tra, cân nặng và đóng gói để chuẩn bị vận chuyển về Việt Nam. Thời gian xử lý tại kho thường từ 1-2 ngày.",
+    },
+    {
+      title: "Hàng đang vận chuyển nghĩa là gì",
+      category: "Giải thích trạng thái",
+      content:
+        "Trạng thái 'Đang vận chuyển' nghĩa là kiện hàng đã rời kho Trung Quốc và đang trên đường về kho Việt Nam. Thời gian vận chuyển quốc tế thường từ 3-7 ngày tùy tuyến đường. Bạn sẽ nhận thông báo khi hàng tới kho Việt Nam.",
+    },
+    {
+      title: "Hàng về kho Việt Nam thì làm gì tiếp",
+      category: "Hướng dẫn sử dụng",
+      content:
+        "Khi hàng về kho Việt Nam, bạn sẽ nhận thông báo qua Zalo/Telegram. Lúc này bạn cần:\n- Đảm bảo tài khoản có đủ số dư\n- Xác nhận địa chỉ giao hàng chính xác\nNhân viên sẽ sắp xếp giao hàng cho bạn trong 1-2 ngày làm việc.",
+    },
+    {
+      title: "Cách tính phí cân nặng",
+      category: "Chính sách & phí",
+      content:
+        "Phí vận chuyển quốc tế tính theo cân nặng thực tế: Cân nặng (kg) × Đơn giá/kg.\nVí dụ: Hàng nặng 2kg, đơn giá 35.000đ/kg → Phí = 2 × 35.000 = 70.000đ.\nCân nặng được xác nhận khi kho Trung Quốc nhận và cân hàng.",
+    },
+    {
+      title: "Khi nào cần nạp tiền",
+      category: "Hướng dẫn sử dụng",
+      content:
+        "Bạn nên nạp tiền trước khi đơn hàng hoàn thành giao hàng. Hệ thống tự trừ tiền khi đơn hoàn tất. Nếu số dư không đủ, đơn sẽ được giữ lại cho đến khi bạn nạp thêm. Nạp sớm để hàng được giao nhanh hơn nhé!",
+    },
+    {
+      title: "Vì sao chưa thấy đơn cập nhật",
+      category: "Câu hỏi thường gặp",
+      content:
+        "Đơn hàng có thể chưa cập nhật vì:\n- Người bán chưa gửi hàng\n- Hàng đang trên đường đến kho\n- Kho chưa xử lý kiện hàng\nTrạng thái được cập nhật khi có thay đổi thực tế. Nếu quá 3 ngày không cập nhật, hãy liên hệ nhân viên hỗ trợ.",
+    },
+    {
+      title: "Cách liên hệ nhân viên hỗ trợ",
+      category: "Liên hệ & hỗ trợ",
+      content:
+        "Bạn có thể liên hệ hỗ trợ qua:\n- Zalo OA: Bắc Trung Hải Logistics\n- Telegram: @bactrunghai_bot\n- Hotline: 0901 234 567\n- Email: support@bactrunghai.vn\nNhân viên hỗ trợ trong giờ làm việc (T2-T7, 8:00-17:30).",
+    },
+    {
+      title: "Lưu ý khi gửi link Taobao/1688/Tmall",
+      category: "Hướng dẫn sử dụng",
+      content:
+        "Khi tạo đơn, hãy dán link sản phẩm đầy đủ từ Taobao, 1688 hoặc Tmall.\n- Copy link từ thanh địa chỉ trình duyệt\n- Đảm bảo link bắt đầu bằng https://\n- Chọn đúng màu/size trước khi copy link\n- Ghi chú thêm yêu cầu đặc biệt ở phần ghi chú đơn hàng",
     },
   ];
 
