@@ -218,6 +218,21 @@ export default function AdminOrderDetailPage() {
         </Card>
       )}
 
+      <Card title="Link sản phẩm">
+        {order.productLink ? (
+          <a
+            href={order.productLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
+          >
+            {order.productLink}
+          </a>
+        ) : (
+          <p className="text-sm text-slate-400">Chưa có link sản phẩm</p>
+        )}
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.customerInfo")}>
           <dl className="space-y-3 text-sm">
