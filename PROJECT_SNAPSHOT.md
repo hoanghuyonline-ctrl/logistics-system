@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #196 merged
+**Latest stable commit:** PR #198 merged
 
 ---
 
@@ -162,6 +162,8 @@
 - **Admin Dashboard Operational Alerts Polish** (PR #194) — Improved visual emphasis for urgent operational items on admin dashboard "Truy cập nhanh" section; red pulsing badge (Tailwind animate-ping) on urgent cards when count > 0; "Cần xử lý" indicator for stuck shipments, stale orders, unresolved issues, notification failures, unanswered chatbot questions; Vietnamese summary helper text "⚠️ Có mục cần xử lý"; non-urgent cards (pending orders, handover notes) unchanged; UI-only; no schema/API/workflow changes
 
 - **Customer Order Urgency Visibility** (PR #196) — Compact Vietnamese status helper blocks below shipment timeline on customer order detail page; amber warning box when order delayed beyond existing thresholds ("Đơn hàng đang xử lý chậm hơn dự kiến") with specific delay message and support suggestion; green helper when package at Vietnam warehouse ("Đang chuẩn bị giao"); green success when delivered ("Đơn hàng đã giao thành công"); reuses existing getDelayWarning thresholds; Vietnamese-first; no schema/API/shipment logic changes
+
+- **Notification Center Operational Polish** (PR #198) — Improved notification dropdown readability for mobile; type-based icons via keyword matching on Vietnamese titles (✅ delivery success, 🚚 delivery, 💰 payment/deposit, ⚠️ complaints/warnings, 📦 status updates, 🔔 default); unread emphasis with left blue border accent and stronger background; Vietnamese empty-state "Chưa có thông báo mới."; UI-only; no schema/API/notification logic changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
