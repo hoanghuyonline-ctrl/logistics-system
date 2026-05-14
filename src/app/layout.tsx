@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/layouts/Providers";
-import ZaloQRWidget from "@/components/ui/ZaloQRWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +29,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>
-          {children}
-          <ZaloQRWidget />
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -11,6 +11,7 @@ import {
   LandingCTA,
   LandingFooter,
 } from "@/components/landing";
+import ZaloQRWidget from "@/components/ui/ZaloQRWidget";
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
       <LandingLocations />
       <LandingCTA />
       <LandingFooter />
+      <ZaloQRWidget />
     </div>
   );
 }
