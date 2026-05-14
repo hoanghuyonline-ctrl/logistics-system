@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #198 merged
+**Latest stable commit:** PR #200 merged
 
 ---
 
@@ -164,6 +164,8 @@
 - **Customer Order Urgency Visibility** (PR #196) — Compact Vietnamese status helper blocks below shipment timeline on customer order detail page; amber warning box when order delayed beyond existing thresholds ("Đơn hàng đang xử lý chậm hơn dự kiến") with specific delay message and support suggestion; green helper when package at Vietnam warehouse ("Đang chuẩn bị giao"); green success when delivered ("Đơn hàng đã giao thành công"); reuses existing getDelayWarning thresholds; Vietnamese-first; no schema/API/shipment logic changes
 
 - **Notification Center Operational Polish** (PR #198) — Improved notification dropdown readability for mobile; type-based icons via keyword matching on Vietnamese titles (✅ delivery success, 🚚 delivery, 💰 payment/deposit, ⚠️ complaints/warnings, 📦 status updates, 🔔 default); unread emphasis with left blue border accent and stronger background; Vietnamese empty-state "Chưa có thông báo mới."; UI-only; no schema/API/notification logic changes
+
+- **Warehouse Scan Productivity Enhancement** (PR #200) — Auto-refocus and select scan input after successful status update and after scan errors for faster continuous scanning; Vietnamese helper text "Có thể dùng máy quét mã vạch hoặc nhập thủ công."; clearer red error box for invalid scans with "❌ Không tìm thấy kiện hàng" heading and guidance text; preserves duplicate cooldown, API flow, camera scan behavior; shared ScanPage component; no schema/API/workflow changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
