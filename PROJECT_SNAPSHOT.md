@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-13
 **Branch:** `main`
-**Latest stable commit:** PR #148 merged
+**Latest stable commit:** PR #163 merged
 
 ---
 
@@ -117,6 +117,20 @@
 - **"Tạo tri thức" Shortcut Enhancement** (PR #145) — Enhanced existing "Tạo tri thức" button on unanswered question groups; prefills content with `Khách hỏi: "[question]"\nTrả lời:` template; auto-extracts up to 6 keywords from question text; emerald button style with tooltip; reuses existing knowledge create form
 - **Knowledge Match Diagnostics Logging** (PR #146) — Enhanced chatbot knowledge match logs with `score` (match confidence), `candidates` (number of entries scoring > 0), `keywords` (matched entry's keywords), and `channel` (ZALO/TELEGRAM/MESSENGER); consistent structured format across all 3 webhooks; exported `KnowledgeAnswerResult` interface; no behavior changes — logging only
 - **Unanswered Questions Quick Filters** (PR #148) — 5 toggle chips above unanswered question groups list: "Chưa có tri thức" (unresolved only), "Hỏi nhiều nhất" (sort by count), "Mới nhất" (sort by time), "Đã phân loại" (has category); helps admin find chatbot knowledge gaps faster; client-side only, works alongside existing search/channel/status/category filters; no schema or API changes
+- **Standalone Knowledge Seed Script** (PR #150) — `prisma/seed-support-knowledge.ts` runnable via `npm run seed:knowledge`; production-safe, skips duplicates by title; reuses existing 139-entry dataset
+- **Vietnamese User Manual** (PR #151) — Complete A-to-Z user guide at `docs/USER_MANUAL.md` (834 lines) covering all 7 roles (Customer, Admin, Warehouse CN/VN, Accountant, Chatbot/Support, System Operation) with step-by-step workflows, troubleshooting, and daily/weekly/emergency checklists
+- **User Manual Training Enhancements** (PR #152) — 34 screenshot placeholders (`[ẢNH: ...]`), tips/warnings/important blocks, training callouts, and screenshot checklist appendix for onboarding and future PDF/video tutorials
+- **Backup & Recovery Guide** (PR #153) — `docs/BACKUP_AND_RECOVERY.md` (473 lines) covering PostgreSQL backup procedures, restore workflows, disaster recovery, emergency checklists, and operational safety notes
+- **Daily Operations Checklist** (PR #154) — `docs/DAILY_OPERATIONS_CHECKLIST.md` (300 lines) with checkbox-style checklists for morning startup, warehouse CN/VN, accountant, customer support, end-of-day, and emergency quick actions
+- **Incident & Operation Log** (PR #155) — `docs/INCIDENT_AND_OPERATION_LOG.md` (318 lines) with severity levels, 17 example incidents, quick/detailed log templates, daily operational notes, lessons learned, and communication guidelines with message templates
+- **Automated Backup Scripts** (PR #156) — `scripts/backup-db.bat` and `scripts/backup-uploads.bat` for Windows production server; timestamped PostgreSQL backups via Docker; 7-day rotation policy; auto-create backup directories; updated BACKUP_AND_RECOVERY.md with scheduling notes
+- **System Health Dashboard** (PR #157) — `/admin/system-health` page with 3 cards: system status (app online, DB connection, server time, environment), chatbot channels (Zalo/Telegram/Messenger enabled/disabled), operational indicators (unanswered questions, stuck shipments); green/red status dots; sidebar nav + i18n
+- **Stuck Shipment Monitoring** (PR #158) — `/admin/stuck-shipments` page for delayed/stuck orders; warning cards for orders not updated > X days, stuck at China/Vietnam warehouse, unpaid orders waiting too long, packages without weight; red/yellow indicators; clickable order links; configurable thresholds
+- **Notification Failure Tracking + Retry** (PR #159) — `NotificationFailure` Prisma model with channel, orderCode, failureCategory, shortReason, retryCount; admin `/admin/notification-failures` page with failure list, channel filter, manual retry button; `POST /api/admin/notifications/failures` retry endpoint; migration `20260514000000_add_notification_failure_retry`
+- **Customer Shipment Timeline UX** (PR #160) — Enhanced customer order detail timeline with Vietnamese status descriptions, "Bước tiếp theo" next-step hints, delay warning indicators (configurable thresholds per status), visual progress bar with 9-step icons; `src/lib/shipment-timeline-info.ts` helper; no schema changes
+- **Customer Issue Tracking** (PR #161) — `CustomerIssue` Prisma model with 8 issue types (thiếu hàng, giao chậm, sai cân, hỏng hàng, chưa nhận, phí sai, chatbot, khác) and 4 statuses (mới, đang xử lý, chờ khách, đã giải quyết); `/admin/customer-issues` page with create form, quick filters, inline status update, resolution notes; migration `20260514010000_add_customer_issues`
+- **Staff Handover Notes** (PR #162) — `StaffNote` Prisma model with title, content, orderCode, priority (URGENT/HIGH/NORMAL), resolved toggle; `/admin/staff-notes` page accessible by Admin/Warehouse/Accountant roles; create form, filter chips (chưa xong/đã xong/khẩn cấp), search, card layout with toggle resolve; migration `20260514020000_add_staff_notes`
+- **Quick Operational Views** (PR #163) — "Truy cập nhanh" section on admin dashboard with 8 clickable cards showing realtime counts: đơn chờ xử lý, kẹt kho TQ, kẹt kho VN, đơn chậm cập nhật, khiếu nại chưa xử lý, lỗi thông báo, chatbot chưa trả lời, ghi chú bàn giao; `/api/admin/quick-views` endpoint with parallel queries; color-coded active/inactive states; no schema changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
@@ -161,6 +175,12 @@
 | `/api/admin/notifications/health` | GET | Notification channel readiness status (ADMIN-only) |
 | `/api/admin/support-knowledge` | GET/POST | List/create support knowledge entries (ADMIN-only) |
 | `/api/admin/support-knowledge/[id]` | PATCH/DELETE | Update/delete support knowledge entry (ADMIN-only) |
+| `/api/admin/customer-issues` | GET/POST/PUT | Customer issue tracking CRUD (ADMIN-only) |
+| `/api/admin/staff-notes` | GET/POST/PUT | Staff handover notes CRUD (ADMIN/WAREHOUSE/ACCOUNTANT) |
+| `/api/admin/stuck-shipments` | GET | Delayed/stuck shipment indicators (ADMIN-only) |
+| `/api/admin/system-health` | GET | System/chatbot/operational health status (ADMIN-only) |
+| `/api/admin/notifications/failures` | GET/POST | Notification failure list and retry (ADMIN-only) |
+| `/api/admin/quick-views` | GET | Quick operational view counts for dashboard (ADMIN-only) |
 
 ## Important Prisma Models
 
@@ -176,6 +196,9 @@
 | **Notification** | userId, title, message, isRead |
 | **SupportKnowledge** | id, title, content, category, keywords, isActive, matchCount, matchCountZalo, matchCountTelegram, matchCountMessenger, lastMatchedAt |
 | **ChatbotUnansweredQuestion** | id, channel, question, senderId, resolved, category |
+| **NotificationFailure** | id, channel, orderCode, customerId, recipient, failureCategory, shortReason, retryCount, lastRetryAt, resolved |
+| **CustomerIssue** | id, customerId, orderCode, issueType, description, status, assignedTo, resolution |
+| **StaffNote** | id, title, content, orderCode, priority, resolved, createdBy |
 
 **Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType
 
