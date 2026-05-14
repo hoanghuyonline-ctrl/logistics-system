@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { onCustomerIssueCreated } from "@/lib/notifications";
 
 const ISSUE_TYPES = [
   "THIEU_HANG",
@@ -66,6 +67,16 @@ export async function POST(request: Request) {
       issueType,
       description,
     },
+  });
+
+  onCustomerIssueCreated({
+    userId: user.id,
+    userEmail: user.email,
+    userName: user.name,
+    issueType,
+    orderCode: orderCode || undefined,
+  }).catch((err: unknown) => {
+    console.error("[notify] onCustomerIssueCreated failed:", err);
   });
 
   return jsonResponse(issue, 201);

@@ -46,3 +46,11 @@ export async function notifyOrderStatusChange(
     orderId,
   });
 }
+
+export {
+  onShipmentStatusChanged,
+  onCustomerIssueCreated,
+  onCustomerIssueStatusChanged,
+  onCustomerVisibleOrderNote,
+  onWalletEvent,
+} from "./notifications/triggers";

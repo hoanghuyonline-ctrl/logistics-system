@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
-import { createNotification } from "@/lib/notifications";
+import { onCustomerVisibleOrderNote } from "@/lib/notifications";
 import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/notes">) {
@@ -46,12 +46,21 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/orders/[id]
   });
 
   if (!hasRole(user.role, ["CUSTOMER"])) {
-    createNotification({
-      userId: order.userId,
-      title: `Đơn hàng ${order.orderCode} - Cập nhật từ kho vận`,
-      message: body.content,
-      orderId: order.id,
-    }).catch(() => {});
+    prisma.user
+      .findUnique({ where: { id: order.userId }, select: { email: true, fullName: true } })
+      .then((customer) =>
+        onCustomerVisibleOrderNote({
+          userId: order.userId,
+          userEmail: customer?.email,
+          userName: customer?.fullName,
+          orderId: order.id,
+          orderCode: order.orderCode,
+          noteContent: body.content,
+        }),
+      )
+      .catch((err) => {
+        console.error("[notify] onCustomerVisibleOrderNote failed:", err);
+      });
   }
 
   return jsonResponse(note, 201);
