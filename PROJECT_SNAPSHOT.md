@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #177 merged
+**Latest stable commit:** PR #179 merged
 
 ---
 
@@ -143,6 +143,8 @@
 
 - **Zalo TOKEN_EXPIRED Diagnostics** (PR #177) — Structured `[zalo/bind]` logs with senderId/orderCode/customerId/saved/reason; `[zalo/reply]` FAIL logs with failureType=TOKEN_EXPIRED and errorCode for -216/-230; system health API `zaloDiagnostics` section (tokenExpired, boundCustomers, unresolvedFailures, configPresent); new "Chẩn Đoán Zalo OA" card on system health page with TOKEN_EXPIRED red banner warning; settings page channel health shows "Token hết hạn — cần cập nhật" with red styling; no schema changes
 
+- **Zalo OA Automatic Token Refresh** (PR #179) — `refreshZaloAccessToken()` helper calls Zalo OAuth v4 endpoint with refresh token; runtime memory cache for refreshed access token (no .env writes); `sendZalo()` and webhook `replyToUser()` auto-refresh and retry once on TOKEN_EXPIRED (-216/-230); structured `[zalo/token]` logs (refresh success/fail, timestamp, retry result); `zalo_oa_refresh_token` added to notification config; system health API `tokenRefresh` diagnostics (lastRefreshAt, success, errorReason); health page shows "Lần refresh token gần nhất" with success/fail status; settings page shows ZALO_OA_REFRESH_TOKEN field; requires ZALO_APP_ID and ZALO_APP_SECRET_KEY env vars
+
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
 ## Stack
@@ -249,4 +251,4 @@
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
-23. **Zalo TOKEN_EXPIRED now surfaced in health dashboard** (resolved PR #177) — Admin health dashboard and settings page now detect and display TOKEN_EXPIRED warnings. Manual token replacement in .env + PM2 restart still required.
+23. **Zalo TOKEN_EXPIRED now auto-recovered** (resolved PR #179) — System automatically refreshes access token on -216 error and retries. Requires ZALO_OA_REFRESH_TOKEN, ZALO_APP_ID, and ZALO_APP_SECRET_KEY to be configured. Manual intervention only needed if refresh token itself expires (~3 months).
