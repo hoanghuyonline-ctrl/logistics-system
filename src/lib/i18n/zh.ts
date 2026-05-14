@@ -192,6 +192,7 @@ const zh: Record<string, string> = {
   "nav.supportKnowledge": "知识库",
   "nav.systemHealth": "系统状态",
   "nav.stuckShipments": "滞留订单",
+  "nav.notificationFailures": "通知失败",
 
   // Warehouse scan
   "scan.title": "扫描包裹",
