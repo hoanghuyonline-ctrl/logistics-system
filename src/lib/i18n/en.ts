@@ -53,6 +53,7 @@ const en: Record<string, string> = {
   "nav.myOrders": "My Orders",
   "nav.wallet": "Wallet",
   "nav.transactions": "Transactions",
+  "nav.issues": "Complaints / Support",
   "nav.notifications": "Notifications",
   "nav.profile": "Profile",
   "nav.users": "Users",

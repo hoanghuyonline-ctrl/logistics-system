@@ -53,6 +53,7 @@ const zh: Record<string, string> = {
   "nav.myOrders": "我的订单",
   "nav.wallet": "钱包",
   "nav.transactions": "交易记录",
+  "nav.issues": "投诉 / 支持",
   "nav.notifications": "通知",
   "nav.profile": "个人资料",
   "nav.users": "用户管理",
