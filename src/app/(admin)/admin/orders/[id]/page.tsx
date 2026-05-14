@@ -44,7 +44,7 @@ interface OrderDetail {
   trackingCodeIntl: string | null;
   customStatusNote: string | null;
   createdAt: string;
-  user: { fullName: string; email: string; phone: string; address: string };
+  user: { fullName: string; email: string; phone: string; address: string; zaloRecipientId: string | null };
   package: { packageCode: string; barcode: string | null } | null;
   statusLogs: Array<{
     id: string;
@@ -358,7 +358,22 @@ export default function AdminOrderDetailPage() {
             <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.email")}</dt><dd className="font-medium text-slate-900">{order.user.email}</dd></div>
             <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.phone")}</dt><dd className="font-medium text-slate-900">{order.user.phone || "—"}</dd></div>
             <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.address")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.user.address || "—"}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">Zalo</dt><dd className={`font-medium ${order.user.zaloRecipientId ? "text-emerald-600" : "text-amber-600"}`}>{order.user.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}</dd></div>
           </dl>
+          {!order.user.zaloRecipientId && (
+            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+              <p>Khách chưa liên kết Zalo. Hãy yêu cầu khách nhắn mã đơn này vào OA.</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="font-mono bg-white px-2 py-1 rounded border border-amber-300 text-amber-900">{order.orderCode}</span>
+                <button
+                  onClick={() => copyToClipboard(order.orderCode)}
+                  className="px-3 py-1 bg-amber-100 text-amber-800 rounded text-xs font-medium hover:bg-amber-200 transition-colors"
+                >
+                  Sao chép mã đơn
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
 
         <Card title={t("orderDetail.costBreakdown")}>

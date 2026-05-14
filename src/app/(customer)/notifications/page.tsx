@@ -29,6 +29,16 @@ export default function NotificationChannelsPage() {
   const [telegramInput, setTelegramInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [latestOrderCode, setLatestOrderCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  function copyOrderCode() {
+    if (!latestOrderCode) return;
+    navigator.clipboard.writeText(latestOrderCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -38,6 +48,13 @@ export default function NotificationChannelsPage() {
         setTelegramInput(data.telegramChatId || "");
       })
       .finally(() => setLoading(false));
+    fetch("/api/orders?limit=1")
+      .then((r) => r.json())
+      .then((data) => {
+        const orders = Array.isArray(data) ? data : data.orders || [];
+        if (orders.length > 0) setLatestOrderCode(orders[0].orderCode);
+      })
+      .catch(() => {});
   }, []);
 
   async function saveTelegram() {
@@ -193,11 +210,26 @@ export default function NotificationChannelsPage() {
             </div>
           ) : (
             <div className="mt-4 bg-slate-50 rounded-lg p-4 text-sm text-slate-700 space-y-2">
-              <p className="font-medium text-slate-800">Hướng dẫn liên kết Zalo:</p>
-              <ol className="list-decimal list-inside space-y-1.5">
+              <p className="font-medium text-slate-800">Để liên kết Zalo, hãy nhắn mã đơn gần nhất của bạn vào OA Bắc Trung Hải.</p>
+              {latestOrderCode ? (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="font-mono bg-white px-2.5 py-1.5 rounded border border-slate-300 text-slate-900 font-semibold">{latestOrderCode}</span>
+                  <button
+                    onClick={copyOrderCode}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    {copied ? "Đã sao chép!" : "Sao chép mã đơn để liên kết Zalo"}
+                  </button>
+                </div>
+              ) : (
+                <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
+                  Bạn cần có ít nhất một đơn hàng để liên kết Zalo.
+                </p>
+              )}
+              <ol className="list-decimal list-inside space-y-1.5 mt-3">
                 <li>Quét mã QR Zalo OA (nút <strong>&quot;Zalo hỗ trợ&quot;</strong> góc trái màn hình)</li>
-                <li>Nhắn mã đơn hàng của bạn, ví dụ: <span className="font-mono bg-white px-1.5 py-0.5 rounded border">BTH123456</span></li>
-                <li>Sau khi xác nhận thành công, hệ thống sẽ tự động liên kết tài khoản Zalo của bạn</li>
+                <li>Nhắn mã đơn hàng vào OA</li>
+                <li>Hệ thống sẽ tự động liên kết tài khoản Zalo của bạn</li>
               </ol>
               <p className="text-xs text-slate-500 mt-2">
                 Sau khi liên kết, bạn sẽ nhận thông báo cập nhật đơn hàng, khiếu nại và ví tiền qua Zalo.
