@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #183 merged
+**Latest stable commit:** PR #185 merged
 
 ---
 
@@ -148,6 +148,8 @@
 - **Zalo Auto-Refresh Admin Settings** (PR #181) — Admin settings fields for `zalo_app_id`, `zalo_app_secret_key` under "Cấu hình Zalo OA"; secret key masked in UI; `zalo-token.ts` reads credentials via `getNotificationConfig()` (DB-first with env fallback); operators can manage all Zalo refresh credentials from settings page without SSH; no schema changes
 
 - **Zalo Linking UX Improvement** (PR #183) — Customer notification channels page shows latest order code with "Sao chép mã đơn để liên kết Zalo" copy button; no-order state shows "Bạn cần có ít nhất một đơn hàng để liên kết Zalo"; admin order detail shows Zalo binding status in customer info card with helper text and order code copy button when not linked; no schema changes
+
+- **Zalo Binding UX Enhancement** (PR #185) — Improved Zalo customer linking UX across 4 touchpoints: dismissable onboarding banner on customer dashboard prompting unlinked users to link Zalo with link to detailed guide; inline Zalo linking hint on customer order detail page with order code copy button; notification channels page Zalo section redesigned with numbered 3-step visual guide (blue circle indicators) replacing plain ordered list; admin order detail unlinked-customer warning enhanced with clearer wording ("không nhận được thông báo qua Zalo"), step-by-step guidance for admin, and explanation that binding is automatic; linked state now shows green confirmation message; all Vietnamese-first; no schema changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
