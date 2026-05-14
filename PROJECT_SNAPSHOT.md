@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #166 merged
+**Latest stable commit:** PR #175 merged
 
 ---
 
@@ -36,6 +36,14 @@
 - **Zalo Automatic Status Notifications** (PR #95) — Shipment status changes automatically push Vietnamese Zalo notifications to bound customers; 9 status templates with emoji icons; structured `[zalo/status]` logging; only sends when customer has `zaloRecipientId` and `ZALO_SEND_ENABLED=true`
 - **Zalo Auto-Bind Sender ID** (PR #96) — First-time order lookup via Zalo OA automatically binds sender ID to customer account (`User.zaloRecipientId`); conflict safety (never overwrites existing different binding); structured `[zalo/bind]` logging; Vietnamese confirmation reply on successful bind
 - **Zalo QR Support Widget** (PR #166) — Floating bottom-left widget on all pages; toggle button reveals Zalo QR code image with Vietnamese text "Quét mã QR này để được Zalo hỗ trợ 24/7"; client component using `next/image`; consistent Tailwind styling
+- **Zalo QR Widget in Dashboards** (PR #168) — Zalo QR support widget shown in all authenticated dashboard pages (customer, admin, warehouse, accountant); consistent placement across layouts
+- **Customer Issue Submission** (PR #169) — Customers can submit complaints/issues directly from order detail page; linked to existing `CustomerIssue` model; integrated with admin issue tracking
+- **Customer Notification Events** (PR #170) — All operational events (order status changes, warehouse scans, payment, etc.) now send customer notifications across all configured channels (System, Telegram, Zalo, Email)
+- **Channel Routing Fix** (PR #171) — Telegram/Zalo notifications now route to per-customer channel bindings; skips sending if customer has not bound the channel; prevents delivery failures to unbound recipients
+- **Notification Channel Linking Page** (PR #172) — Customer-facing `/customer/notification-channels` page showing Zalo and Telegram binding status; instructions for linking channels; Vietnamese UI
+- **Channel Unlink/Relink Controls** (PR #173) — Customers can unlink and relink Zalo and Telegram notification channels from their settings; admin-side visibility preserved
+- **Zalo Chatbot Greeting & FAQ Improvements** (PR #174) — Zalo OA chatbot now handles greeting messages (xin chào, hello, hi, etc.) with Vietnamese welcome reply; improved FAQ knowledge matching with better scoring; fallback guidance for unmatched queries
+- **Zalo Silent Reply Fix** (PR #175) — Resolved Zalo OA silent replies after auto-binding; robust error handling with try/catch around reply sending; structured `[zalo/reply]` logging for all send attempts and failures
 - **Notification Channel Delivery Logs & Health API** (PR #98) — Standardized `[notify/channel]` structured logs for SYSTEM, TELEGRAM, ZALO, EMAIL delivery results (orderCode, customerId, recipient, success/failure, reason); admin-only `GET /api/admin/notifications/health` returns channel readiness (telegram/zalo/email/messenger enabled/disabled)
 - **Admin Notification Health Card** (PR #99) — Compact Vietnamese "Trạng thái kênh thông báo" card on Admin Settings page showing Telegram, Zalo OA, Email, Messenger, and App channel readiness at a glance; no secrets exposed
 - **Vietnamese System Notifications** (PR #34) — Customer-facing bell-dropdown notifications converted to Vietnamese-first wording (9 status messages + title + fallback)
@@ -239,3 +247,4 @@
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
+23. **Zalo TOKEN_EXPIRED not surfaced in health dashboard** — Zalo error code -216 is classified as TOKEN_EXPIRED in failure tracking, but the admin health dashboard card does not proactively detect or warn about expired tokens. Current workaround: manually replace `ZALO_OA_ACCESS_TOKEN` in .env and restart PM2.
