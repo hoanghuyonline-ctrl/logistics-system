@@ -31,17 +31,22 @@ export default function CustomerDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
+  const [zaloBound, setZaloBound] = useState<boolean | null>(null);
+  const [zaloBannerDismissed, setZaloBannerDismissed] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const [ordersRes, walletRes] = await Promise.all([
+      const [ordersRes, walletRes, meRes] = await Promise.all([
         fetch("/api/orders?limit=5"),
         fetch("/api/wallet"),
+        fetch("/api/auth/me"),
       ]);
       const ordersData = await ordersRes.json();
       const walletData = await walletRes.json();
+      const meData = await meRes.json();
       setOrders(ordersData.orders || []);
       setWallet(walletData);
+      setZaloBound(!!meData?.zaloRecipientId);
       setLoading(false);
     }
     load();
@@ -69,6 +74,33 @@ export default function CustomerDashboard() {
         <KPICard title={t("dashboard.pendingOrders")} value={`${debt} VND`} icon={<span>📊</span>} color="red" />
         <KPICard title={t("dashboard.totalOrders")} value={orders.length} icon={<span>📦</span>} color="blue" />
       </div>
+
+      {zaloBound === false && !zaloBannerDismissed && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 relative">
+          <button
+            onClick={() => setZaloBannerDismissed(true)}
+            className="absolute top-3 right-3 text-blue-400 hover:text-blue-600 text-sm leading-none"
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+          <div className="flex items-start gap-3 pr-6">
+            <span className="text-2xl shrink-0">💬</span>
+            <div>
+              <p className="text-sm font-semibold text-blue-900">Liên kết Zalo để nhận thông báo đơn hàng tự động</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Quét mã QR Zalo OA (nút <strong>&quot;Zalo hỗ trợ&quot;</strong> góc trái màn hình), rồi nhắn mã đơn hàng bất kỳ. Hệ thống sẽ tự liên kết tài khoản Zalo của bạn.
+              </p>
+              <Link
+                href="/notifications"
+                className="inline-block mt-2 text-sm font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2"
+              >
+                Xem hướng dẫn chi tiết →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Card
         title={t("dashboard.recentOrders")}

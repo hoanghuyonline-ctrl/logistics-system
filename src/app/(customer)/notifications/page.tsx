@@ -198,42 +198,68 @@ export default function NotificationChannelsPage() {
             </span>
           </div>
           {user?.zaloRecipientId ? (
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-xs text-slate-500">Hủy liên kết để đổi sang tài khoản Zalo khác.</p>
-              <button
-                onClick={unlinkZalo}
-                disabled={saving}
-                className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors"
-              >
-                Hủy liên kết
-              </button>
+            <div className="mt-4 space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-800">
+                Tài khoản Zalo đã liên kết. Bạn sẽ nhận thông báo cập nhật đơn hàng, khiếu nại và ví tiền qua Zalo tự động.
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">Hủy liên kết để đổi sang tài khoản Zalo khác.</p>
+                <button
+                  onClick={unlinkZalo}
+                  disabled={saving}
+                  className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors"
+                >
+                  Hủy liên kết
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="mt-4 bg-slate-50 rounded-lg p-4 text-sm text-slate-700 space-y-2">
-              <p className="font-medium text-slate-800">Để liên kết Zalo, hãy nhắn mã đơn gần nhất của bạn vào OA Bắc Trung Hải.</p>
-              {latestOrderCode ? (
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="font-mono bg-white px-2.5 py-1.5 rounded border border-slate-300 text-slate-900 font-semibold">{latestOrderCode}</span>
-                  <button
-                    onClick={copyOrderCode}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    {copied ? "Đã sao chép!" : "Sao chép mã đơn để liên kết Zalo"}
-                  </button>
+            <div className="mt-4 bg-slate-50 rounded-lg p-4 text-sm text-slate-700 space-y-4">
+              <p className="font-semibold text-slate-900">Hướng dẫn liên kết Zalo (chỉ 3 bước)</p>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0">1</span>
+                  <div>
+                    <p className="font-medium text-slate-800">Mở Zalo OA Bắc Trung Hải</p>
+                    <p className="text-slate-600 mt-0.5">Nhấn nút <strong>&quot;Zalo hỗ trợ&quot;</strong> ở góc trái dưới màn hình, quét mã QR để mở OA.</p>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
-                  Bạn cần có ít nhất một đơn hàng để liên kết Zalo.
-                </p>
-              )}
-              <ol className="list-decimal list-inside space-y-1.5 mt-3">
-                <li>Quét mã QR Zalo OA (nút <strong>&quot;Zalo hỗ trợ&quot;</strong> góc trái màn hình)</li>
-                <li>Nhắn mã đơn hàng vào OA</li>
-                <li>Hệ thống sẽ tự động liên kết tài khoản Zalo của bạn</li>
-              </ol>
-              <p className="text-xs text-slate-500 mt-2">
-                Sau khi liên kết, bạn sẽ nhận thông báo cập nhật đơn hàng, khiếu nại và ví tiền qua Zalo.
-              </p>
+
+                <div className="flex items-start gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0">2</span>
+                  <div>
+                    <p className="font-medium text-slate-800">Nhắn mã đơn hàng vào OA</p>
+                    {latestOrderCode ? (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="font-mono bg-white px-2.5 py-1.5 rounded border border-slate-300 text-slate-900 font-semibold">{latestOrderCode}</span>
+                        <button
+                          onClick={copyOrderCode}
+                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          {copied ? "Đã sao chép!" : "Sao chép mã đơn"}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-1.5">
+                        Bạn cần có ít nhất một đơn hàng để liên kết Zalo.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold shrink-0">3</span>
+                  <div>
+                    <p className="font-medium text-slate-800">Hoàn tất — liên kết tự động</p>
+                    <p className="text-slate-600 mt-0.5">Hệ thống sẽ tự nhận diện tài khoản và liên kết Zalo của bạn. Bạn sẽ nhận tin xác nhận ngay.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800">
+                Sau khi liên kết, bạn sẽ nhận thông báo cập nhật đơn hàng, khiếu nại và ví tiền qua Zalo tự động.
+              </div>
             </div>
           )}
           {saveMsg && saveMsg.includes("Zalo") && (

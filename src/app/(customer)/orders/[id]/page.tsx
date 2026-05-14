@@ -71,6 +71,8 @@ export default function OrderDetailPage() {
   const [issueDesc, setIssueDesc] = useState("");
   const [issueSubmitting, setIssueSubmitting] = useState(false);
   const [issueSuccess, setIssueSuccess] = useState(false);
+  const [zaloBound, setZaloBound] = useState<boolean | null>(null);
+  const [orderCodeCopied, setOrderCodeCopied] = useState(false);
 
   useEffect(() => {
     fetch(`/api/orders/${params.id}`)
@@ -79,6 +81,10 @@ export default function OrderDetailPage() {
         setOrder(d);
         setLoading(false);
       });
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => setZaloBound(!!data?.zaloRecipientId))
+      .catch(() => {});
   }, [params.id]);
 
   async function addNote() {
@@ -179,6 +185,31 @@ export default function OrderDetailPage() {
           </Card>
         );
       })()}
+
+      {zaloBound === false && (
+        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <span className="text-lg shrink-0">💬</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-blue-900">Nhận cập nhật đơn hàng này qua Zalo</p>
+            <p className="text-sm text-blue-700 mt-1">
+              Nhắn mã đơn <strong>{order.orderCode}</strong> vào Zalo OA Bắc Trung Hải để liên kết và nhận thông báo tự động.
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(order.orderCode).then(() => {
+                    setOrderCodeCopied(true);
+                    setTimeout(() => setOrderCodeCopied(false), 2000);
+                  });
+                }}
+                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+              >
+                {orderCodeCopied ? "Đã sao chép!" : "Sao chép mã đơn"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.productInfo")}>
