@@ -191,6 +191,7 @@ const zh: Record<string, string> = {
   "nav.auditLog": "操作日志",
   "nav.supportKnowledge": "知识库",
   "nav.systemHealth": "系统状态",
+  "nav.stuckShipments": "滞留订单",
 
   // Warehouse scan
   "scan.title": "扫描包裹",
