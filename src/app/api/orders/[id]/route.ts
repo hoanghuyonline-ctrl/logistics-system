@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]"
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, fullName: true, email: true, phone: true, address: true } },
+      user: { select: { id: true, fullName: true, email: true, phone: true, address: true, zaloRecipientId: true } },
       package: true,
       statusLogs: {
         orderBy: { createdAt: "asc" },
