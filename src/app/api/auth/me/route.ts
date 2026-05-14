@@ -17,6 +17,7 @@ export async function GET() {
       address: true,
       role: true,
       telegramChatId: true,
+      zaloRecipientId: true,
       createdAt: true,
     },
   });

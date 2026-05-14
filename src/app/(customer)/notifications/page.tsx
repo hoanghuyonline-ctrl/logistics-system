@@ -3,91 +3,254 @@
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
-import EmptyState from "@/components/ui/EmptyState";
-import { useI18n } from "@/lib/i18n";
+import Card from "@/components/ui/Card";
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
+interface UserChannelInfo {
+  email: string;
+  telegramChatId: string | null;
+  zaloRecipientId: string | null;
 }
 
-export default function NotificationsPage() {
-  const { t } = useI18n();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain) return "***@***";
+  const visible = local.slice(0, 2);
+  return `${visible}***@${domain}`;
+}
+
+function maskId(id: string): string {
+  if (id.length <= 6) return "***" + id.slice(-2);
+  return id.slice(0, 3) + "***" + id.slice(-3);
+}
+
+export default function NotificationChannelsPage() {
+  const [user, setUser] = useState<UserChannelInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [telegramInput, setTelegramInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
 
   useEffect(() => {
-    fetch("/api/notifications?limit=50")
+    fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((d) => {
-        setNotifications(d.notifications || []);
-        setLoading(false);
-      });
+      .then((data) => {
+        setUser(data);
+        setTelegramInput(data.telegramChatId || "");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  async function markAllRead() {
-    await fetch("/api/notifications/read-all", { method: "PATCH" });
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  async function saveTelegram() {
+    if (!telegramInput.trim()) return;
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramChatId: telegramInput.trim() }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setUser((prev) => prev ? { ...prev, telegramChatId: updated.telegramChatId } : prev);
+        setSaveMsg("Đã lưu thành công!");
+      } else {
+        setSaveMsg("Lưu thất bại, vui lòng thử lại.");
+      }
+    } catch {
+      setSaveMsg("Lỗi kết nối, vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  async function markRead(id: string) {
-    await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+  async function unlinkTelegram() {
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramChatId: null }),
+      });
+      if (res.ok) {
+        setUser((prev) => prev ? { ...prev, telegramChatId: null } : prev);
+        setTelegramInput("");
+        setSaveMsg("Đã hủy liên kết Telegram.");
+      }
+    } catch {
+      setSaveMsg("Lỗi kết nối, vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  if (loading) return <LoadingSpinner text={t("notifications.loading")} />;
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  if (loading) return <LoadingSpinner />;
 
   return (
-    <div>
-      <PageHeader
-        title={t("nav.notifications")}
-        subtitle={unreadCount > 0 ? `${unreadCount} ${t("notifications.unread")}` : t("notifications.allRead")}
-        action={
-          unreadCount > 0 ? (
-            <button onClick={markAllRead} className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
-              {t("notif.markAllRead")}
-            </button>
-          ) : undefined
-        }
-      />
+    <div className="p-6 max-w-3xl mx-auto">
+      <PageHeader title="Thông báo & Liên kết kênh" />
 
-      {notifications.length === 0 ? (
-        <EmptyState icon="🔔" title={t("notifications.emptyTitle")} description={t("notifications.emptyDescription")} />
-      ) : (
-        <div className="space-y-2">
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              onClick={() => !n.isRead && markRead(n.id)}
-              className={`rounded-2xl border p-5 cursor-pointer transition-all duration-200 ${
-                n.isRead
-                  ? "bg-white border-slate-200 hover:border-slate-300"
-                  : "bg-blue-50/50 border-blue-200 hover:bg-blue-50"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    {!n.isRead && <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />}
-                    <h3 className={`text-sm font-semibold ${n.isRead ? "text-slate-700" : "text-slate-900"}`}>
-                      {n.title}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{n.message}</p>
-                </div>
-                <span className="text-xs text-slate-400 whitespace-nowrap font-medium">
-                  {new Date(n.createdAt).toLocaleDateString()}
-                </span>
-              </div>
+      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+        Để nhận thông báo đúng tài khoản, quý khách cần liên kết từng kênh trước.
+        Nếu chưa liên kết, hệ thống sẽ chỉ gửi qua <strong>App</strong> và <strong>Email</strong>.
+      </div>
+
+      <div className="space-y-4">
+        {/* App / In-app */}
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <span className="text-lg">📱</span> App (Trong tài khoản)
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">Nhận thông báo trong tài khoản của bạn trên hệ thống.</p>
             </div>
-          ))}
-        </div>
-      )}
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+              Đã bật
+            </span>
+          </div>
+        </Card>
+
+        {/* Email */}
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <span className="text-lg">✉️</span> Email
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Gửi thông báo qua email: <span className="font-mono text-slate-700">{user ? maskEmail(user.email) : "---"}</span>
+              </p>
+            </div>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+              Đã liên kết
+            </span>
+          </div>
+        </Card>
+
+        {/* Zalo */}
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <span className="text-lg">💬</span> Zalo
+              </h3>
+              {user?.zaloRecipientId ? (
+                <p className="text-sm text-slate-500 mt-1">
+                  Đã liên kết: <span className="font-mono text-slate-700">{maskId(user.zaloRecipientId)}</span>
+                </p>
+              ) : (
+                <p className="text-sm text-slate-500 mt-1">Chưa liên kết — thực hiện các bước bên dưới để liên kết.</p>
+              )}
+            </div>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+              user?.zaloRecipientId
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-amber-100 text-amber-700"
+            }`}>
+              {user?.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}
+            </span>
+          </div>
+          {!user?.zaloRecipientId && (
+            <div className="mt-4 bg-slate-50 rounded-lg p-4 text-sm text-slate-700 space-y-2">
+              <p className="font-medium text-slate-800">Hướng dẫn liên kết Zalo:</p>
+              <ol className="list-decimal list-inside space-y-1.5">
+                <li>Quét mã QR Zalo OA (nút <strong>&quot;Zalo hỗ trợ&quot;</strong> góc trái màn hình)</li>
+                <li>Nhắn mã đơn hàng của bạn, ví dụ: <span className="font-mono bg-white px-1.5 py-0.5 rounded border">BTH123456</span></li>
+                <li>Sau khi xác nhận thành công, hệ thống sẽ tự động liên kết tài khoản Zalo của bạn</li>
+              </ol>
+              <p className="text-xs text-slate-500 mt-2">
+                Sau khi liên kết, bạn sẽ nhận thông báo cập nhật đơn hàng, khiếu nại và ví tiền qua Zalo.
+              </p>
+            </div>
+          )}
+        </Card>
+
+        {/* Telegram */}
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <span className="text-lg">📨</span> Telegram
+              </h3>
+              {user?.telegramChatId ? (
+                <p className="text-sm text-slate-500 mt-1">
+                  Đã liên kết: <span className="font-mono text-slate-700">{maskId(user.telegramChatId)}</span>
+                </p>
+              ) : (
+                <p className="text-sm text-slate-500 mt-1">Chưa liên kết — nhập Chat ID để nhận thông báo qua Telegram.</p>
+              )}
+            </div>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+              user?.telegramChatId
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-amber-100 text-amber-700"
+            }`}>
+              {user?.telegramChatId ? "Đã liên kết" : "Chưa liên kết"}
+            </span>
+          </div>
+
+          <div className="mt-4 bg-slate-50 rounded-lg p-4 text-sm text-slate-700 space-y-3">
+            <p className="font-medium text-slate-800">Hướng dẫn lấy Chat ID:</p>
+            <ol className="list-decimal list-inside space-y-1.5">
+              <li>Mở ứng dụng Telegram</li>
+              <li>Tìm bot <span className="font-mono bg-white px-1.5 py-0.5 rounded border">@userinfobot</span> và gửi bất kỳ tin nhắn nào</li>
+              <li>Bot sẽ trả về Chat ID của bạn (dãy số)</li>
+              <li>Nhập Chat ID vào ô bên dưới và nhấn &quot;Lưu&quot;</li>
+            </ol>
+
+            <div className="flex items-center gap-2 mt-3">
+              <input
+                type="text"
+                value={telegramInput}
+                onChange={(e) => setTelegramInput(e.target.value)}
+                placeholder="Nhập Telegram Chat ID..."
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={saveTelegram}
+                disabled={saving || !telegramInput.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {saving ? "Đang lưu..." : "Lưu"}
+              </button>
+              {user?.telegramChatId && (
+                <button
+                  onClick={unlinkTelegram}
+                  disabled={saving}
+                  className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors"
+                >
+                  Hủy liên kết
+                </button>
+              )}
+            </div>
+            {saveMsg && (
+              <p className={`text-xs mt-1 ${saveMsg.includes("thành công") || saveMsg.includes("hủy") ? "text-emerald-600" : "text-red-600"}`}>
+                {saveMsg}
+              </p>
+            )}
+          </div>
+        </Card>
+
+        {/* Messenger/Facebook */}
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <span className="text-lg">💭</span> Messenger / Facebook
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">Hỗ trợ chat trực tiếp. Chưa hỗ trợ thông báo chủ động.</p>
+            </div>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+              Chỉ chat
+            </span>
+          </div>
+          <div className="mt-3 text-sm text-slate-500">
+            <p>Nhắn tin cho Fanpage để được hỗ trợ trực tiếp. Tính năng thông báo chủ động qua Messenger sẽ được bổ sung trong tương lai.</p>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
