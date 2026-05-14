@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getNotificationConfig } from "@/lib/notification-config";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
+import { getCachedAccessToken, refreshZaloAccessToken } from "@/lib/zalo-token";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -80,14 +81,7 @@ async function tryBindZaloRecipient(
   return true;
 }
 
-async function replyToUser(userId: string, text: string): Promise<void> {
-  const token = await getNotificationConfig("zalo_oa_access_token");
-  if (!token) {
-    const msg = "ZALO_OA_ACCESS_TOKEN not configured";
-    console.error(`[zalo/reply] FAIL | senderId=${userId} reason=${msg}`);
-    throw new Error(msg);
-  }
-
+async function sendZaloReply(token: string, userId: string, text: string): Promise<{ ok: boolean; tokenExpired: boolean; errorMsg?: string }> {
   const tokenHint = token.slice(0, 6) + "***";
   console.log(`[zalo/reply] SENDING | senderId=${userId} token=${tokenHint} textLen=${text.length}`);
 
@@ -105,23 +99,57 @@ async function replyToUser(userId: string, text: string): Promise<void> {
 
   if (!res.ok) {
     const errorBody = await res.text();
-    const isTokenExpired = res.status === 401 || /access.?token.*expir/i.test(errorBody);
-    const failureType = isTokenExpired ? "TOKEN_EXPIRED" : `HTTP_${res.status}`;
+    const tokenExpired = res.status === 401 || /access.?token.*expir/i.test(errorBody);
+    const failureType = tokenExpired ? "TOKEN_EXPIRED" : `HTTP_${res.status}`;
     const msg = `Zalo API HTTP ${res.status}: ${errorBody}`;
     console.error(`[zalo/reply] FAIL | senderId=${userId} failureType=${failureType} reason=${msg}`);
-    throw new Error(msg);
+    return { ok: false, tokenExpired, errorMsg: msg };
   }
 
   const data = await res.json();
   if (data.error !== 0) {
-    const isTokenExpired = data.error === -216 || data.error === -230;
-    const failureType = isTokenExpired ? "TOKEN_EXPIRED" : `API_ERROR_${data.error}`;
+    const tokenExpired = data.error === -216 || data.error === -230;
+    const failureType = tokenExpired ? "TOKEN_EXPIRED" : `API_ERROR_${data.error}`;
     const msg = `Zalo API error ${data.error}: ${data.message || "unknown"}`;
     console.error(`[zalo/reply] FAIL | senderId=${userId} failureType=${failureType} errorCode=${data.error} reason=${msg}`);
-    throw new Error(msg);
+    return { ok: false, tokenExpired, errorMsg: msg };
   }
 
   console.log(`[zalo/reply] OK | senderId=${userId}`);
+  return { ok: true, tokenExpired: false };
+}
+
+async function replyToUser(userId: string, text: string): Promise<void> {
+  const token = getCachedAccessToken() || (await getNotificationConfig("zalo_oa_access_token"));
+  if (!token) {
+    const msg = "ZALO_OA_ACCESS_TOKEN not configured";
+    console.error(`[zalo/reply] FAIL | senderId=${userId} reason=${msg}`);
+    throw new Error(msg);
+  }
+
+  const result = await sendZaloReply(token, userId, text);
+  if (result.ok) return;
+
+  if (result.tokenExpired) {
+    console.log(`[zalo/token] TOKEN_EXPIRED in webhook reply — attempting auto-refresh | senderId=${userId}`);
+    try {
+      const newToken = await refreshZaloAccessToken();
+      console.log(`[zalo/token] refresh OK — retrying reply | senderId=${userId}`);
+      const retryResult = await sendZaloReply(newToken, userId, text);
+      if (retryResult.ok) {
+        console.log(`[zalo/token] retry reply OK | senderId=${userId}`);
+        return;
+      }
+      console.error(`[zalo/token] retry reply FAIL | senderId=${userId} reason=${retryResult.errorMsg}`);
+      throw new Error(retryResult.errorMsg || "Retry failed after token refresh");
+    } catch (refreshErr) {
+      const reason = refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+      console.error(`[zalo/token] refresh FAIL — cannot retry reply | senderId=${userId} reason=${reason}`);
+      throw new Error(reason);
+    }
+  }
+
+  throw new Error(result.errorMsg || "Zalo reply failed");
 }
 
 async function handleOrderLookup(userId: string, text: string): Promise<void> {

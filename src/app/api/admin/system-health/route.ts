@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { getNotificationConfig } from "@/lib/notification-config";
+import { getZaloTokenStatus } from "@/lib/zalo-token";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -64,6 +65,7 @@ export async function GET() {
   ]);
 
   const zaloTokenExpired = !!zaloTokenExpiredFailure;
+  const zaloTokenRefresh = getZaloTokenStatus();
 
   return jsonResponse({
     system: {
@@ -87,6 +89,13 @@ export async function GET() {
         sendEnabled: zaloEnabled === "true",
         accessToken: !!zaloToken,
       },
+      tokenRefresh: zaloTokenRefresh
+        ? {
+            lastRefreshAt: zaloTokenRefresh.refreshedAt,
+            success: zaloTokenRefresh.success,
+            errorReason: zaloTokenRefresh.errorReason ?? null,
+          }
+        : null,
     },
     operational: {
       unansweredQuestions: unansweredCount,

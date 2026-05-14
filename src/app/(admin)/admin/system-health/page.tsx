@@ -5,6 +5,12 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 
+interface ZaloTokenRefresh {
+  lastRefreshAt: string;
+  success: boolean;
+  errorReason: string | null;
+}
+
 interface ZaloDiagnostics {
   tokenExpired: boolean;
   tokenExpiredAt: string | null;
@@ -15,6 +21,7 @@ interface ZaloDiagnostics {
     sendEnabled: boolean;
     accessToken: boolean;
   };
+  tokenRefresh: ZaloTokenRefresh | null;
 }
 
 interface HealthData {
@@ -244,6 +251,24 @@ export default function SystemHealthPage() {
                 value={data.zaloDiagnostics.unresolvedFailures}
                 alert={data.zaloDiagnostics.unresolvedFailures > 0}
               />
+              {data.zaloDiagnostics.tokenRefresh && (
+                <div className="mt-2 pt-2 border-t border-slate-100">
+                  <StatusRow
+                    label="Lần refresh token gần nhất"
+                    value={
+                      data.zaloDiagnostics.tokenRefresh.success
+                        ? `Thành công — ${timeSince(data.zaloDiagnostics.tokenRefresh.lastRefreshAt)}`
+                        : `Thất bại — ${timeSince(data.zaloDiagnostics.tokenRefresh.lastRefreshAt)}`
+                    }
+                    status={data.zaloDiagnostics.tokenRefresh.success ? "green" : "red"}
+                  />
+                  {data.zaloDiagnostics.tokenRefresh.errorReason && (
+                    <p className="text-xs text-red-500 ml-4 mt-1">
+                      {data.zaloDiagnostics.tokenRefresh.errorReason}
+                    </p>
+                  )}
+                </div>
+              )}
             </Card>
           )}
 
