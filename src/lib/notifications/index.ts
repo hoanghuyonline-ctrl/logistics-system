@@ -1,5 +1,12 @@
 export { sendNotification } from "./service";
-export { onOrderCreated, onShipmentStatusChanged } from "./triggers";
+export {
+  onOrderCreated,
+  onShipmentStatusChanged,
+  onCustomerIssueCreated,
+  onCustomerIssueStatusChanged,
+  onCustomerVisibleOrderNote,
+  onWalletEvent,
+} from "./triggers";
 export { sendEmail } from "./channels/email";
 export { sendTelegram } from "./channels/telegram";
 export { sendZalo, notifyZaloStatusChange } from "./channels/zalo";

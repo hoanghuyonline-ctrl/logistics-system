@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
-import { createNotification } from "@/lib/notifications";
+import { onWalletEvent } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -52,11 +52,20 @@ export async function POST(request: Request) {
     },
   });
 
-  await createNotification({
-    userId,
-    title: "Nạp tiền thành công",
-    message: `Ví của bạn đã được nạp ${depositAmount.toLocaleString()} VND.`,
-  });
+  prisma.user
+    .findUnique({ where: { id: userId }, select: { email: true, fullName: true } })
+    .then((customer) =>
+      onWalletEvent({
+        userId,
+        userEmail: customer?.email,
+        userName: customer?.fullName,
+        title: "Nạp tiền thành công",
+        message: `Chào ${customer?.fullName || "bạn"}, ví của bạn đã được nạp ${depositAmount.toLocaleString()} VND. Số dư hiện tại: ${newBalance.toLocaleString()} VND.`,
+      }),
+    )
+    .catch((err) => {
+      console.error("[notify] wallet deposit failed:", err);
+    });
 
   return jsonResponse(transaction, 201);
 }

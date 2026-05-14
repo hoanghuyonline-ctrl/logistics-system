@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
-import { notifyOrderStatusChange } from "@/lib/notifications";
+import { onShipmentStatusChanged } from "@/lib/notifications";
 import { toShipmentStatus, isValidTransition, ShipmentStatus } from "@/lib/shipment-status";
 import { auditLog } from "@/lib/audit";
 
@@ -56,7 +56,23 @@ export async function POST(request: Request) {
       details: { fromStatus: order.status, toStatus: "ARRIVED_CHINA_WH", weightKg },
     });
 
-    await notifyOrderStatusChange(order.userId, order.id, order.orderCode, "ARRIVED_CHINA_WH");
+    prisma.user
+      .findUnique({ where: { id: order.userId }, select: { email: true, fullName: true } })
+      .then((customer) =>
+        onShipmentStatusChanged({
+          userId: order.userId,
+          userEmail: customer?.email,
+          userName: customer?.fullName,
+          orderId: order.id,
+          orderCode: order.orderCode,
+          fromStatus: order.status,
+          toStatus: "ARRIVED_CHINA_WH",
+          channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+        }),
+      )
+      .catch((err) => {
+        console.error("[notify] warehouse china receive failed:", err);
+      });
 
     return jsonResponse(updated);
   } catch (error) {

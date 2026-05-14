@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { onCustomerIssueStatusChanged } from "@/lib/notifications";
 
 const ISSUE_TYPES = [
   "THIEU_HANG",
@@ -116,14 +117,39 @@ export async function PUT(request: Request) {
   if (resolution !== undefined) data.resolution = resolution;
   if (assignedTo !== undefined) data.assignedTo = assignedTo || null;
 
+  const issue = await prisma.customerIssue.findUnique({
+    where: { id },
+    select: { customerId: true, issueType: true, orderCode: true, status: true },
+  });
+  if (!issue) return errorResponse("Issue not found", 404);
+
   const updated = await prisma.customerIssue.update({
     where: { id },
     data,
     include: {
-      customer: { select: { fullName: true } },
+      customer: { select: { fullName: true, email: true } },
       assignee: { select: { fullName: true } },
     },
   });
+
+  if (status || resolution !== undefined) {
+    prisma.user
+      .findUnique({ where: { id: issue.customerId }, select: { email: true, fullName: true } })
+      .then((customer) =>
+        onCustomerIssueStatusChanged({
+          userId: issue.customerId,
+          userEmail: customer?.email,
+          userName: customer?.fullName,
+          issueType: issue.issueType,
+          newStatus: status || issue.status,
+          orderCode: issue.orderCode || undefined,
+          resolution: typeof resolution === "string" ? resolution : undefined,
+        }),
+      )
+      .catch((err) => {
+        console.error("[notify] onCustomerIssueStatusChanged failed:", err);
+      });
+  }
 
   return jsonResponse(updated);
 }

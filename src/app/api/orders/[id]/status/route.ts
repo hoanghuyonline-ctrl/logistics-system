@@ -1,9 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { ORDER_STATUS_TRANSITIONS } from "@/types";
-import { notifyOrderStatusChange } from "@/lib/notifications";
 import { onShipmentStatusChanged } from "@/lib/notifications/triggers";
-import { notifyZaloStatusChange } from "@/lib/notifications/channels/zalo";
 import { InvalidTransitionError, toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
 import { OrderStatus } from "@prisma/client";
 import type { NextRequest } from "next/server";
@@ -123,8 +121,6 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
     details: { fromStatus: order.status, toStatus: status },
   });
 
-  await notifyOrderStatusChange(order.userId, order.id, order.orderCode, status);
-
   prisma.user
     .findUnique({ where: { id: order.userId }, select: { email: true, fullName: true } })
     .then((orderUser) =>
@@ -136,21 +132,12 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
         orderCode: order.orderCode,
         fromStatus: order.status,
         toStatus: status,
-        channels: ["SYSTEM", "TELEGRAM"],
+        channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
       }),
     )
     .catch((err) => {
       console.error("[notifications] onShipmentStatusChanged failed:", err);
     });
-
-  // Fire-and-forget Zalo notification (only sends if customer has zaloRecipientId)
-  notifyZaloStatusChange({
-    userId: order.userId,
-    orderCode: order.orderCode,
-    toStatus: status,
-  }).catch((err: unknown) => {
-    console.error("[zalo/status] notifyZaloStatusChange failed:", err);
-  });
 
   return jsonResponse(updated);
 }
