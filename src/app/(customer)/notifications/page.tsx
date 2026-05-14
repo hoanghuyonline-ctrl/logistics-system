@@ -65,6 +65,10 @@ export default function NotificationChannelsPage() {
   }
 
   async function unlinkTelegram() {
+    const confirmed = window.confirm(
+      "Bạn có chắc muốn hủy liên kết kênh Telegram không?\n\nSau khi hủy, hệ thống sẽ không gửi thông báo qua Telegram nữa."
+    );
+    if (!confirmed) return;
     setSaving(true);
     setSaveMsg("");
     try {
@@ -77,6 +81,30 @@ export default function NotificationChannelsPage() {
         setUser((prev) => prev ? { ...prev, telegramChatId: null } : prev);
         setTelegramInput("");
         setSaveMsg("Đã hủy liên kết Telegram.");
+      }
+    } catch {
+      setSaveMsg("Lỗi kết nối, vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function unlinkZalo() {
+    const confirmed = window.confirm(
+      "Bạn có chắc muốn hủy liên kết kênh Zalo không?\n\nSau khi hủy, hệ thống sẽ không gửi thông báo qua Zalo nữa. Bạn có thể liên kết lại bằng cách quét mã QR Zalo OA và nhắn mã đơn hàng."
+    );
+    if (!confirmed) return;
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ zaloRecipientId: null }),
+      });
+      if (res.ok) {
+        setUser((prev) => prev ? { ...prev, zaloRecipientId: null } : prev);
+        setSaveMsg("Đã hủy liên kết Zalo. Bạn có thể liên kết lại qua Zalo OA.");
       }
     } catch {
       setSaveMsg("Lỗi kết nối, vui lòng thử lại.");
@@ -152,7 +180,18 @@ export default function NotificationChannelsPage() {
               {user?.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}
             </span>
           </div>
-          {!user?.zaloRecipientId && (
+          {user?.zaloRecipientId ? (
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-xs text-slate-500">Hủy liên kết để đổi sang tài khoản Zalo khác.</p>
+              <button
+                onClick={unlinkZalo}
+                disabled={saving}
+                className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition-colors"
+              >
+                Hủy liên kết
+              </button>
+            </div>
+          ) : (
             <div className="mt-4 bg-slate-50 rounded-lg p-4 text-sm text-slate-700 space-y-2">
               <p className="font-medium text-slate-800">Hướng dẫn liên kết Zalo:</p>
               <ol className="list-decimal list-inside space-y-1.5">
@@ -164,6 +203,11 @@ export default function NotificationChannelsPage() {
                 Sau khi liên kết, bạn sẽ nhận thông báo cập nhật đơn hàng, khiếu nại và ví tiền qua Zalo.
               </p>
             </div>
+          )}
+          {saveMsg && saveMsg.includes("Zalo") && (
+            <p className={`text-xs mt-2 ${saveMsg.includes("hủy") ? "text-emerald-600" : "text-red-600"}`}>
+              {saveMsg}
+            </p>
           )}
         </Card>
 
@@ -246,8 +290,9 @@ export default function NotificationChannelsPage() {
               Chỉ chat
             </span>
           </div>
-          <div className="mt-3 text-sm text-slate-500">
-            <p>Nhắn tin cho Fanpage để được hỗ trợ trực tiếp. Tính năng thông báo chủ động qua Messenger sẽ được bổ sung trong tương lai.</p>
+          <div className="mt-3 text-sm text-slate-500 space-y-2">
+            <p>Nhắn tin cho Fanpage để được hỗ trợ trực tiếp.</p>
+            <p className="text-xs text-slate-400">Hiện tại Messenger chỉ dùng để chat hỗ trợ, chưa có hủy/liên kết thông báo chủ động. Tính năng này sẽ được bổ sung trong tương lai.</p>
           </div>
         </Card>
       </div>

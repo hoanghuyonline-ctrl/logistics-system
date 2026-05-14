@@ -7,11 +7,11 @@ export async function PUT(request: Request) {
   if (!sessionUser) return errorResponse("Unauthorized", 401);
 
   const body = await request.json();
-  const { fullName, phone, address, telegramChatId } = body;
+  const { fullName, phone, address, telegramChatId, zaloRecipientId } = body;
 
   const user = await prisma.user.update({
     where: { id: sessionUser.id },
-    data: { fullName, phone, address, telegramChatId },
+    data: { fullName, phone, address, telegramChatId, zaloRecipientId },
     select: {
       id: true,
       email: true,
@@ -20,6 +20,7 @@ export async function PUT(request: Request) {
       address: true,
       role: true,
       telegramChatId: true,
+      zaloRecipientId: true,
     },
   });
 
