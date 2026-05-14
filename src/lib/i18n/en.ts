@@ -193,6 +193,7 @@ const en: Record<string, string> = {
   "nav.systemHealth": "System Health",
   "nav.stuckShipments": "Stuck Orders",
   "nav.notificationFailures": "Notif. Failures",
+  "nav.customerIssues": "Issues",
 
   // Warehouse scan
   "scan.title": "Scan Package",

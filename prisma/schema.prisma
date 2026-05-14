@@ -88,6 +88,8 @@ model User {
   packagesCreated    Package[]        @relation("PackageCreator")
   configChanges      SystemConfig[]
   transactionsCreated Transaction[]   @relation("TransactionCreator")
+  customerIssues     CustomerIssue[]  @relation("CustomerIssues")
+  assignedIssues     CustomerIssue[]  @relation("AssignedIssues")
 }
 
 model Wallet {
@@ -269,4 +271,20 @@ model ChatbotUnansweredQuestion {
   resolved  Boolean  @default(false)
   category  String?
   createdAt DateTime @default(now())
+}
+
+model CustomerIssue {
+  id          String   @id @default(uuid())
+  customerId  String
+  orderCode   String?
+  issueType   String
+  description String
+  status      String   @default("NEW")
+  assignedTo  String?
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer User  @relation("CustomerIssues", fields: [customerId], references: [id])
+  assignee User? @relation("AssignedIssues", fields: [assignedTo], references: [id])
 }
