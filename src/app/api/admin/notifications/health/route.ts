@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { getNotificationConfig } from "@/lib/notification-config";
 
@@ -9,7 +10,7 @@ export async function GET() {
     return errorResponse("Forbidden", 403);
   }
 
-  const [telegramToken, telegramChatId, zaloEnabled, zaloToken, messengerToken, smtpHost] =
+  const [telegramToken, telegramChatId, zaloEnabled, zaloToken, messengerToken, smtpHost, zaloTokenExpired] =
     await Promise.all([
       getNotificationConfig("telegram_bot_token"),
       getNotificationConfig("telegram_chat_id"),
@@ -17,11 +18,18 @@ export async function GET() {
       getNotificationConfig("zalo_oa_access_token"),
       Promise.resolve(process.env.MESSENGER_PAGE_ACCESS_TOKEN || ""),
       Promise.resolve(process.env.SMTP_HOST || ""),
+      prisma.notificationFailure.findFirst({
+        where: { channel: "ZALO", failureCategory: "TOKEN_EXPIRED", resolved: false },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }).then((f) => !!f).catch(() => false),
     ]);
+
+  const zaloConfigured = zaloEnabled === "true" && zaloToken;
 
   return jsonResponse({
     telegram: telegramToken && telegramChatId ? "enabled" : "disabled",
-    zalo: zaloEnabled === "true" && zaloToken ? "enabled" : "disabled",
+    zalo: zaloConfigured ? (zaloTokenExpired ? "token_expired" : "enabled") : "disabled",
     email: smtpHost ? "enabled" : "disabled",
     messenger: messengerToken ? "enabled" : "disabled",
   });

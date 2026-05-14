@@ -24,6 +24,9 @@ export async function GET() {
     stuckPendingCount,
     stuckDeliveryCount,
     latestChatbotActivity,
+    zaloTokenExpiredFailure,
+    zaloUnresolvedFailureCount,
+    zaloBoundCustomerCount,
   ] = await Promise.all([
     prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
     getNotificationConfig("telegram_bot_token"),
@@ -47,7 +50,20 @@ export async function GET() {
     prisma.chatbotUnansweredQuestion
       .findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true, channel: true } })
       .catch(() => null),
+    prisma.notificationFailure.findFirst({
+      where: { channel: "ZALO", failureCategory: "TOKEN_EXPIRED", resolved: false },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true, shortReason: true },
+    }).catch(() => null),
+    prisma.notificationFailure.count({
+      where: { channel: "ZALO", resolved: false },
+    }).catch(() => 0),
+    prisma.user.count({
+      where: { zaloRecipientId: { not: null } },
+    }).catch(() => 0),
   ]);
+
+  const zaloTokenExpired = !!zaloTokenExpiredFailure;
 
   return jsonResponse({
     system: {
@@ -60,6 +76,17 @@ export async function GET() {
       telegram: telegramToken && telegramChatId ? "enabled" : "disabled",
       zalo: zaloEnabled === "true" && zaloToken ? "enabled" : "disabled",
       messenger: messengerToken ? "enabled" : "disabled",
+    },
+    zaloDiagnostics: {
+      tokenExpired: zaloTokenExpired,
+      tokenExpiredAt: zaloTokenExpiredFailure?.createdAt ?? null,
+      tokenExpiredReason: zaloTokenExpiredFailure?.shortReason ?? null,
+      unresolvedFailures: zaloUnresolvedFailureCount,
+      boundCustomers: zaloBoundCustomerCount,
+      configPresent: {
+        sendEnabled: zaloEnabled === "true",
+        accessToken: !!zaloToken,
+      },
     },
     operational: {
       unansweredQuestions: unansweredCount,

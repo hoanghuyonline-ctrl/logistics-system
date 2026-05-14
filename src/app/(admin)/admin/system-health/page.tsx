@@ -5,6 +5,18 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 
+interface ZaloDiagnostics {
+  tokenExpired: boolean;
+  tokenExpiredAt: string | null;
+  tokenExpiredReason: string | null;
+  unresolvedFailures: number;
+  boundCustomers: number;
+  configPresent: {
+    sendEnabled: boolean;
+    accessToken: boolean;
+  };
+}
+
 interface HealthData {
   system: {
     appOnline: boolean;
@@ -17,6 +29,7 @@ interface HealthData {
     zalo: string;
     messenger: string;
   };
+  zaloDiagnostics?: ZaloDiagnostics;
   operational: {
     unansweredQuestions: number;
     stuckPending: number;
@@ -184,6 +197,55 @@ export default function SystemHealthPage() {
               </div>
             )}
           </Card>
+
+          {/* Zalo Diagnostics */}
+          {data.zaloDiagnostics && (
+            <Card title="Chẩn Đoán Zalo OA">
+              {data.zaloDiagnostics.tokenExpired && (
+                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <div className="flex items-center gap-2 mb-1">
+                    <StatusDot status="red" />
+                    <span className="text-sm font-semibold text-red-700">
+                      Zalo token đã hết hạn — cần cập nhật ZALO_OA_ACCESS_TOKEN
+                    </span>
+                  </div>
+                  {data.zaloDiagnostics.tokenExpiredAt && (
+                    <p className="text-xs text-red-600 ml-4">
+                      Phát hiện lúc: {formatTime(data.zaloDiagnostics.tokenExpiredAt)}
+                    </p>
+                  )}
+                  <p className="text-xs text-red-500 mt-1 ml-4">
+                    Cập nhật token trong .env và khởi động lại PM2.
+                  </p>
+                </div>
+              )}
+              <StatusRow
+                label="ZALO_SEND_ENABLED"
+                value={data.zaloDiagnostics.configPresent.sendEnabled ? "Đã bật" : "Chưa bật"}
+                status={data.zaloDiagnostics.configPresent.sendEnabled ? "green" : "red"}
+              />
+              <StatusRow
+                label="ZALO_OA_ACCESS_TOKEN"
+                value={data.zaloDiagnostics.configPresent.accessToken ? "Đã có" : "Thiếu"}
+                status={
+                  !data.zaloDiagnostics.configPresent.accessToken
+                    ? "red"
+                    : data.zaloDiagnostics.tokenExpired
+                      ? "red"
+                      : "green"
+                }
+              />
+              <MetricRow
+                label="Khách hàng đã liên kết Zalo"
+                value={data.zaloDiagnostics.boundCustomers}
+              />
+              <MetricRow
+                label="Lỗi Zalo chưa xử lý"
+                value={data.zaloDiagnostics.unresolvedFailures}
+                alert={data.zaloDiagnostics.unresolvedFailures > 0}
+              />
+            </Card>
+          )}
 
           {/* Operational Indicators */}
           <Card title="Chỉ Số Vận Hành">
