@@ -71,6 +71,12 @@ const NOTIF_FIELD_META: Record<string, { label: string; desc: string; secret: bo
     secret: true,
     placeholder: "Nhập access token mới...",
   },
+  zalo_oa_refresh_token: {
+    label: "Zalo OA Refresh Token",
+    desc: "Refresh token để tự động gia hạn access token",
+    secret: true,
+    placeholder: "Nhập refresh token...",
+  },
   zalo_recipient_id: {
     label: "Zalo Recipient ID",
     desc: "ID người nhận tin nhắn thử Zalo",
@@ -259,7 +265,7 @@ export default function SettingsPage() {
   ] as const;
 
   const telegramKeys = ["telegram_bot_token", "telegram_chat_id"];
-  const zaloKeys = ["zalo_send_enabled", "zalo_oa_access_token", "zalo_recipient_id"];
+  const zaloKeys = ["zalo_send_enabled", "zalo_oa_access_token", "zalo_oa_refresh_token", "zalo_recipient_id"];
 
   function renderNotifField(cfg: NotifConfig) {
     const meta = NOTIF_FIELD_META[cfg.key];

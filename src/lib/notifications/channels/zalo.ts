@@ -1,9 +1,9 @@
 // TODO: Migrate to ZNS (Zalo Notification Service) templates for transactional messages
-// TODO: Implement OAuth refresh flow for long-lived access tokens
 // TODO: Add webhook handling for delivery receipts
 
 import { getNotificationConfig } from "@/lib/notification-config";
 import { prisma } from "@/lib/prisma";
+import { getCachedAccessToken, refreshZaloAccessToken } from "@/lib/zalo-token";
 
 const API_URL = "https://openapi.zalo.me/v3.0/oa/message/cs";
 
@@ -92,7 +92,7 @@ export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
     return log;
   }
 
-  const token = await getNotificationConfig("zalo_oa_access_token");
+  const token = getCachedAccessToken() || (await getNotificationConfig("zalo_oa_access_token"));
   if (!token) {
     const log: ZaloSendLog = {
       timestamp, orderCode: options.orderCode, recipientId: recipientId || "(chưa đặt)",
@@ -110,6 +110,38 @@ export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
     logZaloSend(log);
     throw new Error("ZALO_RECIPIENT_ID is not configured");
   }
+
+  const result = await attemptZaloSend(token, recipientId, options);
+  if (result.success) return result;
+
+  if (result.failureCategory === "TOKEN_EXPIRED") {
+    console.log(`[zalo/token] TOKEN_EXPIRED detected — attempting auto-refresh | đơn=${options.orderCode || "(none)"}`);
+    try {
+      const newToken = await refreshZaloAccessToken();
+      console.log(`[zalo/token] refresh OK — retrying send | đơn=${options.orderCode || "(none)"}`);
+      const retryResult = await attemptZaloSend(newToken, recipientId, options);
+      if (retryResult.success) {
+        console.log(`[zalo/token] retry OK | đơn=${options.orderCode || "(none)"}`);
+        return retryResult;
+      }
+      console.error(`[zalo/token] retry FAIL | đơn=${options.orderCode || "(none)"} category=${retryResult.failureCategory}`);
+      throw new Error(getFailureLabel(retryResult.failureCategory || "UNKNOWN"));
+    } catch (refreshErr) {
+      const reason = refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+      console.error(`[zalo/token] refresh FAIL — cannot retry | đơn=${options.orderCode || "(none)"} reason=${reason}`);
+      throw new Error(getFailureLabel("TOKEN_EXPIRED"));
+    }
+  }
+
+  throw new Error(getFailureLabel(result.failureCategory || "UNKNOWN"));
+}
+
+async function attemptZaloSend(
+  token: string,
+  recipientId: string,
+  options: ZaloOptions,
+): Promise<ZaloSendLog> {
+  const timestamp = new Date().toISOString();
 
   try {
     const res = await fetch(API_URL, {
@@ -133,7 +165,7 @@ export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
         errorReason: `HTTP ${res.status}: ${body.slice(0, 200)}`,
       };
       logZaloSend(log);
-      throw new Error(getFailureLabel(category));
+      return log;
     }
 
     const data = await res.json();
@@ -145,16 +177,13 @@ export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
         errorReason: `Mã lỗi ${data.error}: ${data.message || "không rõ"}`,
       };
       logZaloSend(log);
-      throw new Error(getFailureLabel(category));
+      return log;
     }
 
     const log: ZaloSendLog = { timestamp, orderCode: options.orderCode, recipientId, success: true };
     logZaloSend(log);
     return log;
   } catch (err) {
-    if (err instanceof Error && Object.values(FAILURE_LABELS).includes(err.message)) {
-      throw err;
-    }
     const message = err instanceof Error ? err.message : String(err);
     const category = classifyZaloError(0, 0, message);
     const log: ZaloSendLog = {
@@ -162,7 +191,7 @@ export async function sendZalo(options: ZaloOptions): Promise<ZaloSendLog> {
       success: false, failureCategory: category, errorReason: message,
     };
     logZaloSend(log);
-    throw new Error(getFailureLabel(category));
+    return log;
   }
 }
 
