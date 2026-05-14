@@ -14,6 +14,9 @@ export async function GET() {
   const now = new Date();
 
   // Database check + operational counts in parallel
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+
   const [
     dbOk,
     telegramToken,
@@ -28,6 +31,10 @@ export async function GET() {
     zaloTokenExpiredFailure,
     zaloUnresolvedFailureCount,
     zaloBoundCustomerCount,
+    failuresToday,
+    unresolvedFailures,
+    affectedChannels,
+    latestFailure,
   ] = await Promise.all([
     prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
     getNotificationConfig("telegram_bot_token"),
@@ -62,6 +69,21 @@ export async function GET() {
     prisma.user.count({
       where: { zaloRecipientId: { not: null } },
     }).catch(() => 0),
+    prisma.notificationFailure.count({
+      where: { createdAt: { gte: todayStart } },
+    }).catch(() => 0),
+    prisma.notificationFailure.count({
+      where: { resolved: false },
+    }).catch(() => 0),
+    prisma.notificationFailure.groupBy({
+      by: ["channel"],
+      where: { resolved: false },
+      _count: true,
+    }).catch(() => []),
+    prisma.notificationFailure.findFirst({
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true, channel: true },
+    }).catch(() => null),
   ]);
 
   const zaloTokenExpired = !!zaloTokenExpiredFailure;
@@ -104,6 +126,14 @@ export async function GET() {
       lastChatbotActivity: latestChatbotActivity
         ? { time: latestChatbotActivity.createdAt, channel: latestChatbotActivity.channel }
         : null,
+    },
+    notificationDelivery: {
+      failuresToday,
+      unresolvedFailures,
+      affectedChannels: (affectedChannels as { channel: string; _count: number }[]).map(
+        (c) => c.channel,
+      ),
+      latestFailureAt: latestFailure?.createdAt ?? null,
     },
   });
 }

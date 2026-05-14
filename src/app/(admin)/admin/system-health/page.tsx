@@ -24,6 +24,13 @@ interface ZaloDiagnostics {
   tokenRefresh: ZaloTokenRefresh | null;
 }
 
+interface NotificationDelivery {
+  failuresToday: number;
+  unresolvedFailures: number;
+  affectedChannels: string[];
+  latestFailureAt: string | null;
+}
+
 interface HealthData {
   system: {
     appOnline: boolean;
@@ -43,6 +50,7 @@ interface HealthData {
     stuckDelivery: number;
     lastChatbotActivity: { time: string; channel: string } | null;
   };
+  notificationDelivery?: NotificationDelivery;
 }
 
 function StatusDot({ status }: { status: "green" | "yellow" | "red" }) {
@@ -271,6 +279,59 @@ export default function SystemHealthPage() {
               )}
             </Card>
           )}
+
+          {/* Notification Delivery Summary */}
+          {data.notificationDelivery && (() => {
+            const nd = data.notificationDelivery;
+            const hasErrors = nd.unresolvedFailures > 0;
+            const needsWatch = nd.failuresToday > 0 && nd.unresolvedFailures === 0;
+            const healthStatus: "green" | "yellow" | "red" = hasErrors ? "red" : needsWatch ? "yellow" : "green";
+            const healthLabel = hasErrors ? "Có lỗi gửi thông báo" : needsWatch ? "Cần theo dõi" : "Ổn định";
+            return (
+              <Card title="Tình Trạng Gửi Thông Báo">
+                <div className="flex items-center gap-2 mb-3">
+                  <StatusDot status={healthStatus} />
+                  <span className={`text-sm font-semibold ${
+                    healthStatus === "red" ? "text-red-700" : healthStatus === "yellow" ? "text-amber-700" : "text-emerald-700"
+                  }`}>
+                    {healthLabel}
+                  </span>
+                </div>
+                <MetricRow
+                  label="Lỗi hôm nay"
+                  value={nd.failuresToday}
+                  alert={nd.failuresToday > 0}
+                />
+                <MetricRow
+                  label="Chưa xử lý"
+                  value={nd.unresolvedFailures}
+                  alert={nd.unresolvedFailures > 0}
+                />
+                {nd.affectedChannels.length > 0 && (
+                  <div className="flex items-center justify-between py-3 border-b border-slate-50">
+                    <span className="text-sm text-slate-600">Kênh bị ảnh hưởng</span>
+                    <span className="text-sm font-medium text-red-600">
+                      {nd.affectedChannels.join(", ")}
+                    </span>
+                  </div>
+                )}
+                {nd.latestFailureAt && (
+                  <div className="flex items-center justify-between py-3 border-b border-slate-50">
+                    <span className="text-sm text-slate-600">Lỗi gần nhất</span>
+                    <span className="text-sm text-slate-500">{timeSince(nd.latestFailureAt)}</span>
+                  </div>
+                )}
+                <div className="mt-3">
+                  <a
+                    href="/admin/notification-failures"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    Xem lỗi thông báo →
+                  </a>
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* Operational Indicators */}
           <Card title="Chỉ Số Vận Hành">
