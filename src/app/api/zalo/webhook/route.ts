@@ -17,9 +17,23 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Đã huỷ",
 };
 
-const WELCOME_MESSAGE =
-  "Xin chào, Bắc Trung Hải Logistics đã nhận được tin nhắn của quý khách.\n\n" +
-  "Quý khách có thể gửi mã đơn hàng để tra cứu trạng thái.";
+const GREETING_PATTERNS = /^(xin chào|chào|hello|hi|hey|alo|a lô|ad ơi|admin ơi|chào shop|chào bạn|mình cần hỗ trợ|hỗ trợ|help)$/i;
+
+const GREETING_REPLY =
+  "Xin chào 👋\n" +
+  "Bắc Trung Hải Logistics có thể hỗ trợ:\n\n" +
+  "• Tra cứu đơn hàng\n" +
+  "• Kiểm tra trạng thái vận chuyển\n" +
+  "• Hướng dẫn nạp tiền\n" +
+  "• Giải đáp phí vận chuyển\n\n" +
+  "Bạn có thể:\n" +
+  "• Gửi mã đơn (ví dụ BTH123456)\n" +
+  "• Hoặc nhập câu hỏi cần hỗ trợ.";
+
+const FALLBACK_REPLY =
+  "Hiện tại hệ thống chưa có câu trả lời phù hợp cho câu hỏi này.\n" +
+  "Bộ phận hỗ trợ sẽ kiểm tra và phản hồi sớm nhất.\n\n" +
+  "Bạn cũng có thể gửi mã đơn hàng để tra cứu trạng thái.";
 
 const BIND_SUCCESS_MESSAGE =
   "✅ Zalo đã được liên kết với tài khoản của quý khách.\n" +
@@ -204,31 +218,45 @@ export async function POST(request: Request) {
         // Fire-and-forget: do not await to avoid blocking webhook response
         (async () => {
           try {
-            if (/\d/.test(text) && !/\s/.test(text)) {
-              await handleOrderLookup(userId, text);
-            } else {
-              const match = await findSupportKnowledgeAnswer(text, "ZALO");
-              if (match) {
-                console.log(
-                  `[zalo/knowledge] matched=true | channel=ZALO score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
-                );
-                const reply =
-                  `📦 Bắc Trung Hải Logistics\n\n` +
-                  `${match.content}\n\n` +
-                  `Nếu cần hỗ trợ thêm, quý khách có thể liên hệ nhân viên.`;
-                await replyToUser(userId, reply);
-              } else {
-                console.log(
-                  `[zalo/knowledge] matched=false | channel=ZALO score=0 candidates=0 matchSource=none query="${text}"`
-                );
-                prisma.chatbotUnansweredQuestion.create({
-                  data: { channel: "ZALO", question: text, senderId: userId },
-                }).catch((e: unknown) => console.error("[zalo/unanswered] save error:", e));
-                await replyToUser(userId, WELCOME_MESSAGE);
-              }
+            // 1. Greeting detection
+            if (GREETING_PATTERNS.test(text.trim())) {
+              console.log(`[zalo/chat] greeting | senderId=${userId} text="${text}"`);
+              await replyToUser(userId, GREETING_REPLY);
+              return;
             }
+
+            // 2. Order code lookup (alphanumeric codes with digits, no spaces)
+            if (/^[A-Za-z0-9\-_]+$/.test(text) && /\d/.test(text) && text.length >= 4) {
+              await handleOrderLookup(userId, text);
+              return;
+            }
+
+            // 3. FAQ / SupportKnowledge matching
+            const match = await findSupportKnowledgeAnswer(text, "ZALO");
+            if (match) {
+              console.log(
+                `[zalo/knowledge] matched=true | channel=ZALO score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
+              );
+              const reply =
+                `📦 Bắc Trung Hải Logistics\n\n` +
+                `${match.content}\n\n` +
+                `Nếu cần hỗ trợ thêm, quý khách có thể liên hệ nhân viên.`;
+              await replyToUser(userId, reply);
+              return;
+            }
+
+            // 4. Fallback — no match found
+            console.log(
+              `[zalo/knowledge] matched=false | channel=ZALO score=0 candidates=0 matchSource=none query="${text}"`
+            );
+            prisma.chatbotUnansweredQuestion.create({
+              data: { channel: "ZALO", question: text, senderId: userId },
+            }).catch((e: unknown) => console.error("[zalo/unanswered] save error:", e));
+            await replyToUser(userId, FALLBACK_REPLY);
           } catch (err) {
             console.error("[zalo/webhook] Error handling user_send_text:", err);
+            // Anti-silence: always reply even on error
+            await replyToUser(userId, FALLBACK_REPLY).catch(() => {});
           }
         })();
       }
