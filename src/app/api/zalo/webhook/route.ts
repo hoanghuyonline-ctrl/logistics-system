@@ -86,50 +86,46 @@ async function tryBindZaloRecipient(
 async function replyToUser(userId: string, text: string): Promise<void> {
   const token = await getNotificationConfig("zalo_oa_access_token");
   if (!token) {
-    console.warn("[zalo/webhook] ZALO_OA_ACCESS_TOKEN not configured — skipping reply");
-    return;
+    const msg = "ZALO_OA_ACCESS_TOKEN not configured";
+    console.error(`[zalo/reply] FAIL | senderId=${userId} reason=${msg}`);
+    throw new Error(msg);
   }
 
   const tokenHint = token.slice(0, 6) + "***";
-  console.log(`[zalo/webhook] Sending reply to ${userId} (token: ${tokenHint})`);
+  console.log(`[zalo/reply] SENDING | senderId=${userId} token=${tokenHint} textLen=${text.length}`);
 
-  try {
-    const res = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        access_token: token,
-      },
-      body: JSON.stringify({
-        recipient: { user_id: userId },
-        message: { text },
-      }),
-    });
+  const res = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      access_token: token,
+    },
+    body: JSON.stringify({
+      recipient: { user_id: userId },
+      message: { text },
+    }),
+  });
 
-    if (!res.ok) {
-      const errorBody = await res.text();
-      console.error(
-        `[zalo/webhook] Zalo API error — status: ${res.status}, body: ${errorBody}`
-      );
-      return;
-    }
-
-    const data = await res.json();
-    if (data.error !== 0) {
-      console.error(
-        `[zalo/webhook] Zalo API returned error — code: ${data.error}, message: ${data.message || "unknown"}`
-      );
-      return;
-    }
-
-    console.log(`[zalo/webhook] Reply sent successfully to ${userId}`);
-  } catch (err) {
-    console.error("[zalo/webhook] Network error sending reply:", err);
+  if (!res.ok) {
+    const errorBody = await res.text();
+    const msg = `Zalo API HTTP ${res.status}: ${errorBody}`;
+    console.error(`[zalo/reply] FAIL | senderId=${userId} reason=${msg}`);
+    throw new Error(msg);
   }
+
+  const data = await res.json();
+  if (data.error !== 0) {
+    const msg = `Zalo API error ${data.error}: ${data.message || "unknown"}`;
+    console.error(`[zalo/reply] FAIL | senderId=${userId} reason=${msg}`);
+    throw new Error(msg);
+  }
+
+  console.log(`[zalo/reply] OK | senderId=${userId}`);
 }
 
 async function handleOrderLookup(userId: string, text: string): Promise<void> {
   const orderCode = text.trim();
+  console.log(`[zalo/chat] branch=order_lookup | senderId=${userId} orderCode=${orderCode}`);
 
   const order = await prisma.order.findUnique({
     where: { orderCode },
@@ -143,6 +139,7 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
   });
 
   if (!order) {
+    console.log(`[zalo/chat] order_not_found | senderId=${userId} orderCode=${orderCode}`);
     const reply =
       `📦 Bắc Trung Hải Logistics\n` +
       `Không tìm thấy đơn hàng với mã: ${orderCode}\n\n` +
@@ -152,15 +149,21 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
     return;
   }
 
-  // Auto-bind Zalo sender ID to the order's customer account
+  // Auto-bind Zalo sender ID to the order's customer account (non-blocking)
   try {
     const bound = await tryBindZaloRecipient(userId, order.userId, orderCode);
     if (bound) {
-      await replyToUser(userId, BIND_SUCCESS_MESSAGE);
+      try {
+        await replyToUser(userId, BIND_SUCCESS_MESSAGE);
+      } catch (bindReplyErr) {
+        console.error(`[zalo/chat] bind_reply_failed | senderId=${userId} orderCode=${orderCode}`, bindReplyErr);
+      }
     }
   } catch (err) {
-    console.error("[zalo/bind] FAIL | senderId=" + userId + " orderCode=" + orderCode, err);
+    console.error(`[zalo/bind] FAIL | senderId=${userId} orderCode=${orderCode}`, err);
   }
+
+  // Always send order status reply regardless of bind result
 
   const statusLabel = STATUS_LABELS[order.status] || order.status;
   const lines: string[] = [
@@ -192,74 +195,114 @@ async function handleOrderLookup(userId: string, text: string): Promise<void> {
 interface ZaloWebhookPayload {
   event_name?: string;
   sender?: { id?: string };
+  recipient?: { id?: string };
   message?: { text?: string; msg_id?: string };
+  follower?: { id?: string };
   timestamp?: string;
+}
+
+async function handleTextMessage(userId: string, text: string): Promise<void> {
+  let branch = "unknown";
+  try {
+    // 1. Greeting detection
+    if (GREETING_PATTERNS.test(text.trim())) {
+      branch = "greeting";
+      console.log(`[zalo/chat] branch=${branch} | senderId=${userId} text="${text}"`);
+      await replyToUser(userId, GREETING_REPLY);
+      console.log(`[zalo/chat] reply_success=true | branch=${branch} senderId=${userId}`);
+      return;
+    }
+
+    // 2. Order code lookup (alphanumeric codes with digits, no spaces)
+    if (/^[A-Za-z0-9\-_]+$/.test(text) && /\d/.test(text) && text.length >= 4) {
+      branch = "order_lookup";
+      await handleOrderLookup(userId, text);
+      console.log(`[zalo/chat] reply_success=true | branch=${branch} senderId=${userId}`);
+      return;
+    }
+
+    // 3. FAQ / SupportKnowledge matching
+    const match = await findSupportKnowledgeAnswer(text, "ZALO");
+    if (match) {
+      branch = "support_knowledge";
+      console.log(
+        `[zalo/chat] branch=${branch} | senderId=${userId} score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" query="${text}"`
+      );
+      const reply =
+        `📦 Bắc Trung Hải Logistics\n\n` +
+        `${match.content}\n\n` +
+        `Nếu cần hỗ trợ thêm, quý khách có thể liên hệ nhân viên.`;
+      await replyToUser(userId, reply);
+      console.log(`[zalo/chat] reply_success=true | branch=${branch} senderId=${userId}`);
+      return;
+    }
+
+    // 4. Fallback — no match found
+    branch = "fallback";
+    console.log(
+      `[zalo/chat] branch=${branch} | senderId=${userId} query="${text}"`
+    );
+    prisma.chatbotUnansweredQuestion.create({
+      data: { channel: "ZALO", question: text, senderId: userId },
+    }).catch((e: unknown) => console.error("[zalo/unanswered] save error:", e));
+    await replyToUser(userId, FALLBACK_REPLY);
+    console.log(`[zalo/chat] reply_success=true | branch=${branch} senderId=${userId}`);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error(`[zalo/chat] reply_success=false | branch=${branch} senderId=${userId} error="${reason}"`);
+    // Anti-silence: try fallback reply even on error (only if the error wasn't from replyToUser itself in fallback branch)
+    if (branch !== "fallback") {
+      try {
+        await replyToUser(userId, FALLBACK_REPLY);
+        console.log(`[zalo/chat] fallback_retry=true | senderId=${userId}`);
+      } catch (retryErr) {
+        console.error(`[zalo/chat] fallback_retry=false | senderId=${userId}`, retryErr);
+      }
+    }
+  }
 }
 
 /**
  * POST — Receive incoming Zalo OA webhook events.
- * Handles user_send_text with auto-reply and order lookup.
+ * Handles user_send_text, follow, and other text events.
  * Returns 200 to acknowledge receipt regardless of processing result.
  */
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ZaloWebhookPayload;
+    const eventName = body.event_name || "unknown";
+    const senderId = body.sender?.id || body.follower?.id;
 
     console.log(
-      "[zalo/webhook] Received event:",
-      JSON.stringify(body, null, 2)
+      `[zalo/webhook] event=${eventName} | senderId=${senderId || "(none)"} | raw=${JSON.stringify(body)}`
     );
 
-    if (body.event_name === "user_send_text") {
-      const userId = body.sender?.id;
+    // Handle text messages
+    if (eventName === "user_send_text") {
       const text = body.message?.text?.trim();
 
-      if (userId && text) {
-        // Fire-and-forget: do not await to avoid blocking webhook response
-        (async () => {
-          try {
-            // 1. Greeting detection
-            if (GREETING_PATTERNS.test(text.trim())) {
-              console.log(`[zalo/chat] greeting | senderId=${userId} text="${text}"`);
-              await replyToUser(userId, GREETING_REPLY);
-              return;
-            }
-
-            // 2. Order code lookup (alphanumeric codes with digits, no spaces)
-            if (/^[A-Za-z0-9\-_]+$/.test(text) && /\d/.test(text) && text.length >= 4) {
-              await handleOrderLookup(userId, text);
-              return;
-            }
-
-            // 3. FAQ / SupportKnowledge matching
-            const match = await findSupportKnowledgeAnswer(text, "ZALO");
-            if (match) {
-              console.log(
-                `[zalo/knowledge] matched=true | channel=ZALO score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
-              );
-              const reply =
-                `📦 Bắc Trung Hải Logistics\n\n` +
-                `${match.content}\n\n` +
-                `Nếu cần hỗ trợ thêm, quý khách có thể liên hệ nhân viên.`;
-              await replyToUser(userId, reply);
-              return;
-            }
-
-            // 4. Fallback — no match found
-            console.log(
-              `[zalo/knowledge] matched=false | channel=ZALO score=0 candidates=0 matchSource=none query="${text}"`
-            );
-            prisma.chatbotUnansweredQuestion.create({
-              data: { channel: "ZALO", question: text, senderId: userId },
-            }).catch((e: unknown) => console.error("[zalo/unanswered] save error:", e));
-            await replyToUser(userId, FALLBACK_REPLY);
-          } catch (err) {
-            console.error("[zalo/webhook] Error handling user_send_text:", err);
-            // Anti-silence: always reply even on error
-            await replyToUser(userId, FALLBACK_REPLY).catch(() => {});
-          }
-        })();
+      if (!senderId || !text) {
+        console.warn(`[zalo/webhook] SKIP | event=${eventName} senderId=${senderId || "(missing)"} text=${text ? "present" : "(missing)"}`);
+        return Response.json({ status: "ok" }, { status: 200 });
       }
+
+      // Fire-and-forget: do not await to avoid blocking webhook response
+      handleTextMessage(senderId, text).catch((err) =>
+        console.error(`[zalo/webhook] unhandled error in handleTextMessage | senderId=${senderId}`, err)
+      );
+    }
+    // Handle follow event — greet new followers
+    else if (eventName === "follow") {
+      if (senderId) {
+        console.log(`[zalo/chat] branch=follow | senderId=${senderId}`);
+        replyToUser(senderId, GREETING_REPLY).catch((err) =>
+          console.error(`[zalo/chat] follow_reply_failed | senderId=${senderId}`, err)
+        );
+      }
+    }
+    // Log all other events so nothing is silently ignored
+    else {
+      console.log(`[zalo/webhook] branch=ignored_event | event=${eventName} senderId=${senderId || "(none)"}`);
     }
 
     return Response.json({ status: "ok" }, { status: 200 });
