@@ -6,6 +6,8 @@ const NOTIFICATION_KEYS = [
   "zalo_send_enabled",
   "zalo_oa_access_token",
   "zalo_oa_refresh_token",
+  "zalo_app_id",
+  "zalo_app_secret_key",
   "zalo_recipient_id",
 ] as const;
 
@@ -17,6 +19,8 @@ const ENV_MAP: Record<NotificationConfigKey, string> = {
   zalo_send_enabled: "ZALO_SEND_ENABLED",
   zalo_oa_access_token: "ZALO_OA_ACCESS_TOKEN",
   zalo_oa_refresh_token: "ZALO_OA_REFRESH_TOKEN",
+  zalo_app_id: "ZALO_APP_ID",
+  zalo_app_secret_key: "ZALO_APP_SECRET_KEY",
   zalo_recipient_id: "ZALO_RECIPIENT_ID",
 };
 
@@ -24,6 +28,7 @@ const SECRET_KEYS: NotificationConfigKey[] = [
   "telegram_bot_token",
   "zalo_oa_access_token",
   "zalo_oa_refresh_token",
+  "zalo_app_secret_key",
 ];
 
 export async function getNotificationConfig(

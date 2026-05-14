@@ -34,8 +34,8 @@ export async function refreshZaloAccessToken(): Promise<string> {
     throw new Error(reason);
   }
 
-  const appId = process.env.ZALO_APP_ID || "";
-  const secretKey = process.env.ZALO_APP_SECRET_KEY || "";
+  const appId = await getNotificationConfig("zalo_app_id");
+  const secretKey = await getNotificationConfig("zalo_app_secret_key");
 
   if (!appId || !secretKey) {
     const reason = "Thiếu ZALO_APP_ID hoặc ZALO_APP_SECRET_KEY";
