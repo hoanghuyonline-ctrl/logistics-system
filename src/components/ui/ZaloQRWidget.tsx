@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 
-export default function ZaloQRWidget() {
+export default function ZaloQRWidget({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    <div className={className ?? "fixed bottom-4 left-4 z-50"}>
       {open && (
         <div className="mb-3 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 w-64 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-center justify-between mb-3">
