@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
@@ -188,9 +189,12 @@ export default function OrderDetailPage() {
 
       {zaloBound === false && (
         <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-          <span className="text-lg shrink-0">💬</span>
+          <span className="text-lg shrink-0">📱</span>
           <div className="flex-1">
-            <p className="text-sm font-medium text-blue-900">Liên kết Zalo để nhận thông báo đơn hàng</p>
+            <p className="text-sm font-semibold text-blue-900">Nhận thông báo Zalo tự động</p>
+            <p className="text-sm text-blue-700 mt-1">
+              Liên kết Zalo để nhận cập nhật trạng thái đơn hàng ngay khi kho xử lý.
+            </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="font-mono bg-white px-2.5 py-1.5 rounded border border-blue-200 text-blue-900 font-semibold text-sm">{order.orderCode}</span>
               <button
@@ -205,17 +209,23 @@ export default function OrderDetailPage() {
                 {orderCodeCopied ? "Đã sao chép!" : "Sao chép mã đơn"}
               </button>
             </div>
-            <p className="text-sm text-blue-700 mt-2">
-              Sao chép mã đơn này và gửi cho Zalo OA Bắc Trung Hải Logistics để liên kết tài khoản. Sau khi liên kết, bạn sẽ nhận thông báo trạng thái đơn hàng qua Zalo.
-            </p>
+            <Link
+              href="/notifications"
+              className="inline-block mt-2 text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2"
+            >
+              Cài đặt kênh thông báo →
+            </Link>
           </div>
         </div>
       )}
 
       {zaloBound === true && (
         <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-          <span className="text-lg shrink-0">💬</span>
-          <p className="text-sm text-emerald-800">Zalo đã liên kết. Bạn sẽ nhận thông báo trạng thái đơn hàng qua Zalo.</p>
+          <span className="text-sm shrink-0">✅</span>
+          <div>
+            <p className="text-sm font-medium text-emerald-800">Zalo đã liên kết</p>
+            <p className="text-xs text-emerald-700 mt-0.5">Bạn sẽ tự động nhận cập nhật trạng thái đơn hàng qua Zalo.</p>
+          </div>
         </div>
       )}
 
