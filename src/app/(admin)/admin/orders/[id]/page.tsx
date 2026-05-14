@@ -361,17 +361,19 @@ export default function AdminOrderDetailPage() {
             <div className="flex justify-between"><dt className="text-slate-500">Zalo</dt><dd className={`font-medium ${order.user.zaloRecipientId ? "text-emerald-600" : "text-amber-600"}`}>{order.user.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}</dd></div>
           </dl>
           {!order.user.zaloRecipientId && (
-            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-              <p>Khách chưa liên kết Zalo. Hãy yêu cầu khách nhắn mã đơn này vào OA.</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="font-mono bg-white px-2 py-1 rounded border border-amber-300 text-amber-900">{order.orderCode}</span>
+            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 space-y-2">
+              <p className="font-medium">Khách chưa liên kết Zalo — không nhận được thông báo qua Zalo</p>
+              <p>Hướng dẫn khách liên kết: Mở Zalo, quét mã QR OA Bắc Trung Hải, rồi nhắn mã đơn bên dưới.</p>
+              <div className="flex items-center gap-2">
+                <span className="font-mono bg-white px-2 py-1 rounded border border-amber-300 text-amber-900 font-semibold">{order.orderCode}</span>
                 <button
                   onClick={() => copyToClipboard(order.orderCode)}
-                  className="px-3 py-1 bg-amber-100 text-amber-800 rounded text-xs font-medium hover:bg-amber-200 transition-colors"
+                  className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-lg text-xs font-medium hover:bg-amber-200 transition-colors"
                 >
                   Sao chép mã đơn
                 </button>
               </div>
+              <p className="text-xs text-amber-600">Sau khi khách nhắn mã đơn, hệ thống sẽ tự động liên kết tài khoản Zalo.</p>
             </div>
           )}
         </Card>
