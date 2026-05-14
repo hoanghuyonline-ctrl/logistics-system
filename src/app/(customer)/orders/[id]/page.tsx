@@ -190,11 +190,9 @@ export default function OrderDetailPage() {
         <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
           <span className="text-lg shrink-0">💬</span>
           <div className="flex-1">
-            <p className="text-sm font-medium text-blue-900">Nhận cập nhật đơn hàng này qua Zalo</p>
-            <p className="text-sm text-blue-700 mt-1">
-              Nhắn mã đơn <strong>{order.orderCode}</strong> vào Zalo OA Bắc Trung Hải để liên kết và nhận thông báo tự động.
-            </p>
+            <p className="text-sm font-medium text-blue-900">Liên kết Zalo để nhận thông báo đơn hàng</p>
             <div className="flex items-center gap-2 mt-2">
+              <span className="font-mono bg-white px-2.5 py-1.5 rounded border border-blue-200 text-blue-900 font-semibold text-sm">{order.orderCode}</span>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(order.orderCode).then(() => {
@@ -207,7 +205,17 @@ export default function OrderDetailPage() {
                 {orderCodeCopied ? "Đã sao chép!" : "Sao chép mã đơn"}
               </button>
             </div>
+            <p className="text-sm text-blue-700 mt-2">
+              Sao chép mã đơn này và gửi cho Zalo OA Bắc Trung Hải Logistics để liên kết tài khoản. Sau khi liên kết, bạn sẽ nhận thông báo trạng thái đơn hàng qua Zalo.
+            </p>
           </div>
+        </div>
+      )}
+
+      {zaloBound === true && (
+        <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+          <span className="text-lg shrink-0">💬</span>
+          <p className="text-sm text-emerald-800">Zalo đã liên kết. Bạn sẽ nhận thông báo trạng thái đơn hàng qua Zalo.</p>
         </div>
       )}
 
