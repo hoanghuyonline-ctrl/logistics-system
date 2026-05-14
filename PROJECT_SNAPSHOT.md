@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #179 merged
+**Latest stable commit:** PR #181 merged
 
 ---
 
@@ -144,6 +144,8 @@
 - **Zalo TOKEN_EXPIRED Diagnostics** (PR #177) — Structured `[zalo/bind]` logs with senderId/orderCode/customerId/saved/reason; `[zalo/reply]` FAIL logs with failureType=TOKEN_EXPIRED and errorCode for -216/-230; system health API `zaloDiagnostics` section (tokenExpired, boundCustomers, unresolvedFailures, configPresent); new "Chẩn Đoán Zalo OA" card on system health page with TOKEN_EXPIRED red banner warning; settings page channel health shows "Token hết hạn — cần cập nhật" with red styling; no schema changes
 
 - **Zalo OA Automatic Token Refresh** (PR #179) — `refreshZaloAccessToken()` helper calls Zalo OAuth v4 endpoint with refresh token; runtime memory cache for refreshed access token (no .env writes); `sendZalo()` and webhook `replyToUser()` auto-refresh and retry once on TOKEN_EXPIRED (-216/-230); structured `[zalo/token]` logs (refresh success/fail, timestamp, retry result); `zalo_oa_refresh_token` added to notification config; system health API `tokenRefresh` diagnostics (lastRefreshAt, success, errorReason); health page shows "Lần refresh token gần nhất" with success/fail status; settings page shows ZALO_OA_REFRESH_TOKEN field; requires ZALO_APP_ID and ZALO_APP_SECRET_KEY env vars
+
+- **Zalo Auto-Refresh Admin Settings** (PR #181) — Admin settings fields for `zalo_app_id`, `zalo_app_secret_key` under "Cấu hình Zalo OA"; secret key masked in UI; `zalo-token.ts` reads credentials via `getNotificationConfig()` (DB-first with env fallback); operators can manage all Zalo refresh credentials from settings page without SSH; no schema changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
