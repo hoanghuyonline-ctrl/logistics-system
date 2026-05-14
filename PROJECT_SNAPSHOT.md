@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #175 merged
+**Latest stable commit:** PR #177 merged
 
 ---
 
@@ -141,6 +141,8 @@
 - **Staff Handover Notes** (PR #162) — `StaffNote` Prisma model with title, content, orderCode, priority (URGENT/HIGH/NORMAL), resolved toggle; `/admin/staff-notes` page accessible by Admin/Warehouse/Accountant roles; create form, filter chips (chưa xong/đã xong/khẩn cấp), search, card layout with toggle resolve; migration `20260514020000_add_staff_notes`
 - **Quick Operational Views** (PR #163) — "Truy cập nhanh" section on admin dashboard with 8 clickable cards showing realtime counts: đơn chờ xử lý, kẹt kho TQ, kẹt kho VN, đơn chậm cập nhật, khiếu nại chưa xử lý, lỗi thông báo, chatbot chưa trả lời, ghi chú bàn giao; `/api/admin/quick-views` endpoint with parallel queries; color-coded active/inactive states; no schema changes
 
+- **Zalo TOKEN_EXPIRED Diagnostics** (PR #177) — Structured `[zalo/bind]` logs with senderId/orderCode/customerId/saved/reason; `[zalo/reply]` FAIL logs with failureType=TOKEN_EXPIRED and errorCode for -216/-230; system health API `zaloDiagnostics` section (tokenExpired, boundCustomers, unresolvedFailures, configPresent); new "Chẩn Đoán Zalo OA" card on system health page with TOKEN_EXPIRED red banner warning; settings page channel health shows "Token hết hạn — cần cập nhật" with red styling; no schema changes
+
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
 ## Stack
@@ -247,4 +249,4 @@
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
-23. **Zalo TOKEN_EXPIRED not surfaced in health dashboard** — Zalo error code -216 is classified as TOKEN_EXPIRED in failure tracking, but the admin health dashboard card does not proactively detect or warn about expired tokens. Current workaround: manually replace `ZALO_OA_ACCESS_TOKEN` in .env and restart PM2.
+23. **Zalo TOKEN_EXPIRED now surfaced in health dashboard** (resolved PR #177) — Admin health dashboard and settings page now detect and display TOKEN_EXPIRED warnings. Manual token replacement in .env + PM2 restart still required.
