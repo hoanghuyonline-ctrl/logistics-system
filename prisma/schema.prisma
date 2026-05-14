@@ -239,6 +239,9 @@ model NotificationFailure {
   failureCategory String?
   shortReason     String?
   payloadSummary  String?
+  retryCount      Int      @default(0)
+  lastRetryAt     DateTime?
+  resolved        Boolean  @default(false)
   createdAt       DateTime @default(now())
 }
 

@@ -192,6 +192,7 @@ const vi: Record<string, string> = {
   "nav.supportKnowledge": "Tri thức hỗ trợ",
   "nav.systemHealth": "Tình trạng HT",
   "nav.stuckShipments": "Đơn chậm/tắc",
+  "nav.notificationFailures": "Lỗi thông báo",
 
   // Warehouse scan
   "scan.title": "Quét hàng",
