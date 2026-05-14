@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #185 merged
+**Latest stable commit:** PR #190 merged
 
 ---
 
@@ -150,6 +150,12 @@
 - **Zalo Linking UX Improvement** (PR #183) — Customer notification channels page shows latest order code with "Sao chép mã đơn để liên kết Zalo" copy button; no-order state shows "Bạn cần có ít nhất một đơn hàng để liên kết Zalo"; admin order detail shows Zalo binding status in customer info card with helper text and order code copy button when not linked; no schema changes
 
 - **Zalo Binding UX Enhancement** (PR #185) — Improved Zalo customer linking UX across 4 touchpoints: dismissable onboarding banner on customer dashboard prompting unlinked users to link Zalo with link to detailed guide; inline Zalo linking hint on customer order detail page with order code copy button; notification channels page Zalo section redesigned with numbered 3-step visual guide (blue circle indicators) replacing plain ordered list; admin order detail unlinked-customer warning enhanced with clearer wording ("không nhận được thông báo qua Zalo"), step-by-step guidance for admin, and explanation that binding is automatic; linked state now shows green confirmation message; all Vietnamese-first; no schema changes
+
+- **Zalo Order Detail Linking Visibility** (PR #187) — Customer order detail page Zalo card refined: order code displayed prominently with copy button and explicit instruction "Sao chép mã đơn này và gửi cho Zalo OA Bắc Trung Hải Logistics để liên kết tài khoản"; linked state shows green success note; Vietnamese-first; no schema/webhook/notification changes
+
+- **Zalo Timeline Notification Awareness** (PR #189) — Compact Zalo awareness box below customer order shipment timeline; unlinked state: 📱 icon, "Nhận thông báo Zalo tự động" heading, order code with copy button, link to notification channel settings; linked state: ✅ green "Zalo đã liên kết" with auto-update confirmation; Vietnamese-first; no schema/API/webhook changes
+
+- **Admin Quick Customer Contact Actions** (PR #190) — Admin order detail customer info section: quick action buttons (Sao chép SĐT, Mở Zalo, Sao chép email, Sao chép mã đơn); Zalo deep link via `zalo.me` with VN→intl phone prefix conversion; green "Đã liên kết Zalo OA" indicator for linked customers; reuses existing copyToClipboard/toast pattern; Vietnamese-first labels; no schema/API/webhook changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
