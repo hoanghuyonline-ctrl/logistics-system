@@ -46,6 +46,7 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
   const [pkg, setPkg] = useState<ScannedPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [lastUpdateInfo, setLastUpdateInfo] = useState<{
     packageCode: string;
     barcode: string | null;
@@ -88,6 +89,7 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
 
     setLoading(true);
     setPkg(null);
+    setScanError(null);
     try {
       const res = await fetch("/api/warehouse/scan", {
         method: "POST",
@@ -96,13 +98,20 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast(data.error || t("scan.notFound"), "error");
+        const errMsg = data.error || t("scan.notFound");
+        setScanError(errMsg);
+        toast(errMsg, "error");
+        inputRef.current?.focus();
+        inputRef.current?.select();
         return;
       }
       setPkg(data.package);
       toast(t("scan.found"), "success");
     } catch {
+      setScanError(t("scan.error"));
       toast(t("scan.error"), "error");
+      inputRef.current?.focus();
+      inputRef.current?.select();
     } finally {
       setLoading(false);
     }
@@ -138,6 +147,10 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
         updatedAt: new Date(),
       });
       toast(t("scan.updateSuccess"), "success");
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 100);
     } catch {
       toast(t("scan.error"), "error");
     } finally {
@@ -149,6 +162,7 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
     setBarcode("");
     setPkg(null);
     setLastUpdateInfo(null);
+    setScanError(null);
     inputRef.current?.focus();
   }
 
@@ -189,7 +203,19 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
             </button>
           )}
         </form>
+        <p className="text-xs text-slate-400 mt-2">Có thể dùng máy quét mã vạch hoặc nhập thủ công.</p>
       </Card>
+
+      {scanError && !pkg && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <span className="text-lg shrink-0">❌</span>
+          <div>
+            <p className="text-sm font-semibold text-red-900">Không tìm thấy kiện hàng</p>
+            <p className="text-sm text-red-700 mt-0.5">{scanError}</p>
+            <p className="text-xs text-red-600 mt-1.5">Vui lòng kiểm tra lại mã và thử quét lại.</p>
+          </div>
+        </div>
+      )}
 
       {pkg && (
         <Card title={t("scan.resultTitle")} className="mb-6">
