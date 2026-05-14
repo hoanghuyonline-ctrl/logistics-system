@@ -68,37 +68,52 @@ export default function AdminDashboard() {
         <Card title="Truy cập nhanh">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
             {[
-              { label: "Đơn chờ xử lý", count: quickViews.unpaidOrders, href: "/admin/orders?status=PENDING", active: "bg-amber-50 border-amber-200 hover:bg-amber-100", accent: "text-amber-700", icon: "⏳" },
-              { label: "Kẹt kho TQ", count: quickViews.stuckChina, href: "/admin/stuck-shipments", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🏭" },
-              { label: "Kẹt kho VN", count: quickViews.stuckVietnam, href: "/admin/stuck-shipments", active: "bg-orange-50 border-orange-200 hover:bg-orange-100", accent: "text-orange-700", icon: "🏠" },
-              { label: "Đơn chậm cập nhật", count: quickViews.staleOrders, href: "/admin/stuck-shipments", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🐌" },
-              { label: "Khiếu nại chưa xử lý", count: quickViews.unresolvedIssues, href: "/admin/customer-issues?status=NEW", active: "bg-rose-50 border-rose-200 hover:bg-rose-100", accent: "text-rose-700", icon: "📋" },
-              { label: "Lỗi thông báo", count: quickViews.notifFailures, href: "/admin/notification-failures", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🔔" },
-              { label: "Chatbot chưa trả lời", count: quickViews.unansweredQuestions, href: "/admin/support-knowledge", active: "bg-purple-50 border-purple-200 hover:bg-purple-100", accent: "text-purple-700", icon: "💬" },
-              { label: "Ghi chú bàn giao", count: quickViews.unresolvedNotes, href: "/admin/staff-notes", active: "bg-blue-50 border-blue-200 hover:bg-blue-100", accent: "text-blue-700", icon: "🔖" },
+              { label: "Đơn chờ xử lý", count: quickViews.unpaidOrders, href: "/admin/orders?status=PENDING", active: "bg-amber-50 border-amber-200 hover:bg-amber-100", accent: "text-amber-700", icon: "⏳", urgent: false },
+              { label: "Kẹt kho TQ", count: quickViews.stuckChina, href: "/admin/stuck-shipments", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🏭", urgent: true },
+              { label: "Kẹt kho VN", count: quickViews.stuckVietnam, href: "/admin/stuck-shipments", active: "bg-orange-50 border-orange-200 hover:bg-orange-100", accent: "text-orange-700", icon: "🏠", urgent: true },
+              { label: "Đơn chậm cập nhật", count: quickViews.staleOrders, href: "/admin/stuck-shipments", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🐌", urgent: true },
+              { label: "Khiếu nại chưa xử lý", count: quickViews.unresolvedIssues, href: "/admin/customer-issues?status=NEW", active: "bg-rose-50 border-rose-200 hover:bg-rose-100", accent: "text-rose-700", icon: "📋", urgent: true },
+              { label: "Lỗi thông báo", count: quickViews.notifFailures, href: "/admin/notification-failures", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🔔", urgent: true },
+              { label: "Chatbot chưa trả lời", count: quickViews.unansweredQuestions, href: "/admin/support-knowledge", active: "bg-purple-50 border-purple-200 hover:bg-purple-100", accent: "text-purple-700", icon: "💬", urgent: true },
+              { label: "Ghi chú bàn giao", count: quickViews.unresolvedNotes, href: "/admin/staff-notes", active: "bg-blue-50 border-blue-200 hover:bg-blue-100", accent: "text-blue-700", icon: "🔖", urgent: false },
             ].map((view) => {
               const hasItems = view.count > 0;
+              const needsAttention = hasItems && view.urgent;
               return (
                 <a
                   key={view.label}
                   href={view.href}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                  className={`relative flex items-center gap-3 p-3 rounded-xl border transition-colors ${
                     hasItems
                       ? view.active
                       : "bg-slate-50 border-slate-100 hover:bg-slate-100"
                   }`}
                 >
+                  {needsAttention && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                        {view.count}
+                      </span>
+                    </span>
+                  )}
                   <span className="text-lg">{view.icon}</span>
                   <div className="min-w-0">
                     <div className={`text-lg font-bold ${hasItems ? view.accent : "text-slate-400"}`}>
                       {view.count}
                     </div>
                     <div className="text-[11px] text-slate-500 leading-tight">{view.label}</div>
+                    {needsAttention && (
+                      <div className="text-[10px] font-semibold text-red-600 mt-0.5">Cần xử lý</div>
+                    )}
                   </div>
                 </a>
               );
             })}
           </div>
+          {(quickViews.notifFailures > 0 || quickViews.unresolvedIssues > 0 || quickViews.unansweredQuestions > 0 || quickViews.stuckChina > 0 || quickViews.stuckVietnam > 0 || quickViews.staleOrders > 0) && (
+            <p className="text-xs text-red-600 mt-2">⚠️ Có mục cần xử lý — vui lòng kiểm tra các mục đánh dấu đỏ phía trên.</p>
+          )}
         </Card>
       )}
 
