@@ -131,9 +131,57 @@ Kết quả backup lưu tại: `backups/uploads/uploads-2026-05-14-09-30.zip`
 
 #### Cài đặt chạy tự động bằng Windows Task Scheduler
 
+**Cách 1: Dùng script tự động (khuyến nghị)**
+
+```cmd
+REM Chạy với quyền Administrator
+scripts\setup-daily-backup-task.bat
+```
+
+Script sẽ tự động:
+- Tạo task `BacTrungHai-Daily-Database-Backup` trong Task Scheduler
+- Chạy `backup-db.bat` mỗi ngày lúc **02:00 AM**
+- Xóa task cũ nếu đã tồn tại
+- Chạy với quyền highest (đảm bảo Docker access)
+
+**Kiểm tra task đã cài:**
+
+```cmd
+schtasks /query /tn "BacTrungHai-Daily-Database-Backup"
+```
+
+**Chạy backup thủ công (test):**
+
+```cmd
+schtasks /run /tn "BacTrungHai-Daily-Database-Backup"
+```
+
+**Xóa task:**
+
+```cmd
+REM Chạy với quyền Administrator
+scripts\remove-daily-backup-task.bat
+```
+
+Hoặc xóa bằng lệnh:
+
+```cmd
+schtasks /delete /tn "BacTrungHai-Daily-Database-Backup" /f
+```
+
+**Nơi lưu backup:**
+
+```
+backups\postgres\postgres-YYYY-MM-DD-HH-mm.sql
+```
+
+> **⚠️ Lưu ý:** Chỉ giữ lại **7 file backup mới nhất**. File cũ hơn 7 ngày bị xóa tự động mỗi lần backup chạy.
+
+**Cách 2: Cài thủ công qua Task Scheduler UI**
+
 1. Mở **Task Scheduler** (gõ `taskschd.msc` trong Start)
 2. Bấm **Create Basic Task...**
-3. Đặt tên: `Backup Database Logistics`
+3. Đặt tên: `BacTrungHai-Daily-Database-Backup`
 4. Trigger: **Daily**, lúc **02:00** sáng
 5. Action: **Start a program**
    - Program: `cmd.exe`
