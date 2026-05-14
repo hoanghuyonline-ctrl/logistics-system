@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-14
 **Branch:** `main`
-**Latest stable commit:** PR #192 merged
+**Latest stable commit:** PR #194 merged
 
 ---
 
@@ -158,6 +158,8 @@
 - **Admin Quick Customer Contact Actions** (PR #190) — Admin order detail customer info section: quick action buttons (Sao chép SĐT, Mở Zalo, Sao chép email, Sao chép mã đơn); Zalo deep link via `zalo.me` with VN→intl phone prefix conversion; green "Đã liên kết Zalo OA" indicator for linked customers; reuses existing copyToClipboard/toast pattern; Vietnamese-first labels; no schema/API/webhook changes
 
 - **Warehouse Scan Success Feedback** (PR #192) — Compact green success summary card after warehouse scan status update on both China and Vietnam scan pages; shows mã kiện, barcode, trạng thái mới (StatusBadge), thời gian cập nhật (vi-VN locale), mã đơn hàng; Vietnamese helper text "Có thể tiếp tục quét mã tiếp theo."; clears on new scan or clear action; shared ScanPage component; preserves existing scan workflow, USB/keyboard scanner flow, duplicate cooldown; no schema/API/workflow changes
+
+- **Admin Dashboard Operational Alerts Polish** (PR #194) — Improved visual emphasis for urgent operational items on admin dashboard "Truy cập nhanh" section; red pulsing badge (Tailwind animate-ping) on urgent cards when count > 0; "Cần xử lý" indicator for stuck shipments, stale orders, unresolved issues, notification failures, unanswered chatbot questions; Vietnamese summary helper text "⚠️ Có mục cần xử lý"; non-urgent cards (pending orders, handover notes) unchanged; UI-only; no schema/API/workflow changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
