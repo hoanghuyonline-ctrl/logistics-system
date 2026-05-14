@@ -86,24 +86,39 @@ async function sendToChannel(
       }
 
       case "TELEGRAM": {
-        await sendTelegram({ text: `<b>${payload.title}</b>\n${payload.message}` });
-        logChannelResult(channel, payload, true);
+        const tgUser = await prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: { telegramChatId: true },
+        });
+        if (!tgUser?.telegramChatId) {
+          logChannelResult(channel, payload, false, undefined, "TELEGRAM_NOT_BOUND");
+          persistFailure(channel, payload, "TELEGRAM_NOT_BOUND");
+          return { channel, success: false, error: "TELEGRAM_NOT_BOUND" };
+        }
+        await sendTelegram({
+          text: `<b>${payload.title}</b>\n${payload.message}`,
+          chatId: tgUser.telegramChatId,
+        });
+        logChannelResult(channel, payload, true, tgUser.telegramChatId);
         return { channel, success: true };
       }
 
       case "ZALO": {
-        // Look up per-user Zalo recipient; fall back to global config in sendZalo
         const zaloUser = await prisma.user.findUnique({
           where: { id: payload.userId },
           select: { zaloRecipientId: true },
         });
-        const recipientId = zaloUser?.zaloRecipientId ?? undefined;
+        if (!zaloUser?.zaloRecipientId) {
+          logChannelResult(channel, payload, false, undefined, "ZALO_NOT_BOUND");
+          persistFailure(channel, payload, "ZALO_NOT_BOUND");
+          return { channel, success: false, error: "ZALO_NOT_BOUND" };
+        }
         await sendZalo({
           text: `${payload.title}\n${payload.message}`,
           orderCode: payload.orderCode,
-          recipientId,
+          recipientId: zaloUser.zaloRecipientId,
         });
-        logChannelResult(channel, payload, true, recipientId ?? "(fallback)");
+        logChannelResult(channel, payload, true, zaloUser.zaloRecipientId);
         return { channel, success: true };
       }
 
