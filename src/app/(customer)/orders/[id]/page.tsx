@@ -187,6 +187,47 @@ export default function OrderDetailPage() {
         );
       })()}
 
+      {/* Status helper blocks */}
+      {order.status !== "CANCELLED" && (() => {
+        const lastLog = order.statusLogs[order.statusLogs.length - 1];
+        const delayMsg = lastLog ? getDelayWarning(order.status, lastLog.createdAt) : null;
+        const isAtVietnamWh = order.status === "ARRIVED_VIETNAM_WH" || order.status === "OUT_FOR_DELIVERY";
+        const isCompleted = order.status === "COMPLETED";
+
+        return (
+          <>
+            {delayMsg && !isCompleted && (
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <span className="text-lg shrink-0">⚠️</span>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Đơn hàng đang xử lý chậm hơn dự kiến</p>
+                  <p className="text-sm text-amber-700 mt-1">{delayMsg}</p>
+                  <p className="text-xs text-amber-600 mt-2">Nếu cần hỗ trợ, vui lòng liên hệ nhân viên hoặc gửi khiếu nại bên dưới.</p>
+                </div>
+              </div>
+            )}
+            {isAtVietnamWh && !delayMsg && (
+              <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <span className="text-lg shrink-0">🏠</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Hàng đã về kho Việt Nam</p>
+                  <p className="text-sm text-emerald-700 mt-0.5">Hàng đã về kho Việt Nam và đang chuẩn bị giao.</p>
+                </div>
+              </div>
+            )}
+            {isCompleted && (
+              <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <span className="text-lg shrink-0">✅</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Đơn hàng đã giao thành công</p>
+                  <p className="text-sm text-emerald-700 mt-0.5">Cảm ơn bạn đã sử dụng dịch vụ Bắc Trung Hải Logistics.</p>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
+
       {zaloBound === false && (
         <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
           <span className="text-lg shrink-0">📱</span>
