@@ -46,6 +46,13 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
   const [pkg, setPkg] = useState<ScannedPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [lastUpdateInfo, setLastUpdateInfo] = useState<{
+    packageCode: string;
+    barcode: string | null;
+    newStatus: string;
+    orderCodes: string[];
+    updatedAt: Date;
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -123,6 +130,13 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
         return;
       }
       setPkg(data.package);
+      setLastUpdateInfo({
+        packageCode: data.package.packageCode,
+        barcode: data.package.barcode,
+        newStatus: transition.next,
+        orderCodes: data.package.orders.map((o: PackageOrder) => o.orderCode),
+        updatedAt: new Date(),
+      });
       toast(t("scan.updateSuccess"), "success");
     } catch {
       toast(t("scan.error"), "error");
@@ -134,6 +148,7 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
   function handleClear() {
     setBarcode("");
     setPkg(null);
+    setLastUpdateInfo(null);
     inputRef.current?.focus();
   }
 
@@ -239,6 +254,42 @@ export default function ScanPage({ warehouse }: ScanPageProps) {
             )}
           </div>
         </Card>
+      )}
+
+      {lastUpdateInfo && (
+        <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">✅</span>
+            <p className="text-sm font-semibold text-emerald-900">Cập nhật trạng thái thành công</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-emerald-600 font-medium">Mã kiện</p>
+              <p className="font-semibold text-emerald-900">{lastUpdateInfo.packageCode}</p>
+            </div>
+            {lastUpdateInfo.barcode && (
+              <div>
+                <p className="text-xs text-emerald-600 font-medium">Barcode</p>
+                <p className="font-semibold text-emerald-900">{lastUpdateInfo.barcode}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-emerald-600 font-medium">Trạng thái mới</p>
+              <StatusBadge status={lastUpdateInfo.newStatus} />
+            </div>
+            <div>
+              <p className="text-xs text-emerald-600 font-medium">Thời gian cập nhật</p>
+              <p className="text-emerald-800">{lastUpdateInfo.updatedAt.toLocaleTimeString("vi-VN")}</p>
+            </div>
+            {lastUpdateInfo.orderCodes.length > 0 && (
+              <div className="col-span-2">
+                <p className="text-xs text-emerald-600 font-medium">Mã đơn hàng</p>
+                <p className="text-emerald-800">{lastUpdateInfo.orderCodes.join(", ")}</p>
+              </div>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-emerald-700">Có thể tiếp tục quét mã tiếp theo.</p>
+        </div>
       )}
     </div>
   );
