@@ -360,6 +360,48 @@ export default function AdminOrderDetailPage() {
             <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.address")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.user.address || "—"}</dd></div>
             <div className="flex justify-between"><dt className="text-slate-500">Zalo</dt><dd className={`font-medium ${order.user.zaloRecipientId ? "text-emerald-600" : "text-amber-600"}`}>{order.user.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}</dd></div>
           </dl>
+
+          {/* Quick contact actions */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {order.user.phone && (
+              <>
+                <button
+                  onClick={() => copyToClipboard(order.user.phone!)}
+                  className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors"
+                >
+                  Sao chép SĐT
+                </button>
+                <a
+                  href={`https://zalo.me/${order.user.phone.replace(/^0/, "84")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 transition-colors"
+                >
+                  Mở Zalo
+                </a>
+              </>
+            )}
+            <button
+              onClick={() => copyToClipboard(order.user.email)}
+              className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors"
+            >
+              Sao chép email
+            </button>
+            <button
+              onClick={() => copyToClipboard(order.orderCode)}
+              className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors"
+            >
+              Sao chép mã đơn
+            </button>
+          </div>
+
+          {order.user.zaloRecipientId && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-xs font-medium text-emerald-700">Đã liên kết Zalo OA</span>
+            </div>
+          )}
+
           {!order.user.zaloRecipientId && (
             <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 space-y-2">
               <p className="font-medium">Khách chưa liên kết Zalo — không nhận được thông báo qua Zalo</p>
