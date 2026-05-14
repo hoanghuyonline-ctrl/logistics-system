@@ -89,39 +89,69 @@ backups/backup_20260514_weekly.sql     ← backup tuần
 backups/backup_20260514_emergency.sql  ← backup khẩn cấp
 ```
 
-### 3.3 Backup tự động (script gợi ý)
+### 3.3 Backup tự động bằng script
 
-Tạo file `backup-daily.sh` (hoặc `.bat` trên Windows):
+Hệ thống có sẵn 2 script backup trong thư mục `scripts/`:
 
-```bash
-#!/bin/bash
-# backup-daily.sh — chạy hàng ngày bằng cron hoặc Task Scheduler
+#### Backup database: `scripts/backup-db.bat`
 
-BACKUP_DIR="backups"
-FILENAME="backup_$(date +%Y%m%d_%H%M%S).sql"
+```cmd
+REM Chạy thủ công:
+scripts\backup-db.bat
 
-mkdir -p "$BACKUP_DIR"
-
-echo "Đang backup database..."
-docker exec logistics-postgres pg_dump -U postgres logistics_db > "$BACKUP_DIR/$FILENAME"
-
-# Kiểm tra kết quả
-if [ -s "$BACKUP_DIR/$FILENAME" ]; then
-    echo "✓ Backup thành công: $BACKUP_DIR/$FILENAME"
-    echo "  Dung lượng: $(ls -lh "$BACKUP_DIR/$FILENAME" | awk '{print $5}')"
-else
-    echo "✗ LỖI: Backup thất bại hoặc file rỗng!"
-    echo "  Kiểm tra Docker container: docker ps | grep postgres"
-fi
-
-# Xóa backup cũ hơn 30 ngày
-find "$BACKUP_DIR" -name "backup_*.sql" -mtime +30 -delete
-echo "Đã xóa backup cũ hơn 30 ngày."
+REM Script sẽ tự động:
+REM  1. Tạo thư mục backups\postgres\ nếu chưa có
+REM  2. Backup database → file postgres-YYYY-MM-DD-HH-mm.sql
+REM  3. Kiểm tra file backup có dữ liệu (không rỗng)
+REM  4. Xóa backup cũ hơn 7 ngày
+REM  5. Hiển thị danh sách backup hiện tại
 ```
 
-Chạy thủ công: `bash backup-daily.sh`
+Kết quả backup lưu tại: `backups/postgres/postgres-2026-05-14-09-30.sql`
 
-> **💡 Mẹo:** Cài đặt Windows Task Scheduler hoặc Linux cron để chạy script này mỗi ngày lúc 2:00 sáng.
+#### Backup uploads: `scripts/backup-uploads.bat`
+
+```cmd
+REM Chạy thủ công:
+scripts\backup-uploads.bat
+
+REM Script sẽ tự động:
+REM  1. Kiểm tra thư mục uploads có tồn tại và có file không
+REM  2. Nén thành file uploads-YYYY-MM-DD-HH-mm.zip
+REM  3. Xóa backup uploads cũ hơn 7 ngày
+```
+
+Kết quả backup lưu tại: `backups/uploads/uploads-2026-05-14-09-30.zip`
+
+#### An toàn
+
+- Script **không bao giờ ghi đè** file backup đã tồn tại
+- File backup rỗng (0 bytes) sẽ bị **xóa tự động** và báo lỗi
+- Nếu Docker container không chạy → báo lỗi rõ ràng
+
+#### Cài đặt chạy tự động bằng Windows Task Scheduler
+
+1. Mở **Task Scheduler** (gõ `taskschd.msc` trong Start)
+2. Bấm **Create Basic Task...**
+3. Đặt tên: `Backup Database Logistics`
+4. Trigger: **Daily**, lúc **02:00** sáng
+5. Action: **Start a program**
+   - Program: `cmd.exe`
+   - Arguments: `/c "C:\path\to\logistics-system\scripts\backup-db.bat"`
+   - Start in: `C:\path\to\logistics-system`
+6. Bấm **Finish**
+7. Lặp lại cho `backup-uploads.bat` nếu muốn backup uploads tự động
+
+> **💡 Mẹo:** Thay `C:\path\to\logistics-system` bằng đường dẫn thực tế trên server.
+
+#### Chính sách xoay vòng (rotation)
+
+| Loại backup | Giữ lại | Xóa tự động |
+|------------|---------|-------------|
+| Database (`.sql`) | 7 ngày gần nhất | Cũ hơn 7 ngày |
+| Uploads (`.zip`) | 7 ngày gần nhất | Cũ hơn 7 ngày |
+
+> **⚠️ Lưu ý:** Nên copy backup ra ổ ngoài hoặc cloud mỗi tuần để phòng trường hợp server hỏng.
 
 ### 3.4 Backup chỉ dữ liệu (không schema)
 
