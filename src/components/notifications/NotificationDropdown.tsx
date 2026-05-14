@@ -42,6 +42,16 @@ function formatTimeAgo(dateStr: string, nowMs: number, t: (k: string) => string)
   return `${days}${t("notif.dayAgo")}`;
 }
 
+function getNotifIcon(title: string): string {
+  const t = title.toLowerCase();
+  if (t.includes("giao thành công") || t.includes("hoàn tất") || t.includes("completed")) return "✅";
+  if (t.includes("giao") || t.includes("delivery")) return "🚚";
+  if (t.includes("thanh toán") || t.includes("nạp") || t.includes("tiền") || t.includes("wallet")) return "💰";
+  if (t.includes("khiếu nại") || t.includes("cảnh báo") || t.includes("lỗi")) return "⚠️";
+  if (t.includes("cập nhật") || t.includes("trạng thái")) return "📦";
+  return "🔔";
+}
+
 export default function NotificationDropdown() {
   const { t } = useI18n();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -139,25 +149,31 @@ export default function NotificationDropdown() {
             {loading ? (
               <div className="px-4 py-8 text-center text-sm text-slate-400">{t("common.loading")}</div>
             ) : notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-slate-400">{t("notif.empty")}</div>
+              <div className="px-4 py-8 text-center">
+                <span className="text-2xl block mb-2">🔔</span>
+                <p className="text-sm text-slate-400">Chưa có thông báo mới.</p>
+              </div>
             ) : (
               notifications.map((n) => (
                 <div
                   key={n.id}
                   onClick={() => !n.isRead && markAsRead(n.id)}
-                  className={`px-4 py-3 border-b border-slate-50 cursor-pointer transition-colors ${
-                    n.isRead ? "bg-white hover:bg-slate-50" : "bg-blue-50/40 hover:bg-blue-50"
+                  className={`px-4 py-3 cursor-pointer transition-colors ${
+                    n.isRead
+                      ? "bg-white hover:bg-slate-50 border-b border-slate-50"
+                      : "bg-blue-50/60 hover:bg-blue-100/60 border-l-[3px] border-l-blue-500 border-b border-b-blue-100"
                   }`}
                 >
-                  <div className="flex items-start gap-2">
-                    {!n.isRead && <span className="w-2 h-2 mt-1.5 bg-blue-600 rounded-full flex-shrink-0" />}
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-base mt-0.5 flex-shrink-0">{getNotifIcon(n.title)}</span>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm truncate ${n.isRead ? "text-slate-600" : "font-medium text-slate-900"}`}>
+                      <p className={`text-sm truncate ${n.isRead ? "text-slate-600" : "font-semibold text-slate-900"}`}>
                         {n.title}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5 truncate">{n.message}</p>
                       <p className="text-[11px] text-slate-300 mt-1">{formatTimeAgo(n.createdAt, renderTime, t)}</p>
                     </div>
+                    {!n.isRead && <span className="w-2 h-2 mt-1.5 bg-blue-600 rounded-full flex-shrink-0" />}
                   </div>
                 </div>
               ))
