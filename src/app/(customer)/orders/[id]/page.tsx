@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
+import { getStatusInfo, getDelayWarning, getProgressSteps } from "@/lib/shipment-timeline-info";
 
 interface OrderDetail {
   id: string;
@@ -94,6 +95,50 @@ export default function OrderDetailPage() {
           <span className="text-sm font-medium text-amber-700">Ghi chú trạng thái: {order.customStatusNote}</span>
         </div>
       )}
+
+      {/* Current status explanation + next step */}
+      {order.status !== "CANCELLED" && (() => {
+        const info = getStatusInfo(order.status);
+        const lastLog = order.statusLogs[order.statusLogs.length - 1];
+        const delayMsg = lastLog ? getDelayWarning(order.status, lastLog.createdAt) : null;
+        return (
+          <Card>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">{info.icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-slate-800">{info.description}</p>
+                  <p className="text-sm text-blue-600 mt-1">{info.nextStep}</p>
+                </div>
+              </div>
+              {delayMsg && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <span className="text-base">⏰</span>
+                  <span className="text-sm font-medium text-amber-700">{delayMsg}</span>
+                </div>
+              )}
+              {/* Progress bar */}
+              <div className="pt-2">
+                <div className="flex justify-between">
+                  {getProgressSteps(order.status).map((step) => (
+                    <div key={step.status} className="flex flex-col items-center" style={{ width: "11%" }}>
+                      <span className={`text-sm ${step.current ? "" : step.completed ? "opacity-60" : "opacity-25 grayscale"}`}>
+                        {step.icon}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                  <div
+                    className="bg-blue-500 h-1.5 rounded-full transition-all"
+                    style={{ width: `${(() => { const steps = getProgressSteps(order.status); const idx = steps.findIndex(s => s.current); return Math.round(((idx >= 0 ? idx : 0) / (steps.length - 1)) * 100); })()}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.productInfo")}>
@@ -196,11 +241,13 @@ export default function OrderDetailPage() {
               </div>
               <div className="pb-6">
                 <div className="flex items-center gap-2">
+                  <span className="text-sm">{getStatusInfo(log.toStatus).icon}</span>
                   <StatusBadge status={log.toStatus} />
                 </div>
-                {log.note && <p className="text-sm text-slate-500 mt-1.5">{log.note}</p>}
+                <p className="text-xs text-slate-500 mt-1">{getStatusInfo(log.toStatus).description}</p>
+                {log.note && <p className="text-sm text-slate-600 mt-1 italic">{log.note}</p>}
                 <p className="text-xs text-slate-400 mt-1">
-                  {new Date(log.createdAt).toLocaleString()} — {log.changer.fullName}
+                  {new Date(log.createdAt).toLocaleString("vi-VN")} — {log.changer.fullName}
                 </p>
               </div>
             </div>
