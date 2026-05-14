@@ -54,6 +54,7 @@ const en: Record<string, string> = {
   "nav.wallet": "Wallet",
   "nav.transactions": "Transactions",
   "nav.issues": "Complaints / Support",
+  "nav.channelLinking": "Notifications & Linking",
   "nav.notifications": "Notifications",
   "nav.profile": "Profile",
   "nav.users": "Users",

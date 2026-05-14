@@ -54,6 +54,7 @@ const vi: Record<string, string> = {
   "nav.wallet": "Ví tiền",
   "nav.transactions": "Giao dịch",
   "nav.issues": "Khiếu nại / Hỗ trợ",
+  "nav.channelLinking": "Thông báo & Liên kết",
   "nav.notifications": "Thông báo",
   "nav.profile": "Hồ sơ",
   "nav.users": "Người dùng",
