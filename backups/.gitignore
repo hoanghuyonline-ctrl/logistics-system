@@ -1,0 +1,3 @@
+# Ignore backup files (keep directory structure only)
+postgres/*.sql
+uploads/*.zip
