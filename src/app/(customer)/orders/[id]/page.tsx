@@ -49,12 +49,28 @@ interface OrderDetail {
   }>;
 }
 
+const ISSUE_TYPES: Record<string, string> = {
+  THIEU_HANG: "Thiếu hàng",
+  GIAO_CHAM: "Giao chậm",
+  SAI_CAN: "Sai cân nặng",
+  HONG_HANG: "Hỏng hàng",
+  CHUA_NHAN: "Chưa nhận được hàng",
+  PHI_SAI: "Phí sai",
+  CHATBOT: "Chatbot/Hỗ trợ",
+  KHAC: "Khác",
+};
+
 export default function OrderDetailPage() {
   const { t } = useI18n();
   const params = useParams();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState("");
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueType, setIssueType] = useState("KHAC");
+  const [issueDesc, setIssueDesc] = useState("");
+  const [issueSubmitting, setIssueSubmitting] = useState(false);
+  const [issueSuccess, setIssueSuccess] = useState(false);
 
   useEffect(() => {
     fetch(`/api/orders/${params.id}`)
@@ -75,6 +91,30 @@ export default function OrderDetailPage() {
     setNewNote("");
     const res = await fetch(`/api/orders/${params.id}`);
     setOrder(await res.json());
+  }
+
+  async function submitIssue() {
+    if (!issueDesc.trim() || !order) return;
+    setIssueSubmitting(true);
+    try {
+      const res = await fetch("/api/customer/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderCode: order.orderCode,
+          issueType,
+          description: issueDesc,
+        }),
+      });
+      if (res.ok) {
+        setIssueSuccess(true);
+        setShowIssueForm(false);
+        setIssueDesc("");
+        setIssueType("KHAC");
+      }
+    } finally {
+      setIssueSubmitting(false);
+    }
   }
 
   if (loading || !order) return <LoadingSpinner text={t("orderDetail.loading")} />;
@@ -281,6 +321,68 @@ export default function OrderDetailPage() {
             {t("orderDetail.addNote")}
           </button>
         </div>
+      </Card>
+
+      {/* Issue / Complaint submission */}
+      {issueSuccess && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+          <span className="text-base">✅</span>
+          <span className="text-sm font-medium text-emerald-700">
+            Khiếu nại đã được gửi thành công. Chúng tôi sẽ xử lý sớm nhất.
+          </span>
+        </div>
+      )}
+      <Card>
+        {!showIssueForm ? (
+          <button
+            onClick={() => setShowIssueForm(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors"
+          >
+            <span className="text-base">📋</span>
+            Gửi khiếu nại / yêu cầu hỗ trợ
+          </button>
+        ) : (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-800">Gửi khiếu nại cho đơn {order.orderCode}</h3>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Loại vấn đề</label>
+              <select
+                value={issueType}
+                onChange={(e) => setIssueType(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {Object.entries(ISSUE_TYPES).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả chi tiết</label>
+              <textarea
+                value={issueDesc}
+                onChange={(e) => setIssueDesc(e.target.value)}
+                placeholder="Vui lòng mô tả vấn đề của bạn..."
+                rows={3}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={submitIssue}
+                disabled={issueSubmitting || !issueDesc.trim()}
+                className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+              >
+                {issueSubmitting ? "Đang gửi..." : "Gửi khiếu nại"}
+              </button>
+              <button
+                onClick={() => { setShowIssueForm(false); setIssueDesc(""); }}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
