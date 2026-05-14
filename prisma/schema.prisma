@@ -90,6 +90,7 @@ model User {
   transactionsCreated Transaction[]   @relation("TransactionCreator")
   customerIssues     CustomerIssue[]  @relation("CustomerIssues")
   assignedIssues     CustomerIssue[]  @relation("AssignedIssues")
+  staffNotes         StaffNote[]      @relation("StaffNotes")
 }
 
 model Wallet {
@@ -287,4 +288,18 @@ model CustomerIssue {
 
   customer User  @relation("CustomerIssues", fields: [customerId], references: [id])
   assignee User? @relation("AssignedIssues", fields: [assignedTo], references: [id])
+}
+
+model StaffNote {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  orderCode  String?
+  priority   String   @default("NORMAL")
+  resolved   Boolean  @default(false)
+  createdBy  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  author User @relation("StaffNotes", fields: [createdBy], references: [id])
 }
