@@ -21,7 +21,7 @@ interface NotifConfig {
 
 interface ChannelHealth {
   telegram: "enabled" | "disabled";
-  zalo: "enabled" | "disabled";
+  zalo: "enabled" | "disabled" | "token_expired";
   email: "enabled" | "disabled";
   messenger: "enabled" | "disabled";
 }
@@ -352,26 +352,29 @@ export default function SettingsPage() {
               {CHANNEL_LABELS.map(({ key, label, icon }) => {
                 const status = channelHealth[key];
                 const isEnabled = status === "enabled";
+                const isTokenExpired = status === "token_expired";
                 return (
                   <div
                     key={key}
                     className={`flex items-center gap-3 p-3 rounded-xl border ${
-                      isEnabled
-                        ? "border-green-200 bg-green-50"
-                        : "border-slate-200 bg-slate-50"
+                      isTokenExpired
+                        ? "border-red-300 bg-red-50"
+                        : isEnabled
+                          ? "border-green-200 bg-green-50"
+                          : "border-slate-200 bg-slate-50"
                     }`}
                   >
                     <span className="text-lg">{icon}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-700">{label}</p>
                       <p className={`text-xs font-medium ${
-                        isEnabled ? "text-green-600" : "text-slate-400"
+                        isTokenExpired ? "text-red-600" : isEnabled ? "text-green-600" : "text-slate-400"
                       }`}>
-                        {isEnabled ? "Sẵn sàng" : "Thiếu cấu hình"}
+                        {isTokenExpired ? "Token hết hạn — cần cập nhật" : isEnabled ? "Sẵn sàng" : "Thiếu cấu hình"}
                       </p>
                     </div>
                     <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${
-                      isEnabled ? "bg-green-500" : "bg-slate-300"
+                      isTokenExpired ? "bg-red-500" : isEnabled ? "bg-green-500" : "bg-slate-300"
                     }`} />
                   </div>
                 );

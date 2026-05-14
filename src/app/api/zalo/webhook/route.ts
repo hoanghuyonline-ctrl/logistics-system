@@ -51,34 +51,31 @@ async function tryBindZaloRecipient(
 
   if (!user) {
     console.log(
-      `[zalo/bind] SKIP — user not found | senderId=${senderId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+      `[zalo/bind] senderId=${senderId} orderCode=${orderCode} customerId=${matchedUserId} saved=false reason=user_not_found`
     );
     return false;
   }
 
-  // Already bound to the same sender — no action needed
   if (user.zaloRecipientId === senderId) {
     console.log(
-      `[zalo/bind] SKIP — already bound | senderId=${senderId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+      `[zalo/bind] senderId=${senderId} orderCode=${orderCode} customerId=${matchedUserId} saved=false reason=already_bound`
     );
     return false;
   }
 
-  // Conflict: another Zalo account already bound to this customer
   if (user.zaloRecipientId && user.zaloRecipientId !== senderId) {
     console.warn(
-      `[zalo/bind] CONFLICT — user already has different zaloRecipientId | senderId=${senderId} existing=${user.zaloRecipientId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+      `[zalo/bind] senderId=${senderId} orderCode=${orderCode} customerId=${matchedUserId} saved=false reason=conflict existing=${user.zaloRecipientId}`
     );
     return false;
   }
 
-  // First-time bind
   await prisma.user.update({
     where: { id: matchedUserId },
     data: { zaloRecipientId: senderId },
   });
   console.log(
-    `[zalo/bind] OK — bound | senderId=${senderId} orderCode=${orderCode} matchedUserId=${matchedUserId}`
+    `[zalo/bind] senderId=${senderId} orderCode=${orderCode} customerId=${matchedUserId} saved=true`
   );
   return true;
 }
@@ -108,15 +105,19 @@ async function replyToUser(userId: string, text: string): Promise<void> {
 
   if (!res.ok) {
     const errorBody = await res.text();
+    const isTokenExpired = res.status === 401 || /access.?token.*expir/i.test(errorBody);
+    const failureType = isTokenExpired ? "TOKEN_EXPIRED" : `HTTP_${res.status}`;
     const msg = `Zalo API HTTP ${res.status}: ${errorBody}`;
-    console.error(`[zalo/reply] FAIL | senderId=${userId} reason=${msg}`);
+    console.error(`[zalo/reply] FAIL | senderId=${userId} failureType=${failureType} reason=${msg}`);
     throw new Error(msg);
   }
 
   const data = await res.json();
   if (data.error !== 0) {
+    const isTokenExpired = data.error === -216 || data.error === -230;
+    const failureType = isTokenExpired ? "TOKEN_EXPIRED" : `API_ERROR_${data.error}`;
     const msg = `Zalo API error ${data.error}: ${data.message || "unknown"}`;
-    console.error(`[zalo/reply] FAIL | senderId=${userId} reason=${msg}`);
+    console.error(`[zalo/reply] FAIL | senderId=${userId} failureType=${failureType} errorCode=${data.error} reason=${msg}`);
     throw new Error(msg);
   }
 
