@@ -21,15 +21,28 @@ interface DashboardData {
   statusDistribution: Array<{ status: string; count: number }>;
 }
 
+interface QuickViewData {
+  unpaidOrders: number;
+  stuckChina: number;
+  stuckVietnam: number;
+  staleOrders: number;
+  unresolvedIssues: number;
+  notifFailures: number;
+  unansweredQuestions: number;
+  unresolvedNotes: number;
+}
+
 export default function AdminDashboard() {
   const { t } = useI18n();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [quickViews, setQuickViews] = useState<QuickViewData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/analytics/dashboard")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); });
+    Promise.all([
+      fetch("/api/analytics/dashboard").then((r) => r.json()),
+      fetch("/api/admin/quick-views").then((r) => r.json()),
+    ]).then(([d, qv]) => { setData(d); setQuickViews(qv); setLoading(false); });
   }, []);
 
   if (loading || !data) return <LoadingSpinner text={t("common.loading")} />;
@@ -49,6 +62,45 @@ export default function AdminDashboard() {
         <KPICard title={t("admin.totalRevenue")} value={`${data.totalRevenue.toLocaleString()} VND`} icon={<span>💰</span>} color="green" />
         <KPICard title={t("admin.totalProfit")} value={`${data.estimatedProfit.toLocaleString()} VND`} icon={<span>📈</span>} color="purple" />
       </div>
+
+      {/* Quick operational views */}
+      {quickViews && (
+        <Card title="Truy cập nhanh">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+            {[
+              { label: "Đơn chờ xử lý", count: quickViews.unpaidOrders, href: "/admin/orders?status=PENDING", active: "bg-amber-50 border-amber-200 hover:bg-amber-100", accent: "text-amber-700", icon: "⏳" },
+              { label: "Kẹt kho TQ", count: quickViews.stuckChina, href: "/admin/stuck-shipments", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🏭" },
+              { label: "Kẹt kho VN", count: quickViews.stuckVietnam, href: "/admin/stuck-shipments", active: "bg-orange-50 border-orange-200 hover:bg-orange-100", accent: "text-orange-700", icon: "🏠" },
+              { label: "Đơn chậm cập nhật", count: quickViews.staleOrders, href: "/admin/stuck-shipments", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🐌" },
+              { label: "Khiếu nại chưa xử lý", count: quickViews.unresolvedIssues, href: "/admin/customer-issues?status=NEW", active: "bg-rose-50 border-rose-200 hover:bg-rose-100", accent: "text-rose-700", icon: "📋" },
+              { label: "Lỗi thông báo", count: quickViews.notifFailures, href: "/admin/notification-failures", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🔔" },
+              { label: "Chatbot chưa trả lời", count: quickViews.unansweredQuestions, href: "/admin/support-knowledge", active: "bg-purple-50 border-purple-200 hover:bg-purple-100", accent: "text-purple-700", icon: "💬" },
+              { label: "Ghi chú bàn giao", count: quickViews.unresolvedNotes, href: "/admin/staff-notes", active: "bg-blue-50 border-blue-200 hover:bg-blue-100", accent: "text-blue-700", icon: "🔖" },
+            ].map((view) => {
+              const hasItems = view.count > 0;
+              return (
+                <a
+                  key={view.label}
+                  href={view.href}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                    hasItems
+                      ? view.active
+                      : "bg-slate-50 border-slate-100 hover:bg-slate-100"
+                  }`}
+                >
+                  <span className="text-lg">{view.icon}</span>
+                  <div className="min-w-0">
+                    <div className={`text-lg font-bold ${hasItems ? view.accent : "text-slate-400"}`}>
+                      {view.count}
+                    </div>
+                    <div className="text-[11px] text-slate-500 leading-tight">{view.label}</div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("admin.orderStatusDistribution")}>
