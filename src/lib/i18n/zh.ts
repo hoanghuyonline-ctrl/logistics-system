@@ -190,6 +190,7 @@ const zh: Record<string, string> = {
   "audit.note": "备注",
   "nav.auditLog": "操作日志",
   "nav.supportKnowledge": "知识库",
+  "nav.systemHealth": "系统状态",
 
   // Warehouse scan
   "scan.title": "扫描包裹",

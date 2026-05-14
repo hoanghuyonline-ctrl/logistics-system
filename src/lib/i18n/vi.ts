@@ -190,6 +190,7 @@ const vi: Record<string, string> = {
   "audit.note": "Ghi chú",
   "nav.auditLog": "Nhật ký",
   "nav.supportKnowledge": "Tri thức hỗ trợ",
+  "nav.systemHealth": "Tình trạng HT",
 
   // Warehouse scan
   "scan.title": "Quét hàng",
