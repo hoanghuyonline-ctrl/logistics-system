@@ -146,6 +146,12 @@ model Order {
   internationalShippingFee  Decimal     @default(0) @db.Decimal(15, 2)
   vietnamDeliveryFee        Decimal     @default(0) @db.Decimal(15, 2)
   totalCostVND              Decimal     @db.Decimal(15, 2)
+  confirmedProductCost      Decimal?    @db.Decimal(15, 2)
+  confirmedShippingCost     Decimal?    @db.Decimal(15, 2)
+  confirmedServiceFee       Decimal?    @db.Decimal(15, 2)
+  confirmedTotalCost        Decimal?    @db.Decimal(15, 2)
+  confirmedAt               DateTime?
+  confirmedById             String?
   status                    OrderStatus @default(PENDING)
   priority                  OrderPriority @default(NORMAL)
   trackingCodeChina         String?

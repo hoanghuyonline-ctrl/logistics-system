@@ -28,6 +28,11 @@ interface OrderDetail {
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
   totalCostVND: string;
+  confirmedProductCost: string | null;
+  confirmedShippingCost: string | null;
+  confirmedServiceFee: string | null;
+  confirmedTotalCost: string | null;
+  confirmedAt: string | null;
   status: string;
   trackingCodeChina: string | null;
   trackingCodeIntl: string | null;
@@ -358,45 +363,100 @@ export default function OrderDetailPage() {
         </Card>
 
         <Card title={t("orderDetail.costBreakdown")}>
-          <dl className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.productCostCNY")}</dt>
-              <dd className="font-medium text-slate-900">&yen;{fmt(order.totalPriceCNY)}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.exchangeRate")}</dt>
-              <dd className="font-medium text-slate-900">1 CNY = {fmt(order.exchangeRate)} VND</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.productCostVND")}</dt>
-              <dd className="font-medium text-slate-900">{fmt(order.totalPriceVND)} VND</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.serviceFee")} ({order.serviceFeePercent}%)</dt>
-              <dd className="font-medium text-slate-900">{fmt(order.serviceFeeVND)} VND</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.chinaShipping")}</dt>
-              <dd className="font-medium text-slate-900">{fmt(order.chinaShippingFee)} VND</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.intlShipping")}</dt>
-              <dd className="font-medium text-slate-900">{fmt(order.internationalShippingFee)} VND</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.vnDelivery")}</dt>
-              <dd className="font-medium text-slate-900">{fmt(order.vietnamDeliveryFee)} VND</dd>
-            </div>
-            <div className="flex justify-between items-end pt-3 border-t border-slate-100">
-              <dt className="font-bold text-slate-900">{t("orderDetail.total")}</dt>
-              <dd className="text-xl font-bold text-blue-600">{fmt(order.totalCostVND)} VND</dd>
-            </div>
-          </dl>
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-            <p className="text-xs text-amber-800 leading-relaxed">
-              💡 {t("newOrder.contactCompanyNote")} {t("newOrder.priceConfirmNote")}
-            </p>
-          </div>
+          {order.confirmedTotalCost ? (
+            <>
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-sm font-semibold text-emerald-800">{t("pricing.companyConfirmed")}</span>
+                </div>
+                <dl className="space-y-2 text-sm">
+                  {order.confirmedProductCost && (
+                    <div className="flex justify-between">
+                      <dt className="text-emerald-700">{t("pricing.confirmedProduct")}</dt>
+                      <dd className="font-medium text-emerald-900">{fmt(order.confirmedProductCost)} VND</dd>
+                    </div>
+                  )}
+                  {order.confirmedShippingCost && (
+                    <div className="flex justify-between">
+                      <dt className="text-emerald-700">{t("pricing.confirmedShipping")}</dt>
+                      <dd className="font-medium text-emerald-900">{fmt(order.confirmedShippingCost)} VND</dd>
+                    </div>
+                  )}
+                  {order.confirmedServiceFee && (
+                    <div className="flex justify-between">
+                      <dt className="text-emerald-700">{t("pricing.confirmedService")}</dt>
+                      <dd className="font-medium text-emerald-900">{fmt(order.confirmedServiceFee)} VND</dd>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-end pt-2 border-t border-emerald-200">
+                    <dt className="font-bold text-emerald-900">{t("pricing.finalCost")}</dt>
+                    <dd className="text-xl font-bold text-emerald-700">{fmt(order.confirmedTotalCost)} VND</dd>
+                  </div>
+                </dl>
+              </div>
+              <details className="group">
+                <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600">
+                  {t("pricing.showEstimate")}
+                </summary>
+                <dl className="space-y-2 text-sm mt-3 opacity-60">
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">{t("orderDetail.productCostCNY")}</dt>
+                    <dd className="font-medium text-slate-900">&yen;{fmt(order.totalPriceCNY)}</dd>
+                  </div>
+                  <div className="flex justify-between items-end pt-2 border-t border-slate-100">
+                    <dt className="font-bold text-slate-900">{t("pricing.systemEstimate")}</dt>
+                    <dd className="text-lg font-bold text-slate-400 line-through">{fmt(order.totalCostVND)} VND</dd>
+                  </div>
+                </dl>
+              </details>
+            </>
+          ) : (
+            <>
+              <dl className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.productCostCNY")}</dt>
+                  <dd className="font-medium text-slate-900">&yen;{fmt(order.totalPriceCNY)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.exchangeRate")}</dt>
+                  <dd className="font-medium text-slate-900">1 CNY = {fmt(order.exchangeRate)} VND</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.productCostVND")}</dt>
+                  <dd className="font-medium text-slate-900">{fmt(order.totalPriceVND)} VND</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.serviceFee")} ({order.serviceFeePercent}%)</dt>
+                  <dd className="font-medium text-slate-900">{fmt(order.serviceFeeVND)} VND</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.chinaShipping")}</dt>
+                  <dd className="font-medium text-slate-900">{fmt(order.chinaShippingFee)} VND</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.intlShipping")}</dt>
+                  <dd className="font-medium text-slate-900">{fmt(order.internationalShippingFee)} VND</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.vnDelivery")}</dt>
+                  <dd className="font-medium text-slate-900">{fmt(order.vietnamDeliveryFee)} VND</dd>
+                </div>
+                <div className="flex justify-between items-end pt-3 border-t border-slate-100">
+                  <dt className="font-bold text-slate-900">{t("pricing.systemEstimate")}</dt>
+                  <dd className="text-xl font-bold text-blue-600">{fmt(order.totalCostVND)} VND</dd>
+                </div>
+              </dl>
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <p className="text-xs text-amber-800 leading-relaxed font-medium">
+                    {t("pricing.awaitingConfirmation")}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </Card>
       </div>
 

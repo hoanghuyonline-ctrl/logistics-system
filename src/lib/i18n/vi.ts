@@ -371,6 +371,16 @@ const vi: Record<string, string> = {
   "newOrder.contactCompanyNote": "Giá thực tế vui lòng liên hệ công ty.",
   "newOrder.estimateOnly": "Giá tham khảo",
 
+  // Pricing confirmation
+  "pricing.systemEstimate": "Giá dự kiến hệ thống",
+  "pricing.companyConfirmed": "Giá công ty xác nhận",
+  "pricing.confirmedProduct": "Tiền hàng xác nhận",
+  "pricing.confirmedShipping": "Phí vận chuyển xác nhận",
+  "pricing.confirmedService": "Phí dịch vụ xác nhận",
+  "pricing.finalCost": "Chi phí cuối cùng",
+  "pricing.awaitingConfirmation": "Chờ công ty xác nhận giá. Chi phí thực tế sẽ được cập nhật sau khi kiểm tra đơn hàng.",
+  "pricing.showEstimate": "Xem giá dự kiến ban đầu",
+
   // Wallet
   "wallet.loading": "Đang tải ví...",
   "wallet.title": "Ví của tôi",

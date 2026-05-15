@@ -5,7 +5,8 @@ export type AuditAction =
   | "WAREHOUSE_SCAN_UPDATE"
   | "WAREHOUSE_RECEIVE_CN"
   | "WAREHOUSE_RECEIVE_VN"
-  | "WAREHOUSE_DELIVERY";
+  | "WAREHOUSE_DELIVERY"
+  | "ORDER_PRICING_CONFIRMED";
 
 export interface AuditEntry {
   action: AuditAction;
