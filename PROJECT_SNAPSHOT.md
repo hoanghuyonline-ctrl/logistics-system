@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** Docs PR (post PR #240)
+**Latest stable commit:** Post PR #245 (finance/order workflow improvements)
 
 ---
 
@@ -13,8 +13,8 @@
 - **Admin Panel** — Dashboard with KPIs, user management, order management with status transitions, package management, finance (revenue/profit), fee settings, analytics with time-range charts
 - **Warehouse China** — Dashboard, receive goods (weight entry), create packages (multi-order grouping)
 - **Warehouse Vietnam** — Dashboard, receive shipments, dispatch & complete delivery
-- **Order Cost Calculation** — Automatic: `(price CNY × exchange rate) + service fee + CN shipping + intl shipping (kg × rate) + VN delivery fee`
-- **Wallet System** — Deposits, order payment deduction on completion, refund on cancellation, debt tracking
+- **Order Cost Calculation** — Automatic: `(price CNY × exchange rate) + service fee + CN shipping + intl shipping (kg × rate) + VN delivery fee` (system estimate; final cost confirmed by company)
+- **Wallet System** — Deposits, order payment deduction on completion, refund on cancellation, debt tracking; order creation allowed with zero/insufficient balance
 - **Centralized ShipmentStatus Workflow** — 8-state enum with validated transitions, bidirectional mapping to legacy OrderStatus
 - **Barcode Rendering** — Code128 barcode generation (PNG/SVG) via bwip-js, print label popup
 - **UI/UX Redesign** — Modern SaaS design across all 25+ pages, reusable components, toast notifications, loading/empty states
@@ -205,6 +205,9 @@
 - **Support Ticket Improvement** (PR #239) — Added `priority` field (LOW/NORMAL/HIGH/URGENT) to `CustomerIssue`; inline priority dropdown with color-coded chips; inline staff assignment dropdown; priority selector in create form; Vietnamese priority labels; migration `20260515170000_add_issue_priority`
 - **Analytics Summary Dashboard** (PR #240) — `GET /api/admin/analytics/summary` aggregating leads by source, conversion rate, overdue follow-ups, open support tickets by priority, campaigns by status; admin page `/admin/analytics-summary` with stat cards, source bar chart, priority/campaign breakdowns; sidebar nav "Tổng quan"; no heavy charts — compact data-driven display
 - **Vietnamese End-User & Admin Guides** (Docs PR post #240) — Comprehensive Vietnamese-first documentation: `docs/USER_GUIDE_VI.md` (15 sections — login/register, dashboard, order creation, order tracking, order detail, A→Z shipping flow, wallet/top-up/QR, transactions, notifications, Zalo/Telegram linking, issues/complaints, profile, common errors, FAQ) and `docs/ADMIN_GUIDE_VI.md` (25 sections — role overview, admin dashboard, user management, order management with warning badges, package management, China/Vietnam warehouse workflows, barcode scanning, accountant finance, notification channels, CRM lead management, follow-up workflow, marketing campaigns, support tickets, knowledge base/chatbot, analytics, system config, audit log, system health, staff notes, stuck shipments, production/deploy basics, backup/restore, common mistakes, real operational examples); screenshot placeholders for 32 screens; no code changes
+- **Order Creation Without Wallet Balance** (PR #243) — Removed hard wallet balance check from order creation API; customers can create orders with zero/insufficient balance; order created normally, payment reconciled later; updated customer-facing cost UI with Vietnamese wording: "Giá thực tế vui lòng liên hệ công ty" and "Chi phí sẽ được công ty xác nhận sau khi kiểm tra đơn hàng"; new i18n keys `newOrder.contactCompanyNote`, `newOrder.priceConfirmNote`, `newOrder.estimateOnly` in VI/EN/ZH; no schema change
+- **Admin Deposit/Top-Up Visibility** (PR #244) — Admin and accountant users now receive system notifications when customers create new top-up requests ("Yêu cầu nạp tiền mới" with customer name, amount, transfer reference); fire-and-forget pattern; added `pendingDeposits` count to `/api/admin/quick-views`; new "Nạp tiền chờ xác nhận" dashboard card (first position, emerald color, urgent badge with animated ping, links to `/admin/finance`); no schema change
+- **System Estimated vs Company Confirmed Pricing** (PR #245) — Added confirmed pricing fields to Order model: `confirmedProductCost`, `confirmedShippingCost`, `confirmedServiceFee`, `confirmedTotalCost`, `confirmedAt`, `confirmedById` (all nullable, backward compatible); new `PATCH /api/orders/[id]/confirm-pricing` endpoint for admin/accountant with audit log and customer notification; payment/debt logic now uses `confirmedTotalCost` when available (fallback to `totalCostVND`); customer order detail shows green "Giá công ty xác nhận" box when confirmed or amber "Chờ công ty xác nhận giá" badge when pending; admin order detail has pricing confirmation form; orders list shows confirmed vs estimated amounts; 8 new `pricing.*` i18n keys in VI/EN/ZH; migration `20260515200000_add_confirmed_pricing`
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
@@ -234,7 +237,7 @@
 | `/api/packages/[id]/barcode` | GET | Render Code128 barcode (PNG/SVG) |
 | `/api/wallet` | GET | Customer wallet |
 | `/api/wallet/deposit` | POST | Deposit funds |
-| `/api/wallet/topup-request` | GET/POST/DELETE | Customer pending top-up request (get/create/cancel) |
+| `/api/wallet/topup-request` | GET/POST/DELETE | Customer pending top-up request (get/create/cancel); POST notifies all active admins/accountants |
 | `/api/admin/topup-requests` | GET | List all top-up requests (ADMIN/ACCOUNTANT) |
 | `/api/admin/topup-requests/[id]` | PATCH | Confirm/cancel top-up request (ADMIN/ACCOUNTANT) |
 | `/api/settings` | GET/PUT | System fee configuration |
@@ -259,7 +262,8 @@
 | `/api/admin/stuck-shipments` | GET | Delayed/stuck shipment indicators (ADMIN-only) |
 | `/api/admin/system-health` | GET | System/chatbot/operational health status (ADMIN-only) |
 | `/api/admin/notifications/failures` | GET/POST | Notification failure list and retry (ADMIN-only) |
-| `/api/admin/quick-views` | GET | Quick operational view counts for dashboard (ADMIN-only) |
+| `/api/orders/[id]/confirm-pricing` | PATCH | Confirm order pricing — admin/accountant set final amounts, audit log, customer notification |
+| `/api/admin/quick-views` | GET | Quick operational view counts for dashboard including pendingDeposits (ADMIN-only) |
 | `/api/admin/leads` | GET/POST/PUT | CRM lead list (search, source/status/followUp filters, sort=activity), create, update (ADMIN-only) |
 | `/api/admin/leads/convert` | POST | Convert lead to customer account (ADMIN-only) |
 | `/api/admin/leads/[id]/activity` | GET | Lead activity timeline (last 50 activities with actor, ADMIN-only) |
@@ -272,7 +276,7 @@
 | Model | Key Fields |
 |-------|-----------|
 | **User** | id, email, password, role (CUSTOMER/ADMIN/WAREHOUSE_CN/WAREHOUSE_VN/ACCOUNTANT), zaloRecipientId (nullable) |
-| **Order** | orderCode, status (OrderStatus enum), unitPriceCNY, totalCostVND, weightKg, packageId |
+| **Order** | orderCode, status (OrderStatus enum), unitPriceCNY, totalCostVND, confirmedProductCost?, confirmedShippingCost?, confirmedServiceFee?, confirmedTotalCost?, confirmedAt?, confirmedById?, weightKg, packageId |
 | **Package** | packageCode, barcode, totalWeightKg, dimensions, status (PackageStatus) |
 | **Wallet** | userId, balance, debt |
 | **Transaction** | userId, type, amount, orderId |
@@ -290,6 +294,8 @@
 | **CustomerIssue** | id, customerId, orderCode, issueType, description, status, priority, assignedTo, resolution |
 
 **Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType, LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS)
+
+**AuditActions:** ORDER_STATUS_CHANGE, PACKAGE_STATUS_CHANGE, WAREHOUSE_SCAN_LOOKUP, WAREHOUSE_SCAN_UPDATE, WAREHOUSE_RECEIVE_CN, WAREHOUSE_RECEIVE_VN, WAREHOUSE_DELIVERY, ORDER_PRICING_CONFIRMED
 
 ## Remaining Major Tasks
 
