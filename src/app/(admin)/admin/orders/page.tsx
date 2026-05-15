@@ -32,11 +32,22 @@ interface Order {
   customStatusNote: string | null;
   totalCostVND: string;
   createdAt: string;
+  updatedAt: string;
   priority: string;
+  weightKg: string | null;
+  trackingCodeChina: string | null;
+  trackingCodeIntl: string | null;
+  packageId: string | null;
   user: { id: string; fullName: string; email: string; phone: string | null };
+  package: { totalWeightKg: string | null; barcode: string | null } | null;
   orderNotes: Array<{ content: string; createdAt: string; user: { fullName: string; role: string } }>;
   statusLogs: Array<{ createdAt: string; toStatus: string; changer: { fullName: string; role: string } }>;
 }
+
+const ACTIVE_STATUSES = ["PENDING", "PURCHASED", "SELLER_SHIPPED", "ARRIVED_CHINA_WH", "PACKING", "SHIPPING_TO_VIETNAM", "ARRIVED_VIETNAM_WH", "OUT_FOR_DELIVERY"];
+const POST_CHINA_STATUSES = ["ARRIVED_CHINA_WH", "PACKING", "SHIPPING_TO_VIETNAM", "ARRIVED_VIETNAM_WH", "OUT_FOR_DELIVERY"];
+const POST_SHIPPED_STATUSES = ["SELLER_SHIPPED", "ARRIVED_CHINA_WH", "PACKING", "SHIPPING_TO_VIETNAM", "ARRIVED_VIETNAM_WH", "OUT_FOR_DELIVERY"];
+const STALE_DAYS = 5;
 
 const STATUS_DOT_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-400",
@@ -309,6 +320,34 @@ function AdminOrdersContent() {
                           {order.customStatusNote && (
                             <p className="text-xs text-amber-600 mt-1 truncate max-w-[150px]" title={order.customStatusNote}>{order.customStatusNote}</p>
                           )}
+                          {(() => {
+                            const warnings: Array<{ text: string; cls: string; tip: string }> = [];
+                            const isActive = ACTIVE_STATUSES.includes(order.status);
+                            const lastLogDate = order.statusLogs[0] ? new Date(order.statusLogs[0].createdAt).getTime() : new Date(order.createdAt).getTime();
+                            const daysSinceUpdate = Math.floor((now - lastLogDate) / (1000 * 60 * 60 * 24));
+                            if (isActive && daysSinceUpdate >= STALE_DAYS) {
+                              warnings.push({ text: t("shipment.notUpdated"), cls: "bg-orange-100 text-orange-700", tip: `${daysSinceUpdate} ${t("shipment.daysNoUpdate")}` });
+                            }
+                            if (POST_CHINA_STATUSES.includes(order.status) && !order.weightKg && (!order.package || !order.package.totalWeightKg)) {
+                              warnings.push({ text: t("shipment.missingData"), cls: "bg-red-100 text-red-600", tip: t("shipment.missingWeight") });
+                            }
+                            if (POST_SHIPPED_STATUSES.includes(order.status) && !order.trackingCodeChina && !order.trackingCodeIntl) {
+                              warnings.push({ text: t("shipment.needsCheck"), cls: "bg-amber-100 text-amber-700", tip: t("shipment.missingTracking") });
+                            }
+                            if (order.customStatusNote) {
+                              warnings.push({ text: t("shipment.awaitingCustomer"), cls: "bg-blue-100 text-blue-600", tip: order.customStatusNote });
+                            }
+                            if (warnings.length === 0) return null;
+                            return (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {warnings.map((w, i) => (
+                                  <span key={i} className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${w.cls}`} title={w.tip}>
+                                    {w.text}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
                         <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
