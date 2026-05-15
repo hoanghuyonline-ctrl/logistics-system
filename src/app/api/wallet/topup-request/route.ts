@@ -1,6 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
 
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user) return errorResponse("Unauthorized", 401);
+
+  const pending = await prisma.walletTopUpRequest.findFirst({
+    where: { customerId: user.id, status: "PENDING" },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return jsonResponse(pending);
+}
+
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
@@ -16,10 +28,10 @@ export async function POST(request: Request) {
   }
 
   const existing = await prisma.walletTopUpRequest.findFirst({
-    where: { transferReference, status: "PENDING" },
+    where: { customerId: user.id, status: "PENDING" },
   });
   if (existing) {
-    return errorResponse("Yêu cầu nạp tiền với mã này đã tồn tại", 409);
+    return jsonResponse(existing, 200);
   }
 
   const record = await prisma.walletTopUpRequest.create({
@@ -35,4 +47,24 @@ export async function POST(request: Request) {
   });
 
   return jsonResponse(record, 201);
+}
+
+export async function DELETE() {
+  const user = await getCurrentUser();
+  if (!user) return errorResponse("Unauthorized", 401);
+
+  const pending = await prisma.walletTopUpRequest.findFirst({
+    where: { customerId: user.id, status: "PENDING" },
+  });
+
+  if (!pending) {
+    return errorResponse("Không có yêu cầu nạp tiền chờ xác nhận", 404);
+  }
+
+  await prisma.walletTopUpRequest.update({
+    where: { id: pending.id },
+    data: { status: "CANCELLED" },
+  });
+
+  return jsonResponse({ success: true });
 }
