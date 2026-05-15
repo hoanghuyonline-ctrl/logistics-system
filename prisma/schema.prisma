@@ -303,6 +303,7 @@ model CustomerIssue {
   issueType   String
   description String
   status      String   @default("NEW")
+  priority    String   @default("NORMAL")
   assignedTo  String?
   resolution  String?
   createdAt   DateTime @default(now())

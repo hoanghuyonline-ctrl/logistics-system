@@ -12,6 +12,7 @@ interface Issue {
   issueType: string;
   description: string;
   status: string;
+  priority: string;
   assignedTo: string | null;
   resolution: string | null;
   createdAt: string;
@@ -50,6 +51,20 @@ const STATUS_COLORS: Record<string, string> = {
   RESOLVED: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
+const PRIORITY_LABELS: Record<string, string> = {
+  LOW: "Thấp",
+  NORMAL: "Bình thường",
+  HIGH: "Cao",
+  URGENT: "Khẩn cấp",
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  LOW: "bg-slate-100 text-slate-600",
+  NORMAL: "bg-blue-50 text-blue-600",
+  HIGH: "bg-orange-100 text-orange-700",
+  URGENT: "bg-red-100 text-red-700",
+};
+
 function timeSince(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
   if (mins < 1) return "Vừa xong";
@@ -69,11 +84,13 @@ export default function CustomerIssuesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState("");
   const [editResolution, setEditResolution] = useState("");
+  const [adminUsers, setAdminUsers] = useState<Array<{ id: string; fullName: string }>>([]);
 
   // Create form
   const [newCustomerId, setNewCustomerId] = useState("");
   const [newOrderCode, setNewOrderCode] = useState("");
   const [newType, setNewType] = useState("KHAC");
+  const [newPriority, setNewPriority] = useState("NORMAL");
   const [newDesc, setNewDesc] = useState("");
   const [customers, setCustomers] = useState<Array<{ id: string; fullName: string }>>([]);
 
@@ -96,6 +113,12 @@ export default function CustomerIssuesPage() {
       .then((r) => r.json())
       .then((d) => setCustomers(Array.isArray(d) ? d : d.customers || []))
       .catch(() => {});
+    fetch("/api/users?role=ADMIN&limit=100")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.users) setAdminUsers(d.users.map((u: { id: string; fullName: string }) => ({ id: u.id, fullName: u.fullName })));
+      })
+      .catch(() => {});
   }, []);
 
   const handleCreate = async () => {
@@ -107,6 +130,7 @@ export default function CustomerIssuesPage() {
         customerId: newCustomerId,
         orderCode: newOrderCode || undefined,
         issueType: newType,
+        priority: newPriority,
         description: newDesc,
       }),
     });
@@ -114,6 +138,7 @@ export default function CustomerIssuesPage() {
     setNewCustomerId("");
     setNewOrderCode("");
     setNewType("KHAC");
+    setNewPriority("NORMAL");
     setNewDesc("");
     fetchData();
   };
@@ -125,6 +150,24 @@ export default function CustomerIssuesPage() {
       body: JSON.stringify({ id, status: editStatus, resolution: editResolution }),
     });
     setEditingId(null);
+    fetchData();
+  };
+
+  const handleAssign = async (issueId: string, assignedTo: string) => {
+    await fetch("/api/admin/customer-issues", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: issueId, assignedTo: assignedTo || null }),
+    });
+    fetchData();
+  };
+
+  const handlePriority = async (issueId: string, priority: string) => {
+    await fetch("/api/admin/customer-issues", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: issueId, priority }),
+    });
     fetchData();
   };
 
@@ -187,6 +230,18 @@ export default function CustomerIssuesPage() {
               </select>
             </div>
             <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Độ ưu tiên</label>
+              <select
+                value={newPriority}
+                onChange={(e) => setNewPriority(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl bg-white"
+              >
+                {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-2">
               <label className="block text-xs font-medium text-slate-500 mb-1">Mô tả *</label>
               <input
                 value={newDesc}
@@ -251,6 +306,7 @@ export default function CustomerIssuesPage() {
                   <th className="pb-2 font-medium">Đơn</th>
                   <th className="pb-2 font-medium">Loại</th>
                   <th className="pb-2 font-medium">Mô tả</th>
+                  <th className="pb-2 font-medium">Độ ưu tiên</th>
                   <th className="pb-2 font-medium">Trạng thái</th>
                   <th className="pb-2 font-medium">Phụ trách</th>
                   <th className="pb-2 font-medium">Thời gian</th>
@@ -277,11 +333,33 @@ export default function CustomerIssuesPage() {
                       {issue.resolution && <div className="text-xs text-emerald-600 mt-0.5 truncate" title={issue.resolution}>→ {issue.resolution}</div>}
                     </td>
                     <td className="py-3">
+                      <select
+                        value={issue.priority}
+                        onChange={(e) => handlePriority(issue.id, e.target.value)}
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium border-0 ${PRIORITY_COLORS[issue.priority] || "bg-slate-100"}`}
+                      >
+                        {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-3">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${STATUS_COLORS[issue.status] || "bg-slate-100 text-slate-600"}`}>
                         {STATUS_LABELS[issue.status] || issue.status}
                       </span>
                     </td>
-                    <td className="py-3 text-xs text-slate-500">{issue.assignee?.fullName || "—"}</td>
+                    <td className="py-3">
+                      <select
+                        value={issue.assignedTo || ""}
+                        onChange={(e) => handleAssign(issue.id, e.target.value)}
+                        className="text-xs px-2 py-1 border border-slate-200 rounded-lg bg-white min-w-[100px]"
+                      >
+                        <option value="">—</option>
+                        {adminUsers.map((u) => (
+                          <option key={u.id} value={u.id}>{u.fullName}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="py-3 text-xs text-slate-400 whitespace-nowrap">{timeSince(issue.createdAt)}</td>
                     <td className="py-3">
                       {editingId === issue.id ? (

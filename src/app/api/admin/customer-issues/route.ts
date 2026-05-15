@@ -68,11 +68,12 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { customerId, orderCode, issueType, description } = body as {
+  const { customerId, orderCode, issueType, description, priority } = body as {
     customerId: string;
     orderCode?: string;
     issueType: string;
     description: string;
+    priority?: string;
   };
 
   if (!customerId || !issueType || !description) {
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
       orderCode: orderCode || null,
       issueType,
       description,
+      priority: priority || "NORMAL",
       assignedTo: user.id,
     },
     include: {
@@ -103,11 +105,12 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { id, status, resolution, assignedTo } = body as {
+  const { id, status, resolution, assignedTo, priority } = body as {
     id: string;
     status?: string;
     resolution?: string;
     assignedTo?: string;
+    priority?: string;
   };
 
   if (!id) return errorResponse("Missing id", 400);
@@ -116,6 +119,7 @@ export async function PUT(request: Request) {
   if (status) data.status = status;
   if (resolution !== undefined) data.resolution = resolution;
   if (assignedTo !== undefined) data.assignedTo = assignedTo || null;
+  if (priority) data.priority = priority;
 
   const issue = await prisma.customerIssue.findUnique({
     where: { id },
