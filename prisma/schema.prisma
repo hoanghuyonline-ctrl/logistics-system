@@ -91,6 +91,8 @@ model User {
   customerIssues     CustomerIssue[]  @relation("CustomerIssues")
   assignedIssues     CustomerIssue[]  @relation("AssignedIssues")
   staffNotes         StaffNote[]      @relation("StaffNotes")
+  topUpRequests      WalletTopUpRequest[] @relation("TopUpRequests")
+  topUpConfirmations WalletTopUpRequest[] @relation("TopUpConfirmations")
 }
 
 model Wallet {
@@ -302,4 +304,21 @@ model StaffNote {
   updatedAt  DateTime @updatedAt
 
   author User @relation("StaffNotes", fields: [createdBy], references: [id])
+}
+
+model WalletTopUpRequest {
+  id                String   @id @default(uuid())
+  customerId        String
+  amount            Decimal  @db.Decimal(15, 2)
+  transferReference String
+  bankName          String
+  bankAccount       String
+  accountHolder     String
+  status            String   @default("PENDING")
+  confirmedBy       String?
+  confirmedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  customer  User  @relation("TopUpRequests", fields: [customerId], references: [id])
+  confirmer User? @relation("TopUpConfirmations", fields: [confirmedBy], references: [id])
 }

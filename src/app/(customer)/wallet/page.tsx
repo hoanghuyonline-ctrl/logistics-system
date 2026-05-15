@@ -36,6 +36,8 @@ export default function WalletPage() {
   const [userId, setUserId] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
   const [showQR, setShowQR] = useState(false);
+  const [topUpSaved, setTopUpSaved] = useState(false);
+  const [topUpSaving, setTopUpSaving] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -98,6 +100,7 @@ export default function WalletPage() {
                 const raw = e.target.value.replace(/\D/g, "");
                 setTopUpAmount(raw ? parseInt(raw, 10).toLocaleString("vi-VN") : "");
                 setShowQR(false);
+                setTopUpSaved(false);
               }}
               className="w-full max-w-xs px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               placeholder="Ví dụ: 500,000"
@@ -106,8 +109,30 @@ export default function WalletPage() {
 
           <button
             type="button"
-            disabled={parsedAmount <= 0}
-            onClick={() => setShowQR(true)}
+            disabled={parsedAmount <= 0 || topUpSaving}
+            onClick={async () => {
+              setShowQR(true);
+              setTopUpSaving(true);
+              try {
+                const ref = `NAPVI${(userId || "").slice(-6).toUpperCase()}${Math.floor(Date.now() / 1000).toString().slice(-6)}`;
+                await fetch("/api/wallet/topup-request", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    amount: parsedAmount,
+                    transferReference: ref,
+                    bankName: BANK_NAME,
+                    bankAccount: BANK_ACCOUNT,
+                    accountHolder: ACCOUNT_NAME,
+                  }),
+                });
+                setTopUpSaved(true);
+              } catch {
+                // QR still shows even if save fails
+              } finally {
+                setTopUpSaving(false);
+              }
+            }}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             🏦 Tạo mã QR chuyển khoản
@@ -161,6 +186,12 @@ export default function WalletPage() {
                 <p className="text-xs text-amber-700">Vui lòng chuyển đúng số tiền và đúng nội dung để được xử lý nhanh.</p>
                 <p className="text-xs text-amber-700">Sau khi chuyển khoản, hệ thống sẽ kiểm tra và cập nhật ví sau khi xác nhận.</p>
               </div>
+
+              {topUpSaved && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                  <p className="text-xs font-medium text-emerald-800">✅ Yêu cầu nạp tiền đã được tạo. Quản trị viên sẽ đối chiếu nội dung chuyển khoản và xác nhận ví sau khi nhận tiền.</p>
+                </div>
+              )}
             </div>
           )}
         </div>

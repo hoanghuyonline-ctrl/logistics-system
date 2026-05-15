@@ -17,6 +17,21 @@ interface HealthData {
   totalDebt: number;
 }
 
+interface TopUpRequest {
+  id: string;
+  customerId: string;
+  amount: string;
+  transferReference: string;
+  bankName: string;
+  bankAccount: string;
+  accountHolder: string;
+  status: string;
+  confirmedAt: string | null;
+  createdAt: string;
+  customer: { id: string; fullName: string; email: string; phone: string | null };
+  confirmer: { fullName: string } | null;
+}
+
 export default function FinancePage() {
   const { toast } = useToast();
   const { t } = useI18n();
@@ -37,13 +52,17 @@ export default function FinancePage() {
   const [depositUserId, setDepositUserId] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [loading, setLoading] = useState(true);
+  const [topUpRequests, setTopUpRequests] = useState<TopUpRequest[]>([]);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [topUpFilter, setTopUpFilter] = useState<"PENDING" | "ALL">("PENDING");
 
   useEffect(() => {
     Promise.all([
       fetch("/api/analytics/profit").then((r) => r.json()),
       fetch("/api/accountant/dashboard").then((r) => r.json()),
+      fetch("/api/admin/topup-requests").then((r) => r.json()),
     ])
-      .then(([profitData, dashData]) => {
+      .then(([profitData, dashData, topUpData]) => {
         setProfit(profitData);
         setHealth({
           customersWithDebt: dashData.customersWithDebt ?? 0,
@@ -53,10 +72,41 @@ export default function FinancePage() {
           pendingPayments: dashData.pendingPayments ?? 0,
           totalDebt: dashData.totalDebt ?? 0,
         });
+        setTopUpRequests(Array.isArray(topUpData) ? topUpData : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  async function handleTopUpAction(id: string, action: "confirm" | "cancel") {
+    setConfirmingId(id);
+    try {
+      const res = await fetch(`/api/admin/topup-requests/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTopUpRequests((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status: data.status, confirmedAt: new Date().toISOString() } : r))
+        );
+        toast(action === "confirm" ? t("topup.confirmed") : t("topup.cancelled"), "success");
+      } else {
+        const err = await res.json();
+        toast(err.error || t("topup.actionFailed"), "error");
+      }
+    } catch {
+      toast(t("topup.actionFailed"), "error");
+    } finally {
+      setConfirmingId(null);
+    }
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    toast(t("orders.copied"), "success");
+  }
 
   async function processDeposit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,6 +175,123 @@ export default function FinancePage() {
           </div>
         </div>
       )}
+
+      {/* Top-up requests section */}
+      <Card title={t("topup.pendingTitle")} className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setTopUpFilter("PENDING")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+              topUpFilter === "PENDING" ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {t("topup.filterPending")}
+          </button>
+          <button
+            onClick={() => setTopUpFilter("ALL")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+              topUpFilter === "ALL" ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {t("topup.filterAll")}
+          </button>
+          <span className="text-xs text-slate-500">
+            {topUpRequests.filter((r) => r.status === "PENDING").length} {t("topup.pendingCount")}
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("topup.customer")}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">{t("common.amount")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("topup.transferRef")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("topup.time")}</th>
+                <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">{t("topup.status")}</th>
+                <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">{t("topup.actions")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {topUpRequests
+                .filter((r) => topUpFilter === "ALL" || r.status === "PENDING")
+                .map((r) => (
+                  <tr key={r.id} className={`hover:bg-slate-50/50 transition-colors ${r.status === "PENDING" ? "bg-amber-50/30" : ""}`}>
+                    <td className="px-3 py-3">
+                      <div className="text-sm font-medium text-slate-900">{r.customer.fullName}</div>
+                      <div className="text-xs text-slate-500">{r.customer.email}</div>
+                      {r.customer.phone && <div className="text-xs text-slate-400">{r.customer.phone}</div>}
+                    </td>
+                    <td className="px-3 py-3 text-right text-sm font-semibold text-emerald-700 whitespace-nowrap">
+                      {parseFloat(r.amount).toLocaleString("vi-VN")} VND
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-sm font-semibold text-slate-900 bg-amber-100 px-2 py-0.5 rounded">{r.transferReference}</span>
+                        <button
+                          onClick={() => copyToClipboard(r.transferReference)}
+                          className="p-1 text-slate-400 hover:text-slate-600 transition-colors" title={t("topup.copyRef")}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-xs text-slate-500 hidden sm:table-cell whitespace-nowrap">
+                      {new Date(r.createdAt).toLocaleString("vi-VN")}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold ${
+                        r.status === "PENDING" ? "bg-amber-100 text-amber-800" :
+                        r.status === "CONFIRMED" ? "bg-emerald-100 text-emerald-800" :
+                        "bg-red-100 text-red-800"
+                      }`}>
+                        {r.status === "PENDING" ? t("topup.statusPending") :
+                         r.status === "CONFIRMED" ? t("topup.statusConfirmed") :
+                         t("topup.statusCancelled")}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {r.status === "PENDING" ? (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => handleTopUpAction(r.id, "confirm")}
+                            disabled={confirmingId === r.id}
+                            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                          >
+                            {t("topup.confirmBtn")}
+                          </button>
+                          <button
+                            onClick={() => handleTopUpAction(r.id, "cancel")}
+                            disabled={confirmingId === r.id}
+                            className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"
+                          >
+                            {t("topup.cancelBtn")}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">
+                          {r.confirmer?.fullName && `${r.confirmer.fullName}`}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              {topUpRequests.filter((r) => topUpFilter === "ALL" || r.status === "PENDING").length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-3 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-2xl">{topUpFilter === "PENDING" ? "\u2705" : "\ud83d\udcb3"}</span>
+                      <p className="text-sm text-slate-500">{t("topup.empty")}</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
         <KPICard title={t("admin.totalRevenue")} value={`${(profit?.totalRevenue || 0).toLocaleString()} VND`} icon={<span>💰</span>} color="green" />

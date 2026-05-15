@@ -605,6 +605,27 @@ const vi: Record<string, string> = {
   "warehouse.errorInvalidTransition": "Không thể chuyển trạng thái đơn hàng hiện tại",
   "warehouse.errorServerError": "Đã xảy ra lỗi hệ thống, vui lòng thử lại",
 
+  // Top-up requests
+  "topup.pendingTitle": "Yêu cầu nạp tiền chờ xác nhận",
+  "topup.filterPending": "Chờ xác nhận",
+  "topup.filterAll": "Tất cả",
+  "topup.pendingCount": "yêu cầu chờ",
+  "topup.customer": "Khách hàng",
+  "topup.transferRef": "Mã chuyển khoản",
+  "topup.time": "Thời gian",
+  "topup.status": "Trạng thái",
+  "topup.actions": "Thao tác",
+  "topup.statusPending": "Chờ xác nhận",
+  "topup.statusConfirmed": "Đã xác nhận",
+  "topup.statusCancelled": "Đã huỷ",
+  "topup.confirmBtn": "Xác nhận đã nhận tiền",
+  "topup.cancelBtn": "Huỷ",
+  "topup.confirmed": "Đã xác nhận nạp tiền thành công",
+  "topup.cancelled": "Đã huỷ yêu cầu nạp tiền",
+  "topup.actionFailed": "Không thể xử lý yêu cầu",
+  "topup.copyRef": "Sao chép mã chuyển khoản",
+  "topup.empty": "Không có yêu cầu nạp tiền nào",
+
   // Language
   "language.label": "Ngôn ngữ",
 };
