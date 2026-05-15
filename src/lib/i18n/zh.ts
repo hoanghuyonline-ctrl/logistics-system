@@ -691,6 +691,19 @@ const zh: Record<string, string> = {
   "crm.status.INTERESTED": "有意向",
   "crm.status.CONVERTED": "已转化",
   "crm.status.LOST": "已流失",
+  "crm.followUp": "跟进",
+  "crm.followUpToday": "今日跟进",
+  "crm.overdueFollowUp": "超期跟进",
+  "crm.markContacted": "已联系",
+  "crm.markedContacted": "已标记为已联系",
+  "crm.setFollowUp": "设置跟进",
+  "crm.scheduleFollowUp": "设置跟进计划",
+  "crm.followUpDate": "下次跟进日期",
+  "crm.followUpNoteLabel": "跟进备注",
+  "crm.followUpNotePlaceholder": "例如：回电询问运输需求...",
+  "crm.followUpSaved": "跟进计划已保存",
+  "crm.clearFollowUp": "清除计划",
+  "crm.lastContacted": "最后联系",
 };
 
 export default zh;

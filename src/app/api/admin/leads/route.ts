@@ -17,15 +17,29 @@ export async function GET(request: Request) {
   const mode = url.searchParams.get("mode") || "";
 
   if (mode === "stats") {
-    const [total, newCount, convertedCount, todayCount] = await Promise.all([
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const [total, newCount, convertedCount, todayCount, followUpTodayCount, overdueCount] = await Promise.all([
       prisma.lead.count(),
       prisma.lead.count({ where: { status: "NEW" } }),
       prisma.lead.count({ where: { status: "CONVERTED" } }),
       prisma.lead.count({
+        where: { createdAt: { gte: todayStart } },
+      }),
+      prisma.lead.count({
         where: {
-          createdAt: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          },
+          nextFollowUpAt: { gte: todayStart, lte: todayEnd },
+          status: { notIn: ["CONVERTED", "LOST"] },
+        },
+      }),
+      prisma.lead.count({
+        where: {
+          nextFollowUpAt: { lt: todayStart },
+          status: { notIn: ["CONVERTED", "LOST"] },
         },
       }),
     ]);
@@ -34,9 +48,13 @@ export async function GET(request: Request) {
       newCount,
       convertedCount,
       todayCount,
+      followUpTodayCount,
+      overdueCount,
       conversionRate: total > 0 ? Math.round((convertedCount / total) * 100) : 0,
     });
   }
+
+  const followUp = url.searchParams.get("followUp") || "";
 
   const where: Prisma.LeadWhereInput = {};
   if (search) {
@@ -51,6 +69,19 @@ export async function GET(request: Request) {
   }
   if (status) {
     where.status = status as Prisma.EnumLeadStatusFilter;
+  }
+  if (followUp === "today") {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    where.nextFollowUpAt = { gte: todayStart, lte: todayEnd };
+    where.status = { notIn: ["CONVERTED", "LOST"] };
+  } else if (followUp === "overdue") {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    where.nextFollowUpAt = { lt: todayStart };
+    where.status = { notIn: ["CONVERTED", "LOST"] };
   }
 
   const [leads, total] = await Promise.all([
@@ -134,6 +165,15 @@ export async function PUT(request: Request) {
   if (updates.source !== undefined) data.source = updates.source;
   if (updates.status !== undefined) data.status = updates.status;
   if (updates.notes !== undefined) data.notes = updates.notes?.trim() || null;
+  if (updates.nextFollowUpAt !== undefined) {
+    data.nextFollowUpAt = updates.nextFollowUpAt ? new Date(updates.nextFollowUpAt) : null;
+  }
+  if (updates.lastContactedAt !== undefined) {
+    data.lastContactedAt = updates.lastContactedAt ? new Date(updates.lastContactedAt) : null;
+  }
+  if (updates.followUpNote !== undefined) {
+    data.followUpNote = updates.followUpNote?.trim() || null;
+  }
   if (updates.assignedToId !== undefined) {
     data.assignedTo = updates.assignedToId
       ? { connect: { id: updates.assignedToId } }
