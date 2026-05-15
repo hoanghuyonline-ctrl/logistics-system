@@ -108,6 +108,49 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
   KHAC: "Khác",
 };
 
+/* ─── alert helpers ─── */
+
+const ALERT_STORAGE_KEY = "admin_ops_alert_enabled";
+
+function playAlertBeep() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = "square";
+    gain.gain.value = 0.15;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+    setTimeout(() => {
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.frequency.value = 1100;
+      osc2.type = "square";
+      gain2.gain.value = 0.15;
+      osc2.start();
+      osc2.stop(ctx.currentTime + 0.2);
+      setTimeout(() => ctx.close(), 300);
+    }, 180);
+  } catch {
+    /* Web Audio not supported */
+  }
+}
+
+function triggerVibration() {
+  try {
+    if (navigator.vibrate) {
+      navigator.vibrate([200, 100, 200]);
+    }
+  } catch {
+    /* Vibration API not supported */
+  }
+}
+
 /* ─── main component ─── */
 
 export default function AdminOperationsPage() {
@@ -122,6 +165,27 @@ export default function AdminOperationsPage() {
   const [issueCounts, setIssueCounts] = useState<Record<string, number>>({});
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
+  const prevUrgentRef = useRef<number | null>(null);
+  const alertEnabledRef = useRef(true);
+
+  /* alert toggle */
+  const [alertEnabled, setAlertEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(ALERT_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
+  });
+
+  useEffect(() => {
+    alertEnabledRef.current = alertEnabled;
+  }, [alertEnabled]);
+
+  const toggleAlert = useCallback(() => {
+    setAlertEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem(ALERT_STORAGE_KEY, String(next));
+      return next;
+    });
+  }, []);
 
   const fetchAll = useCallback(async () => {
     if (inFlightRef.current) return;
@@ -143,6 +207,22 @@ export default function AdminOperationsPage() {
       setIssueCounts(issueData.statusCounts || {});
       setLastUpdated(new Date());
       setLoading(false);
+
+      /* compute new urgent total and fire alert if increased */
+      const stuckTotal = (stuck.categories || []).reduce(
+        (s: number, c: StuckCategory) => s + c.items.length, 0
+      );
+      const newUrgent =
+        (qv.pendingDeposits || 0) +
+        (qv.unresolvedIssues || 0) +
+        (qv.notifFailures || 0) +
+        stuckTotal;
+
+      if (prevUrgentRef.current !== null && newUrgent > prevUrgentRef.current && alertEnabledRef.current) {
+        playAlertBeep();
+        triggerVibration();
+      }
+      prevUrgentRef.current = newUrgent;
     } catch {
       setLoading(false);
     } finally {
@@ -182,6 +262,19 @@ export default function AdminOperationsPage() {
         subtitle="Trang chủ làm việc hàng ngày cho Admin"
         action={
           <div className="flex items-center gap-3">
+            {/* Alert toggle */}
+            <button
+              onClick={toggleAlert}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                alertEnabled
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                  : "bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100"
+              }`}
+              title={alertEnabled ? "Tắt âm báo khi có việc khẩn" : "Bật âm báo khi có việc khẩn"}
+            >
+              <span>{alertEnabled ? "🔔" : "🔕"}</span>
+              <span>{alertEnabled ? "Âm báo: Bật" : "Âm báo: Tắt"}</span>
+            </button>
             {/* Last updated time */}
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
