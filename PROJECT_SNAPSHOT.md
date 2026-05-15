@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #212 merged
+**Latest stable commit:** PR #215 merged
 
 ---
 
@@ -178,6 +178,10 @@
 - **Accountant Dashboard Quick Finance Visibility** (PR #210) — Finance health overview section on accountant dashboard and admin finance page with 5 compact indicators: customers with debt (💳), pending deposits (⏳), today refunds (↩️), high-value orders (💎), negative balances (⚠️); color-coded cards with Vietnamese health labels ("Cần xử lý", "Chờ xác nhận", "Đơn giá trị cao"); 4 lightweight API count queries added to `/api/accountant/dashboard` (customersWithDebt, negativeBalanceCount, todayRefunds, highValueOrdersToday); mobile-friendly layout on both pages; 11 new i18n keys per locale (vi/en/zh); no schema changes
 
 - **Admin Shipment Problem Visibility** (PR #212) — Compact warning badges on admin order list for problematic shipments: "Chưa cập nhật" (5+ days stale, orange), "Thiếu dữ liệu" (missing weight post-China warehouse, red), "Cần kiểm tra" (missing tracking codes, amber), "Chờ khách xác nhận" (custom status note, blue); package data (totalWeightKg, barcode) added to orders API for admin/accountant roles; multiple warnings stack with flex-wrap; 7 new i18n keys per locale (vi/en/zh); no schema changes
+
+- **Customer Order Detail FAQ Helpers** (PR #214) — Compact Vietnamese-first helper blocks on customer order detail page for common shipment states: SELLER_SHIPPED ("Người bán đang chuẩn bị giao hàng tới kho Trung Quốc"), SHIPPING_TO_VIETNAM ("Đơn hàng đang vận chuyển quốc tế, thời gian có thể thay đổi"), ARRIVED_VIETNAM_WH ("Kho Việt Nam đang xử lý và chuẩn bị giao"), OUT_FOR_DELIVERY ("Hàng đang được giao đến địa chỉ của bạn"); "Liên hệ hỗ trợ" section with Zalo-aware guidance (linked: message Zalo OA, unlinked: link to notification channel settings); no API/schema/notification changes
+
+- **Customer Shipping Address Confirmation** (PR #215) — Required Vietnam delivery address confirmation on customer create order page; "Địa chỉ nhận hàng tại Việt Nam" section displays customer name, phone, address from existing profile (`/api/auth/me`); required checkbox "Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam" — submit disabled until checked; missing-address warning with "Cập nhật hồ sơ →" link to `/profile` blocks submission when address is empty; Vietnamese-first; no schema/API/notification changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
