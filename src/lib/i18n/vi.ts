@@ -457,6 +457,12 @@ const vi: Record<string, string> = {
   "users.email": "Email",
   "users.role": "Vai trò",
   "users.status": "Trạng thái",
+  "users.totalOrders": "đơn",
+  "users.zaloLinked": "Đã liên kết Zalo",
+  "users.zaloNotLinked": "Chưa liên kết",
+  "users.recentOrder": "Có đơn gần đây",
+  "users.noOrders": "Chưa có đơn",
+  "users.quickInfo": "Thông tin nhanh",
 
   // Finance
   "finance.loading": "Đang tải dữ liệu tài chính...",

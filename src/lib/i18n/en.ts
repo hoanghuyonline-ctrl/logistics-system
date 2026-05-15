@@ -457,6 +457,12 @@ const en: Record<string, string> = {
   "users.email": "Email",
   "users.role": "Role",
   "users.status": "Status",
+  "users.totalOrders": "orders",
+  "users.zaloLinked": "Zalo linked",
+  "users.zaloNotLinked": "Not linked",
+  "users.recentOrder": "Recent order",
+  "users.noOrders": "No orders",
+  "users.quickInfo": "Quick Info",
 
   // Finance
   "finance.loading": "Loading finance data...",

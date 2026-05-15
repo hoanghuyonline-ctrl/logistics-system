@@ -16,7 +16,22 @@ interface User {
   role: string;
   isActive: boolean;
   createdAt: string;
+  updatedAt: string;
+  zaloRecipientId: string | null;
   wallet: { balance: string; debt: string } | null;
+  _count: { orders: number };
+  orders: { updatedAt: string }[];
+}
+
+function timeAgo(dateStr: string, currentTime: number, t: (key: string, fallback?: string) => string): string {
+  const diff = currentTime - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return t("users.justNow", "v\u1eeba xong");
+  if (mins < 60) return `${mins} ${t("users.minutesAgo", "ph\u00fat tr\u01b0\u1edbc")}`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} ${t("users.hoursAgo", "gi\u1edd tr\u01b0\u1edbc")}`;
+  const days = Math.floor(hours / 24);
+  return `${days} ${t("users.daysAgo", "ng\u00e0y tr\u01b0\u1edbc")}`;
 }
 
 const roleColors: Record<string, string> = {
@@ -48,6 +63,7 @@ export default function UsersPage() {
 
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [now] = useState(() => Date.now());
 
   const loadUsers = useCallback(() => {
     const params = new URLSearchParams({ page: String(page), limit: "15" });
@@ -257,14 +273,42 @@ export default function UsersPage() {
               <tbody className="divide-y divide-slate-50">
                 {users.map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{u.fullName}</td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-slate-900">{u.fullName}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${u._count.orders > 0 ? "bg-blue-50 text-blue-600" : "bg-slate-50 text-slate-400"}`}>
+                          {u._count.orders} {t("users.totalOrders")}
+                        </span>
+                        {u.zaloRecipientId ? (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-600" title={t("users.zaloLinked")}>
+                            Zalo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-400" title={t("users.zaloNotLinked")}>
+                            Zalo
+                          </span>
+                        )}
+                        {u.orders.length > 0 && (now - new Date(u.orders[0].updatedAt).getTime()) < 7 * 86400000 && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-600">
+                            {t("users.recentOrder")}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-sm text-slate-600">{u.email}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${roleColors[u.role] || "bg-slate-100 text-slate-700"}`}>
                         {t(`role.${u.role}`, u.role.replace(/_/g, " "))}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">{u.wallet ? `${parseFloat(u.wallet.balance).toLocaleString()} VND` : "—"}</td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-slate-700">{u.wallet ? `${parseFloat(u.wallet.balance).toLocaleString()} VND` : "—"}</div>
+                      {u.orders.length > 0 && (
+                        <div className="text-[10px] text-slate-400 mt-0.5" title={new Date(u.orders[0].updatedAt).toLocaleString("vi-VN")}>
+                          {timeAgo(u.orders[0].updatedAt, now, t)}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${u.isActive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-emerald-500" : "bg-red-500"}`} />
