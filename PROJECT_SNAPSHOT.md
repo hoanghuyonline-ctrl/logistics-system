@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-14
+**Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #200 merged
+**Latest stable commit:** PR #202 merged
 
 ---
 
@@ -167,6 +167,8 @@
 
 - **Warehouse Scan Productivity Enhancement** (PR #200) — Auto-refocus and select scan input after successful status update and after scan errors for faster continuous scanning; Vietnamese helper text "Có thể dùng máy quét mã vạch hoặc nhập thủ công."; clearer red error box for invalid scans with "❌ Không tìm thấy kiện hàng" heading and guidance text; preserves duplicate cooldown, API flow, camera scan behavior; shared ScanPage component; no schema/API/workflow changes
 
+- **Admin User Management Actions** (PR #202) — Edit user modal (name, email, role, active status) with PUT API email uniqueness check; safe delete/deactivate via `isActive: false` with Vietnamese confirmation dialog and self-delete protection (frontend + API); "Xuất Excel" export button downloads `users-export-YYYY-MM-DD.xlsx` with Vietnamese column headers (Họ tên, Email, Vai trò, Số dư, Trạng thái); `xlsx` npm dependency added; 20 new i18n keys per locale (vi/en/zh); no schema changes
+
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
 ## Stack
@@ -200,6 +202,8 @@
 | `/api/warehouse/vietnam/receive` | POST | Receive goods at VN warehouse |
 | `/api/warehouse/vietnam/delivery/[id]` | PATCH | Dispatch/complete delivery |
 | `/api/users` | GET/POST | User management |
+| `/api/users/[id]` | GET/PUT/DELETE | User detail, edit, deactivate |
+| `/api/users/export` | GET | Export user list as .xlsx |
 | `/api/warehouse/scan` | POST | Barcode lookup + package status update |
 | `/api/packages/[id]/images` | GET/POST/DELETE | Package image upload/list/delete (validated) |
 | `/api/admin/audit-log` | GET | Paginated audit log (OrderStatusLog) |
