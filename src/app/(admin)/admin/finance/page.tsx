@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import KPICard from "@/components/ui/KPICard";
 import Card from "@/components/ui/Card";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 interface HealthData {
   customersWithDebt: number;
@@ -70,6 +71,30 @@ export default function FinancePage() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [topUpFilter, setTopUpFilter] = useState<"PENDING" | "ALL">("PENDING");
   const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
+
+  const refreshFetcher = useCallback(async () => {
+    const [topUpData, dashData] = await Promise.all([
+      fetch("/api/admin/topup-requests").then((r) => r.json()),
+      fetch("/api/accountant/dashboard").then((r) => r.json()),
+    ]);
+    return { topUpData, dashData };
+  }, []);
+
+  const handleRefreshData = useCallback((result: { topUpData: unknown; dashData: Record<string, unknown> }) => {
+    const topUpData = result.topUpData;
+    const dashData = result.dashData;
+    setTopUpRequests(Array.isArray(topUpData) ? topUpData : []);
+    setHealth({
+      customersWithDebt: (dashData.customersWithDebt as number) ?? 0,
+      negativeBalanceCount: (dashData.negativeBalanceCount as number) ?? 0,
+      todayRefunds: (dashData.todayRefunds as number) ?? 0,
+      highValueOrdersToday: (dashData.highValueOrdersToday as number) ?? 0,
+      pendingPayments: (dashData.pendingPayments as number) ?? 0,
+      totalDebt: (dashData.totalDebt as number) ?? 0,
+    });
+  }, []);
+
+  const { lastRefreshed } = useAutoRefresh(refreshFetcher, handleRefreshData, 30000);
 
   useEffect(() => {
     Promise.all([
@@ -167,6 +192,15 @@ export default function FinancePage() {
   return (
     <div>
       <PageHeader title={t("finance.title")} subtitle={t("finance.subtitle")} />
+
+      {/* Auto-refresh indicator */}
+      <div className="flex items-center gap-1.5 mb-4 text-[11px] text-slate-400">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+        <span>{"T\u1ef1 \u0111\u1ed9ng c\u1eadp nh\u1eadt"}</span>
+        {lastRefreshed && (
+          <span>{"\u2014"} {lastRefreshed.toLocaleTimeString("vi-VN")}</span>
+        )}
+      </div>
 
       {/* Finance Health Indicators */}
       {health && (
