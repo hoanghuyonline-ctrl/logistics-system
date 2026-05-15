@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #202 merged
+**Latest stable commit:** PR #204 merged
 
 ---
 
@@ -168,6 +168,8 @@
 - **Warehouse Scan Productivity Enhancement** (PR #200) — Auto-refocus and select scan input after successful status update and after scan errors for faster continuous scanning; Vietnamese helper text "Có thể dùng máy quét mã vạch hoặc nhập thủ công."; clearer red error box for invalid scans with "❌ Không tìm thấy kiện hàng" heading and guidance text; preserves duplicate cooldown, API flow, camera scan behavior; shared ScanPage component; no schema/API/workflow changes
 
 - **Admin User Management Actions** (PR #202) — Edit user modal (name, email, role, active status) with PUT API email uniqueness check; safe delete/deactivate via `isActive: false` with Vietnamese confirmation dialog and self-delete protection (frontend + API); "Xuất Excel" export button downloads `users-export-YYYY-MM-DD.xlsx` with Vietnamese column headers (Họ tên, Email, Vai trò, Số dư, Trạng thái); `xlsx` npm dependency added; 20 new i18n keys per locale (vi/en/zh); no schema changes
+
+- **Admin User Detail Quick Overview** (PR #204) — Compact quick-info badges on admin user table rows: order count badge (blue/grey), Zalo linked status indicator (green/grey with tooltip), "Có đơn gần đây" amber badge for orders updated within 7 days, latest order activity time-ago text below balance; API extended with `_count.orders`, `zaloRecipientId`, `updatedAt`, latest order `updatedAt` (take: 1); 7 new i18n keys per locale (vi/en/zh); no schema changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
