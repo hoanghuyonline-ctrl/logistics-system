@@ -339,6 +339,17 @@ const zh: Record<string, string> = {
   "orders.order": "订单",
   "orders.customer": "客户",
   "orders.createdOn": "创建于",
+  "orders.progress": "进度",
+  "orders.step": "步骤",
+  "orders.hasPackage": "已打包",
+  "orders.longPending": "等待较久",
+  "orders.arrivedVN": "已到越南",
+  "orders.delivered": "已送达",
+  "orders.orderCancelled": "已取消",
+  "orders.justNow": "刚刚",
+  "orders.minutesAgo": "分钟前",
+  "orders.hoursAgo": "小时前",
+  "orders.daysAgo": "天前",
 
   // New order
   "newOrder.title": "创建新订单",

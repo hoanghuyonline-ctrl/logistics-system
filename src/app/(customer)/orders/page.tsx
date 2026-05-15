@@ -18,6 +18,53 @@ interface Order {
   status: string;
   totalCostVND: string;
   createdAt: string;
+  updatedAt: string;
+  packageId: string | null;
+  priority: string;
+  statusLogs: Array<{ createdAt: string; toStatus: string }>;
+}
+
+const STATUS_DOT_COLORS: Record<string, string> = {
+  PENDING: "bg-yellow-400",
+  PURCHASED: "bg-blue-400",
+  SELLER_SHIPPED: "bg-indigo-400",
+  ARRIVED_CHINA_WH: "bg-purple-400",
+  PACKING: "bg-orange-400",
+  SHIPPING_TO_VIETNAM: "bg-cyan-400",
+  ARRIVED_VIETNAM_WH: "bg-teal-400",
+  OUT_FOR_DELIVERY: "bg-lime-500",
+  COMPLETED: "bg-green-500",
+  CANCELLED: "bg-red-500",
+};
+
+const STATUS_STEP: Record<string, number> = {
+  PENDING: 1,
+  PURCHASED: 2,
+  SELLER_SHIPPED: 3,
+  ARRIVED_CHINA_WH: 4,
+  PACKING: 5,
+  SHIPPING_TO_VIETNAM: 6,
+  ARRIVED_VIETNAM_WH: 7,
+  OUT_FOR_DELIVERY: 8,
+  COMPLETED: 8,
+  CANCELLED: 0,
+};
+
+const HIGHLIGHT_STATUSES: Record<string, string> = {
+  ARRIVED_VIETNAM_WH: "border-l-4 border-l-teal-400",
+  COMPLETED: "border-l-4 border-l-green-400",
+  CANCELLED: "border-l-4 border-l-red-400",
+};
+
+function formatTimeAgo(dateStr: string, now: number, t: (key: string) => string): string {
+  const diff = now - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return t("orders.justNow");
+  if (minutes < 60) return `${minutes} ${t("orders.minutesAgo")}`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${t("orders.hoursAgo")}`;
+  const days = Math.floor(hours / 24);
+  return `${days} ${t("orders.daysAgo")}`;
 }
 
 export default function OrdersPage() {
@@ -28,6 +75,7 @@ export default function OrdersPage() {
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [now] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
@@ -100,29 +148,89 @@ export default function OrdersPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-slate-100">
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.orderCode")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.qty")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.totalCost")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.orderCode")}</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("orderDetail.product")}</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.totalCost")}</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("orders.progress")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
-                            {order.orderCode}
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">{order.productName}</td>
-                        <td className="px-6 py-4 text-sm text-slate-700">{order.quantity}</td>
-                        <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                        <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
+                    {orders.map((order) => {
+                      const step = STATUS_STEP[order.status] ?? 0;
+                      const lastLog = order.statusLogs?.[0];
+                      const highlightClass = HIGHLIGHT_STATUSES[order.status] ?? "";
+                      const daysSinceCreated = Math.floor((now - new Date(order.createdAt).getTime()) / 86400000);
+                      const isLongPending = order.status === "PENDING" && daysSinceCreated > 3;
+
+                      return (
+                        <tr key={order.id} className={`hover:bg-slate-50/50 transition-colors ${highlightClass}`}>
+                          {/* Order code + product (mobile combined) */}
+                          <td className="px-3 sm:px-6 py-3">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[order.status] || "bg-slate-300"}`} />
+                              <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700 whitespace-nowrap">
+                                {order.orderCode}
+                              </Link>
+                            </div>
+                            <div className="sm:hidden text-xs text-slate-500 mt-0.5 truncate max-w-[180px]">{order.productName}</div>
+                            {order.packageId && (
+                              <span className="inline-flex items-center text-[10px] text-purple-600 mt-0.5">📦 {t("orders.hasPackage")}</span>
+                            )}
+                          </td>
+
+                          {/* Product (desktop) */}
+                          <td className="px-3 sm:px-6 py-3 text-sm text-slate-700 max-w-xs truncate hidden sm:table-cell">
+                            <div className="truncate">{order.productName}</div>
+                            <div className="text-xs text-slate-400 mt-0.5">×{order.quantity}</div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-3 sm:px-6 py-3">
+                            <StatusBadge status={order.status} />
+                            {isLongPending && (
+                              <span className="block text-[10px] text-amber-600 font-medium mt-1">⚠ {t("orders.longPending")}</span>
+                            )}
+                            {order.status === "ARRIVED_VIETNAM_WH" && (
+                              <span className="block text-[10px] text-teal-600 font-medium mt-1">🏠 {t("orders.arrivedVN")}</span>
+                            )}
+                            {order.status === "COMPLETED" && (
+                              <span className="block text-[10px] text-green-600 font-medium mt-1">✓ {t("orders.delivered")}</span>
+                            )}
+                          </td>
+
+                          {/* Cost + date */}
+                          <td className="px-3 sm:px-6 py-3">
+                            <div className="text-sm font-medium text-slate-900 whitespace-nowrap">{parseFloat(order.totalCostVND).toLocaleString()} ₫</div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</div>
+                          </td>
+
+                          {/* Progress (desktop) */}
+                          <td className="px-3 sm:px-6 py-3 hidden sm:table-cell">
+                            {order.status !== "CANCELLED" ? (
+                              <div>
+                                <div className="flex items-center gap-1 mb-1">
+                                  {Array.from({ length: 8 }).map((_, i) => (
+                                    <div
+                                      key={i}
+                                      className={`h-1.5 flex-1 rounded-full ${i < step ? STATUS_DOT_COLORS[order.status] || "bg-blue-400" : "bg-slate-200"}`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-[11px] text-slate-500">{t(`orders.step`)} {step}/8</span>
+                                {lastLog && (
+                                  <span className="block text-[10px] text-slate-400 mt-0.5">
+                                    {formatTimeAgo(lastLog.createdAt, now, t)}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-red-500">{t("orders.orderCancelled")}</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

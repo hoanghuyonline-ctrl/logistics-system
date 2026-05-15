@@ -339,6 +339,17 @@ const vi: Record<string, string> = {
   "orders.order": "Đơn hàng",
   "orders.customer": "Khách hàng",
   "orders.createdOn": "Tạo ngày",
+  "orders.progress": "Tiến trình",
+  "orders.step": "Bước",
+  "orders.hasPackage": "Đã đóng kiện",
+  "orders.longPending": "Chờ lâu",
+  "orders.arrivedVN": "Đã về VN",
+  "orders.delivered": "Đã giao",
+  "orders.orderCancelled": "Đã hủy",
+  "orders.justNow": "Vừa xong",
+  "orders.minutesAgo": "phút trước",
+  "orders.hoursAgo": "giờ trước",
+  "orders.daysAgo": "ngày trước",
 
   // New order
   "newOrder.title": "Tạo đơn hàng mới",
