@@ -21,6 +21,10 @@ export async function GET() {
     monthDeposits,
     recentTransactions,
     ordersByStatus,
+    customersWithDebt,
+    negativeBalanceCount,
+    todayRefunds,
+    highValueOrdersToday,
   ] = await Promise.all([
     prisma.order.findMany({
       where: { status: "COMPLETED" },
@@ -57,6 +61,10 @@ export async function GET() {
       by: ["status"],
       _count: { status: true },
     }),
+    prisma.wallet.count({ where: { debt: { gt: 0 } } }),
+    prisma.wallet.count({ where: { balance: { lt: 0 } } }),
+    prisma.transaction.count({ where: { type: "REFUND", createdAt: { gte: todayStart } } }),
+    prisma.order.count({ where: { createdAt: { gte: todayStart }, totalCostVND: { gte: 5000000 } } }),
   ]);
 
   const totalRevenue = completedOrders.reduce(
@@ -100,5 +108,9 @@ export async function GET() {
       status: s.status,
       count: s._count.status,
     })),
+    customersWithDebt,
+    negativeBalanceCount,
+    todayRefunds,
+    highValueOrdersToday,
   });
 }

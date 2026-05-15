@@ -495,6 +495,16 @@ const en: Record<string, string> = {
   "finance.shipping": "Shipping",
   "finance.profit": "Profit",
   "finance.noCompletedOrders": "No completed orders yet",
+  "finance.healthOverview": "Finance Health",
+  "finance.customersWithDebt": "Customers with debt",
+  "finance.pendingDeposits": "Pending deposits",
+  "finance.todayRefunds": "Today refunds",
+  "finance.highValueToday": "High-value today",
+  "finance.negativeBalances": "Negative balances",
+  "finance.needsAction": "Needs action",
+  "finance.awaitingConfirm": "Awaiting",
+  "finance.highValue": "High value",
+  "finance.customersOwing": "customers owing",
 
   // Packages
   "packages.title": "Package Management",

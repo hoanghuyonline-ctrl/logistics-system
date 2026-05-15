@@ -495,6 +495,16 @@ const vi: Record<string, string> = {
   "finance.shipping": "Vận chuyển",
   "finance.profit": "Lợi nhuận",
   "finance.noCompletedOrders": "Chưa có đơn hoàn thành",
+  "finance.healthOverview": "Tình trạng tài chính",
+  "finance.customersWithDebt": "Khách có nợ",
+  "finance.pendingDeposits": "Chờ xác nhận",
+  "finance.todayRefunds": "Hoàn tiền hôm nay",
+  "finance.highValueToday": "Đơn giá trị cao",
+  "finance.negativeBalances": "Số dư âm",
+  "finance.needsAction": "Cần xử lý",
+  "finance.awaitingConfirm": "Chờ xác nhận",
+  "finance.highValue": "Đơn giá trị cao",
+  "finance.customersOwing": "khách còn nợ",
 
   // Packages
   "packages.title": "Quản lý kiện hàng",

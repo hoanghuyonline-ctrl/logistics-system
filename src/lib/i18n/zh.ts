@@ -495,6 +495,16 @@ const zh: Record<string, string> = {
   "finance.shipping": "运费",
   "finance.profit": "利润",
   "finance.noCompletedOrders": "暂无已完成订单",
+  "finance.healthOverview": "财务状况",
+  "finance.customersWithDebt": "欠款客户",
+  "finance.pendingDeposits": "待确认",
+  "finance.todayRefunds": "今日退款",
+  "finance.highValueToday": "高价值订单",
+  "finance.negativeBalances": "负余额",
+  "finance.needsAction": "需处理",
+  "finance.awaitingConfirm": "待确认",
+  "finance.highValue": "高价值",
+  "finance.customersOwing": "个客户欠款",
 
   // Packages
   "packages.title": "包裹管理",
