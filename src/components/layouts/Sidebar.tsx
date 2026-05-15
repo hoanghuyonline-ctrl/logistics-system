@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -73,7 +74,7 @@ function getNavItems(role: string): NavItem[] {
   }
 }
 
-export default function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { t, locale, setLocale } = useI18n();
@@ -81,7 +82,7 @@ export default function Sidebar() {
   const navItems = getNavItems(role);
 
   return (
-    <aside className="w-[260px] bg-white border-r border-slate-200 min-h-screen flex flex-col">
+    <>
       {/* Logo */}
       <div className="px-6 py-5 border-b border-slate-100">
         <div className="flex items-center gap-3">
@@ -96,13 +97,14 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-blue-50 text-blue-700 shadow-sm"
@@ -153,6 +155,90 @@ export default function Sidebar() {
           {t("common.signOut")}
         </button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export default function Sidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const { data: session } = useSession();
+  const { t } = useI18n();
+
+  // Close drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
+  return (
+    <>
+      {/* Mobile top header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-1.5 -ml-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Mở menu"
+          >
+            <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
+              <span className="text-white text-xs font-bold">VN</span>
+            </div>
+            <span className="text-sm font-bold text-slate-900">{t("common.appName")}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-slate-400 font-medium">
+            {session?.user?.name?.split(" ").pop() || ""}
+          </span>
+        </div>
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 transition-opacity"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <aside className="absolute top-0 left-0 bottom-0 w-[280px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-200">
+            {/* Close button */}
+            <div className="absolute top-4 right-3">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Đóng menu"
+              >
+                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <SidebarContent onNavigate={() => setMobileOpen(false)} />
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-[260px] bg-white border-r border-slate-200 min-h-screen flex-col flex-shrink-0">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }
