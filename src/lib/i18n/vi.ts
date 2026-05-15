@@ -691,6 +691,19 @@ const vi: Record<string, string> = {
   "crm.status.INTERESTED": "Quan tâm",
   "crm.status.CONVERTED": "Đã chuyển đổi",
   "crm.status.LOST": "Đã mất",
+  "crm.followUp": "Chăm sóc",
+  "crm.followUpToday": "Chăm sóc hôm nay",
+  "crm.overdueFollowUp": "Quá hạn chăm sóc",
+  "crm.markContacted": "Đã liên hệ",
+  "crm.markedContacted": "Đã đánh dấu liên hệ",
+  "crm.setFollowUp": "Đặt lịch chăm sóc",
+  "crm.scheduleFollowUp": "Đặt lịch chăm sóc",
+  "crm.followUpDate": "Ngày chăm sóc tiếp theo",
+  "crm.followUpNoteLabel": "Ghi chú chăm sóc",
+  "crm.followUpNotePlaceholder": "VD: Gọi lại hỏi nhu cầu vận chuyển...",
+  "crm.followUpSaved": "Đã lưu lịch chăm sóc",
+  "crm.clearFollowUp": "Xóa lịch",
+  "crm.lastContacted": "Liên hệ lần cuối",
 };
 
 export default vi;

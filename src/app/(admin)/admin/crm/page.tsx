@@ -22,6 +22,9 @@ interface Lead {
   convertedUserId: string | null;
   createdAt: string;
   updatedAt: string;
+  nextFollowUpAt: string | null;
+  lastContactedAt: string | null;
+  followUpNote: string | null;
   assignedTo: { id: string; fullName: string } | null;
   convertedUser: { id: string; fullName: string; email: string } | null;
 }
@@ -31,6 +34,8 @@ interface CrmStats {
   newCount: number;
   convertedCount: number;
   todayCount: number;
+  followUpTodayCount: number;
+  overdueCount: number;
   conversionRate: number;
 }
 
@@ -69,6 +74,7 @@ export default function CrmPage() {
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [followUpFilter, setFollowUpFilter] = useState("");
   const [stats, setStats] = useState<CrmStats | null>(null);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
 
@@ -81,6 +87,11 @@ export default function CrmPage() {
 
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editNotes, setEditNotes] = useState("");
+  const [editFollowUpNote, setEditFollowUpNote] = useState("");
+
+  const [followUpLead, setFollowUpLead] = useState<Lead | null>(null);
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [followUpNoteInput, setFollowUpNoteInput] = useState("");
 
   const [convertLead, setConvertLead] = useState<Lead | null>(null);
   const [convertMode, setConvertMode] = useState<"existing" | "new">("new");
@@ -95,6 +106,7 @@ export default function CrmPage() {
       if (search) params.set("search", search);
       if (sourceFilter) params.set("source", sourceFilter);
       if (statusFilter) params.set("status", statusFilter);
+      if (followUpFilter) params.set("followUp", followUpFilter);
       const res = await fetch(`/api/admin/leads?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -106,7 +118,7 @@ export default function CrmPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, sourceFilter, statusFilter, t, toast]);
+  }, [page, search, sourceFilter, statusFilter, followUpFilter, t, toast]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -207,7 +219,7 @@ export default function CrmPage() {
       const res = await fetch("/api/admin/leads", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: leadId, notes: editNotes }),
+        body: JSON.stringify({ id: leadId, notes: editNotes, followUpNote: editFollowUpNote }),
       });
       if (res.ok) {
         const updated = await res.json();
@@ -217,6 +229,48 @@ export default function CrmPage() {
       }
     } catch {
       toast("Lỗi lưu ghi chú", "error");
+    }
+  }
+
+  async function handleMarkContacted(leadId: string) {
+    try {
+      const res = await fetch("/api/admin/leads", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: leadId, lastContactedAt: new Date().toISOString(), status: "CONTACTED" }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setLeads((prev) => prev.map((l) => l.id === leadId ? updated : l));
+        fetchStats();
+        toast(t("crm.markedContacted", "Đã đánh dấu liên hệ"), "success");
+      }
+    } catch {
+      toast("Lỗi cập nhật", "error");
+    }
+  }
+
+  async function handleSaveFollowUp() {
+    if (!followUpLead) return;
+    try {
+      const res = await fetch("/api/admin/leads", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: followUpLead.id,
+          nextFollowUpAt: followUpDate || null,
+          followUpNote: followUpNoteInput || null,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setLeads((prev) => prev.map((l) => l.id === followUpLead.id ? updated : l));
+        setFollowUpLead(null);
+        fetchStats();
+        toast(t("crm.followUpSaved", "Đã lưu lịch chăm sóc"), "success");
+      }
+    } catch {
+      toast("Lỗi cập nhật", "error");
     }
   }
 
@@ -276,7 +330,7 @@ export default function CrmPage() {
 
       {/* Stats widgets */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <Card>
             <div className="text-center py-2">
               <p className="text-2xl font-bold text-blue-600">{stats.todayCount}</p>
@@ -301,6 +355,22 @@ export default function CrmPage() {
               <p className="text-xs text-slate-500 mt-1">{t("crm.conversionRate", "Tỉ lệ chuyển đổi")}</p>
             </div>
           </Card>
+          <button onClick={() => { setFollowUpFilter(followUpFilter === "today" ? "" : "today"); setPage(1); }}>
+            <Card>
+              <div className="text-center py-2">
+                <p className={`text-2xl font-bold ${followUpFilter === "today" ? "text-white" : "text-orange-600"}`}>{stats.followUpTodayCount}</p>
+                <p className={`text-xs mt-1 ${followUpFilter === "today" ? "text-orange-100" : "text-slate-500"}`}>{t("crm.followUpToday", "Chăm sóc hôm nay")}</p>
+              </div>
+            </Card>
+          </button>
+          <button onClick={() => { setFollowUpFilter(followUpFilter === "overdue" ? "" : "overdue"); setPage(1); }}>
+            <Card>
+              <div className={`text-center py-2 rounded-xl ${followUpFilter === "overdue" ? "bg-red-600" : stats.overdueCount > 0 ? "bg-red-50" : ""}`}>
+                <p className={`text-2xl font-bold ${followUpFilter === "overdue" ? "text-white" : "text-red-600"}`}>{stats.overdueCount}</p>
+                <p className={`text-xs mt-1 ${followUpFilter === "overdue" ? "text-red-100" : stats.overdueCount > 0 ? "text-red-600" : "text-slate-500"}`}>{t("crm.overdueFollowUp", "Quá hạn chăm sóc")}</p>
+              </div>
+            </Card>
+          </button>
         </div>
       )}
 
@@ -432,6 +502,7 @@ export default function CrmPage() {
                 <th className="py-3 px-2">{t("crm.contact", "Liên hệ")}</th>
                 <th className="py-3 px-2">{t("crm.sourceLabel", "Nguồn")}</th>
                 <th className="py-3 px-2">{t("common.status")}</th>
+                <th className="py-3 px-2">{t("crm.followUp", "Chăm sóc")}</th>
                 <th className="py-3 px-2">{t("crm.assignee", "Phụ trách")}</th>
                 <th className="py-3 px-2">{t("common.actions")}</th>
               </tr>
@@ -439,7 +510,7 @@ export default function CrmPage() {
             <tbody>
               {leads.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
                     {t("crm.noLeads", "Chưa có leads nào")}
                   </td>
                 </tr>
@@ -483,6 +554,25 @@ export default function CrmPage() {
                       )}
                     </td>
                     <td className="py-3 px-2">
+                      {(() => {
+                        if (!lead.nextFollowUpAt) return <span className="text-xs text-slate-300">—</span>;
+                        const followDate = new Date(lead.nextFollowUpAt);
+                        const now = new Date();
+                        const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+                        const todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+                        const isOverdue = followDate < todayStart;
+                        const isToday = followDate >= todayStart && followDate <= todayEnd;
+                        return (
+                          <div>
+                            <span className={`text-xs font-medium ${isOverdue ? "text-red-600" : isToday ? "text-orange-600" : "text-slate-600"}`}>
+                              {isOverdue && "⚠️ "}{followDate.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}
+                            </span>
+                            {lead.followUpNote && <p className="text-xs text-slate-400 truncate max-w-[100px]" title={lead.followUpNote}>{lead.followUpNote}</p>}
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td className="py-3 px-2">
                       <select
                         value={lead.assignedToId || ""}
                         onChange={(e) => handleAssign(lead.id, e.target.value)}
@@ -495,14 +585,32 @@ export default function CrmPage() {
                       </select>
                     </td>
                     <td className="py-3 px-2">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         <button
-                          onClick={() => { setEditingLead(lead); setEditNotes(lead.notes || ""); }}
+                          onClick={() => { setEditingLead(lead); setEditNotes(lead.notes || ""); setEditFollowUpNote(lead.followUpNote || ""); }}
                           className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
                           title={t("crm.editNotes", "Ghi chú")}
                         >
                           📝
                         </button>
+                        {lead.status !== "CONVERTED" && lead.status !== "LOST" && (
+                          <>
+                            <button
+                              onClick={() => handleMarkContacted(lead.id)}
+                              className="text-xs px-2 py-1 border border-blue-200 text-blue-700 rounded hover:bg-blue-50"
+                              title={t("crm.markContacted", "Đã liên hệ")}
+                            >
+                              📞
+                            </button>
+                            <button
+                              onClick={() => { setFollowUpLead(lead); setFollowUpDate(lead.nextFollowUpAt ? lead.nextFollowUpAt.slice(0, 16) : ""); setFollowUpNoteInput(lead.followUpNote || ""); }}
+                              className="text-xs px-2 py-1 border border-orange-200 text-orange-700 rounded hover:bg-orange-50"
+                              title={t("crm.setFollowUp", "Đặt lịch chăm sóc")}
+                            >
+                              📅
+                            </button>
+                          </>
+                        )}
                         {lead.status !== "CONVERTED" && (
                           <button
                             onClick={() => { setConvertLead(lead); setConvertMode("new"); setConvertEmail(lead.email || ""); }}
@@ -539,9 +647,22 @@ export default function CrmPage() {
               value={editNotes}
               onChange={(e) => setEditNotes(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-              rows={5}
+              rows={4}
               placeholder={t("crm.notesPlaceholder", "Nhập ghi chú về lead...")}
             />
+            <p className="text-xs text-slate-500 mt-3 mb-1">{t("crm.followUpNoteLabel", "Ghi chú chăm sóc")}</p>
+            <textarea
+              value={editFollowUpNote}
+              onChange={(e) => setEditFollowUpNote(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              rows={2}
+              placeholder={t("crm.followUpNotePlaceholder", "VD: Gọi lại hỏi nhu cầu vận chuyển...")}
+            />
+            {editingLead.lastContactedAt && (
+              <p className="text-xs text-slate-400 mt-2">
+                {t("crm.lastContacted", "Liên hệ lần cuối")}: {new Date(editingLead.lastContactedAt).toLocaleString("vi-VN")}
+              </p>
+            )}
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => handleSaveNotes(editingLead.id)}
@@ -551,6 +672,61 @@ export default function CrmPage() {
               </button>
               <button
                 onClick={() => setEditingLead(null)}
+                className="px-4 py-2 border border-slate-300 text-sm rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Follow-up scheduling modal */}
+      {followUpLead && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-sm font-semibold text-slate-800 mb-1">
+              {t("crm.scheduleFollowUp", "Đặt lịch chăm sóc")}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">{followUpLead.fullName}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-slate-600 mb-1 block">{t("crm.followUpDate", "Ngày chăm sóc tiếp theo")}</label>
+                <input
+                  type="datetime-local"
+                  value={followUpDate}
+                  onChange={(e) => setFollowUpDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-600 mb-1 block">{t("crm.followUpNoteLabel", "Ghi chú chăm sóc")}</label>
+                <textarea
+                  value={followUpNoteInput}
+                  onChange={(e) => setFollowUpNoteInput(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  rows={2}
+                  placeholder={t("crm.followUpNotePlaceholder", "VD: Gọi lại hỏi nhu cầu vận chuyển...")}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={handleSaveFollowUp}
+                className="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                {t("common.save")}
+              </button>
+              {followUpLead.nextFollowUpAt && (
+                <button
+                  onClick={() => { setFollowUpDate(""); setFollowUpNoteInput(""); handleSaveFollowUp(); }}
+                  className="px-4 py-2 border border-red-200 text-red-600 text-sm rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  {t("crm.clearFollowUp", "Xóa lịch")}
+                </button>
+              )}
+              <button
+                onClick={() => setFollowUpLead(null)}
                 className="px-4 py-2 border border-slate-300 text-sm rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 {t("common.cancel")}

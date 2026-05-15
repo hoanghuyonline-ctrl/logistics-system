@@ -691,6 +691,19 @@ const en: Record<string, string> = {
   "crm.status.INTERESTED": "Interested",
   "crm.status.CONVERTED": "Converted",
   "crm.status.LOST": "Lost",
+  "crm.followUp": "Follow-up",
+  "crm.followUpToday": "Follow-up today",
+  "crm.overdueFollowUp": "Overdue follow-up",
+  "crm.markContacted": "Mark contacted",
+  "crm.markedContacted": "Marked as contacted",
+  "crm.setFollowUp": "Set follow-up",
+  "crm.scheduleFollowUp": "Schedule follow-up",
+  "crm.followUpDate": "Next follow-up date",
+  "crm.followUpNoteLabel": "Follow-up note",
+  "crm.followUpNotePlaceholder": "e.g. Call back about shipping needs...",
+  "crm.followUpSaved": "Follow-up saved",
+  "crm.clearFollowUp": "Clear schedule",
+  "crm.lastContacted": "Last contacted",
 };
 
 export default en;
