@@ -84,6 +84,12 @@ export async function GET(request: Request) {
     where.status = { notIn: ["CONVERTED", "LOST"] };
   }
 
+  const sort = url.searchParams.get("sort") || "";
+  const orderBy: Prisma.LeadOrderByWithRelationInput[] =
+    sort === "activity"
+      ? [{ lastContactedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }]
+      : [{ createdAt: "desc" }];
+
   const [leads, total] = await Promise.all([
     prisma.lead.findMany({
       where,
@@ -91,7 +97,7 @@ export async function GET(request: Request) {
         assignedTo: { select: { id: true, fullName: true } },
         convertedUser: { select: { id: true, fullName: true, email: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
     }),

@@ -704,6 +704,9 @@ const vi: Record<string, string> = {
   "crm.followUpSaved": "Đã lưu lịch chăm sóc",
   "crm.clearFollowUp": "Xóa lịch",
   "crm.lastContacted": "Liên hệ lần cuối",
+  "crm.autoCreated": "Tự động tạo",
+  "crm.sortNewest": "Mới nhất",
+  "crm.sortActivity": "Hoạt động gần nhất",
 };
 
 export default vi;

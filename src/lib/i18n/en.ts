@@ -704,6 +704,9 @@ const en: Record<string, string> = {
   "crm.followUpSaved": "Follow-up saved",
   "crm.clearFollowUp": "Clear schedule",
   "crm.lastContacted": "Last contacted",
+  "crm.autoCreated": "Auto-created",
+  "crm.sortNewest": "Newest",
+  "crm.sortActivity": "Latest activity",
 };
 
 export default en;
