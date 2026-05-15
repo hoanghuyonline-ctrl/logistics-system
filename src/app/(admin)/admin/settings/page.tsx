@@ -73,7 +73,7 @@ const NOTIF_FIELD_META: Record<string, { label: string; desc: string; secret: bo
   },
   zalo_oa_refresh_token: {
     label: "Zalo OA Refresh Token",
-    desc: "Refresh token để tự động gia hạn access token",
+    desc: "Dùng để tự động gia hạn Access Token khi hết hạn. Hệ thống sẽ tự cập nhật sau mỗi lần refresh thành công.",
     secret: true,
     placeholder: "Nhập refresh token...",
   },

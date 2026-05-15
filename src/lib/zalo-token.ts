@@ -1,4 +1,5 @@
 import { getNotificationConfig } from "@/lib/notification-config";
+import { prisma } from "@/lib/prisma";
 
 const REFRESH_URL = "https://oauth.zaloapp.com/v4/oa/access_token";
 
@@ -107,6 +108,35 @@ export async function refreshZaloAccessToken(): Promise<string> {
   const tokenHint = newAccessToken.slice(0, 6) + "***";
   const now = new Date().toISOString();
   console.log(`[zalo/token] OK | newToken=${tokenHint} refreshedAt=${now}`);
+
+  // Persist new access token and rotated refresh token to DB
+  try {
+    const admin = await prisma.user.findFirst({
+      where: { role: "ADMIN" },
+      select: { id: true },
+    });
+    const actorId = admin?.id;
+    if (actorId) {
+      await prisma.systemConfig.upsert({
+        where: { key: "zalo_oa_access_token" },
+        update: { value: newAccessToken, updatedBy: actorId },
+        create: { key: "zalo_oa_access_token", value: newAccessToken, updatedBy: actorId },
+      });
+      if (data.refresh_token) {
+        await prisma.systemConfig.upsert({
+          where: { key: "zalo_oa_refresh_token" },
+          update: { value: data.refresh_token, updatedBy: actorId },
+          create: { key: "zalo_oa_refresh_token", value: data.refresh_token, updatedBy: actorId },
+        });
+        console.log(`[zalo/token] persisted new refresh_token to DB`);
+      }
+      console.log(`[zalo/token] persisted new access_token to DB`);
+    } else {
+      console.warn(`[zalo/token] no ADMIN user found — cannot persist tokens to DB`);
+    }
+  } catch (err) {
+    console.error(`[zalo/token] failed to persist tokens to DB:`, err);
+  }
 
   cachedToken = {
     accessToken: newAccessToken,
