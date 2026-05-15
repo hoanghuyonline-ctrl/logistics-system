@@ -457,6 +457,12 @@ const zh: Record<string, string> = {
   "users.email": "邮箱",
   "users.role": "角色",
   "users.status": "状态",
+  "users.totalOrders": "订单",
+  "users.zaloLinked": "Zalo已绑定",
+  "users.zaloNotLinked": "未绑定",
+  "users.recentOrder": "有近期订单",
+  "users.noOrders": "无订单",
+  "users.quickInfo": "快速信息",
 
   // Finance
   "finance.loading": "正在加载财务数据...",
