@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -45,6 +46,25 @@ export async function POST(request: Request) {
       status: "PENDING",
     },
   });
+
+  // Notify all admins and accountants about new deposit request (fire-and-forget)
+  prisma.user
+    .findMany({ where: { role: { in: ["ADMIN", "ACCOUNTANT"] }, isActive: true } })
+    .then((staff) => {
+      const amountFormatted = parseFloat(amount).toLocaleString("vi-VN");
+      for (const s of staff) {
+        createNotification({
+          userId: s.id,
+          title: "Yêu cầu nạp tiền mới",
+          message: `Khách hàng ${user.fullName || user.email} yêu cầu nạp ${amountFormatted} VND. Mã tham chiếu: ${transferReference}.`,
+        }).catch((err) => {
+          console.error("[topup-request] Failed to notify staff:", err);
+        });
+      }
+    })
+    .catch((err) => {
+      console.error("[topup-request] Failed to fetch staff for notification:", err);
+    });
 
   return jsonResponse(record, 201);
 }

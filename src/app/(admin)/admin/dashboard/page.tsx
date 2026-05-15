@@ -30,6 +30,7 @@ interface QuickViewData {
   notifFailures: number;
   unansweredQuestions: number;
   unresolvedNotes: number;
+  pendingDeposits: number;
 }
 
 export default function AdminDashboard() {
@@ -68,6 +69,7 @@ export default function AdminDashboard() {
         <Card title="Truy cập nhanh">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
             {[
+              { label: "Nạp tiền chờ xác nhận", count: quickViews.pendingDeposits, href: "/admin/finance", active: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100", accent: "text-emerald-700", icon: "💰", urgent: true },
               { label: "Đơn chờ xử lý", count: quickViews.unpaidOrders, href: "/admin/orders?status=PENDING", active: "bg-amber-50 border-amber-200 hover:bg-amber-100", accent: "text-amber-700", icon: "⏳", urgent: false },
               { label: "Kẹt kho TQ", count: quickViews.stuckChina, href: "/admin/stuck-shipments", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🏭", urgent: true },
               { label: "Kẹt kho VN", count: quickViews.stuckVietnam, href: "/admin/stuck-shipments", active: "bg-orange-50 border-orange-200 hover:bg-orange-100", accent: "text-orange-700", icon: "🏠", urgent: true },
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
               );
             })}
           </div>
-          {(quickViews.notifFailures > 0 || quickViews.unresolvedIssues > 0 || quickViews.unansweredQuestions > 0 || quickViews.stuckChina > 0 || quickViews.stuckVietnam > 0 || quickViews.staleOrders > 0) && (
+          {(quickViews.pendingDeposits > 0 || quickViews.notifFailures > 0 || quickViews.unresolvedIssues > 0 || quickViews.unansweredQuestions > 0 || quickViews.stuckChina > 0 || quickViews.stuckVietnam > 0 || quickViews.staleOrders > 0) && (
             <p className="text-xs text-red-600 mt-2">⚠️ Có mục cần xử lý — vui lòng kiểm tra các mục đánh dấu đỏ phía trên.</p>
           )}
         </Card>
