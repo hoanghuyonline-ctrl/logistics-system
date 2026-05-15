@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import bcrypt from "bcryptjs";
+import { recordLeadActivity } from "@/lib/lead-activity";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -66,6 +67,8 @@ export async function POST(request: Request) {
       convertedUser: { select: { id: true, fullName: true, email: true } },
     },
   });
+
+  recordLeadActivity(leadId, "CONVERTED", `userId=${convertedUserId}`, user.id).catch(() => {});
 
   return jsonResponse(updatedLead);
 }

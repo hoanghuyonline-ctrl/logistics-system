@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
+import { recordLeadActivity } from "@/lib/lead-activity";
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -141,6 +142,8 @@ export async function POST(request: Request) {
     },
   });
 
+  recordLeadActivity(lead.id, "CREATED", `Nguồn: ${source || "OTHER"}`, user.id).catch(() => {});
+
   return jsonResponse(lead, 201);
 }
 
@@ -194,6 +197,22 @@ export async function PUT(request: Request) {
       convertedUser: { select: { id: true, fullName: true, email: true } },
     },
   });
+
+  if (updates.status !== undefined && updates.status !== existing.status) {
+    recordLeadActivity(id, "STATUS_CHANGED", `${existing.status} → ${updates.status}`, user.id).catch(() => {});
+  }
+  if (updates.notes !== undefined) {
+    recordLeadActivity(id, "NOTE_UPDATED", undefined, user.id).catch(() => {});
+  }
+  if (updates.assignedToId !== undefined && updates.assignedToId !== existing.assignedToId) {
+    recordLeadActivity(id, "ASSIGNED", updates.assignedToId || "Bỏ phân công", user.id).catch(() => {});
+  }
+  if (updates.lastContactedAt !== undefined) {
+    recordLeadActivity(id, "CONTACTED", undefined, user.id).catch(() => {});
+  }
+  if (updates.nextFollowUpAt !== undefined) {
+    recordLeadActivity(id, "FOLLOW_UP_SET", updates.nextFollowUpAt || "Xóa lịch", user.id).catch(() => {});
+  }
 
   return jsonResponse(lead);
 }

@@ -66,6 +66,18 @@ const SOURCE_COLORS: Record<string, string> = {
   OTHER: "bg-slate-50 text-slate-600",
 };
 
+const ACTIVITY_LABELS: Record<string, string> = {
+  CREATED: "Tạo lead",
+  STATUS_CHANGED: "Đổi trạng thái",
+  NOTE_UPDATED: "Cập nhật ghi chú",
+  ASSIGNED: "Phân công",
+  CONTACTED: "Đã liên hệ",
+  FOLLOW_UP_SET: "Đặt lịch chăm sóc",
+  CONVERTED: "Chuyển đổi KH",
+  AUTO_CREATED: "Tự động tạo",
+  MESSAGE_RECEIVED: "Nhận tin nhắn",
+};
+
 export default function CrmPage() {
   const { t } = useI18n();
   const { toast } = useToast();
@@ -103,6 +115,9 @@ export default function CrmPage() {
   const [convertPassword, setConvertPassword] = useState("");
   const [convertExistingId, setConvertExistingId] = useState("");
   const [converting, setConverting] = useState(false);
+
+  const [activities, setActivities] = useState<{ id: string; action: string; detail: string | null; createdAt: string; actor: { fullName: string } | null }[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -607,7 +622,18 @@ export default function CrmPage() {
                     <td className="py-3 px-2">
                       <div className="flex gap-1 flex-wrap">
                         <button
-                          onClick={() => { setEditingLead(lead); setEditNotes(lead.notes || ""); setEditFollowUpNote(lead.followUpNote || ""); }}
+                          onClick={() => {
+                            setEditingLead(lead);
+                            setEditNotes(lead.notes || "");
+                            setEditFollowUpNote(lead.followUpNote || "");
+                            setLoadingActivities(true);
+                            setActivities([]);
+                            fetch(`/api/admin/leads/${lead.id}/activity`)
+                              .then((r) => r.ok ? r.json() : [])
+                              .then((data) => setActivities(Array.isArray(data) ? data : []))
+                              .catch(() => {})
+                              .finally(() => setLoadingActivities(false));
+                          }}
                           className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
                           title={t("crm.editNotes", "Ghi chú")}
                         >
@@ -659,7 +685,7 @@ export default function CrmPage() {
       {/* Notes modal */}
       {editingLead && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-sm font-semibold text-slate-800 mb-3">
               {t("crm.notesFor", "Ghi chú cho")} {editingLead.fullName}
             </h3>
@@ -683,6 +709,30 @@ export default function CrmPage() {
                 {t("crm.lastContacted", "Liên hệ lần cuối")}: {new Date(editingLead.lastContactedAt).toLocaleString("vi-VN")}
               </p>
             )}
+
+            {/* Activity timeline */}
+            <div className="mt-4 border-t border-slate-200 pt-3">
+              <p className="text-xs font-semibold text-slate-600 mb-2">{t("crm.activityTimeline", "Lịch sử hoạt động")}</p>
+              {loadingActivities ? (
+                <p className="text-xs text-slate-400">{t("common.loading", "Đang tải...")}</p>
+              ) : activities.length === 0 ? (
+                <p className="text-xs text-slate-400">{t("crm.noActivity", "Chưa có hoạt động")}</p>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {activities.map((a) => (
+                    <div key={a.id} className="flex items-start gap-2 text-xs">
+                      <span className="text-slate-400 whitespace-nowrap">{new Date(a.createdAt).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                      <span className="text-slate-700">
+                        {ACTIVITY_LABELS[a.action] || a.action}
+                        {a.detail && <span className="text-slate-500"> — {a.detail}</span>}
+                      </span>
+                      {a.actor && <span className="text-slate-400 ml-auto">{a.actor.fullName}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => handleSaveNotes(editingLead.id)}

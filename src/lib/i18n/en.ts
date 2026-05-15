@@ -707,6 +707,8 @@ const en: Record<string, string> = {
   "crm.autoCreated": "Auto-created",
   "crm.sortNewest": "Newest",
   "crm.sortActivity": "Latest activity",
+  "crm.activityTimeline": "Activity timeline",
+  "crm.noActivity": "No activity yet",
 };
 
 export default en;

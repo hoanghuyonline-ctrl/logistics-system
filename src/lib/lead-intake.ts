@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { recordLeadActivity } from "@/lib/lead-activity";
 
 type LeadChannel = "ZALO" | "FACEBOOK";
 
@@ -27,6 +28,7 @@ export async function upsertLeadFromChannel(params: LeadIntakeParams): Promise<v
           where: { id: existing.id },
           data: { lastContactedAt: new Date() },
         });
+        recordLeadActivity(existing.id, "MESSAGE_RECEIVED", "Zalo").catch(() => {});
         console.log(`[lead-intake] updated | channel=ZALO senderId=${senderId} leadId=${existing.id}`);
         return;
       }
@@ -41,6 +43,7 @@ export async function upsertLeadFromChannel(params: LeadIntakeParams): Promise<v
           lastContactedAt: new Date(),
         },
       });
+      recordLeadActivity(lead.id, "AUTO_CREATED", "Zalo").catch(() => {});
       console.log(`[lead-intake] created | channel=ZALO senderId=${senderId} leadId=${lead.id}`);
     } else {
       const existing = await prisma.lead.findUnique({
@@ -52,6 +55,7 @@ export async function upsertLeadFromChannel(params: LeadIntakeParams): Promise<v
           where: { id: existing.id },
           data: { lastContactedAt: new Date() },
         });
+        recordLeadActivity(existing.id, "MESSAGE_RECEIVED", "Facebook").catch(() => {});
         console.log(`[lead-intake] updated | channel=FACEBOOK senderId=${senderId} leadId=${existing.id}`);
         return;
       }
@@ -66,6 +70,7 @@ export async function upsertLeadFromChannel(params: LeadIntakeParams): Promise<v
           lastContactedAt: new Date(),
         },
       });
+      recordLeadActivity(lead.id, "AUTO_CREATED", "Facebook").catch(() => {});
       console.log(`[lead-intake] created | channel=FACEBOOK senderId=${senderId} leadId=${lead.id}`);
     }
   } catch (err) {
