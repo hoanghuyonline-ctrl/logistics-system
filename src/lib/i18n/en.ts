@@ -605,6 +605,27 @@ const en: Record<string, string> = {
   "warehouse.errorInvalidTransition": "Cannot update order from current status",
   "warehouse.errorServerError": "A system error occurred, please try again",
 
+  // Top-up requests
+  "topup.pendingTitle": "Pending top-up requests",
+  "topup.filterPending": "Pending",
+  "topup.filterAll": "All",
+  "topup.pendingCount": "pending",
+  "topup.customer": "Customer",
+  "topup.transferRef": "Transfer reference",
+  "topup.time": "Time",
+  "topup.status": "Status",
+  "topup.actions": "Actions",
+  "topup.statusPending": "Pending",
+  "topup.statusConfirmed": "Confirmed",
+  "topup.statusCancelled": "Cancelled",
+  "topup.confirmBtn": "Confirm received",
+  "topup.cancelBtn": "Cancel",
+  "topup.confirmed": "Top-up confirmed successfully",
+  "topup.cancelled": "Top-up request cancelled",
+  "topup.actionFailed": "Failed to process request",
+  "topup.copyRef": "Copy transfer reference",
+  "topup.empty": "No top-up requests",
+
   // Language
   "language.label": "Language",
 };

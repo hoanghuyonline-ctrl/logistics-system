@@ -605,6 +605,27 @@ const zh: Record<string, string> = {
   "warehouse.errorInvalidTransition": "无法从当前状态更新订单",
   "warehouse.errorServerError": "系统错误，请重试",
 
+  // Top-up requests
+  "topup.pendingTitle": "待确认充值请求",
+  "topup.filterPending": "待确认",
+  "topup.filterAll": "全部",
+  "topup.pendingCount": "个待处理",
+  "topup.customer": "客户",
+  "topup.transferRef": "转账参考号",
+  "topup.time": "时间",
+  "topup.status": "状态",
+  "topup.actions": "操作",
+  "topup.statusPending": "待确认",
+  "topup.statusConfirmed": "已确认",
+  "topup.statusCancelled": "已取消",
+  "topup.confirmBtn": "确认已收款",
+  "topup.cancelBtn": "取消",
+  "topup.confirmed": "充值确认成功",
+  "topup.cancelled": "充值请求已取消",
+  "topup.actionFailed": "处理请求失败",
+  "topup.copyRef": "复制转账参考号",
+  "topup.empty": "暂无充值请求",
+
   // Language
   "language.label": "语言",
 };
