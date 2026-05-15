@@ -33,10 +33,23 @@ interface Order {
   totalCostVND: string;
   createdAt: string;
   priority: string;
-  user: { fullName: string; email: string };
+  user: { id: string; fullName: string; email: string; phone: string | null };
   orderNotes: Array<{ content: string; createdAt: string; user: { fullName: string; role: string } }>;
   statusLogs: Array<{ createdAt: string; toStatus: string; changer: { fullName: string; role: string } }>;
 }
+
+const STATUS_DOT_COLORS: Record<string, string> = {
+  PENDING: "bg-yellow-400",
+  PURCHASED: "bg-blue-400",
+  SELLER_SHIPPED: "bg-indigo-400",
+  ARRIVED_CHINA_WH: "bg-purple-400",
+  PACKING: "bg-orange-400",
+  SHIPPING_TO_VIETNAM: "bg-cyan-400",
+  ARRIVED_VIETNAM_WH: "bg-teal-400",
+  OUT_FOR_DELIVERY: "bg-lime-500",
+  COMPLETED: "bg-green-500",
+  CANCELLED: "bg-red-500",
+};
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   HIGH: { label: "Ưu tiên", className: "bg-amber-100 text-amber-700 border-amber-200" },
@@ -55,6 +68,13 @@ function AdminOrdersContent() {
   const { t } = useI18n();
   const { toast } = useToast();
   const router = useRouter();
+
+  function copyToClipboard(value: string, e?: React.MouseEvent) {
+    if (e) e.stopPropagation();
+    navigator.clipboard.writeText(value).then(() => {
+      toast(t("orders.copied", "\u0110\u00e3 sao ch\u00e9p"), "success");
+    });
+  }
   const searchParams = useSearchParams();  
   const [orders, setOrders] = useState<Order[]>([]);
   const [page, setPage] = useState(() => parseInt(searchParams.get("page") || "1"));
@@ -65,6 +85,7 @@ function AdminOrdersContent() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<{ statusCounts: Record<string, number>; urgentCount: number } | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [now] = useState(() => Date.now());
 
   useEffect(() => {
     const urlParams = new URLSearchParams();
@@ -231,7 +252,7 @@ function AdminOrdersContent() {
                   <tbody className="divide-y divide-slate-50">
                     {orders.map((order) => {
                       const isCancelled = order.status === "CANCELLED";
-                      const daysSinceCreated = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                      const daysSinceCreated = Math.floor((now - new Date(order.createdAt).getTime()) / (1000 * 60 * 60 * 24));
                       const isLongPending = order.status === "PENDING" && daysSinceCreated >= 3;
                       const hasNotes = order.orderNotes.length > 0;
                       const hasCustomNote = !!order.customStatusNote;
@@ -240,25 +261,42 @@ function AdminOrdersContent() {
                       <tr key={order.id} className={`transition-colors cursor-pointer ${isCancelled ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50/50"}`} onClick={(e) => handleRowClick(e, order.id)} onAuxClick={(e) => { if (e.button === 1) handleRowClick(e, order.id); }}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[order.status] || "bg-slate-400"}`} title={t(`status.${order.status}`)} />
                             <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700" onClick={(e) => e.stopPropagation()}>
                               {order.orderCode}
                             </Link>
+                            <button onClick={(e) => copyToClipboard(order.orderCode, e)}
+                              className="text-slate-400 hover:text-blue-500 transition-colors shrink-0" title={t("orders.copyOrderCode", "Sao ch\u00e9p m\u00e3 \u0111\u01a1n")}>
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
+                            </button>
                             {priorityConfig[order.priority] && (
                               <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded border ${priorityConfig[order.priority].className}`}>
                                 {priorityConfig[order.priority].label}
                               </span>
                             )}
                             {hasNotes && (
-                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" title="Có ghi chú" />
+                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" title="C\u00f3 ghi ch\u00fa" />
                             )}
                             {hasCustomNote && (
-                              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Có ghi chú trạng thái" />
+                              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="C\u00f3 ghi ch\u00fa tr\u1ea1ng th\u00e1i" />
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-slate-900">{order.user.fullName}</div>
-                          <div className="text-xs text-slate-400">{order.user.email}</div>
+                          <div className="flex items-center gap-1">
+                            <div>
+                              <div className="text-sm font-medium text-slate-900">{order.user.fullName}</div>
+                              <div className="text-xs text-slate-400">{order.user.email}</div>
+                            </div>
+                            <div className="flex items-center gap-0.5 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              {order.user.phone && (
+                                <button onClick={(e) => copyToClipboard(order.user.phone!, e)}
+                                  className="text-slate-400 hover:text-emerald-500 transition-colors p-0.5" title={`${t("orders.copyPhone", "Sao ch\u00e9p S\u0110T")}: ${order.user.phone}`}>
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">{order.productName}</td>
                         <td className="px-6 py-4">
@@ -283,27 +321,29 @@ function AdminOrdersContent() {
                               : noteActivity || logActivity;
                             if (!latest) return <span className="text-slate-300">—</span>;
                             const roleLabels: Record<string, string> = { ADMIN: "Admin", CUSTOMER: "KH", WAREHOUSE_CN: "Kho TQ", WAREHOUSE_VN: "Kho VN", ACCOUNTANT: "Kế toán" };
-                            const ago = Math.floor((Date.now() - latest.at.getTime()) / 60000);
+                            const ago = Math.floor((now - latest.at.getTime()) / 60000);
                             const timeStr = ago < 1 ? "vừa xong" : ago < 60 ? `${ago} phút trước` : ago < 1440 ? `${Math.floor(ago / 60)} giờ trước` : `${Math.floor(ago / 1440)} ngày trước`;
                             return <span className="truncate block" title={`${latest.name} • ${latest.at.toLocaleString()}`}>{roleLabels[latest.role] || latest.role} • {timeStr}</span>;
                           })()}
                         </td>
                         <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                          {(() => {
-                            const nextStatuses = (TRANSITIONS[order.status] || []).filter((s) => s !== "CANCELLED");
-                            if (nextStatuses.length === 0) return <span className="text-slate-300 text-xs">—</span>;
-                            const isUpdating = updatingId === order.id;
-                            return (
-                              <div className="flex gap-1 flex-wrap">
-                                {nextStatuses.map((s) => (
-                                  <button key={s} disabled={isUpdating} onClick={() => quickUpdateStatus(order.id, s)}
-                                    className="px-2 py-1 text-[11px] font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50">
-                                    {isUpdating ? "…" : `→ ${t(`status.${s}`, s)}`}
-                                  </button>
-                                ))}
-                              </div>
-                            );
-                          })()}
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <Link href={`/admin/orders/${order.id}`} onClick={(e) => e.stopPropagation()}
+                              className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title={t("orders.openDetail", "Xem chi ti\u1ebft")}>
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            </Link>
+                            {(() => {
+                              const nextStatuses = (TRANSITIONS[order.status] || []).filter((s) => s !== "CANCELLED");
+                              if (nextStatuses.length === 0) return null;
+                              const isUpdating = updatingId === order.id;
+                              return nextStatuses.map((s) => (
+                                <button key={s} disabled={isUpdating} onClick={() => quickUpdateStatus(order.id, s)}
+                                  className="px-2 py-1 text-[11px] font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50 whitespace-nowrap">
+                                  {isUpdating ? "\u2026" : `\u2192 ${t(`status.${s}`, s)}`}
+                                </button>
+                              ));
+                            })()}
+                          </div>
                         </td>
                       </tr>
                       );
