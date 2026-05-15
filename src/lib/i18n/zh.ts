@@ -366,7 +366,10 @@ const zh: Record<string, string> = {
   "newOrder.estimatedCost": "预估费用",
   "newOrder.productTotal": "商品合计",
   "newOrder.estimatedTotal": "预估总额",
-  "newOrder.finalCostNote": "最终费用包括服务费、中国国内运费、按重量计算的国际运费和越南派送费。",
+  "newOrder.finalCostNote": "实际价格请联系公司。费用将在审核订单后由公司确认。",
+  "newOrder.priceConfirmNote": "费用将在审核订单后由公司确认。",
+  "newOrder.contactCompanyNote": "实际价格请联系公司。",
+  "newOrder.estimateOnly": "仅供参考",
 
   // Wallet
   "wallet.loading": "正在加载钱包...",

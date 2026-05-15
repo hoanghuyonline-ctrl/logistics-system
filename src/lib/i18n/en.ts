@@ -366,7 +366,10 @@ const en: Record<string, string> = {
   "newOrder.estimatedCost": "Estimated Cost",
   "newOrder.productTotal": "Product Total",
   "newOrder.estimatedTotal": "Estimated Total",
-  "newOrder.finalCostNote": "Final cost includes service fee, China shipping, international shipping by weight, and Vietnam delivery.",
+  "newOrder.finalCostNote": "Actual price — please contact the company. Final cost will be confirmed after order review.",
+  "newOrder.priceConfirmNote": "Final cost will be confirmed by the company after order review.",
+  "newOrder.contactCompanyNote": "Actual price — please contact the company.",
+  "newOrder.estimateOnly": "Estimate only",
 
   // Wallet
   "wallet.loading": "Loading wallet...",

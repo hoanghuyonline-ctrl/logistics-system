@@ -154,11 +154,6 @@ export async function POST(request: Request) {
   const wallet = await prisma.wallet.findUnique({ where: { userId: customerId } });
   if (!wallet) return errorResponse("Wallet not found", 404);
 
-  const estimatedCost = parseFloat(cost.totalCostVND.toString());
-  if (parseFloat(wallet.balance.toString()) < estimatedCost) {
-    return errorResponse("Số dư ví không đủ. Vui lòng nạp thêm tiền trước khi đặt hàng.");
-  }
-
   const order = await prisma.order.create({
     data: {
       orderCode: generateOrderCode(),

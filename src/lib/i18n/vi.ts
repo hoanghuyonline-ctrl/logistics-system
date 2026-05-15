@@ -366,7 +366,10 @@ const vi: Record<string, string> = {
   "newOrder.estimatedCost": "Chi phí dự kiến",
   "newOrder.productTotal": "Tiền hàng",
   "newOrder.estimatedTotal": "Tổng dự kiến",
-  "newOrder.finalCostNote": "Tổng phí cuối cùng gồm phí dịch vụ, ship nội địa Trung Quốc, vận chuyển quốc tế theo cân nặng và giao hàng tại Việt Nam.",
+  "newOrder.finalCostNote": "Giá thực tế vui lòng liên hệ công ty. Chi phí sẽ được công ty xác nhận sau khi kiểm tra đơn hàng.",
+  "newOrder.priceConfirmNote": "Chi phí sẽ được công ty xác nhận sau khi kiểm tra đơn hàng.",
+  "newOrder.contactCompanyNote": "Giá thực tế vui lòng liên hệ công ty.",
+  "newOrder.estimateOnly": "Giá tham khảo",
 
   // Wallet
   "wallet.loading": "Đang tải ví...",
