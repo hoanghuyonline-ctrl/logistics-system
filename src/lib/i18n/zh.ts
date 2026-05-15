@@ -48,6 +48,7 @@ const zh: Record<string, string> = {
   "auth.registerBrandingDesc": "从淘宝、1688、天猫下单——我们负责采购、仓储、跨境运输和最后一公里配送。",
 
   // Sidebar nav
+  "nav.operations": "运营中心",
   "nav.dashboard": "仪表板",
   "nav.newOrder": "新建订单",
   "nav.myOrders": "我的订单",
