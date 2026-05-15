@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useI18n } from "@/lib/i18n";
+import { useToast } from "@/components/ui/Toast";
+import { useAdminPolling, type QuickViewCounts } from "@/lib/useAdminPolling";
 import KPICard from "@/components/ui/KPICard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
@@ -35,16 +37,37 @@ interface QuickViewData {
 
 export default function AdminDashboard() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [quickViews, setQuickViews] = useState<QuickViewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  const handlePollUpdate = useCallback((qv: QuickViewCounts) => {
+    setQuickViews(qv);
+    setLastRefreshed(new Date());
+  }, []);
+
+  const handleAlerts = useCallback((alerts: Array<{ label: string; prev: number; next: number }>) => {
+    for (const a of alerts) {
+      const diff = a.next - a.prev;
+      toast(`${a.label} (+${diff})`, "warning");
+    }
+  }, [toast]);
+
+  const { seedPrev } = useAdminPolling(handlePollUpdate, handleAlerts, 25000);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/analytics/dashboard").then((r) => r.json()),
       fetch("/api/admin/quick-views").then((r) => r.json()),
-    ]).then(([d, qv]) => { setData(d); setQuickViews(qv); setLoading(false); });
-  }, []);
+    ]).then(([d, qv]) => {
+      setData(d);
+      setQuickViews(qv);
+      seedPrev(qv);
+      setLoading(false);
+    });
+  }, [seedPrev]);
 
   if (loading || !data) return <LoadingSpinner text={t("common.loading")} />;
 
@@ -66,7 +89,7 @@ export default function AdminDashboard() {
 
       {/* Quick operational views */}
       {quickViews && (
-        <Card title="Truy cập nhanh">
+        <Card title="Truy cập nhanh" action={<span className="inline-flex items-center gap-1.5 text-[10px] font-normal text-slate-400"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />{lastRefreshed ? `Cập nhật ${lastRefreshed.toLocaleTimeString("vi-VN")}` : "Tự động cập nhật"}</span>}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
             {[
               { label: "Nạp tiền chờ xác nhận", count: quickViews.pendingDeposits, href: "/admin/finance", active: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100", accent: "text-emerald-700", icon: "💰", urgent: true },
