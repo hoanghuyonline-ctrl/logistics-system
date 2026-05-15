@@ -37,12 +37,15 @@ services:
       retries: 3
 
   db:
-    image: postgres:16-alpine
+    image: postgres:16
+    container_name: logistics-postgres-new
     restart: unless-stopped
     environment:
       POSTGRES_DB: logistics
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
