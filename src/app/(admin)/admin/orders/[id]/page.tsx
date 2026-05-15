@@ -38,6 +38,11 @@ interface OrderDetail {
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
   totalCostVND: string;
+  confirmedProductCost: string | null;
+  confirmedShippingCost: string | null;
+  confirmedServiceFee: string | null;
+  confirmedTotalCost: string | null;
+  confirmedAt: string | null;
   status: string;
   priority: string;
   trackingCodeChina: string | null;
@@ -74,6 +79,13 @@ export default function AdminOrderDetailPage() {
   const [customNoteEditing, setCustomNoteEditing] = useState(false);
   const [customNoteSaving, setCustomNoteSaving] = useState(false);
   const [newNote, setNewNote] = useState("");
+  const [pricingForm, setPricingForm] = useState({
+    confirmedProductCost: "",
+    confirmedShippingCost: "",
+    confirmedServiceFee: "",
+    confirmedTotalCost: "",
+  });
+  const [pricingSaving, setPricingSaving] = useState(false);
 
   function copyToClipboard(value: string) {
     navigator.clipboard.writeText(value).then(() => {
@@ -89,6 +101,12 @@ export default function AdminOrderDetailPage() {
         setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
         setWeight(d.weightKg || "");
         setCustomNote(d.customStatusNote || "");
+        setPricingForm({
+          confirmedProductCost: d.confirmedProductCost || "",
+          confirmedShippingCost: d.confirmedShippingCost || "",
+          confirmedServiceFee: d.confirmedServiceFee || "",
+          confirmedTotalCost: d.confirmedTotalCost || "",
+        });
         setLoading(false);
       });
   }, [params.id]);
@@ -103,6 +121,12 @@ export default function AdminOrderDetailPage() {
         setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
         setWeight(d.weightKg || "");
         setCustomNote(d.customStatusNote || "");
+        setPricingForm({
+          confirmedProductCost: d.confirmedProductCost || "",
+          confirmedShippingCost: d.confirmedShippingCost || "",
+          confirmedServiceFee: d.confirmedServiceFee || "",
+          confirmedTotalCost: d.confirmedTotalCost || "",
+        });
         setLoading(false);
       });
     return () => { cancelled = true; };
@@ -209,6 +233,32 @@ export default function AdminOrderDetailPage() {
     } else {
       toast(t("orderDetail.weightUpdateFailed"), "error");
     }
+  }
+
+  async function confirmPricing() {
+    if (!pricingForm.confirmedTotalCost) {
+      toast("Vui lòng nhập chi phí cuối cùng", "error");
+      return;
+    }
+    setPricingSaving(true);
+    const res = await fetch(`/api/orders/${params.id}/confirm-pricing`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        confirmedProductCost: pricingForm.confirmedProductCost || null,
+        confirmedShippingCost: pricingForm.confirmedShippingCost || null,
+        confirmedServiceFee: pricingForm.confirmedServiceFee || null,
+        confirmedTotalCost: pricingForm.confirmedTotalCost,
+      }),
+    });
+    if (res.ok) {
+      toast("Đã xác nhận giá đơn hàng", "success");
+      loadOrder();
+    } else {
+      const data = await res.json();
+      toast(data.error || "Không thể xác nhận giá", "error");
+    }
+    setPricingSaving(false);
   }
 
   if (loading || !order) return <LoadingSpinner text={t("orderDetail.loading")} />;
@@ -428,12 +478,74 @@ export default function AdminOrderDetailPage() {
             <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.intlShippingShort")}</dt><dd className="font-medium text-slate-900">{fmt(order.internationalShippingFee)} VND</dd></div>
             <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.vnDeliveryShort")}</dt><dd className="font-medium text-slate-900">{fmt(order.vietnamDeliveryFee)} VND</dd></div>
             <div className="flex justify-between items-end pt-3 border-t border-slate-100">
-              <dt className="font-bold text-slate-900">{t("orderDetail.total")}</dt>
-              <dd className="text-xl font-bold text-blue-600">{fmt(order.totalCostVND)} VND</dd>
+              <dt className="font-bold text-slate-900">{t("pricing.systemEstimate")}</dt>
+              <dd className={`text-xl font-bold ${order.confirmedTotalCost ? "text-slate-400 line-through" : "text-blue-600"}`}>{fmt(order.totalCostVND)} VND</dd>
             </div>
           </dl>
+
+          {order.confirmedTotalCost && (
+            <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-sm font-semibold text-emerald-800">{t("pricing.companyConfirmed")}</span>
+                <span className="text-xs text-emerald-600 ml-auto">{new Date(order.confirmedAt!).toLocaleString("vi-VN")}</span>
+              </div>
+              <dl className="space-y-2 text-sm">
+                {order.confirmedProductCost && (
+                  <div className="flex justify-between"><dt className="text-emerald-700">{t("pricing.confirmedProduct")}</dt><dd className="font-medium text-emerald-900">{fmt(order.confirmedProductCost)} VND</dd></div>
+                )}
+                {order.confirmedShippingCost && (
+                  <div className="flex justify-between"><dt className="text-emerald-700">{t("pricing.confirmedShipping")}</dt><dd className="font-medium text-emerald-900">{fmt(order.confirmedShippingCost)} VND</dd></div>
+                )}
+                {order.confirmedServiceFee && (
+                  <div className="flex justify-between"><dt className="text-emerald-700">{t("pricing.confirmedService")}</dt><dd className="font-medium text-emerald-900">{fmt(order.confirmedServiceFee)} VND</dd></div>
+                )}
+                <div className="flex justify-between items-end pt-2 border-t border-emerald-200">
+                  <dt className="font-bold text-emerald-900">{t("pricing.finalCost")}</dt>
+                  <dd className="text-xl font-bold text-emerald-700">{fmt(order.confirmedTotalCost)} VND</dd>
+                </div>
+              </dl>
+            </div>
+          )}
         </Card>
       </div>
+
+      {/* Confirm pricing form */}
+      <Card title={order.confirmedTotalCost ? "Cập nhật giá xác nhận" : "Xác nhận giá đơn hàng"}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.confirmedProduct")} (VND)</label>
+            <input type="number" min="0" step="1000" value={pricingForm.confirmedProductCost}
+              onChange={(e) => setPricingForm({ ...pricingForm, confirmedProductCost: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Tiền hàng" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.confirmedShipping")} (VND)</label>
+            <input type="number" min="0" step="1000" value={pricingForm.confirmedShippingCost}
+              onChange={(e) => setPricingForm({ ...pricingForm, confirmedShippingCost: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Phí vận chuyển" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.confirmedService")} (VND)</label>
+            <input type="number" min="0" step="1000" value={pricingForm.confirmedServiceFee}
+              onChange={(e) => setPricingForm({ ...pricingForm, confirmedServiceFee: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Phí dịch vụ" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.finalCost")} (VND) <span className="text-red-500">*</span></label>
+            <input type="number" min="0" step="1000" value={pricingForm.confirmedTotalCost}
+              onChange={(e) => setPricingForm({ ...pricingForm, confirmedTotalCost: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold" placeholder="Tổng chi phí cuối cùng" />
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <button onClick={confirmPricing} disabled={pricingSaving}
+            className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
+            {pricingSaving ? "Đang lưu..." : (order.confirmedTotalCost ? "Cập nhật giá" : "Xác nhận giá")}
+          </button>
+          <p className="text-xs text-slate-400">Khách hàng sẽ nhận thông báo khi giá được xác nhận.</p>
+        </div>
+      </Card>
 
       {/* Custom status note — separate from system status */}
       <Card title="Ghi chú trạng thái">

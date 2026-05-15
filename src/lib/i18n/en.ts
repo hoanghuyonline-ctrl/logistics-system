@@ -371,6 +371,16 @@ const en: Record<string, string> = {
   "newOrder.contactCompanyNote": "Actual price — please contact the company.",
   "newOrder.estimateOnly": "Estimate only",
 
+  // Pricing confirmation
+  "pricing.systemEstimate": "System estimated price",
+  "pricing.companyConfirmed": "Company confirmed price",
+  "pricing.confirmedProduct": "Confirmed product cost",
+  "pricing.confirmedShipping": "Confirmed shipping cost",
+  "pricing.confirmedService": "Confirmed service fee",
+  "pricing.finalCost": "Final cost",
+  "pricing.awaitingConfirmation": "Awaiting company price confirmation. Actual cost will be updated after order review.",
+  "pricing.showEstimate": "Show initial estimate",
+
   // Wallet
   "wallet.loading": "Loading wallet...",
   "wallet.title": "My Wallet",

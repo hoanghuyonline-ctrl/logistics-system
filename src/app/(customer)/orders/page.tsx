@@ -17,6 +17,7 @@ interface Order {
   quantity: number;
   status: string;
   totalCostVND: string;
+  confirmedTotalCost: string | null;
   createdAt: string;
   updatedAt: string;
   packageId: string | null;
@@ -201,7 +202,11 @@ export default function OrdersPage() {
 
                           {/* Cost + date */}
                           <td className="px-3 sm:px-6 py-3">
-                            <div className="text-sm font-medium text-slate-900 whitespace-nowrap">{parseFloat(order.totalCostVND).toLocaleString()} ₫</div>
+                            <div className="text-sm font-medium text-slate-900 whitespace-nowrap">
+                              {order.confirmedTotalCost
+                                ? <>{parseFloat(order.confirmedTotalCost).toLocaleString()} ₫</>
+                                : <><span className="text-slate-400">{parseFloat(order.totalCostVND).toLocaleString()} ₫</span><span className="text-[10px] text-amber-500 ml-1">~</span></>}
+                            </div>
                             <div className="text-[11px] text-slate-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</div>
                           </td>
 

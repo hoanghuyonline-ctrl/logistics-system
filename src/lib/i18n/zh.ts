@@ -371,6 +371,16 @@ const zh: Record<string, string> = {
   "newOrder.contactCompanyNote": "实际价格请联系公司。",
   "newOrder.estimateOnly": "仅供参考",
 
+  // Pricing confirmation
+  "pricing.systemEstimate": "系统预估价格",
+  "pricing.companyConfirmed": "公司确认价格",
+  "pricing.confirmedProduct": "确认商品费",
+  "pricing.confirmedShipping": "确认运费",
+  "pricing.confirmedService": "确认服务费",
+  "pricing.finalCost": "最终费用",
+  "pricing.awaitingConfirmation": "等待公司确认价格。实际费用将在审核订单后更新。",
+  "pricing.showEstimate": "查看初始预估",
+
   // Wallet
   "wallet.loading": "正在加载钱包...",
   "wallet.title": "我的钱包",

@@ -51,7 +51,9 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
   if (status === "COMPLETED") {
     const wallet = await prisma.wallet.findUnique({ where: { userId: order.userId } });
     if (wallet) {
-      const cost = parseFloat(order.totalCostVND.toString());
+      const cost = order.confirmedTotalCost
+        ? parseFloat(order.confirmedTotalCost.toString())
+        : parseFloat(order.totalCostVND.toString());
       const currentBalance = parseFloat(wallet.balance.toString());
       const newBalance = currentBalance - cost;
 
