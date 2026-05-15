@@ -641,6 +641,7 @@ const zh: Record<string, string> = {
 
   // CRM
   "nav.crm": "CRM / 线索",
+  "nav.campaigns": "营销活动",
   "crm.title": "潜在客户管理 (CRM)",
   "crm.subtitle": "跟踪线索、转化客户、管理获客渠道",
   "crm.addLead": "添加线索",
