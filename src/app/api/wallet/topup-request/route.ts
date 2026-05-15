@@ -48,22 +48,25 @@ export async function POST(request: Request) {
   });
 
   // Notify all admins and accountants about new deposit request (fire-and-forget)
-  prisma.user
-    .findMany({ where: { role: { in: ["ADMIN", "ACCOUNTANT"] }, isActive: true } })
-    .then((staff) => {
+  Promise.all([
+    prisma.user.findUnique({ where: { id: user.id }, select: { fullName: true, email: true } }),
+    prisma.user.findMany({ where: { role: { in: ["ADMIN", "ACCOUNTANT"] }, isActive: true } }),
+  ])
+    .then(([customer, staff]) => {
+      const customerName = customer?.fullName || customer?.email || user.email || "Khách hàng";
       const amountFormatted = parseFloat(amount).toLocaleString("vi-VN");
       for (const s of staff) {
         createNotification({
           userId: s.id,
           title: "Yêu cầu nạp tiền mới",
-          message: `Khách hàng ${user.fullName || user.email} yêu cầu nạp ${amountFormatted} VND. Mã tham chiếu: ${transferReference}.`,
+          message: `Khách hàng ${customerName} yêu cầu nạp ${amountFormatted} VND. Mã tham chiếu: ${transferReference}.`,
         }).catch((err) => {
           console.error("[topup-request] Failed to notify staff:", err);
         });
       }
     })
     .catch((err) => {
-      console.error("[topup-request] Failed to fetch staff for notification:", err);
+      console.error("[topup-request] Failed to fetch data for notification:", err);
     });
 
   return jsonResponse(record, 201);
