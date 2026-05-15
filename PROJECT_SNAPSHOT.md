@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #235 merged
+**Latest stable commit:** PR #240 merged
 
 ---
 
@@ -200,6 +200,10 @@
 - **CRM Follow-Up Reminders** (PR #234) — Added `nextFollowUpAt`, `lastContactedAt`, `followUpNote` fields to Lead model; stats endpoint returns `followUpTodayCount` and `overdueCount`; list endpoint supports `?followUp=today|overdue` filter; 2 new clickable stat cards "Chăm sóc hôm nay" (orange) and "Quá hạn chăm sóc" (red); "Chăm sóc" column in lead table with overdue badge (⚠️); 📞 "Đã liên hệ" button marks lead as CONTACTED with timestamp; 📅 follow-up scheduling modal with date picker + note; notes modal shows follow-up note and last contacted time; migration `20260515130000_add_lead_followup_fields`; 14 new `crm.*` i18n keys per locale (VI/EN/ZH)
 
 - **Automatic CRM Lead Intake from Zalo/Facebook** (PR #235) — Incoming Zalo OA and Facebook Messenger messages automatically create/update CRM leads; new `zaloSenderId` (unique), `facebookSenderId` (unique), `isAutoCreated` fields on `Lead` model; `upsertLeadFromChannel()` in `src/lib/lead-intake.ts` deduplicates by sender ID and updates `lastContactedAt` on repeat messages; fire-and-forget pattern in both webhooks (no chatbot rewrite); CRM UI "Tự động tạo" emerald badge on auto-created leads; sort dropdown (Mới nhất / Hoạt động gần nhất) with `sort=activity` API param; migration `20260515140000_add_lead_auto_intake`; 3 new `crm.*` i18n keys (VI/EN/ZH); no mass messaging, no auto customer creation
+- **CRM Lead Activity Timeline** (PR #237) — `LeadActivity` model recording all lead actions (CREATED, STATUS_CHANGED, NOTE_UPDATED, ASSIGNED, CONTACTED, FOLLOW_UP_SET, CONVERTED, AUTO_CREATED, MESSAGE_RECEIVED); `recordLeadActivity()` fire-and-forget helper; `GET /api/admin/leads/[id]/activity` endpoint; compact "Lịch sử hoạt động" timeline in CRM notes modal; Vietnamese action labels; migration `20260515150000_add_lead_activity`
+- **Marketing Campaign Foundation** (PR #238) — `Campaign` model with name, channel (ZALO/FACEBOOK/EMAIL/SMS), status (DRAFT/SCHEDULED/COMPLETED/CANCELLED), targetStatus, messageTemplate, scheduledAt; `GET/POST/PUT /api/admin/campaigns`; admin campaigns page (`/admin/campaigns`) with list, create form, status/channel filters, notes modal; sidebar nav "Chiến dịch"; planning only — no message sending; migration `20260515160000_add_campaign`
+- **Support Ticket Improvement** (PR #239) — Added `priority` field (LOW/NORMAL/HIGH/URGENT) to `CustomerIssue`; inline priority dropdown with color-coded chips; inline staff assignment dropdown; priority selector in create form; Vietnamese priority labels; migration `20260515170000_add_issue_priority`
+- **Analytics Summary Dashboard** (PR #240) — `GET /api/admin/analytics/summary` aggregating leads by source, conversion rate, overdue follow-ups, open support tickets by priority, campaigns by status; admin page `/admin/analytics-summary` with stat cards, source bar chart, priority/campaign breakdowns; sidebar nav "Tổng quan"; no heavy charts — compact data-driven display
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
@@ -257,6 +261,9 @@
 | `/api/admin/quick-views` | GET | Quick operational view counts for dashboard (ADMIN-only) |
 | `/api/admin/leads` | GET/POST/PUT | CRM lead list (search, source/status/followUp filters, sort=activity), create, update (ADMIN-only) |
 | `/api/admin/leads/convert` | POST | Convert lead to customer account (ADMIN-only) |
+| `/api/admin/leads/[id]/activity` | GET | Lead activity timeline (last 50 activities with actor, ADMIN-only) |
+| `/api/admin/campaigns` | GET/POST/PUT | Campaign list (status/channel filters), create, update (ADMIN-only) |
+| `/api/admin/analytics/summary` | GET | CRM/marketing/support aggregated stats (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models
@@ -274,12 +281,14 @@
 | **SupportKnowledge** | id, title, content, category, keywords, isActive, matchCount, matchCountZalo, matchCountTelegram, matchCountMessenger, lastMatchedAt |
 | **ChatbotUnansweredQuestion** | id, channel, question, senderId, resolved, category |
 | **NotificationFailure** | id, channel, orderCode, customerId, recipient, failureCategory, shortReason, retryCount, lastRetryAt, resolved |
-| **CustomerIssue** | id, customerId, orderCode, issueType, description, status, assignedTo, resolution |
 | **StaffNote** | id, title, content, orderCode, priority, resolved, createdBy |
 | **WalletTopUpRequest** | id, customerId, amount, transferReference, bankName, bankAccount, accountHolder, status (PENDING/CONFIRMED/CANCELLED), confirmedBy, confirmedAt |
 | **Lead** | id, fullName, phone, email, zaloName, facebookName, zaloSenderId (unique), facebookSenderId (unique), source (LeadSource), status (LeadStatus), isAutoCreated, notes, assignedToId, convertedUserId, nextFollowUpAt, lastContactedAt, followUpNote |
+| **LeadActivity** | id, leadId, action, detail, actorId, createdAt |
+| **Campaign** | id, name, channel (CampaignChannel), status (CampaignStatus), targetStatus, messageTemplate, scheduledAt, notes, createdById |
+| **CustomerIssue** | id, customerId, orderCode, issueType, description, status, priority, assignedTo, resolution |
 
-**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType, LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST)
+**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType, LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS)
 
 ## Remaining Major Tasks
 

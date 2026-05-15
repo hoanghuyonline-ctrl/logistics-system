@@ -710,6 +710,11 @@ const vi: Record<string, string> = {
   "crm.sortActivity": "Hoạt động gần nhất",
   "crm.activityTimeline": "Lịch sử hoạt động",
   "crm.noActivity": "Chưa có hoạt động",
+  "nav.analyticsSummary": "Tổng quan",
+  "analytics.summaryTitle": "Tổng quan CRM / Marketing / Hỗ trợ",
+  "analytics.leadsBySource": "Leads theo nguồn",
+  "analytics.ticketsByPriority": "Ticket mở theo độ ưu tiên",
+  "analytics.campaignsByStatus": "Chiến dịch theo trạng thái",
 };
 
 export default vi;
