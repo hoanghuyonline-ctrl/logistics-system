@@ -641,6 +641,7 @@ const en: Record<string, string> = {
 
   // CRM
   "nav.crm": "CRM / Leads",
+  "nav.campaigns": "Campaigns",
   "crm.title": "Lead Management (CRM)",
   "crm.subtitle": "Track leads, convert customers, manage acquisition sources",
   "crm.addLead": "Add lead",

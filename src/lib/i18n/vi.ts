@@ -641,6 +641,7 @@ const vi: Record<string, string> = {
 
   // CRM
   "nav.crm": "CRM / Leads",
+  "nav.campaigns": "Chiến dịch",
   "crm.title": "Quản lý khách hàng tiềm năng (CRM)",
   "crm.subtitle": "Theo dõi leads, chuyển đổi khách hàng, quản lý nguồn tiếp cận",
   "crm.addLead": "Thêm lead",

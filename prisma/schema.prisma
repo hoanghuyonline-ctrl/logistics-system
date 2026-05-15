@@ -112,6 +112,7 @@ model User {
   assignedLeads      Lead[]               @relation("LeadAssignee")
   convertedFromLeads Lead[]               @relation("LeadConvertedUser")
   leadActivities     LeadActivity[]       @relation("LeadActivityActor")
+  campaigns          Campaign[]           @relation("CampaignCreator")
 }
 
 model Wallet {
@@ -397,4 +398,34 @@ model LeadActivity {
   actor User? @relation("LeadActivityActor", fields: [actorId], references: [id])
 
   @@index([leadId, createdAt])
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum CampaignChannel {
+  ZALO
+  FACEBOOK
+  EMAIL
+  SMS
+}
+
+model Campaign {
+  id              String          @id @default(uuid())
+  name            String
+  channel         CampaignChannel
+  status          CampaignStatus  @default(DRAFT)
+  targetStatus    String?
+  messageTemplate String?         @db.Text
+  scheduledAt     DateTime?
+  notes           String?         @db.Text
+  createdById     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  createdBy User? @relation("CampaignCreator", fields: [createdById], references: [id])
 }
