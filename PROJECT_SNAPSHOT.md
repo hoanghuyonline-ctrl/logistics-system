@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #219 merged
+**Latest stable commit:** PR #225 merged
 
 ---
 
@@ -185,6 +185,16 @@
 
 - **Customer Address Edit Shortcut** (PRs #217, #219) — Compact "Sửa địa chỉ" link next to "Địa chỉ nhận hàng tại Việt Nam" section title on customer create order page; links to existing `/profile` page for quick address update before placing order; always visible regardless of address state; Vietnamese-first; no schema/API/notification changes
 
+- **Address Edit Button Visibility Fix** (PR #221) — Made "Sửa địa chỉ" button on create order page visually obvious with bordered button style instead of plain text link; improved discoverability for mobile users
+
+- **Wallet QR Top-Up Request Flow** (PR #222) — Customer wallet page "Nạp tiền vào ví" section with VietQR integration; amount input, QR code generation via vietqr.io API (Vietinbank CN Lạng Sơn / 110003049134); transfer reference code format `NAPVI{lastSixUserId}{lastSixTimestamp}`; bank details display (ngân hàng, số tài khoản, chủ tài khoản, nội dung CK); QR image rendering; Vietnamese-first UX with "Lưu ý quan trọng" warnings; no schema changes
+
+- **Mobile Responsive Authenticated Layout** (PR #223) — Responsive sidebar/drawer layout for all authenticated pages (customer, admin, warehouse, accountant); collapsible sidebar on desktop with toggle button; slide-out drawer on mobile with hamburger menu; sticky top bar with page title; smooth CSS transitions; backdrop overlay on mobile; persisted sidebar state; all existing navigation links preserved; Vietnamese-first; no schema/API changes
+
+- **Wallet QR Top-Up Admin Confirmation List** (PR #224) — New `WalletTopUpRequest` Prisma model (customerId, amount, transferReference, bankName, bankAccount, accountHolder, status PENDING/CONFIRMED/CANCELLED, confirmedBy, confirmedAt); customer wallet saves pending request on QR generation via `POST /api/wallet/topup-request`; admin finance page "Yêu cầu nạp tiền chờ xác nhận" section with table (customer info, amount, transfer reference with copy button, time, status); filter chips (Chờ xác nhận / Tất cả); confirm/cancel action buttons; `PATCH /api/admin/topup-requests/[id]` reuses existing wallet deposit logic (balance + debt handling), creates transaction, prevents duplicate confirmation; fire-and-forget wallet notification on confirmation; migration `20260515070000_add_wallet_topup_request`; 19 new `topup.*` i18n keys (VI/EN/ZH)
+
+- **Wallet Top-Up Safety Controls** (PR #225) — Single pending QR request per customer; `POST /api/wallet/topup-request` returns existing PENDING request instead of creating duplicate; `GET /api/wallet/topup-request` returns customer's current pending request; `DELETE /api/wallet/topup-request` allows customer to cancel own PENDING request; customer wallet page loads existing pending on mount, shows amber banner "Bạn đang có một yêu cầu nạp tiền chờ xác nhận", displays existing QR/reference, "Huỷ yêu cầu nạp tiền" cancel button; new request form hidden while pending request exists; after cancel, customer can create new request; admin/accountant confirmation flow unchanged
+
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
 ## Stack
@@ -213,6 +223,9 @@
 | `/api/packages/[id]/barcode` | GET | Render Code128 barcode (PNG/SVG) |
 | `/api/wallet` | GET | Customer wallet |
 | `/api/wallet/deposit` | POST | Deposit funds |
+| `/api/wallet/topup-request` | GET/POST/DELETE | Customer pending top-up request (get/create/cancel) |
+| `/api/admin/topup-requests` | GET | List all top-up requests (ADMIN/ACCOUNTANT) |
+| `/api/admin/topup-requests/[id]` | PATCH | Confirm/cancel top-up request (ADMIN/ACCOUNTANT) |
 | `/api/settings` | GET/PUT | System fee configuration |
 | `/api/warehouse/china/receive` | POST | Receive goods at CN warehouse |
 | `/api/warehouse/vietnam/receive` | POST | Receive goods at VN warehouse |
@@ -254,6 +267,7 @@
 | **NotificationFailure** | id, channel, orderCode, customerId, recipient, failureCategory, shortReason, retryCount, lastRetryAt, resolved |
 | **CustomerIssue** | id, customerId, orderCode, issueType, description, status, assignedTo, resolution |
 | **StaffNote** | id, title, content, orderCode, priority, resolved, createdBy |
+| **WalletTopUpRequest** | id, customerId, amount, transferReference, bankName, bankAccount, accountHolder, status (PENDING/CONFIRMED/CANCELLED), confirmedBy, confirmedAt |
 
 **Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType
 
