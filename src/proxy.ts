@@ -43,6 +43,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
+  if (pathname.startsWith("/scanner") && role !== "ADMIN" && role !== "WAREHOUSE_CN" && role !== "WAREHOUSE_VN") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   return NextResponse.next();
 }
 

@@ -211,6 +211,7 @@
 
 - **Admin Dashboard Auto-Refresh Polling** (PR #248) — `useAdminPolling` hook with 25-second polling of `/api/admin/quick-views`; admin dashboard "Truy cập nhanh" card auto-refreshes all 9 counters; green pulse dot + last-refreshed timestamp; Vietnamese warning toasts when counts increase; ACCOUNTANT role access to quick-views API; no schema changes, no new dependencies
 - **Extended Admin/Accountant Auto-Refresh Polling** (PR #249) — Reusable `useAutoRefresh` hook (`src/lib/useAutoRefresh.ts`) with duplicate-request prevention and cleanup on unmount; admin finance page polls top-up requests and finance health indicators every 30 seconds; accountant dashboard polls financial KPIs every 30 seconds; compact "Tự động cập nhật" indicator with green pulse dot and last-refreshed timestamp on both pages; notification bell already polls at 30 seconds (no change needed); no schema changes, no new dependencies, no WebSocket/SSE
+- **Mini Warehouse Scanner App** (PR #250) — Standalone mobile-first scanner module at `/scanner` with dark theme; 3-tab interface: Quét mã (barcode/packageCode scan via USB scanner, keyboard, or camera with lookup result, package details, linked orders, and quick status transition buttons), Lịch sử (in-session scan history with action type, status, and timestamp), Tổng quan (session counters + live package status counts from `GET /api/scanner/stats`); own layout without sidebar; "Quét Kho Mini" branded header with role badge and exit button; `(scanner)` route group with session-based role guard (ADMIN/WAREHOUSE_CN/WAREHOUSE_VN); proxy.ts route protection; reuses existing `POST /api/warehouse/scan` API and `CameraScanner` component; Vietnamese-first UX; no schema changes, no new dependencies
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
@@ -272,6 +273,7 @@
 | `/api/admin/leads/[id]/activity` | GET | Lead activity timeline (last 50 activities with actor, ADMIN-only) |
 | `/api/admin/campaigns` | GET/POST/PUT | Campaign list (status/channel filters), create, update (ADMIN-only) |
 | `/api/admin/analytics/summary` | GET | CRM/marketing/support aggregated stats (ADMIN-only) |
+| `/api/scanner/stats` | GET | Package status counts for Mini Scanner dashboard (ADMIN/WAREHOUSE_CN/WAREHOUSE_VN) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models
