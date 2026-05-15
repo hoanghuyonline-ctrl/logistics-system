@@ -430,3 +430,17 @@ model Campaign {
 
   createdBy User? @relation("CampaignCreator", fields: [createdById], references: [id])
 }
+
+model ChatbotQualityLog {
+  id            String   @id @default(uuid())
+  channel       String
+  senderId      String?
+  question      String
+  flag          String
+  detail        String?
+  knowledgeId   String?
+  score         Int?
+  createdAt     DateTime @default(now())
+
+  @@index([channel, createdAt])
+}
