@@ -87,13 +87,53 @@ npm run build
 
 ---
 
+## Standalone Mode (Recommended for Production)
+
+Next.js `output: "standalone"` produces a self-contained server at `.next/standalone/server.js`.
+**Critical:** The standalone output does NOT include static assets (`_next/static/`) or public files (`public/`). You MUST copy them after every build, otherwise CSS/JS/images will return 404.
+
+### Quick Deploy (Windows PowerShell)
+
+```powershell
+# One-command deploy:
+powershell -File scripts\deploy-standalone.ps1
+
+# Then start/restart:
+pm2 start .next\standalone\server.js --name logistics-system
+# or if already running:
+pm2 restart logistics-system
+```
+
+### Manual Deploy Steps
+
+```powershell
+# 1. Build
+npm run build
+
+# 2. Copy static assets (REQUIRED — without this CSS/JS will 404!)
+xcopy /E /Y /I .next\static .next\standalone\.next\static
+xcopy /E /Y /I public .next\standalone\public
+
+# 3. Start standalone server
+pm2 start .next\standalone\server.js --name logistics-system
+```
+
+### Why CSS/styling breaks without the copy step
+
+The standalone server (`server.js`) serves `/_next/static/*` from `.next/standalone/.next/static/`. If that folder is empty or missing, all CSS, JavaScript, fonts, and images return HTTP 404. The HTML loads but appears as unstyled plain text.
+
+---
+
 ## PM2 Commands
 
 ### Start
 
 ```powershell
-# Start using ecosystem config
+# Start using ecosystem config (next start mode)
 pm2 start ecosystem.config.js
+
+# Or start standalone mode
+pm2 start .next\standalone\server.js --name logistics-system
 
 # Verify running
 pm2 status
@@ -111,7 +151,14 @@ pm2 stop logistics-system
 # Normal restart
 pm2 restart logistics-system
 
-# After code update (full rebuild)
+# After code update (full rebuild — standalone mode)
+git pull origin main
+npm install
+npx prisma generate
+powershell -File scripts\deploy-standalone.ps1
+pm2 restart logistics-system
+
+# After code update (full rebuild — next start mode)
 git pull origin main
 npm install
 npx prisma generate
