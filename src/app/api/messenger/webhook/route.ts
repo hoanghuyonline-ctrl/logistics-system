@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
+import { upsertLeadFromChannel } from "@/lib/lead-intake";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -167,6 +168,9 @@ export async function POST(request: Request) {
             console.log(
               `[messenger/webhook] Text message from ${senderId} at ${timestamp}: "${text}"`
             );
+
+            // Fire-and-forget: create/update CRM lead
+            upsertLeadFromChannel({ channel: "FACEBOOK", senderId }).catch(() => {});
 
             if (/\d/.test(text) && !/\s/.test(text)) {
               await handleOrderLookup(senderId, text);

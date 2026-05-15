@@ -359,22 +359,25 @@ model WalletTopUpRequest {
 }
 
 model Lead {
-  id              String     @id @default(uuid())
-  fullName        String
-  phone           String?
-  email           String?
-  zaloName        String?
-  facebookName    String?
-  source          LeadSource @default(OTHER)
-  status          LeadStatus @default(NEW)
-  notes           String?    @db.Text
-  assignedToId    String?
-  convertedUserId String?
-  nextFollowUpAt  DateTime?
-  lastContactedAt DateTime?
-  followUpNote    String?    @db.Text
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  id               String     @id @default(uuid())
+  fullName         String
+  phone            String?
+  email            String?
+  zaloName         String?
+  facebookName     String?
+  zaloSenderId     String?    @unique
+  facebookSenderId String?    @unique
+  source           LeadSource @default(OTHER)
+  status           LeadStatus @default(NEW)
+  isAutoCreated    Boolean    @default(false)
+  notes            String?    @db.Text
+  assignedToId     String?
+  convertedUserId  String?
+  nextFollowUpAt   DateTime?
+  lastContactedAt  DateTime?
+  followUpNote     String?    @db.Text
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   assignedTo    User? @relation("LeadAssignee", fields: [assignedToId], references: [id])
   convertedUser User? @relation("LeadConvertedUser", fields: [convertedUserId], references: [id])

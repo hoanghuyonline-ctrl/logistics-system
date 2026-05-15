@@ -704,6 +704,9 @@ const zh: Record<string, string> = {
   "crm.followUpSaved": "跟进计划已保存",
   "crm.clearFollowUp": "清除计划",
   "crm.lastContacted": "最后联系",
+  "crm.autoCreated": "自动创建",
+  "crm.sortNewest": "最新",
+  "crm.sortActivity": "最近活动",
 };
 
 export default zh;

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getNotificationConfig } from "@/lib/notification-config";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 import { getCachedAccessToken, refreshZaloAccessToken } from "@/lib/zalo-token";
+import { upsertLeadFromChannel } from "@/lib/lead-intake";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -314,6 +315,9 @@ export async function POST(request: Request) {
         console.warn(`[zalo/webhook] SKIP | event=${eventName} senderId=${senderId || "(missing)"} text=${text ? "present" : "(missing)"}`);
         return Response.json({ status: "ok" }, { status: 200 });
       }
+
+      // Fire-and-forget: create/update CRM lead
+      upsertLeadFromChannel({ channel: "ZALO", senderId }).catch(() => {});
 
       // Fire-and-forget: do not await to avoid blocking webhook response
       handleTextMessage(senderId, text).catch((err) =>

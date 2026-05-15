@@ -15,8 +15,11 @@ interface Lead {
   email: string | null;
   zaloName: string | null;
   facebookName: string | null;
+  zaloSenderId: string | null;
+  facebookSenderId: string | null;
   source: string;
   status: string;
+  isAutoCreated: boolean;
   notes: string | null;
   assignedToId: string | null;
   convertedUserId: string | null;
@@ -75,6 +78,7 @@ export default function CrmPage() {
   const [sourceFilter, setSourceFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [followUpFilter, setFollowUpFilter] = useState("");
+  const [sortMode, setSortMode] = useState("");
   const [stats, setStats] = useState<CrmStats | null>(null);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
 
@@ -107,6 +111,7 @@ export default function CrmPage() {
       if (sourceFilter) params.set("source", sourceFilter);
       if (statusFilter) params.set("status", statusFilter);
       if (followUpFilter) params.set("followUp", followUpFilter);
+      if (sortMode) params.set("sort", sortMode);
       const res = await fetch(`/api/admin/leads?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -118,7 +123,7 @@ export default function CrmPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, sourceFilter, statusFilter, followUpFilter, t, toast]);
+  }, [page, search, sourceFilter, statusFilter, followUpFilter, sortMode, t, toast]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -491,6 +496,14 @@ export default function CrmPage() {
               <option key={s} value={s}>{t(`crm.status.${s}`, s)}</option>
             ))}
           </select>
+          <select
+            value={sortMode}
+            onChange={(e) => { setSortMode(e.target.value); setPage(1); }}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+          >
+            <option value="">{t("crm.sortNewest", "Mới nhất")}</option>
+            <option value="activity">{t("crm.sortActivity", "Hoạt động gần nhất")}</option>
+          </select>
         </div>
 
         {/* Lead table */}
@@ -518,7 +531,14 @@ export default function CrmPage() {
                 leads.map((lead) => (
                   <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-25">
                     <td className="py-3 px-2">
-                      <p className="font-medium text-slate-800">{lead.fullName}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium text-slate-800">{lead.fullName}</p>
+                        {lead.isAutoCreated && (
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700">
+                            {t("crm.autoCreated", "Tự động tạo")}
+                          </span>
+                        )}
+                      </div>
                       {lead.zaloName && <p className="text-xs text-slate-400">Zalo: {lead.zaloName}</p>}
                       {lead.facebookName && <p className="text-xs text-slate-400">FB: {lead.facebookName}</p>}
                     </td>
