@@ -56,7 +56,7 @@ const STATUS_TRANSITIONS: Record<string, { next: PackageStatus; label: string }>
   AT_VIETNAM_WH: { next: "DELIVERED" as PackageStatus, label: "Giao hàng" },
 };
 
-type Tab = "scan" | "history" | "dashboard";
+type Tab = "scan" | "history" | "dashboard" | "help";
 
 /* ─── main component ─── */
 
@@ -246,6 +246,7 @@ export default function MiniScannerPage() {
     { id: "scan", label: "Quét mã", icon: "📷" },
     { id: "history", label: "Lịch sử", icon: "📋" },
     { id: "dashboard", label: "Tổng quan", icon: "📊" },
+    { id: "help", label: "Trợ giúp", icon: "❓" },
   ];
 
   return (
@@ -517,6 +518,97 @@ export default function MiniScannerPage() {
                   <span className="text-white">{history.length} mục</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── HELP TAB ─── */}
+        {tab === "help" && (
+          <div className="p-4 space-y-4">
+            <h2 className="text-sm font-bold text-white">Trợ giúp — Quét Kho Mini</h2>
+
+            {/* About */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+              <h3 className="text-xs font-semibold text-emerald-400 mb-2">Giới thiệu</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Quét Kho Mini là ứng dụng quét mã vạch kho hàng dành cho nhân viên kho nhỏ và cửa hàng.
+                Ứng dụng giúp tra cứu kiện hàng, cập nhật trạng thái nhanh chóng, và theo dõi lịch sử quét trong phiên làm việc.
+              </p>
+            </div>
+
+            {/* How to scan */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+              <h3 className="text-xs font-semibold text-emerald-400 mb-2">Hướng dẫn quét</h3>
+              <div className="space-y-2 text-xs text-slate-300">
+                <div className="flex gap-2">
+                  <span className="text-emerald-400 font-bold shrink-0">1.</span>
+                  <span>Dùng máy quét mã vạch USB/Bluetooth — mã tự động nhập vào ô tìm kiếm</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-emerald-400 font-bold shrink-0">2.</span>
+                  <span>Hoặc nhấn camera để quét bằng điện thoại</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-emerald-400 font-bold shrink-0">3.</span>
+                  <span>Hoặc nhập thủ công mã kiện hàng / mã vạch</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-emerald-400 font-bold shrink-0">4.</span>
+                  <span>Nhấn nút hành động (Xuất kho TQ / Nhận kho VN / Giao hàng) để cập nhật trạng thái</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Roles */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+              <h3 className="text-xs font-semibold text-emerald-400 mb-2">Vai trò được phép</h3>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="text-white font-medium">Admin</span>
+                  <span className="text-slate-400">— Toàn quyền quét và cập nhật</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span className="text-white font-medium">Kho Trung Quốc</span>
+                  <span className="text-slate-400">— Quét kiện tại kho TQ</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                  <span className="text-white font-medium">Kho Việt Nam</span>
+                  <span className="text-slate-400">— Quét kiện tại kho VN</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Requirements */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+              <h3 className="text-xs font-semibold text-emerald-400 mb-2">Yêu cầu</h3>
+              <div className="space-y-1.5 text-xs text-slate-300">
+                <p>⚡ Cần kết nối internet để quét và cập nhật trạng thái</p>
+                <p>📱 Hỗ trợ Android, iOS — thêm vào màn hình chính để dùng như ứng dụng</p>
+                <p>🔐 Yêu cầu đăng nhập với vai trò Admin hoặc Nhân viên kho</p>
+              </div>
+            </div>
+
+            {/* Install instructions */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+              <h3 className="text-xs font-semibold text-emerald-400 mb-2">Cài đặt lên điện thoại</h3>
+              <div className="space-y-2 text-xs text-slate-300">
+                <div>
+                  <p className="text-white font-medium mb-1">Android (Chrome):</p>
+                  <p>Mở trang /scanner → Menu ⋮ → &quot;Thêm vào màn hình chính&quot; → Cài đặt</p>
+                </div>
+                <div>
+                  <p className="text-white font-medium mb-1">iOS (Safari):</p>
+                  <p>Mở trang /scanner → Nhấn nút Chia sẻ ↑ → &quot;Thêm vào MH chính&quot;</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Version */}
+            <div className="text-center text-[10px] text-slate-500 py-2">
+              Quét Kho Mini v1.0 — Bắc Trung Hải Logistics
             </div>
           </div>
         )}
