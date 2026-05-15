@@ -143,9 +143,9 @@ export default function NewOrderPage() {
                   </div>
                   <Link
                     href="/profile"
-                    className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-colors shadow-sm"
                   >
-                    Sửa địa chỉ
+                    ✏️ Sửa địa chỉ
                   </Link>
                 </div>
                 {userProfile && userProfile.address ? (
