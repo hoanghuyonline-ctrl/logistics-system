@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #217 merged
+**Latest stable commit:** PR #219 merged
 
 ---
 
@@ -183,7 +183,7 @@
 
 - **Customer Shipping Address Confirmation** (PR #215) — Required Vietnam delivery address confirmation on customer create order page; "Địa chỉ nhận hàng tại Việt Nam" section displays customer name, phone, address from existing profile (`/api/auth/me`); required checkbox "Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam" — submit disabled until checked; missing-address warning with "Cập nhật hồ sơ →" link to `/profile` blocks submission when address is empty; Vietnamese-first; no schema/API/notification changes
 
-- **Customer Address Edit Shortcut** (PR #217) — Compact "Sửa địa chỉ" link next to "Địa chỉ nhận hàng tại Việt Nam" section title on customer create order page; links to existing `/profile` page for quick address update before placing order; only shown when address exists (missing-address state retains "Cập nhật hồ sơ →" button); Vietnamese-first; no schema/API/notification changes
+- **Customer Address Edit Shortcut** (PRs #217, #219) — Compact "Sửa địa chỉ" link next to "Địa chỉ nhận hàng tại Việt Nam" section title on customer create order page; links to existing `/profile` page for quick address update before placing order; always visible regardless of address state; Vietnamese-first; no schema/API/notification changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
