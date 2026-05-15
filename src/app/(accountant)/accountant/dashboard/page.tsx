@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 import KPICard from "@/components/ui/KPICard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
@@ -79,6 +80,18 @@ export default function AccountantDashboard() {
   const [data, setData] = useState<AccountantDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshFetcher = useCallback(async () => {
+    const res = await fetch("/api/accountant/dashboard");
+    if (!res.ok) throw new Error("fetch failed");
+    return res.json() as Promise<AccountantDashboardData>;
+  }, []);
+
+  const handleRefreshData = useCallback((d: AccountantDashboardData) => {
+    setData(d);
+  }, []);
+
+  const { lastRefreshed } = useAutoRefresh(refreshFetcher, handleRefreshData, 30000);
+
   useEffect(() => {
     if (authStatus === "loading") return;
     const role = (session?.user as Record<string, unknown>)?.role as string;
@@ -140,6 +153,15 @@ export default function AccountantDashboard() {
         title={t("accountant.dashboard")}
         subtitle={t("accountant.dashboardSubtitle")}
       />
+
+      {/* Auto-refresh indicator */}
+      <div className="flex items-center gap-1.5 mb-4 text-[11px] text-slate-400">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+        <span>{"T\u1ef1 \u0111\u1ed9ng c\u1eadp nh\u1eadt"}</span>
+        {lastRefreshed && (
+          <span>{"\u2014"} {lastRefreshed.toLocaleTimeString("vi-VN")}</span>
+        )}
+      </div>
 
       {/* Finance Health Indicators */}
       <Card title={t("finance.healthOverview")} className="mb-6">
