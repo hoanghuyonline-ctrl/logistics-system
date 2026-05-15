@@ -65,6 +65,22 @@ enum NotificationType {
   ZALO
 }
 
+enum LeadSource {
+  ZALO
+  FACEBOOK
+  WEBSITE
+  REFERRAL
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  INTERESTED
+  CONVERTED
+  LOST
+}
+
 model User {
   id             String   @id @default(uuid())
   email          String   @unique
@@ -93,6 +109,8 @@ model User {
   staffNotes         StaffNote[]      @relation("StaffNotes")
   topUpRequests      WalletTopUpRequest[] @relation("TopUpRequests")
   topUpConfirmations WalletTopUpRequest[] @relation("TopUpConfirmations")
+  assignedLeads      Lead[]               @relation("LeadAssignee")
+  convertedFromLeads Lead[]               @relation("LeadConvertedUser")
 }
 
 model Wallet {
@@ -338,4 +356,23 @@ model WalletTopUpRequest {
 
   customer  User  @relation("TopUpRequests", fields: [customerId], references: [id])
   confirmer User? @relation("TopUpConfirmations", fields: [confirmedBy], references: [id])
+}
+
+model Lead {
+  id              String     @id @default(uuid())
+  fullName        String
+  phone           String?
+  email           String?
+  zaloName        String?
+  facebookName    String?
+  source          LeadSource @default(OTHER)
+  status          LeadStatus @default(NEW)
+  notes           String?    @db.Text
+  assignedToId    String?
+  convertedUserId String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  assignedTo    User? @relation("LeadAssignee", fields: [assignedToId], references: [id])
+  convertedUser User? @relation("LeadConvertedUser", fields: [convertedUserId], references: [id])
 }
