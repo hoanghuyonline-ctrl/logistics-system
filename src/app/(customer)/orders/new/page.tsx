@@ -141,14 +141,12 @@ export default function NewOrderPage() {
                     <span className="text-base">📍</span>
                     <h3 className="text-sm font-semibold text-slate-800">Địa chỉ nhận hàng tại Việt Nam</h3>
                   </div>
-                  {userProfile?.address && (
-                    <Link
-                      href="/profile"
-                      className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2"
-                    >
-                      Sửa địa chỉ
-                    </Link>
-                  )}
+                  <Link
+                    href="/profile"
+                    className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                  >
+                    Sửa địa chỉ
+                  </Link>
                 </div>
                 {userProfile && userProfile.address ? (
                   <>
