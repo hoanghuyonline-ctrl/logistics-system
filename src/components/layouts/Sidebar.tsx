@@ -28,6 +28,7 @@ const customerNav: NavItem[] = [
 const NOTIFICATION_NAV_ROLES = ["CUSTOMER", "ADMIN"];
 
 const adminNav: NavItem[] = [
+  { labelKey: "nav.operations", href: "/admin/operations", icon: "🏠" },
   { labelKey: "nav.dashboard", href: "/admin/dashboard", icon: "📊" },
   { labelKey: "nav.users", href: "/admin/users", icon: "👥" },
   { labelKey: "nav.orders", href: "/admin/orders", icon: "📦" },

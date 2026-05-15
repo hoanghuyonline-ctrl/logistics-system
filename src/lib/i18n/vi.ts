@@ -48,6 +48,7 @@ const vi: Record<string, string> = {
   "auth.registerBrandingDesc": "Đặt hàng từ Taobao, 1688, Tmall — chúng tôi xử lý mua hàng, kho bãi, vận chuyển quốc tế và giao hàng tận nơi.",
 
   // Sidebar nav
+  "nav.operations": "Điều hành",
   "nav.dashboard": "Bảng điều khiển",
   "nav.newOrder": "Tạo đơn hàng",
   "nav.myOrders": "Đơn hàng của tôi",

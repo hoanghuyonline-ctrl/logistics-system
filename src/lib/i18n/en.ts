@@ -48,6 +48,7 @@ const en: Record<string, string> = {
   "auth.registerBrandingDesc": "Order from Taobao, 1688, Tmall — we handle purchasing, warehousing, cross-border shipping, and last-mile delivery.",
 
   // Sidebar nav
+  "nav.operations": "Operations",
   "nav.dashboard": "Dashboard",
   "nav.newOrder": "New Order",
   "nav.myOrders": "My Orders",
