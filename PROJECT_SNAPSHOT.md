@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #240 merged
+**Latest stable commit:** Docs PR (post PR #240)
 
 ---
 
@@ -204,6 +204,7 @@
 - **Marketing Campaign Foundation** (PR #238) — `Campaign` model with name, channel (ZALO/FACEBOOK/EMAIL/SMS), status (DRAFT/SCHEDULED/COMPLETED/CANCELLED), targetStatus, messageTemplate, scheduledAt; `GET/POST/PUT /api/admin/campaigns`; admin campaigns page (`/admin/campaigns`) with list, create form, status/channel filters, notes modal; sidebar nav "Chiến dịch"; planning only — no message sending; migration `20260515160000_add_campaign`
 - **Support Ticket Improvement** (PR #239) — Added `priority` field (LOW/NORMAL/HIGH/URGENT) to `CustomerIssue`; inline priority dropdown with color-coded chips; inline staff assignment dropdown; priority selector in create form; Vietnamese priority labels; migration `20260515170000_add_issue_priority`
 - **Analytics Summary Dashboard** (PR #240) — `GET /api/admin/analytics/summary` aggregating leads by source, conversion rate, overdue follow-ups, open support tickets by priority, campaigns by status; admin page `/admin/analytics-summary` with stat cards, source bar chart, priority/campaign breakdowns; sidebar nav "Tổng quan"; no heavy charts — compact data-driven display
+- **Vietnamese End-User & Admin Guides** (Docs PR post #240) — Comprehensive Vietnamese-first documentation: `docs/USER_GUIDE_VI.md` (15 sections — login/register, dashboard, order creation, order tracking, order detail, A→Z shipping flow, wallet/top-up/QR, transactions, notifications, Zalo/Telegram linking, issues/complaints, profile, common errors, FAQ) and `docs/ADMIN_GUIDE_VI.md` (25 sections — role overview, admin dashboard, user management, order management with warning badges, package management, China/Vietnam warehouse workflows, barcode scanning, accountant finance, notification channels, CRM lead management, follow-up workflow, marketing campaigns, support tickets, knowledge base/chatbot, analytics, system config, audit log, system health, staff notes, stuck shipments, production/deploy basics, backup/restore, common mistakes, real operational examples); screenshot placeholders for 32 screens; no code changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
