@@ -49,8 +49,10 @@ export default function FinancePage() {
     }>;
   } | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
-  const [depositUserId, setDepositUserId] = useState("");
+  const [depositEmail, setDepositEmail] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
+  const [matchedCustomer, setMatchedCustomer] = useState<{ fullName: string; email: string } | null>(null);
+  const [lookupError, setLookupError] = useState("");
   const [loading, setLoading] = useState(true);
   const [topUpRequests, setTopUpRequests] = useState<TopUpRequest[]>([]);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -108,17 +110,37 @@ export default function FinancePage() {
     toast(t("orders.copied"), "success");
   }
 
+  async function lookupCustomer(email: string) {
+    setMatchedCustomer(null);
+    setLookupError("");
+    if (!email.trim()) return;
+    try {
+      const res = await fetch(`/api/users?search=${encodeURIComponent(email.trim())}&limit=1`);
+      if (res.ok) {
+        const data = await res.json();
+        const users = Array.isArray(data) ? data : data.users || [];
+        const match = users.find((u: { email: string }) => u.email.toLowerCase() === email.trim().toLowerCase());
+        if (match) {
+          setMatchedCustomer({ fullName: match.fullName, email: match.email });
+        } else {
+          setLookupError(t("finance.customerNotFound"));
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
   async function processDeposit(e: React.FormEvent) {
     e.preventDefault();
     const res = await fetch("/api/wallet/deposit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: depositUserId, amount: parseFloat(depositAmount), description: "Admin deposit" }),
+      body: JSON.stringify({ email: depositEmail.trim(), amount: parseFloat(depositAmount), description: "Admin deposit" }),
     });
     if (res.ok) {
       toast(`${t("finance.depositProcessed")}: ${parseFloat(depositAmount).toLocaleString()} VND`, "success");
-      setDepositUserId("");
+      setDepositEmail("");
       setDepositAmount("");
+      setMatchedCustomer(null);
     } else {
       const data = await res.json();
       toast(data.error || t("finance.depositFailed"), "error");
@@ -302,10 +324,19 @@ export default function FinancePage() {
         <Card title={t("finance.processDeposit")}>
           <form onSubmit={processDeposit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("finance.userId")}</label>
-              <input type="text" placeholder={t("finance.userIdPlaceholder")} value={depositUserId}
-                onChange={(e) => setDepositUserId(e.target.value)}
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("finance.customerEmail")}</label>
+              <input type="email" placeholder={t("finance.customerEmailPlaceholder")} value={depositEmail}
+                onChange={(e) => { setDepositEmail(e.target.value); setMatchedCustomer(null); setLookupError(""); }}
+                onBlur={() => lookupCustomer(depositEmail)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required />
+              {matchedCustomer && (
+                <p className="mt-1.5 text-xs text-emerald-600 font-medium">
+                  {t("finance.matchedCustomer")}: {matchedCustomer.fullName}
+                </p>
+              )}
+              {lookupError && (
+                <p className="mt-1.5 text-xs text-red-600 font-medium">{lookupError}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("finance.amountVnd")}</label>

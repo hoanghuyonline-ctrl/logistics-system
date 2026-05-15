@@ -9,13 +9,25 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { userId, amount, description } = body;
+  const { userId, email, amount, description } = body;
 
-  if (!userId || !amount || amount <= 0) {
-    return errorResponse("Valid userId and positive amount are required");
+  if ((!userId && !email) || !amount || amount <= 0) {
+    return errorResponse("Valid userId/email and positive amount are required");
   }
 
-  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+  let resolvedUserId = userId;
+  if (!resolvedUserId && email) {
+    const customer = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (!customer) {
+      return errorResponse("Không tìm thấy khách hàng với email này", 404);
+    }
+    resolvedUserId = customer.id;
+  }
+
+  const wallet = await prisma.wallet.findUnique({ where: { userId: resolvedUserId } });
   if (!wallet) return errorResponse("Wallet not found", 404);
 
   const currentBalance = parseFloat(wallet.balance.toString());
@@ -36,13 +48,13 @@ export async function POST(request: Request) {
   }
 
   await prisma.wallet.update({
-    where: { userId },
+    where: { userId: resolvedUserId },
     data: { balance: newBalance, debt: newDebt },
   });
 
   const transaction = await prisma.transaction.create({
     data: {
-      userId,
+      userId: resolvedUserId,
       type: "DEPOSIT",
       amount: depositAmount,
       balanceBefore: currentBalance,
@@ -53,10 +65,10 @@ export async function POST(request: Request) {
   });
 
   prisma.user
-    .findUnique({ where: { id: userId }, select: { email: true, fullName: true } })
+    .findUnique({ where: { id: resolvedUserId }, select: { email: true, fullName: true } })
     .then((customer) =>
       onWalletEvent({
-        userId,
+        userId: resolvedUserId,
         userEmail: customer?.email,
         userName: customer?.fullName,
         title: "Nạp tiền thành công",
