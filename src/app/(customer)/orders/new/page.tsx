@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { useI18n } from "@/lib/i18n";
@@ -19,11 +20,17 @@ export default function NewOrderPage() {
   const [exchangeRate, setExchangeRate] = useState(3500);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ fullName: string; phone: string; address: string } | null>(null);
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/exchange-rate")
       .then((r) => r.json())
       .then((d) => setExchangeRate(parseFloat(d.exchange_rate)));
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setUserProfile({ fullName: d.fullName || "", phone: d.phone || "", address: d.address || "" }))
+      .catch(() => {});
   }, []);
 
   const estimatedCNY = parseFloat(form.unitPriceCNY || "0") * parseInt(form.quantity || "1");
@@ -127,10 +134,59 @@ export default function NewOrderPage() {
                 />
               </div>
 
+              {/* Địa chỉ nhận hàng tại Việt Nam */}
+              <div className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📍</span>
+                  <h3 className="text-sm font-semibold text-slate-800">Địa chỉ nhận hàng tại Việt Nam</h3>
+                </div>
+                {userProfile && userProfile.address ? (
+                  <>
+                    <dl className="space-y-1.5 text-sm">
+                      <div className="flex gap-2">
+                        <dt className="text-slate-500 shrink-0">Họ tên:</dt>
+                        <dd className="text-slate-900 font-medium">{userProfile.fullName || "—"}</dd>
+                      </div>
+                      <div className="flex gap-2">
+                        <dt className="text-slate-500 shrink-0">SĐT:</dt>
+                        <dd className="text-slate-900 font-medium">{userProfile.phone || "—"}</dd>
+                      </div>
+                      <div className="flex gap-2">
+                        <dt className="text-slate-500 shrink-0">Địa chỉ:</dt>
+                        <dd className="text-slate-900 font-medium">{userProfile.address}</dd>
+                      </div>
+                    </dl>
+                    <label className="flex items-start gap-2 cursor-pointer pt-1">
+                      <input
+                        type="checkbox"
+                        checked={addressConfirmed}
+                        onChange={(e) => setAddressConfirmed(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-slate-700">Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam.</span>
+                    </label>
+                  </>
+                ) : (
+                  <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <span className="text-lg shrink-0">⚠️</span>
+                    <div>
+                      <p className="text-sm font-medium text-amber-900">Bạn chưa có địa chỉ nhận hàng.</p>
+                      <p className="text-sm text-amber-700 mt-0.5">Vui lòng cập nhật hồ sơ trước khi tạo đơn.</p>
+                      <Link
+                        href="/profile"
+                        className="inline-block mt-2 px-4 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors"
+                      >
+                        Cập nhật hồ sơ →
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm text-sm"
+                disabled={loading || !addressConfirmed || !userProfile?.address}
+                className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm text-sm"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
