@@ -42,6 +42,7 @@ const adminNav: NavItem[] = [
   { labelKey: "nav.notificationFailures", href: "/admin/notification-failures", icon: "🔔" },
   { labelKey: "nav.customerIssues", href: "/admin/customer-issues", icon: "📋" },
   { labelKey: "nav.staffNotes", href: "/admin/staff-notes", icon: "🔖" },
+  { labelKey: "nav.crm", href: "/admin/crm", icon: "🎯" },
 ];
 
 const warehouseCNNav: NavItem[] = [
