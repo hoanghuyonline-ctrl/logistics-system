@@ -171,6 +171,14 @@ export default function SettingsPage() {
     international_shipping_rate: "",
     vietnam_delivery_fee_default: "",
   });
+  const [bankConfig, setBankConfig] = useState({
+    topup_bank_name: "",
+    topup_bank_bin: "",
+    topup_bank_account: "",
+    topup_bank_account_holder: "",
+    topup_transfer_prefix: "",
+  });
+  const [bankSaving, setBankSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [notifConfigs, setNotifConfigs] = useState<NotifConfig[]>([]);
@@ -208,6 +216,13 @@ export default function SettingsPage() {
           international_shipping_rate: d.international_shipping_rate || "35000",
           vietnam_delivery_fee_default: d.vietnam_delivery_fee_default || "30000",
         });
+        setBankConfig({
+          topup_bank_name: d.topup_bank_name || "",
+          topup_bank_bin: d.topup_bank_bin || "",
+          topup_bank_account: d.topup_bank_account || "",
+          topup_bank_account_holder: d.topup_bank_account_holder || "",
+          topup_transfer_prefix: d.topup_transfer_prefix || "",
+        });
         setLoading(false);
       });
     loadNotifConfigs();
@@ -231,6 +246,21 @@ export default function SettingsPage() {
       body: JSON.stringify(settings),
     });
     toast(res.ok ? "Đã lưu cài đặt thành công" : "Không thể lưu cài đặt", res.ok ? "success" : "error");
+  }
+
+  async function saveBankConfig(e: React.FormEvent) {
+    e.preventDefault();
+    setBankSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bankConfig),
+      });
+      toast(res.ok ? "Đã lưu cấu hình ngân hàng" : "Không thể lưu cấu hình", res.ok ? "success" : "error");
+    } finally {
+      setBankSaving(false);
+    }
   }
 
   async function saveNotifConfig(key: string) {
@@ -433,6 +463,40 @@ export default function SettingsPage() {
           ))}
           <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm">
             Lưu cài đặt
+          </button>
+        </form>
+      </Card>
+
+      <Card title="Cấu hình ngân hàng QR nạp ví">
+        <p className="text-sm text-slate-500 mb-4">
+          Thông tin này sẽ được dùng để tạo mã QR nạp ví cho khách hàng.
+        </p>
+        <form onSubmit={saveBankConfig} className="space-y-4">
+          {([
+            { key: "topup_bank_name" as const, label: "Tên ngân hàng", placeholder: "Ví dụ: Vietinbank CN Lạng Sơn", desc: "Tên ngân hàng hiển thị cho khách hàng" },
+            { key: "topup_bank_bin" as const, label: "Mã BIN ngân hàng (VietQR)", placeholder: "Ví dụ: 970415", desc: "Mã BIN ngân hàng dùng cho VietQR API (tra cứu tại vietqr.io)" },
+            { key: "topup_bank_account" as const, label: "Số tài khoản", placeholder: "Ví dụ: 110003049134", desc: "Số tài khoản ngân hàng nhận tiền" },
+            { key: "topup_bank_account_holder" as const, label: "Chủ tài khoản", placeholder: "Ví dụ: BAC TRUNG HAI LOGISTICS CO LTD", desc: "Tên chủ tài khoản ngân hàng" },
+            { key: "topup_transfer_prefix" as const, label: "Tiền tố nội dung chuyển khoản", placeholder: "Mặc định: NAPVI", desc: "Tiền tố mã tham chiếu chuyển khoản (mặc định NAPVI nếu để trống)" },
+          ]).map((f) => (
+            <div key={f.key}>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{f.label}</label>
+              <input
+                type="text"
+                value={bankConfig[f.key]}
+                onChange={(e) => setBankConfig({ ...bankConfig, [f.key]: e.target.value })}
+                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder={f.placeholder}
+              />
+              <p className="text-xs text-slate-400 mt-1">{f.desc}</p>
+            </div>
+          ))}
+          <button
+            type="submit"
+            disabled={bankSaving}
+            className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50"
+          >
+            {bankSaving ? "Đang lưu..." : "Lưu cấu hình ngân hàng"}
           </button>
         </form>
       </Card>

@@ -7,10 +7,13 @@ import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
 
-const BANK_ID = "970415"; // Vietinbank BIN
-const BANK_ACCOUNT = "110003049134";
-const BANK_NAME = "Vietinbank CN Lạng Sơn";
-const ACCOUNT_NAME = "BAC TRUNG HAI LOGISTICS CO LTD";
+interface BankConfig {
+  topup_bank_name: string;
+  topup_bank_bin: string;
+  topup_bank_account: string;
+  topup_bank_account_holder: string;
+  topup_transfer_prefix: string;
+}
 
 interface Wallet {
   balance: string;
@@ -51,6 +54,13 @@ export default function WalletPage() {
   const [topUpSaving, setTopUpSaving] = useState(false);
   const [pendingRequest, setPendingRequest] = useState<PendingTopUp | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [bankConfig, setBankConfig] = useState<BankConfig>({
+    topup_bank_name: "Vietinbank CN Lạng Sơn",
+    topup_bank_bin: "970415",
+    topup_bank_account: "110003049134",
+    topup_bank_account_holder: "BAC TRUNG HAI LOGISTICS CO LTD",
+    topup_transfer_prefix: "NAPVI",
+  });
 
   useEffect(() => {
     Promise.all([
@@ -58,12 +68,16 @@ export default function WalletPage() {
       fetch("/api/transactions?limit=10").then((r) => r.json()),
       fetch("/api/auth/me").then((r) => r.json()),
       fetch("/api/wallet/topup-request").then((r) => r.json()),
-    ]).then(([w, txData, me, pending]) => {
+      fetch("/api/wallet/bank-config").then((r) => r.json()),
+    ]).then(([w, txData, me, pending, bc]) => {
       setWallet(w);
       setTransactions(txData.transactions || []);
       setUserId(me?.id || "");
       if (pending && pending.id && pending.status === "PENDING") {
         setPendingRequest(pending);
+      }
+      if (bc && bc.topup_bank_bin) {
+        setBankConfig(bc);
       }
       setLoading(false);
     });
@@ -72,20 +86,21 @@ export default function WalletPage() {
   const transferRef = useMemo(() => {
     if (pendingRequest) return pendingRequest.transferReference;
     if (!userId) return "";
+    const prefix = bankConfig.topup_transfer_prefix || "NAPVI";
     const shortId = userId.slice(-6).toUpperCase();
     const ts = Math.floor(Date.now() / 1000).toString().slice(-6);
-    return `NAPVI${shortId}${ts}`;
-  }, [userId, showQR, pendingRequest]); // eslint-disable-line react-hooks/exhaustive-deps
+    return `${prefix}${shortId}${ts}`;
+  }, [userId, showQR, pendingRequest, bankConfig.topup_transfer_prefix]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const displayAmount = pendingRequest ? parseFloat(pendingRequest.amount) : parseInt(topUpAmount.replace(/\D/g, "") || "0", 10);
 
   const qrUrl = useMemo(() => {
     if (pendingRequest && displayAmount > 0) {
-      return `https://img.vietqr.io/image/${BANK_ID}-${BANK_ACCOUNT}-compact2.png?amount=${displayAmount}&addInfo=${encodeURIComponent(transferRef)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+      return `https://img.vietqr.io/image/${bankConfig.topup_bank_bin}-${bankConfig.topup_bank_account}-compact2.png?amount=${displayAmount}&addInfo=${encodeURIComponent(transferRef)}&accountName=${encodeURIComponent(bankConfig.topup_bank_account_holder)}`;
     }
     if (!showQR || displayAmount <= 0) return "";
-    return `https://img.vietqr.io/image/${BANK_ID}-${BANK_ACCOUNT}-compact2.png?amount=${displayAmount}&addInfo=${encodeURIComponent(transferRef)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-  }, [showQR, displayAmount, transferRef, pendingRequest]);
+    return `https://img.vietqr.io/image/${bankConfig.topup_bank_bin}-${bankConfig.topup_bank_account}-compact2.png?amount=${displayAmount}&addInfo=${encodeURIComponent(transferRef)}&accountName=${encodeURIComponent(bankConfig.topup_bank_account_holder)}`;
+  }, [showQR, displayAmount, transferRef, pendingRequest, bankConfig]);
 
   const parsedAmount = parseInt(topUpAmount.replace(/\D/g, "") || "0", 10);
 
@@ -226,16 +241,17 @@ export default function WalletPage() {
                   setShowQR(true);
                   setTopUpSaving(true);
                   try {
-                    const ref = `NAPVI${(userId || "").slice(-6).toUpperCase()}${Math.floor(Date.now() / 1000).toString().slice(-6)}`;
+                    const prefix = bankConfig.topup_transfer_prefix || "NAPVI";
+                    const ref = `${prefix}${(userId || "").slice(-6).toUpperCase()}${Math.floor(Date.now() / 1000).toString().slice(-6)}`;
                     const res = await fetch("/api/wallet/topup-request", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         amount: parsedAmount,
                         transferReference: ref,
-                        bankName: BANK_NAME,
-                        bankAccount: BANK_ACCOUNT,
-                        accountHolder: ACCOUNT_NAME,
+                        bankName: bankConfig.topup_bank_name,
+                        bankAccount: bankConfig.topup_bank_account,
+                        accountHolder: bankConfig.topup_bank_account_holder,
                       }),
                     });
                     if (res.ok) {
@@ -263,15 +279,15 @@ export default function WalletPage() {
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
                     <div className="flex gap-2">
                       <dt className="text-slate-500 shrink-0">Ngân hàng:</dt>
-                      <dd className="text-slate-900 font-medium">{BANK_NAME}</dd>
+                      <dd className="text-slate-900 font-medium">{bankConfig.topup_bank_name}</dd>
                     </div>
                     <div className="flex gap-2">
                       <dt className="text-slate-500 shrink-0">Số tài khoản:</dt>
-                      <dd className="text-slate-900 font-medium font-mono">{BANK_ACCOUNT}</dd>
+                      <dd className="text-slate-900 font-medium font-mono">{bankConfig.topup_bank_account}</dd>
                     </div>
                     <div className="flex gap-2">
                       <dt className="text-slate-500 shrink-0">Chủ tài khoản:</dt>
-                      <dd className="text-slate-900 font-medium">{ACCOUNT_NAME}</dd>
+                      <dd className="text-slate-900 font-medium">{bankConfig.topup_bank_account_holder}</dd>
                     </div>
                     <div className="flex gap-2">
                       <dt className="text-slate-500 shrink-0">Số tiền:</dt>
