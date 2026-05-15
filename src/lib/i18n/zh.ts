@@ -710,6 +710,11 @@ const zh: Record<string, string> = {
   "crm.sortActivity": "最近活动",
   "crm.activityTimeline": "活动时间线",
   "crm.noActivity": "暂无活动",
+  "nav.analyticsSummary": "总览",
+  "analytics.summaryTitle": "CRM / 营销 / 支持总览",
+  "analytics.leadsBySource": "按来源统计线索",
+  "analytics.ticketsByPriority": "按优先级统计工单",
+  "analytics.campaignsByStatus": "按状态统计活动",
 };
 
 export default zh;

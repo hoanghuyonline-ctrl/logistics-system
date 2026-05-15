@@ -44,6 +44,7 @@ const adminNav: NavItem[] = [
   { labelKey: "nav.staffNotes", href: "/admin/staff-notes", icon: "🔖" },
   { labelKey: "nav.crm", href: "/admin/crm", icon: "🎯" },
   { labelKey: "nav.campaigns", href: "/admin/campaigns", icon: "📣" },
+  { labelKey: "nav.analyticsSummary", href: "/admin/analytics-summary", icon: "📈" },
 ];
 
 const warehouseCNNav: NavItem[] = [

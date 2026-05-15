@@ -710,6 +710,11 @@ const en: Record<string, string> = {
   "crm.sortActivity": "Latest activity",
   "crm.activityTimeline": "Activity timeline",
   "crm.noActivity": "No activity yet",
+  "nav.analyticsSummary": "Summary",
+  "analytics.summaryTitle": "CRM / Marketing / Support Overview",
+  "analytics.leadsBySource": "Leads by source",
+  "analytics.ticketsByPriority": "Open tickets by priority",
+  "analytics.campaignsByStatus": "Campaigns by status",
 };
 
 export default en;
