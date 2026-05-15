@@ -506,6 +506,15 @@ const en: Record<string, string> = {
   "finance.highValue": "High value",
   "finance.customersOwing": "customers owing",
 
+  // Shipment warnings
+  "shipment.notUpdated": "Not updated",
+  "shipment.missingData": "Missing data",
+  "shipment.needsCheck": "Needs check",
+  "shipment.awaitingCustomer": "Awaiting customer",
+  "shipment.daysNoUpdate": "days no update",
+  "shipment.missingWeight": "Missing weight",
+  "shipment.missingTracking": "Missing tracking code",
+
   // Packages
   "packages.title": "Package Management",
   "packages.subtitle": "Create and manage shipping packages",

@@ -506,6 +506,15 @@ const vi: Record<string, string> = {
   "finance.highValue": "Đơn giá trị cao",
   "finance.customersOwing": "khách còn nợ",
 
+  // Shipment warnings
+  "shipment.notUpdated": "Chưa cập nhật",
+  "shipment.missingData": "Thiếu dữ liệu",
+  "shipment.needsCheck": "Cần kiểm tra",
+  "shipment.awaitingCustomer": "Chờ khách xác nhận",
+  "shipment.daysNoUpdate": "ngày chưa cập nhật",
+  "shipment.missingWeight": "Chưa có cân nặng",
+  "shipment.missingTracking": "Chưa có mã vận đơn",
+
   // Packages
   "packages.title": "Quản lý kiện hàng",
   "packages.subtitle": "Tạo và quản lý các kiện vận chuyển",

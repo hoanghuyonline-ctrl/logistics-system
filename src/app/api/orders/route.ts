@@ -79,6 +79,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, fullName: true, email: true, phone: true } },
+        package: hasRole(user.role, ["ADMIN", "ACCOUNTANT"]) ? { select: { totalWeightKg: true, barcode: true } } : false,
         orderNotes: {
           orderBy: { createdAt: "desc" },
           take: 1,

@@ -506,6 +506,15 @@ const zh: Record<string, string> = {
   "finance.highValue": "高价值",
   "finance.customersOwing": "个客户欠款",
 
+  // Shipment warnings
+  "shipment.notUpdated": "未更新",
+  "shipment.missingData": "缺少数据",
+  "shipment.needsCheck": "需检查",
+  "shipment.awaitingCustomer": "等待客户确认",
+  "shipment.daysNoUpdate": "天未更新",
+  "shipment.missingWeight": "缺少重量",
+  "shipment.missingTracking": "缺少追踪号",
+
   // Packages
   "packages.title": "包裹管理",
   "packages.subtitle": "创建和管理运输包裹",
