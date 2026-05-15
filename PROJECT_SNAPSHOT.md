@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #215 merged
+**Latest stable commit:** PR #217 merged
 
 ---
 
@@ -182,6 +182,8 @@
 - **Customer Order Detail FAQ Helpers** (PR #214) — Compact Vietnamese-first helper blocks on customer order detail page for common shipment states: SELLER_SHIPPED ("Người bán đang chuẩn bị giao hàng tới kho Trung Quốc"), SHIPPING_TO_VIETNAM ("Đơn hàng đang vận chuyển quốc tế, thời gian có thể thay đổi"), ARRIVED_VIETNAM_WH ("Kho Việt Nam đang xử lý và chuẩn bị giao"), OUT_FOR_DELIVERY ("Hàng đang được giao đến địa chỉ của bạn"); "Liên hệ hỗ trợ" section with Zalo-aware guidance (linked: message Zalo OA, unlinked: link to notification channel settings); no API/schema/notification changes
 
 - **Customer Shipping Address Confirmation** (PR #215) — Required Vietnam delivery address confirmation on customer create order page; "Địa chỉ nhận hàng tại Việt Nam" section displays customer name, phone, address from existing profile (`/api/auth/me`); required checkbox "Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam" — submit disabled until checked; missing-address warning with "Cập nhật hồ sơ →" link to `/profile` blocks submission when address is empty; Vietnamese-first; no schema/API/notification changes
+
+- **Customer Address Edit Shortcut** (PR #217) — Compact "Sửa địa chỉ" link next to "Địa chỉ nhận hàng tại Việt Nam" section title on customer create order page; links to existing `/profile` page for quick address update before placing order; only shown when address exists (missing-address state retains "Cập nhật hồ sơ →" button); Vietnamese-first; no schema/API/notification changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
