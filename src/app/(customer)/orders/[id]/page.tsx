@@ -191,7 +191,10 @@ export default function OrderDetailPage() {
       {order.status !== "CANCELLED" && (() => {
         const lastLog = order.statusLogs[order.statusLogs.length - 1];
         const delayMsg = lastLog ? getDelayWarning(order.status, lastLog.createdAt) : null;
-        const isAtVietnamWh = order.status === "ARRIVED_VIETNAM_WH" || order.status === "OUT_FOR_DELIVERY";
+        const isSellerShipped = order.status === "SELLER_SHIPPED";
+        const isShippingIntl = order.status === "SHIPPING_TO_VIETNAM";
+        const isAtVietnamWh = order.status === "ARRIVED_VIETNAM_WH";
+        const isOutForDelivery = order.status === "OUT_FOR_DELIVERY";
         const isCompleted = order.status === "COMPLETED";
 
         return (
@@ -202,7 +205,25 @@ export default function OrderDetailPage() {
                 <div>
                   <p className="text-sm font-semibold text-amber-900">Đơn hàng đang xử lý chậm hơn dự kiến</p>
                   <p className="text-sm text-amber-700 mt-1">{delayMsg}</p>
-                  <p className="text-xs text-amber-600 mt-2">Nếu cần hỗ trợ, vui lòng liên hệ nhân viên hoặc gửi khiếu nại bên dưới.</p>
+                  <p className="text-xs text-amber-600 mt-2">Đơn hàng đang chậm hơn dự kiến. Vui lòng theo dõi thêm hoặc liên hệ hỗ trợ nếu cần.</p>
+                </div>
+              </div>
+            )}
+            {isSellerShipped && !delayMsg && (
+              <div className="flex items-start gap-3 p-3 bg-sky-50 border border-sky-200 rounded-xl">
+                <span className="text-lg shrink-0">📦</span>
+                <div>
+                  <p className="text-sm font-semibold text-sky-900">Người bán đang gửi hàng</p>
+                  <p className="text-sm text-sky-700 mt-0.5">Người bán đang chuẩn bị giao hàng tới kho Trung Quốc.</p>
+                </div>
+              </div>
+            )}
+            {isShippingIntl && !delayMsg && (
+              <div className="flex items-start gap-3 p-3 bg-sky-50 border border-sky-200 rounded-xl">
+                <span className="text-lg shrink-0">🚛</span>
+                <div>
+                  <p className="text-sm font-semibold text-sky-900">Đang vận chuyển quốc tế</p>
+                  <p className="text-sm text-sky-700 mt-0.5">Đơn hàng đang vận chuyển quốc tế, thời gian có thể thay đổi.</p>
                 </div>
               </div>
             )}
@@ -210,8 +231,17 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                 <span className="text-lg shrink-0">🏠</span>
                 <div>
-                  <p className="text-sm font-semibold text-emerald-900">Hàng đã về kho Việt Nam</p>
-                  <p className="text-sm text-emerald-700 mt-0.5">Hàng đã về kho Việt Nam và đang chuẩn bị giao.</p>
+                  <p className="text-sm font-semibold text-emerald-900">Kho Việt Nam đang xử lý</p>
+                  <p className="text-sm text-emerald-700 mt-0.5">Kho Việt Nam đang xử lý và chuẩn bị giao.</p>
+                </div>
+              </div>
+            )}
+            {isOutForDelivery && !delayMsg && (
+              <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <span className="text-lg shrink-0">🚚</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Đang chuẩn bị giao hàng</p>
+                  <p className="text-sm text-emerald-700 mt-0.5">Hàng đang được giao đến địa chỉ của bạn. Vui lòng giữ điện thoại.</p>
                 </div>
               </div>
             )}
@@ -266,6 +296,29 @@ export default function OrderDetailPage() {
           <div>
             <p className="text-sm font-medium text-emerald-800">Zalo đã liên kết</p>
             <p className="text-xs text-emerald-700 mt-0.5">Bạn sẽ tự động nhận cập nhật trạng thái đơn hàng qua Zalo.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Liên hệ hỗ trợ */}
+      {order.status !== "CANCELLED" && order.status !== "COMPLETED" && (
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">💬</span>
+            <p className="text-sm font-semibold text-slate-800">Liên hệ hỗ trợ</p>
+          </div>
+          <div className="space-y-1.5 text-sm text-slate-600">
+            {zaloBound ? (
+              <p>Bạn có thể nhắn tin trực tiếp qua <span className="font-medium text-blue-700">Zalo OA Bắc Trung Hải Logistics</span> để được hỗ trợ nhanh nhất. Gửi mã đơn hàng để tra cứu trạng thái.</p>
+            ) : (
+              <p>
+                Liên kết Zalo để nhắn tin hỗ trợ trực tiếp và nhận thông báo tự động.{" "}
+                <Link href="/notifications" className="font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2">
+                  Cài đặt kênh thông báo →
+                </Link>
+              </p>
+            )}
+            <p className="text-xs text-slate-500">Hoặc gửi khiếu nại bên dưới nếu cần hỗ trợ chi tiết hơn.</p>
           </div>
         </div>
       )}
