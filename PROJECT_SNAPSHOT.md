@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #210 merged
+**Latest stable commit:** PR #212 merged
 
 ---
 
@@ -176,6 +176,8 @@
 - **Customer Order List Readability** (PR #208) — Status color dots next to order codes, left border highlights for key states (teal=arrived VN, green=delivered, red=cancelled); 8-step progress bar with step counter and time-ago for latest status change; “⚠ Chờ lâu” warning for orders pending >3 days, “🏠 Đã về VN” and “✓ Đã giao” compact indicators; “📦 Đã đóng kiện” badge when order has package; mobile-friendly layout (product inlined under order code, progress column hidden, tighter padding); 11 new i18n keys per locale (vi/en/zh); no API or schema changes
 
 - **Accountant Dashboard Quick Finance Visibility** (PR #210) — Finance health overview section on accountant dashboard and admin finance page with 5 compact indicators: customers with debt (💳), pending deposits (⏳), today refunds (↩️), high-value orders (💎), negative balances (⚠️); color-coded cards with Vietnamese health labels ("Cần xử lý", "Chờ xác nhận", "Đơn giá trị cao"); 4 lightweight API count queries added to `/api/accountant/dashboard` (customersWithDebt, negativeBalanceCount, todayRefunds, highValueOrdersToday); mobile-friendly layout on both pages; 11 new i18n keys per locale (vi/en/zh); no schema changes
+
+- **Admin Shipment Problem Visibility** (PR #212) — Compact warning badges on admin order list for problematic shipments: "Chưa cập nhật" (5+ days stale, orange), "Thiếu dữ liệu" (missing weight post-China warehouse, red), "Cần kiểm tra" (missing tracking codes, amber), "Chờ khách xác nhận" (custom status note, blue); package data (totalWeightKg, barcode) added to orders API for admin/accountant roles; multiple warnings stack with flex-wrap; 7 new i18n keys per locale (vi/en/zh); no schema changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
