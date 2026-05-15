@@ -339,6 +339,17 @@ const en: Record<string, string> = {
   "orders.order": "Order",
   "orders.customer": "Customer",
   "orders.createdOn": "Created on",
+  "orders.progress": "Progress",
+  "orders.step": "Step",
+  "orders.hasPackage": "Packaged",
+  "orders.longPending": "Long pending",
+  "orders.arrivedVN": "Arrived VN",
+  "orders.delivered": "Delivered",
+  "orders.orderCancelled": "Cancelled",
+  "orders.justNow": "Just now",
+  "orders.minutesAgo": "min ago",
+  "orders.hoursAgo": "hr ago",
+  "orders.daysAgo": "days ago",
 
   // New order
   "newOrder.title": "Create New Order",
