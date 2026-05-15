@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #208 merged
+**Latest stable commit:** PR #210 merged
 
 ---
 
@@ -174,6 +174,8 @@
 - **Admin Order Quick Actions Polish** (PR #206) — Copy order code button (clipboard icon with toast), copy customer phone button (phone icon with tooltip), quick view detail eye icon in actions column; compact status color dot next to each order code for visual scanning; mobile-friendly `whitespace-nowrap` on action buttons; fixed pre-existing `Date.now()` purity lint error; API: added `phone` to user select in orders endpoint; 4 new i18n keys per locale (vi/en/zh); no schema changes
 
 - **Customer Order List Readability** (PR #208) — Status color dots next to order codes, left border highlights for key states (teal=arrived VN, green=delivered, red=cancelled); 8-step progress bar with step counter and time-ago for latest status change; “⚠ Chờ lâu” warning for orders pending >3 days, “🏠 Đã về VN” and “✓ Đã giao” compact indicators; “📦 Đã đóng kiện” badge when order has package; mobile-friendly layout (product inlined under order code, progress column hidden, tighter padding); 11 new i18n keys per locale (vi/en/zh); no API or schema changes
+
+- **Accountant Dashboard Quick Finance Visibility** (PR #210) — Finance health overview section on accountant dashboard and admin finance page with 5 compact indicators: customers with debt (💳), pending deposits (⏳), today refunds (↩️), high-value orders (💎), negative balances (⚠️); color-coded cards with Vietnamese health labels ("Cần xử lý", "Chờ xác nhận", "Đơn giá trị cao"); 4 lightweight API count queries added to `/api/accountant/dashboard` (customersWithDebt, negativeBalanceCount, todayRefunds, highValueOrdersToday); mobile-friendly layout on both pages; 11 new i18n keys per locale (vi/en/zh); no schema changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
