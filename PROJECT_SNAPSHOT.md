@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #225 merged
+**Latest stable commit:** PR #235 merged
 
 ---
 
@@ -194,6 +194,8 @@
 - **Wallet QR Top-Up Admin Confirmation List** (PR #224) — New `WalletTopUpRequest` Prisma model (customerId, amount, transferReference, bankName, bankAccount, accountHolder, status PENDING/CONFIRMED/CANCELLED, confirmedBy, confirmedAt); customer wallet saves pending request on QR generation via `POST /api/wallet/topup-request`; admin finance page "Yêu cầu nạp tiền chờ xác nhận" section with table (customer info, amount, transfer reference with copy button, time, status); filter chips (Chờ xác nhận / Tất cả); confirm/cancel action buttons; `PATCH /api/admin/topup-requests/[id]` reuses existing wallet deposit logic (balance + debt handling), creates transaction, prevents duplicate confirmation; fire-and-forget wallet notification on confirmation; migration `20260515070000_add_wallet_topup_request`; 19 new `topup.*` i18n keys (VI/EN/ZH)
 
 - **Wallet Top-Up Safety Controls** (PR #225) — Single pending QR request per customer; `POST /api/wallet/topup-request` returns existing PENDING request instead of creating duplicate; `GET /api/wallet/topup-request` returns customer's current pending request; `DELETE /api/wallet/topup-request` allows customer to cancel own PENDING request; customer wallet page loads existing pending on mount, shows amber banner "Bạn đang có một yêu cầu nạp tiền chờ xác nhận", displays existing QR/reference, "Huỷ yêu cầu nạp tiền" cancel button; new request form hidden while pending request exists; after cancel, customer can create new request; admin/accountant confirmation flow unchanged
+
+- **Automatic CRM Lead Intake from Zalo/Facebook** (PR #235) — Incoming Zalo OA and Facebook Messenger messages automatically create/update CRM leads; new `zaloSenderId` (unique), `facebookSenderId` (unique), `isAutoCreated` fields on `Lead` model; `upsertLeadFromChannel()` in `src/lib/lead-intake.ts` deduplicates by sender ID and updates `lastContactedAt` on repeat messages; fire-and-forget pattern in both webhooks (no chatbot rewrite); CRM UI "Tự động tạo" emerald badge on auto-created leads; sort dropdown (Mới nhất / Hoạt động gần nhất) with `sort=activity` API param; migration `20260515140000_add_lead_auto_intake`; 3 new `crm.*` i18n keys (VI/EN/ZH); no mass messaging, no auto customer creation
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
