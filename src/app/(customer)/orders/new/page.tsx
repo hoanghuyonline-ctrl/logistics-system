@@ -136,9 +136,19 @@ export default function NewOrderPage() {
 
               {/* Địa chỉ nhận hàng tại Việt Nam */}
               <div className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">📍</span>
-                  <h3 className="text-sm font-semibold text-slate-800">Địa chỉ nhận hàng tại Việt Nam</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📍</span>
+                    <h3 className="text-sm font-semibold text-slate-800">Địa chỉ nhận hàng tại Việt Nam</h3>
+                  </div>
+                  {userProfile?.address && (
+                    <Link
+                      href="/profile"
+                      className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                    >
+                      Sửa địa chỉ
+                    </Link>
+                  )}
                 </div>
                 {userProfile && userProfile.address ? (
                   <>
