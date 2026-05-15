@@ -8,6 +8,15 @@ import PageHeader from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
 
+interface HealthData {
+  customersWithDebt: number;
+  negativeBalanceCount: number;
+  todayRefunds: number;
+  highValueOrdersToday: number;
+  pendingPayments: number;
+  totalDebt: number;
+}
+
 export default function FinancePage() {
   const { toast } = useToast();
   const { t } = useI18n();
@@ -24,14 +33,28 @@ export default function FinancePage() {
       date: string;
     }>;
   } | null>(null);
+  const [health, setHealth] = useState<HealthData | null>(null);
   const [depositUserId, setDepositUserId] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/analytics/profit")
-      .then((r) => r.json())
-      .then((d) => { setProfit(d); setLoading(false); })
+    Promise.all([
+      fetch("/api/analytics/profit").then((r) => r.json()),
+      fetch("/api/accountant/dashboard").then((r) => r.json()),
+    ])
+      .then(([profitData, dashData]) => {
+        setProfit(profitData);
+        setHealth({
+          customersWithDebt: dashData.customersWithDebt ?? 0,
+          negativeBalanceCount: dashData.negativeBalanceCount ?? 0,
+          todayRefunds: dashData.todayRefunds ?? 0,
+          highValueOrdersToday: dashData.highValueOrdersToday ?? 0,
+          pendingPayments: dashData.pendingPayments ?? 0,
+          totalDebt: dashData.totalDebt ?? 0,
+        });
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
 
@@ -57,6 +80,51 @@ export default function FinancePage() {
   return (
     <div>
       <PageHeader title={t("finance.title")} subtitle={t("finance.subtitle")} />
+
+      {/* Finance Health Indicators */}
+      {health && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+          <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.customersWithDebt > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
+            <span className="text-lg">💳</span>
+            <div className="min-w-0">
+              <div className="text-xs text-slate-500 truncate">{t("finance.customersWithDebt")}</div>
+              <div className="text-base font-bold text-slate-900">{health.customersWithDebt}</div>
+            </div>
+            {health.customersWithDebt > 0 && <span className="text-[10px] font-semibold text-red-600 bg-red-100 px-1.5 py-0.5 rounded whitespace-nowrap">{t("finance.needsAction")}</span>}
+          </div>
+          <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.pendingPayments > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white"}`}>
+            <span className="text-lg">⏳</span>
+            <div className="min-w-0">
+              <div className="text-xs text-slate-500 truncate">{t("finance.pendingDeposits")}</div>
+              <div className="text-base font-bold text-slate-900">{health.pendingPayments}</div>
+            </div>
+            {health.pendingPayments > 0 && <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">{t("finance.awaitingConfirm")}</span>}
+          </div>
+          <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.todayRefunds > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white"}`}>
+            <span className="text-lg">↩️</span>
+            <div className="min-w-0">
+              <div className="text-xs text-slate-500 truncate">{t("finance.todayRefunds")}</div>
+              <div className="text-base font-bold text-slate-900">{health.todayRefunds}</div>
+            </div>
+          </div>
+          <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.highValueOrdersToday > 0 ? "border-purple-200 bg-purple-50" : "border-slate-200 bg-white"}`}>
+            <span className="text-lg">💎</span>
+            <div className="min-w-0">
+              <div className="text-xs text-slate-500 truncate">{t("finance.highValueToday")}</div>
+              <div className="text-base font-bold text-slate-900">{health.highValueOrdersToday}</div>
+            </div>
+            {health.highValueOrdersToday > 0 && <span className="text-[10px] font-semibold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded whitespace-nowrap">{t("finance.highValue")}</span>}
+          </div>
+          <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.negativeBalanceCount > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
+            <span className="text-lg">⚠️</span>
+            <div className="min-w-0">
+              <div className="text-xs text-slate-500 truncate">{t("finance.negativeBalances")}</div>
+              <div className="text-base font-bold text-slate-900">{health.negativeBalanceCount}</div>
+            </div>
+            {health.negativeBalanceCount > 0 && <span className="text-[10px] font-semibold text-red-600 bg-red-100 px-1.5 py-0.5 rounded whitespace-nowrap">{t("finance.needsAction")}</span>}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
         <KPICard title={t("admin.totalRevenue")} value={`${(profit?.totalRevenue || 0).toLocaleString()} VND`} icon={<span>💰</span>} color="green" />
@@ -90,23 +158,23 @@ export default function FinancePage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.order")}</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.charged")}</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.productCost")}</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("accountant.serviceFees")}</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.shipping")}</th>
-                <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.profit")}</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.order")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.charged")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("finance.productCost")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("accountant.serviceFees")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("finance.shipping")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.profit")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {profit?.orders.map((o) => (
                 <tr key={o.orderCode} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-semibold text-slate-900">{o.orderCode}</td>
-                  <td className="px-6 py-4 text-right text-sm text-slate-700">{o.totalCharged.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-right text-sm text-slate-700">{o.productCost.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-right text-sm text-slate-700">{o.serviceFee.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-right text-sm text-slate-700">{o.shippingCosts.toLocaleString()}</td>
-                  <td className={`px-6 py-4 text-right text-sm font-semibold ${o.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  <td className="px-3 sm:px-6 py-3 text-sm font-semibold text-slate-900">{o.orderCode}</td>
+                  <td className="px-3 sm:px-6 py-3 text-right text-sm text-slate-700 whitespace-nowrap">{o.totalCharged.toLocaleString()}</td>
+                  <td className="px-3 sm:px-6 py-3 text-right text-sm text-slate-700 hidden sm:table-cell">{o.productCost.toLocaleString()}</td>
+                  <td className="px-3 sm:px-6 py-3 text-right text-sm text-slate-700 hidden sm:table-cell">{o.serviceFee.toLocaleString()}</td>
+                  <td className="px-3 sm:px-6 py-3 text-right text-sm text-slate-700 hidden sm:table-cell">{o.shippingCosts.toLocaleString()}</td>
+                  <td className={`px-3 sm:px-6 py-3 text-right text-sm font-semibold whitespace-nowrap ${o.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                     {o.profit.toLocaleString()}
                   </td>
                 </tr>
