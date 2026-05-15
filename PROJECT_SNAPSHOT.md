@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #225 merged
+**Latest stable commit:** PR #235 merged
 
 ---
 
@@ -195,6 +195,12 @@
 
 - **Wallet Top-Up Safety Controls** (PR #225) — Single pending QR request per customer; `POST /api/wallet/topup-request` returns existing PENDING request instead of creating duplicate; `GET /api/wallet/topup-request` returns customer's current pending request; `DELETE /api/wallet/topup-request` allows customer to cancel own PENDING request; customer wallet page loads existing pending on mount, shows amber banner "Bạn đang có một yêu cầu nạp tiền chờ xác nhận", displays existing QR/reference, "Huỷ yêu cầu nạp tiền" cancel button; new request form hidden while pending request exists; after cancel, customer can create new request; admin/accountant confirmation flow unchanged
 
+- **CRM Lead Management Foundation** (PR #233) — New `Lead` Prisma model with fullName, phone, email, zaloName, facebookName, source (`LeadSource` enum: ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), status (`LeadStatus` enum: NEW/CONTACTED/INTERESTED/CONVERTED/LOST), notes, assignedToId, convertedUserId; admin CRM page `/admin/crm` with dashboard stats (Leads hôm nay, Leads mới, Đã chuyển đổi, Tỉ lệ chuyển đổi), lead list table with inline status dropdown, source/status filter dropdowns, name/phone/email search, create lead form, notes modal, convert-to-customer modal (create new account or link existing user), admin assignment dropdown; `GET/POST/PUT /api/admin/leads` and `POST /api/admin/leads/convert` admin-only APIs; sidebar nav "CRM / Leads" (🎯); migration `20260515120000_add_lead_crm`; 50+ `crm.*` i18n keys (VI/EN/ZH)
+
+- **CRM Follow-Up Reminders** (PR #234) — Added `nextFollowUpAt`, `lastContactedAt`, `followUpNote` fields to Lead model; stats endpoint returns `followUpTodayCount` and `overdueCount`; list endpoint supports `?followUp=today|overdue` filter; 2 new clickable stat cards "Chăm sóc hôm nay" (orange) and "Quá hạn chăm sóc" (red); "Chăm sóc" column in lead table with overdue badge (⚠️); 📞 "Đã liên hệ" button marks lead as CONTACTED with timestamp; 📅 follow-up scheduling modal with date picker + note; notes modal shows follow-up note and last contacted time; migration `20260515130000_add_lead_followup_fields`; 14 new `crm.*` i18n keys per locale (VI/EN/ZH)
+
+- **Automatic CRM Lead Intake from Zalo/Facebook** (PR #235) — Incoming Zalo OA and Facebook Messenger messages automatically create/update CRM leads; new `zaloSenderId` (unique), `facebookSenderId` (unique), `isAutoCreated` fields on `Lead` model; `upsertLeadFromChannel()` in `src/lib/lead-intake.ts` deduplicates by sender ID and updates `lastContactedAt` on repeat messages; fire-and-forget pattern in both webhooks (no chatbot rewrite); CRM UI "Tự động tạo" emerald badge on auto-created leads; sort dropdown (Mới nhất / Hoạt động gần nhất) with `sort=activity` API param; migration `20260515140000_add_lead_auto_intake`; 3 new `crm.*` i18n keys (VI/EN/ZH); no mass messaging, no auto customer creation
+
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
 ## Stack
@@ -239,7 +245,7 @@
 | `/api/analytics` | GET | Dashboard analytics |
 | `/api/accountant/dashboard` | GET | Accountant financial KPIs and recent transactions |
 | `/api/telegram/webhook` | POST | Telegram chatbot webhook (public, no auth) |
-| `/api/zalo/webhook` | POST | Zalo OA webhook — auto-reply, order lookup, sender ID binding (public, no auth) |
+| `/api/zalo/webhook` | POST | Zalo OA webhook — auto-reply, order lookup, sender ID binding, lead intake (public, no auth) |
 | `/api/admin/notifications/health` | GET | Notification channel readiness status (ADMIN-only) |
 | `/api/admin/support-knowledge` | GET/POST | List/create support knowledge entries (ADMIN-only) |
 | `/api/admin/support-knowledge/[id]` | PATCH/DELETE | Update/delete support knowledge entry (ADMIN-only) |
@@ -249,6 +255,9 @@
 | `/api/admin/system-health` | GET | System/chatbot/operational health status (ADMIN-only) |
 | `/api/admin/notifications/failures` | GET/POST | Notification failure list and retry (ADMIN-only) |
 | `/api/admin/quick-views` | GET | Quick operational view counts for dashboard (ADMIN-only) |
+| `/api/admin/leads` | GET/POST/PUT | CRM lead list (search, source/status/followUp filters, sort=activity), create, update (ADMIN-only) |
+| `/api/admin/leads/convert` | POST | Convert lead to customer account (ADMIN-only) |
+| `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models
 
@@ -268,8 +277,9 @@
 | **CustomerIssue** | id, customerId, orderCode, issueType, description, status, assignedTo, resolution |
 | **StaffNote** | id, title, content, orderCode, priority, resolved, createdBy |
 | **WalletTopUpRequest** | id, customerId, amount, transferReference, bankName, bankAccount, accountHolder, status (PENDING/CONFIRMED/CANCELLED), confirmedBy, confirmedAt |
+| **Lead** | id, fullName, phone, email, zaloName, facebookName, zaloSenderId (unique), facebookSenderId (unique), source (LeadSource), status (LeadStatus), isAutoCreated, notes, assignedToId, convertedUserId, nextFollowUpAt, lastContactedAt, followUpNote |
 
-**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType
+**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType, LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST)
 
 ## Remaining Major Tasks
 
