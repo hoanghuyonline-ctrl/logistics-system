@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-15
 **Branch:** `main`
-**Latest stable commit:** PR #204 merged
+**Latest stable commit:** PR #206 merged
 
 ---
 
@@ -170,6 +170,8 @@
 - **Admin User Management Actions** (PR #202) — Edit user modal (name, email, role, active status) with PUT API email uniqueness check; safe delete/deactivate via `isActive: false` with Vietnamese confirmation dialog and self-delete protection (frontend + API); "Xuất Excel" export button downloads `users-export-YYYY-MM-DD.xlsx` with Vietnamese column headers (Họ tên, Email, Vai trò, Số dư, Trạng thái); `xlsx` npm dependency added; 20 new i18n keys per locale (vi/en/zh); no schema changes
 
 - **Admin User Detail Quick Overview** (PR #204) — Compact quick-info badges on admin user table rows: order count badge (blue/grey), Zalo linked status indicator (green/grey with tooltip), "Có đơn gần đây" amber badge for orders updated within 7 days, latest order activity time-ago text below balance; API extended with `_count.orders`, `zaloRecipientId`, `updatedAt`, latest order `updatedAt` (take: 1); 7 new i18n keys per locale (vi/en/zh); no schema changes
+
+- **Admin Order Quick Actions Polish** (PR #206) — Copy order code button (clipboard icon with toast), copy customer phone button (phone icon with tooltip), quick view detail eye icon in actions column; compact status color dot next to each order code for visual scanning; mobile-friendly `whitespace-nowrap` on action buttons; fixed pre-existing `Date.now()` purity lint error; API: added `phone` to user select in orders endpoint; 4 new i18n keys per locale (vi/en/zh); no schema changes
 
 **Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
 
