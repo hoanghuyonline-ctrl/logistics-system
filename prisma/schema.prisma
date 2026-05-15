@@ -306,6 +306,23 @@ model StaffNote {
   author User @relation("StaffNotes", fields: [createdBy], references: [id])
 }
 
+model BankWebhookLog {
+  id                String   @id @default(uuid())
+  provider          String
+  transactionId     String
+  rawPayload        String
+  status            String   @default("RECEIVED")
+  transferReference String?
+  amount            Decimal? @db.Decimal(15, 2)
+  accountNumber     String?
+  transactionTime   DateTime?
+  errorReason       String?
+  topUpRequestId    String?
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, transactionId])
+}
+
 model WalletTopUpRequest {
   id                String   @id @default(uuid())
   customerId        String

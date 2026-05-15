@@ -17,6 +17,18 @@ interface HealthData {
   totalDebt: number;
 }
 
+interface WebhookLog {
+  id: string;
+  provider: string;
+  transactionId: string;
+  status: string;
+  transferReference: string | null;
+  amount: string | null;
+  accountNumber: string | null;
+  errorReason: string | null;
+  createdAt: string;
+}
+
 interface TopUpRequest {
   id: string;
   customerId: string;
@@ -57,14 +69,16 @@ export default function FinancePage() {
   const [topUpRequests, setTopUpRequests] = useState<TopUpRequest[]>([]);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [topUpFilter, setTopUpFilter] = useState<"PENDING" | "ALL">("PENDING");
+  const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/analytics/profit").then((r) => r.json()),
       fetch("/api/accountant/dashboard").then((r) => r.json()),
       fetch("/api/admin/topup-requests").then((r) => r.json()),
+      fetch("/api/admin/webhook-logs").then((r) => r.json()).catch(() => []),
     ])
-      .then(([profitData, dashData, topUpData]) => {
+      .then(([profitData, dashData, topUpData, webhookData]) => {
         setProfit(profitData);
         setHealth({
           customersWithDebt: dashData.customersWithDebt ?? 0,
@@ -75,6 +89,7 @@ export default function FinancePage() {
           totalDebt: dashData.totalDebt ?? 0,
         });
         setTopUpRequests(Array.isArray(topUpData) ? topUpData : []);
+        setWebhookLogs(Array.isArray(webhookData) ? webhookData : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -350,6 +365,57 @@ export default function FinancePage() {
           </form>
         </Card>
       </div>
+
+      {/* Bank Webhook Logs */}
+      <Card title={t("finance.webhookLogsTitle")} noPadding className="mb-8">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("finance.webhookProvider")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("finance.webhookTxId")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("finance.webhookRef")}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">{t("common.amount")}</th>
+                <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">{t("topup.status")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("finance.webhookError")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("topup.time")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {webhookLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-3 py-2.5 text-xs font-medium text-slate-700">{log.provider}</td>
+                  <td className="px-3 py-2.5 text-xs text-slate-600 font-mono">{log.transactionId.slice(0, 12)}...</td>
+                  <td className="px-3 py-2.5 text-xs text-slate-600 hidden sm:table-cell">{log.transferReference || "—"}</td>
+                  <td className="px-3 py-2.5 text-xs text-right text-slate-700">{log.amount ? parseFloat(log.amount).toLocaleString() : "—"}</td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className={`inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                      log.status === "CONFIRMED" ? "bg-emerald-100 text-emerald-700" :
+                      log.status === "FAILED" ? "bg-red-100 text-red-700" :
+                      log.status === "DUPLICATE" ? "bg-purple-100 text-purple-700" :
+                      "bg-slate-100 text-slate-600"
+                    }`}>
+                      {log.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-xs text-red-500 hidden sm:table-cell">{log.errorReason || "—"}</td>
+                  <td className="px-3 py-2.5 text-xs text-slate-500 hidden sm:table-cell">{new Date(log.createdAt).toLocaleString("vi-VN")}</td>
+                </tr>
+              ))}
+              {webhookLogs.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-3 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-2xl">{"\uD83D\uDD14"}</span>
+                      <p className="text-sm text-slate-500">{t("finance.webhookNoLogs")}</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       <Card title={t("finance.profitByOrder")} noPadding>
         <div className="overflow-x-auto">
