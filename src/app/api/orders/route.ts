@@ -78,7 +78,7 @@ export async function GET(request: Request) {
       take: limit,
       orderBy: { createdAt: "desc" },
       include: {
-        user: { select: { id: true, fullName: true, email: true } },
+        user: { select: { id: true, fullName: true, email: true, phone: true } },
         orderNotes: {
           orderBy: { createdAt: "desc" },
           take: 1,
