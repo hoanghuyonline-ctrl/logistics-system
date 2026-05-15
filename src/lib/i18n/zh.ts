@@ -707,6 +707,8 @@ const zh: Record<string, string> = {
   "crm.autoCreated": "自动创建",
   "crm.sortNewest": "最新",
   "crm.sortActivity": "最近活动",
+  "crm.activityTimeline": "活动时间线",
+  "crm.noActivity": "暂无活动",
 };
 
 export default zh;

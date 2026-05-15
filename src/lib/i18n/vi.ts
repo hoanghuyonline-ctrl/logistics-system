@@ -707,6 +707,8 @@ const vi: Record<string, string> = {
   "crm.autoCreated": "Tự động tạo",
   "crm.sortNewest": "Mới nhất",
   "crm.sortActivity": "Hoạt động gần nhất",
+  "crm.activityTimeline": "Lịch sử hoạt động",
+  "crm.noActivity": "Chưa có hoạt động",
 };
 
 export default vi;

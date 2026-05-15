@@ -111,6 +111,7 @@ model User {
   topUpConfirmations WalletTopUpRequest[] @relation("TopUpConfirmations")
   assignedLeads      Lead[]               @relation("LeadAssignee")
   convertedFromLeads Lead[]               @relation("LeadConvertedUser")
+  leadActivities     LeadActivity[]       @relation("LeadActivityActor")
 }
 
 model Wallet {
@@ -379,6 +380,21 @@ model Lead {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
-  assignedTo    User? @relation("LeadAssignee", fields: [assignedToId], references: [id])
-  convertedUser User? @relation("LeadConvertedUser", fields: [convertedUserId], references: [id])
+  assignedTo    User?          @relation("LeadAssignee", fields: [assignedToId], references: [id])
+  convertedUser User?          @relation("LeadConvertedUser", fields: [convertedUserId], references: [id])
+  activities    LeadActivity[]
+}
+
+model LeadActivity {
+  id        String   @id @default(uuid())
+  leadId    String
+  action    String
+  detail    String?
+  actorId   String?
+  createdAt DateTime @default(now())
+
+  lead  Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actor User? @relation("LeadActivityActor", fields: [actorId], references: [id])
+
+  @@index([leadId, createdAt])
 }
