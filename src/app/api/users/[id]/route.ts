@@ -39,11 +39,24 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/users/[id]">
 
   const { id } = await ctx.params;
   const body = await req.json();
-  const { fullName, phone, address, role, isActive } = body;
+  const { fullName, email, phone, address, role, isActive } = body;
+
+  if (email) {
+    const existing = await prisma.user.findFirst({ where: { email, NOT: { id } } });
+    if (existing) return errorResponse("Email already exists", 409);
+  }
+
+  const data: Record<string, unknown> = {};
+  if (fullName !== undefined) data.fullName = fullName;
+  if (email !== undefined) data.email = email;
+  if (phone !== undefined) data.phone = phone;
+  if (address !== undefined) data.address = address;
+  if (role !== undefined) data.role = role;
+  if (isActive !== undefined) data.isActive = isActive;
 
   const updated = await prisma.user.update({
     where: { id },
-    data: { fullName, phone, address, role, isActive },
+    data,
     select: { id: true, email: true, fullName: true, role: true, isActive: true },
   });
 
@@ -57,6 +70,11 @@ export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/users/[id
   }
 
   const { id } = await ctx.params;
+
+  if (id === user.id) {
+    return errorResponse("Cannot deactivate your own account", 400);
+  }
+
   await prisma.user.update({
     where: { id },
     data: { isActive: false },
