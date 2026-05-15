@@ -22,6 +22,7 @@ export async function GET() {
     notifFailures,
     unansweredQuestions,
     unresolvedNotes,
+    pendingDeposits,
   ] = await Promise.all([
     prisma.order.count({ where: { status: "PENDING" } }),
     prisma.order.count({
@@ -40,6 +41,7 @@ export async function GET() {
     prisma.notificationFailure.count({ where: { resolved: false } }),
     prisma.chatbotUnansweredQuestion.count({ where: { resolved: false } }),
     prisma.staffNote.count({ where: { resolved: false } }),
+    prisma.walletTopUpRequest.count({ where: { status: "PENDING" } }),
   ]);
 
   return jsonResponse({
@@ -51,5 +53,6 @@ export async function GET() {
     notifFailures,
     unansweredQuestions,
     unresolvedNotes,
+    pendingDeposits,
   });
 }
