@@ -223,13 +223,21 @@ export default function NewOrderPage() {
               <div className="border-t border-white/20 pt-3 mt-3">
                 <div className="flex justify-between items-end">
                   <span className="text-blue-100 font-medium">{t("newOrder.estimatedTotal")}</span>
-                  <span className="text-xl font-bold">{estimatedVND.toLocaleString()} VND</span>
+                  <div className="text-right">
+                    <span className="text-xl font-bold">{estimatedVND.toLocaleString()} VND</span>
+                    <span className="block text-xs text-blue-200 mt-0.5">({t("newOrder.estimateOnly")})</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-blue-200 mt-4 leading-relaxed">
-              {t("newOrder.finalCostNote")}
-            </p>
+            <div className="mt-4 p-3 bg-white/10 rounded-xl border border-white/20">
+              <p className="text-xs text-white leading-relaxed font-medium">
+                💡 {t("newOrder.contactCompanyNote")}
+              </p>
+              <p className="text-xs text-blue-200 mt-1 leading-relaxed">
+                {t("newOrder.priceConfirmNote")}
+              </p>
+            </div>
           </div>
         </div>
       </div>

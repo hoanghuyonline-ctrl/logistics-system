@@ -392,6 +392,11 @@ export default function OrderDetailPage() {
               <dd className="text-xl font-bold text-blue-600">{fmt(order.totalCostVND)} VND</dd>
             </div>
           </dl>
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-xs text-amber-800 leading-relaxed">
+              💡 {t("newOrder.contactCompanyNote")} {t("newOrder.priceConfirmNote")}
+            </p>
+          </div>
         </Card>
       </div>
 
