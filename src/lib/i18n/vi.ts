@@ -199,6 +199,7 @@ const vi: Record<string, string> = {
     "nav.customerIssues": "Khiếu nại",
     "nav.customerAlerts": "Cảnh báo KH",
     "nav.staffNotes": "Bàn giao",
+    "nav.leads": "Khách hàng mới",
 
   // Warehouse scan
   "scan.title": "Quét hàng",
