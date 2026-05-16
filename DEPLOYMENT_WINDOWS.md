@@ -422,6 +422,62 @@ docker stats
 
 ---
 
+## Standalone Deploy (Without Docker) — Troubleshooting
+
+If you use `scripts/deploy-standalone.ps1` instead of Docker:
+
+### Common Issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| White screen / no CSS | `.next/standalone/.next/static` missing | Re-run `deploy-standalone.ps1` — it copies static assets automatically |
+| Missing images/favicon | `.next/standalone/public` missing | Re-run `deploy-standalone.ps1` — it copies public folder automatically |
+| "Cannot find module prisma" | `node_modules/.prisma` not copied | Run `npx prisma generate` then re-run deploy script |
+| Build fails silently | Interrupted build left corrupt `.next` | Delete `.next` folder entirely, then `npm run build` |
+| PM2 shows "errored" | Missing `.env` or wrong `DATABASE_URL` | Check `.env` file exists in project root with valid settings |
+| Port already in use | Another process on port 3000 | `$env:PORT=3001; node .next\standalone\server.js` |
+| "next.config.ts: output must be standalone" | Config missing | Add `output: "standalone"` to `next.config.ts` |
+
+### Safe Rebuild Sequence (PowerShell)
+
+If things go wrong, this sequence always produces a clean deploy:
+
+```powershell
+# 1. Stop PM2 process (if running)
+pm2 stop logistics-system 2>$null
+
+# 2. Clean previous build
+Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
+
+# 3. Reinstall dependencies
+npm install
+
+# 4. Regenerate Prisma client
+npx prisma generate
+
+# 5. Deploy
+powershell -File scripts\deploy-standalone.ps1
+
+# 6. Start
+pm2 start .next\standalone\server.js --name logistics-system
+pm2 save
+```
+
+### Verifying a Standalone Deploy
+
+After deploy, check these paths exist:
+
+```powershell
+# All three must exist for the app to work correctly:
+Test-Path .next\standalone\server.js          # Core server
+Test-Path .next\standalone\.next\static       # CSS/JS assets
+Test-Path .next\standalone\public             # Images/favicon
+```
+
+If any are missing, re-run `scripts\deploy-standalone.ps1`.
+
+---
+
 ## Architecture Diagram (Docker on Windows)
 
 ```
