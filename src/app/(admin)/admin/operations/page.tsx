@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Link from "next/link";
+import { playAlertBeep, triggerVibration, isAlertEnabled, setAlertEnabled as persistAlertEnabled } from "@/lib/alertSound";
 
 /* ─── types ─── */
 
@@ -110,47 +111,6 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
 
 /* ─── alert helpers ─── */
 
-const ALERT_STORAGE_KEY = "admin_ops_alert_enabled";
-
-function playAlertBeep() {
-  try {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 880;
-    osc.type = "square";
-    gain.gain.value = 0.15;
-    osc.start();
-    osc.stop(ctx.currentTime + 0.15);
-    setTimeout(() => {
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.frequency.value = 1100;
-      osc2.type = "square";
-      gain2.gain.value = 0.15;
-      osc2.start();
-      osc2.stop(ctx.currentTime + 0.2);
-      setTimeout(() => ctx.close(), 300);
-    }, 180);
-  } catch {
-    /* Web Audio not supported */
-  }
-}
-
-function triggerVibration() {
-  try {
-    if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 200]);
-    }
-  } catch {
-    /* Vibration API not supported */
-  }
-}
-
 /* ─── main component ─── */
 
 export default function AdminOperationsPage() {
@@ -169,11 +129,7 @@ export default function AdminOperationsPage() {
   const alertEnabledRef = useRef(true);
 
   /* alert toggle */
-  const [alertEnabled, setAlertEnabled] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const stored = localStorage.getItem(ALERT_STORAGE_KEY);
-    return stored === null ? true : stored === "true";
-  });
+  const [alertEnabled, setAlertEnabled] = useState(() => isAlertEnabled());
 
   useEffect(() => {
     alertEnabledRef.current = alertEnabled;
@@ -182,7 +138,7 @@ export default function AdminOperationsPage() {
   const toggleAlert = useCallback(() => {
     setAlertEnabled((prev) => {
       const next = !prev;
-      localStorage.setItem(ALERT_STORAGE_KEY, String(next));
+      persistAlertEnabled(next);
       return next;
     });
   }, []);
