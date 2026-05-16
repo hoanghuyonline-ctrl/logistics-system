@@ -113,6 +113,22 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
   KHAC: "Khác",
 };
 
+/* ─── deploy check types ─── */
+
+interface EndpointCheck {
+  label: string;
+  url: string;
+  status: "pending" | "ok" | "error" | "forbidden";
+  ms?: number;
+}
+
+const DEPLOY_ENDPOINTS: { label: string; url: string }[] = [
+  { label: "Hệ thống (health)", url: "/api/health" },
+  { label: "Phiên đăng nhập", url: "/api/auth/me" },
+  { label: "Đơn hàng", url: "/api/orders?limit=1" },
+  { label: "Ví tiền", url: "/api/wallet" },
+];
+
 /* ─── alert helpers ─── */
 
 /* ─── main component ─── */
@@ -131,6 +147,43 @@ export default function AdminOperationsPage() {
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
   const alertEnabledRef = useRef(true);
+
+  /* deploy check state */
+  const [deployChecks, setDeployChecks] = useState<EndpointCheck[]>([]);
+  const [deployCheckedAt, setDeployCheckedAt] = useState<Date | null>(null);
+  const [deployChecking, setDeployChecking] = useState(false);
+
+  const runDeployCheck = useCallback(async () => {
+    setDeployChecking(true);
+    const results: EndpointCheck[] = DEPLOY_ENDPOINTS.map((e) => ({
+      ...e,
+      status: "pending" as const,
+    }));
+    setDeployChecks([...results]);
+
+    await Promise.all(
+      results.map(async (ep, i) => {
+        const t0 = performance.now();
+        try {
+          const r = await fetch(ep.url);
+          const ms = Math.round(performance.now() - t0);
+          if (r.ok) {
+            results[i] = { ...ep, status: "ok", ms };
+          } else if (r.status === 401 || r.status === 403) {
+            results[i] = { ...ep, status: "forbidden", ms };
+          } else {
+            results[i] = { ...ep, status: "error", ms };
+          }
+        } catch {
+          const ms = Math.round(performance.now() - t0);
+          results[i] = { ...ep, status: "error", ms };
+        }
+      })
+    );
+    setDeployChecks([...results]);
+    setDeployCheckedAt(new Date());
+    setDeployChecking(false);
+  }, []);
 
   /* alert toggle */
   const [alertEnabled, setAlertEnabled] = useState(() => isAlertEnabled());
@@ -692,6 +745,95 @@ export default function AdminOperationsPage() {
                       Retry {f.retryCount}/3
                     </span>
                     <div className="text-[10px] text-slate-400 mt-0.5">{timeAgo(f.createdAt)} trước</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 7: KIỂM TRA SAU DEPLOY
+          ═══════════════════════════════════════════ */}
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            🩺 Kiểm tra sau deploy
+            {deployChecks.length > 0 && !deployChecking && (
+              deployChecks.every((c) => c.status === "ok" || c.status === "forbidden") ? (
+                <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                  Hệ thống hoạt động
+                </span>
+              ) : deployChecks.some((c) => c.status === "error") ? (
+                <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                  Có lỗi
+                </span>
+              ) : null
+            )}
+          </h2>
+          <div className="flex items-center gap-3">
+            {deployCheckedAt && (
+              <span className="text-[11px] text-slate-400">
+                Lần kiểm tra: {deployCheckedAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            )}
+            <button
+              onClick={runDeployCheck}
+              disabled={deployChecking}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline disabled:text-slate-400 disabled:no-underline flex items-center gap-1"
+            >
+              {deployChecking ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                  Đang kiểm tra...
+                </>
+              ) : (
+                <>🔄 Kiểm tra ngay</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {deployChecks.length === 0 ? (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center text-sm text-slate-500">
+            Nhấn &quot;Kiểm tra ngay&quot; để kiểm tra các endpoint sau deploy
+          </div>
+        ) : (
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="divide-y divide-slate-100">
+              {deployChecks.map((ep) => (
+                <div key={ep.url} className="flex items-center justify-between px-3 sm:px-4 py-2.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm shrink-0">
+                      {ep.status === "pending" && "⏳"}
+                      {ep.status === "ok" && "✅"}
+                      {ep.status === "error" && "❌"}
+                      {ep.status === "forbidden" && "🚫"}
+                    </span>
+                    <div>
+                      <span className="text-sm font-medium text-slate-900">{ep.label}</span>
+                      <span className="text-[11px] text-slate-400 ml-2 hidden sm:inline">{ep.url}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {ep.ms !== undefined && (
+                      <span className="text-[10px] text-slate-400">{ep.ms}ms</span>
+                    )}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      ep.status === "ok"
+                        ? "bg-green-100 text-green-700"
+                        : ep.status === "error"
+                          ? "bg-red-100 text-red-700"
+                          : ep.status === "forbidden"
+                            ? "bg-slate-100 text-slate-500"
+                            : "bg-blue-50 text-blue-500"
+                    }`}>
+                      {ep.status === "ok" && "OK"}
+                      {ep.status === "error" && "Lỗi"}
+                      {ep.status === "forbidden" && "Không áp dụng"}
+                      {ep.status === "pending" && "Đang kiểm tra"}
+                    </span>
                   </div>
                 </div>
               ))}
