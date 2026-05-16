@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-16
 **Branch:** `main`
-**Latest stable commit:** Post PR #275 (authenticated dashboard resilience hotfix)
+**Latest stable commit:** Post PR #278 (customer dashboard UI resilience attempt — unresolved in production)
 
 ---
 
@@ -231,6 +231,8 @@
 - **withErrorHandler Type Fix** (PR #274) — Fixed TypeScript type mismatch in `withErrorHandler` utility
 - **Dashboard Resilience Improvements** (PR #272) — Initial dashboard resilience improvements
 - **HOTFIX: Authenticated Dashboard Resilience for All Roles** (PR #275) — Production hotfix resolving "Không thể tải dữ liệu. Vui lòng thử lại." blank-screen failures on all authenticated dashboards. Root cause: server-side `Promise.all` with unsafe Prisma queries (invalid `package: false` in include, unsafe Decimal conversions, null relation access) combined with client-side all-or-nothing error handling. **Server-side fixes (7 API routes):** added `safeQuery(promise, fallback)` and `safeDecimal(val)` utilities to `src/lib/utils.ts`; wrapped every Prisma query in dashboard APIs with `safeQuery()` so one failing query no longer crashes the entire `Promise.all`; fixed `/api/orders` route invalid `package: false` Prisma include (conditionally-built include object instead); safe Decimal conversions in accountant/analytics dashboards; null-safety on user relation access in customer-alerts. **Client-side fixes (6 dashboard pages):** Customer, Admin, Vietnam warehouse dashboards switched from `Promise.all` to `Promise.allSettled` with partial data display; Admin operations page added `safeFetch` wrapper tolerating individual API failures; China/Vietnam warehouse dashboards added null-safety on `user.fullName`. **Roles protected:** CUSTOMER, ADMIN, ACCOUNTANT, WAREHOUSE_CN, WAREHOUSE_VN. 13 files changed; no schema changes; no new dependencies
+- **Docs Checkpoint** (PR #276) — PROJECT_SNAPSHOT.md update after PR #275 authenticated dashboard resilience hotfix
+- **Customer Dashboard UI Resilience Attempt** (PR #278) — Added fallback card rendering on customer dashboard when API calls fail, replacing blank-screen with graceful degradation. **However, production still shows the old full-page error screen** ("Không thể tải dữ liệu. Vui lòng thử lại.") — PR #278 may not affect the production-rendered route, or another component/layout owns that error screen. See Unresolved Issues below
 
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
@@ -259,7 +261,7 @@ pm2 save
 - `.next/static` and `public` must be copied into `.next/standalone/` after every build (CSS/images break without this)
 - `/api/health` is now a public route (no auth) for Docker/nginx healthchecks
 
-**Deploy notes (PRs #272–#275 — Authenticated Dashboard Resilience):**
+**Deploy notes (PRs #272–#278 — Dashboard Resilience + Customer UI Attempt):**
 No migration needed. No new dependencies. After merging:
 ```powershell
 cd /d D:\BacTrungHai\logistics-system
@@ -271,6 +273,8 @@ xcopy /E /I /Y public .next\standalone\public
 pm2 restart logistics-system
 ```
 **Critical:** PM2 `watch` must remain `false`. Production deploy style unchanged: Windows + PM2 + `next start -p 3000 -H 0.0.0.0`.
+
+**⚠️ Post-deploy note (PR #278):** After deploying PR #278, the CUSTOMER `/dashboard` still shows the old full-page error screen ("Không thể tải dữ liệu. Vui lòng thử lại."). The fix in PR #278 may not reach the component/layout that actually renders in production. Investigation needed — see Unresolved Issues.
 
 **Deploy notes (PR #251):** No migration needed. Rebuild and restart. After deploy, test PWA install: open `/scanner` on Android Chrome → Menu ⋮ → "Add to Home Screen" → app should open standalone without browser chrome. On iOS Safari → Share → "Add to Home Screen". Icons appear as emerald "QK" on dark background.
 
@@ -374,6 +378,10 @@ pm2 restart logistics-system
 - API route smoke tests (orders, warehouse scan, status transitions)
 - Comprehensive E2E test suite (Playwright)
 
+## Unresolved Issues
+
+1. **CUSTOMER /dashboard full-page error persists in production** — After PRs #275 and #278, the customer dashboard still shows "Không thể tải dữ liệu. Vui lòng thử lại." full-page error screen in production. PR #275 hardened all dashboard APIs with `safeQuery`/`safeDecimal` and switched client-side fetches to `Promise.allSettled`. PR #278 added fallback card rendering on the customer dashboard page. Despite both merges, the production error screen remains unchanged. **Likely root cause:** the component or layout rendering the error may be a different file than what PR #278 modified, or Next.js may be serving a cached/different route. **Next work:** identify which exact component/path renders the old full-page error in production (check `(customer)/dashboard/page.tsx` vs layout vs error boundary vs middleware redirect), and confirm the deployed build includes PR #278 changes.
+
 ## Known Risks / Issues
 
 1. **ShipmentStatus ↔ OrderStatus mapping** — PENDING/PURCHASED/SELLER_SHIPPED collapse into single ShipmentStatus.PENDING. Legacy fallback in `/api/orders/[id]/status` preserves finer-grained transitions; removing it would break those flows.
@@ -396,7 +404,8 @@ pm2 restart logistics-system
 18. **Zalo auto-bind requires customer initiative** — customers must message the OA at least once with a valid order code to bind their Zalo recipient ID; no admin-side manual binding yet.
 18. **Smoke tests cover storage only** — 5 Vitest tests for `LocalStorageProvider`; API route and E2E tests not yet implemented.
 19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
-24. **Windows standalone deployment now stable** (resolved PRs #264–#266) — PM2 runs `next start` via `node_modules/next/dist/bin/next`; `/api/health` public; `@prisma/adapter-pg` externalized; CSS/static assets require manual copy after build.
+24. **Windows standalone deployment now stable** (resolved PRs #264–#266) — PM2 runs `next start` via `node_modules/next/dist/bin/next`; `/api/health` public and verified working; `@prisma/adapter-pg` externalized; CSS/static assets require manual copy after build. PM2 `watch` must remain `false`. Static/public copy remains required after every build.
+25. **CUSTOMER /dashboard error not yet resolved** — See Unresolved Issues section above. PRs #275 and #278 attempted fixes but production still shows old full-page error screen.
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
