@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler, safeQuery, safeDecimal } from "@/lib/utils";
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
@@ -12,6 +12,8 @@ export const GET = withErrorHandler(async function GET() {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const emptyAggregate = { _sum: { debt: null, amount: null }, _count: 0 } as never;
 
   const [
     completedOrders,
@@ -26,25 +28,25 @@ export const GET = withErrorHandler(async function GET() {
     todayRefunds,
     highValueOrdersToday,
   ] = await Promise.all([
-    prisma.order.findMany({
+    safeQuery(prisma.order.findMany({
       where: { status: "COMPLETED" },
       select: { totalCostVND: true, totalPriceVND: true, serviceFeeVND: true },
-    }),
-    prisma.order.count({
+    }), []),
+    safeQuery(prisma.order.count({
       where: { status: { in: ["PENDING", "PURCHASED", "SELLER_SHIPPED"] } },
-    }),
-    prisma.wallet.aggregate({ _sum: { debt: true } }),
-    prisma.transaction.aggregate({
+    }), 0),
+    safeQuery(prisma.wallet.aggregate({ _sum: { debt: true } }), emptyAggregate),
+    safeQuery(prisma.transaction.aggregate({
       where: { type: "DEPOSIT" },
       _sum: { amount: true },
       _count: true,
-    }),
-    prisma.transaction.aggregate({
+    }), emptyAggregate),
+    safeQuery(prisma.transaction.aggregate({
       where: { type: "DEPOSIT", createdAt: { gte: monthStart } },
       _sum: { amount: true },
       _count: true,
-    }),
-    prisma.transaction.findMany({
+    }), emptyAggregate),
+    safeQuery(prisma.transaction.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
       select: {
@@ -56,25 +58,25 @@ export const GET = withErrorHandler(async function GET() {
         user: { select: { fullName: true, email: true } },
         order: { select: { orderCode: true } },
       },
-    }),
-    prisma.order.groupBy({
+    }), []),
+    safeQuery(prisma.order.groupBy({
       by: ["status"],
       _count: { status: true },
-    }),
-    prisma.wallet.count({ where: { debt: { gt: 0 } } }),
-    prisma.wallet.count({ where: { balance: { lt: 0 } } }),
-    prisma.transaction.count({ where: { type: "REFUND", createdAt: { gte: todayStart } } }),
-    prisma.order.count({ where: { createdAt: { gte: todayStart }, totalCostVND: { gte: 5000000 } } }),
+    }), []),
+    safeQuery(prisma.wallet.count({ where: { debt: { gt: 0 } } }), 0),
+    safeQuery(prisma.wallet.count({ where: { balance: { lt: 0 } } }), 0),
+    safeQuery(prisma.transaction.count({ where: { type: "REFUND", createdAt: { gte: todayStart } } }), 0),
+    safeQuery(prisma.order.count({ where: { createdAt: { gte: todayStart }, totalCostVND: { gte: 5000000 } } }), 0),
   ]);
 
   const totalRevenue = completedOrders.reduce(
-    (sum, o) => sum + parseFloat(o.totalCostVND.toString()), 0
+    (sum, o) => sum + safeDecimal(o.totalCostVND), 0
   );
   const totalProductCost = completedOrders.reduce(
-    (sum, o) => sum + parseFloat(o.totalPriceVND.toString()), 0
+    (sum, o) => sum + safeDecimal(o.totalPriceVND), 0
   );
   const totalServiceFees = completedOrders.reduce(
-    (sum, o) => sum + parseFloat(o.serviceFeeVND.toString()), 0
+    (sum, o) => sum + safeDecimal(o.serviceFeeVND), 0
   );
   const estimatedProfit = totalRevenue - totalProductCost;
 
@@ -88,20 +90,20 @@ export const GET = withErrorHandler(async function GET() {
     totalServiceFees,
     completedOrderCount: completedOrders.length,
     pendingPayments,
-    totalDebt: parseFloat(totalDebt._sum.debt?.toString() || "0"),
-    totalDeposits: parseFloat(totalDeposits._sum.amount?.toString() || "0"),
+    totalDebt: safeDecimal(totalDebt._sum.debt),
+    totalDeposits: safeDecimal(totalDeposits._sum.amount),
     totalDepositCount: totalDeposits._count,
-    monthDeposits: parseFloat(monthDeposits._sum.amount?.toString() || "0"),
+    monthDeposits: safeDecimal(monthDeposits._sum.amount),
     monthDepositCount: monthDeposits._count,
     todayTransactions,
     recentTransactions: recentTransactions.map((t) => ({
       id: t.id,
       type: t.type,
-      amount: parseFloat(t.amount.toString()),
+      amount: safeDecimal(t.amount),
       description: t.description,
       createdAt: t.createdAt,
-      userName: t.user.fullName,
-      userEmail: t.user.email,
+      userName: t.user?.fullName ?? "N/A",
+      userEmail: t.user?.email ?? "",
       orderCode: t.order?.orderCode || null,
     })),
     ordersByStatus: ordersByStatus.map((s) => ({

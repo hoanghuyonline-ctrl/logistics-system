@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, generateOrderCode, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { getCurrentUser, hasRole, generateOrderCode, jsonResponse, errorResponse, withErrorHandler, safeQuery } from "@/lib/utils";
 import { calculateOrderCost } from "@/lib/cost-calculator";
 import { createNotification } from "@/lib/notifications";
 import { onOrderCreated } from "@/lib/notifications/triggers";
@@ -71,34 +71,41 @@ export const GET = withErrorHandler(async function GET(request: Request) {
   const baseWhere: Record<string, unknown> = {};
   if (hasRole(user.role, ["CUSTOMER"])) baseWhere.userId = user.id;
 
-  const queries: [Promise<unknown>, Promise<number>, Promise<unknown[]>?, Promise<number>?] = [
-    prisma.order.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
+  const includeObj: Record<string, unknown> = {
+    user: { select: { id: true, fullName: true, email: true, phone: true } },
+    orderNotes: {
       orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { id: true, fullName: true, email: true, phone: true } },
-        package: hasRole(user.role, ["ADMIN", "ACCOUNTANT"]) ? { select: { totalWeightKg: true, barcode: true } } : false,
-        orderNotes: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { content: true, createdAt: true, user: { select: { fullName: true, role: true } } },
-        },
-        statusLogs: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { createdAt: true, toStatus: true, changer: { select: { fullName: true, role: true } } },
-        },
-      },
-    }),
-    prisma.order.count({ where }),
+      take: 1,
+      select: { content: true, createdAt: true, user: { select: { fullName: true, role: true } } },
+    },
+    statusLogs: {
+      orderBy: { createdAt: "desc" },
+      take: 1,
+      select: { createdAt: true, toStatus: true, changer: { select: { fullName: true, role: true } } },
+    },
+  };
+  if (hasRole(user.role, ["ADMIN", "ACCOUNTANT"])) {
+    includeObj.package = { select: { totalWeightKg: true, barcode: true } };
+  }
+
+  const queries: [Promise<unknown>, Promise<number>, Promise<unknown[]>?, Promise<number>?] = [
+    safeQuery(
+      prisma.order.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: includeObj,
+      }),
+      [],
+    ),
+    safeQuery(prisma.order.count({ where }), 0),
   ];
 
   if (includeSummary) {
     queries.push(
-      prisma.order.groupBy({ by: ["status"], where: baseWhere, _count: { status: true } }),
-      prisma.order.count({ where: { ...baseWhere, priority: "URGENT" } }),
+      safeQuery(prisma.order.groupBy({ by: ["status"], where: baseWhere, _count: { status: true } }), []),
+      safeQuery(prisma.order.count({ where: { ...baseWhere, priority: "URGENT" } }), 0),
     );
   }
 

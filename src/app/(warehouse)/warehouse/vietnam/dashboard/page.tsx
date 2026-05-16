@@ -23,18 +23,32 @@ export default function VietnamWarehouseDashboard() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/orders?status=SHIPPING_TO_VIETNAM&limit=20").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
-      fetch("/api/orders?status=ARRIVED_VIETNAM_WH&limit=20").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
-    ]).then(([shipping, arrived]) => {
-      setArrivedOrders(shipping.orders || []);
-      setDeliveryOrders(arrived.orders || []);
-      setLoading(false);
-    }).catch((err) => {
-      console.error("[warehouse/vietnam] load failed:", err);
-      setError(true);
-      setLoading(false);
-    });
+    async function load() {
+      let anySuccess = false;
+      try {
+        const [shippingRes, arrivedRes] = await Promise.allSettled([
+          fetch("/api/orders?status=SHIPPING_TO_VIETNAM&limit=20"),
+          fetch("/api/orders?status=ARRIVED_VIETNAM_WH&limit=20"),
+        ]);
+        if (shippingRes.status === "fulfilled" && shippingRes.value.ok) {
+          const d = await shippingRes.value.json();
+          setArrivedOrders(d.orders || []);
+          anySuccess = true;
+        }
+        if (arrivedRes.status === "fulfilled" && arrivedRes.value.ok) {
+          const d = await arrivedRes.value.json();
+          setDeliveryOrders(d.orders || []);
+          anySuccess = true;
+        }
+        if (!anySuccess) setError(true);
+      } catch (err) {
+        console.error("[warehouse/vietnam] load failed:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
   if (loading) return <LoadingSpinner text="Loading dashboard..." />;
@@ -62,7 +76,7 @@ export default function VietnamWarehouseDashboard() {
               <div key={o.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{o.orderCode}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{o.productName} — {o.user.fullName}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{o.productName} — {o.user?.fullName ?? "N/A"}</p>
                 </div>
                 <StatusBadge status={o.status} />
               </div>
@@ -82,7 +96,7 @@ export default function VietnamWarehouseDashboard() {
               <div key={o.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{o.orderCode}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{o.productName} — {o.user.fullName}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{o.productName} — {o.user?.fullName ?? "N/A"}</p>
                 </div>
                 <StatusBadge status={o.status} />
               </div>

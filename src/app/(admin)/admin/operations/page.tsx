@@ -151,31 +151,37 @@ export default function AdminOperationsPage() {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     try {
+      const safeFetch = async (url: string) => {
+        try {
+          const r = await fetch(url);
+          if (!r.ok) return null;
+          return await r.json();
+        } catch { return null; }
+      };
       const [qv, topups, stuck, notifs, issueData] = await Promise.all([
-        fetch("/api/admin/quick-views").then((r) => r.json()),
-        fetch("/api/admin/topup-requests").then((r) => r.json()),
-        fetch("/api/admin/stuck-shipments").then((r) => r.json()),
-        fetch("/api/admin/notifications/failures?filter=unresolved").then((r) => r.json()),
-        fetch("/api/admin/customer-issues?status=NEW").then((r) => r.json()),
+        safeFetch("/api/admin/quick-views"),
+        safeFetch("/api/admin/topup-requests"),
+        safeFetch("/api/admin/stuck-shipments"),
+        safeFetch("/api/admin/notifications/failures?filter=unresolved"),
+        safeFetch("/api/admin/customer-issues?status=NEW"),
       ]);
-      setQuickViews(qv);
+      if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
-      setStuckCategories(stuck.categories || []);
-      setNotifFailures(notifs.failures?.slice(0, 10) || []);
-      setUnresolvedNotifCount(notifs.unresolved || 0);
-      setIssues(issueData.issues?.slice(0, 10) || []);
-      setIssueCounts(issueData.statusCounts || {});
+      setStuckCategories(stuck?.categories || []);
+      setNotifFailures(notifs?.failures?.slice(0, 10) || []);
+      setUnresolvedNotifCount(notifs?.unresolved || 0);
+      setIssues(issueData?.issues?.slice(0, 10) || []);
+      setIssueCounts(issueData?.statusCounts || {});
       setLastUpdated(new Date());
       setLoading(false);
 
-      /* compute new urgent total and fire alert if increased */
-      const stuckTotal = (stuck.categories || []).reduce(
+      const stuckTotal = (stuck?.categories || []).reduce(
         (s: number, c: StuckCategory) => s + c.items.length, 0
       );
       const newUrgent =
-        (qv.pendingDeposits || 0) +
-        (qv.unresolvedIssues || 0) +
-        (qv.notifFailures || 0) +
+        (qv?.pendingDeposits || 0) +
+        (qv?.unresolvedIssues || 0) +
+        (qv?.notifFailures || 0) +
         stuckTotal;
 
       if (prevUrgentRef.current !== null && newUrgent > prevUrgentRef.current && alertEnabledRef.current) {

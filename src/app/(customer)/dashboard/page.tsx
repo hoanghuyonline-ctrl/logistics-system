@@ -37,22 +37,29 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     async function load() {
+      let anySuccess = false;
       try {
-        const [ordersRes, walletRes, meRes] = await Promise.all([
+        const [ordersRes, walletRes, meRes] = await Promise.allSettled([
           fetch("/api/orders?limit=5"),
           fetch("/api/wallet"),
           fetch("/api/auth/me"),
         ]);
-        if (!ordersRes.ok || !walletRes.ok || !meRes.ok) {
-          setError(true);
-          return;
+        if (ordersRes.status === "fulfilled" && ordersRes.value.ok) {
+          const d = await ordersRes.value.json();
+          setOrders(d.orders || []);
+          anySuccess = true;
         }
-        const ordersData = await ordersRes.json();
-        const walletData = await walletRes.json();
-        const meData = await meRes.json();
-        setOrders(ordersData.orders || []);
-        setWallet(walletData);
-        setZaloBound(!!meData?.zaloRecipientId);
+        if (walletRes.status === "fulfilled" && walletRes.value.ok) {
+          const d = await walletRes.value.json();
+          setWallet(d);
+          anySuccess = true;
+        }
+        if (meRes.status === "fulfilled" && meRes.value.ok) {
+          const d = await meRes.value.json();
+          setZaloBound(!!d?.zaloRecipientId);
+          anySuccess = true;
+        }
+        if (!anySuccess) setError(true);
       } catch (err) {
         console.error("[dashboard] load failed:", err);
         setError(true);

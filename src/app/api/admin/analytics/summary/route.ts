@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler, safeQuery } from "@/lib/utils";
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
@@ -23,25 +23,25 @@ export const GET = withErrorHandler(async function GET() {
     campaignCount,
     campaignsByStatus,
   ] = await Promise.all([
-    prisma.lead.groupBy({ by: ["source"], _count: true }),
-    prisma.lead.count(),
-    prisma.lead.count({ where: { status: "CONVERTED" } }),
-    prisma.lead.count({
+    safeQuery(prisma.lead.groupBy({ by: ["source"], _count: true }), []),
+    safeQuery(prisma.lead.count(), 0),
+    safeQuery(prisma.lead.count({ where: { status: "CONVERTED" } }), 0),
+    safeQuery(prisma.lead.count({
       where: {
         nextFollowUpAt: { lt: todayStart },
         status: { notIn: ["CONVERTED", "LOST"] },
       },
-    }),
-    prisma.customerIssue.count({
+    }), 0),
+    safeQuery(prisma.customerIssue.count({
       where: { status: { not: "RESOLVED" } },
-    }),
-    prisma.customerIssue.groupBy({
+    }), 0),
+    safeQuery(prisma.customerIssue.groupBy({
       by: ["priority"],
       where: { status: { not: "RESOLVED" } },
       _count: true,
-    }),
-    prisma.campaign.count(),
-    prisma.campaign.groupBy({ by: ["status"], _count: true }),
+    }), []),
+    safeQuery(prisma.campaign.count(), 0),
+    safeQuery(prisma.campaign.groupBy({ by: ["status"], _count: true }), []),
   ]);
 
   const sourceMap: Record<string, number> = {};
