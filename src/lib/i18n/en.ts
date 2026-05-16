@@ -196,8 +196,9 @@ const en: Record<string, string> = {
   "nav.systemHealth": "System Health",
   "nav.stuckShipments": "Stuck Orders",
   "nav.notificationFailures": "Notif. Failures",
-  "nav.customerIssues": "Issues",
-  "nav.staffNotes": "Handover",
+    "nav.customerIssues": "Issues",
+    "nav.customerAlerts": "Alerts",
+    "nav.staffNotes": "Handover",
 
   // Warehouse scan
   "scan.title": "Scan Package",
