@@ -252,12 +252,12 @@ export default function AdminOperationsPage() {
       {/* ═══════════════════════════════════════════
           SECTION 1: VIỆC CẦN LÀM NGAY (Urgent)
           ═══════════════════════════════════════════ */}
-      <section className="mb-6">
+      <section className="mb-5 sm:mb-6">
         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
           🔴 Việc cần làm ngay
           {urgentCount > 0 ? (
-            <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full animate-pulse">
-              {urgentCount} việc
+            <span className="text-[10px] font-bold bg-red-600 text-white px-2.5 py-0.5 rounded-full animate-pulse shadow-sm">
+              {urgentCount} việc khẩn
             </span>
           ) : (
             <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
@@ -267,30 +267,42 @@ export default function AdminOperationsPage() {
         </h2>
 
         {quickViews && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
             {[
-              { label: "Nạp tiền chờ duyệt", value: quickViews.pendingDeposits, icon: "💳", href: "/admin/finance" },
-              { label: "Đơn chưa thanh toán", value: quickViews.unpaidOrders, icon: "💰", href: "/admin/orders" },
-              { label: "Khiếu nại chưa xử lý", value: quickViews.unresolvedIssues, icon: "⚠️", href: "/admin/customer-issues" },
-              { label: "Thông báo lỗi", value: quickViews.notifFailures, icon: "🔔", href: "/admin/notification-failures" },
-              { label: "Đơn hàng bị kẹt", value: quickViews.staleOrders, icon: "📦", href: "/admin/stuck-shipments" },
+              { label: "Nạp tiền chờ duyệt", value: quickViews.pendingDeposits, icon: "💳", href: "/admin/finance", critical: true },
+              { label: "Đơn chờ mua hàng", value: quickViews.unpaidOrders, icon: "🛒", href: "/admin/orders", critical: false },
+              { label: "Khiếu nại chưa xử lý", value: quickViews.unresolvedIssues, icon: "⚠️", href: "/admin/customer-issues", critical: true },
+              { label: "Gửi thông báo lỗi", value: quickViews.notifFailures, icon: "🔔", href: "/admin/notification-failures", critical: false },
+              { label: "Đơn kẹt >5 ngày", value: quickViews.staleOrders, icon: "⏰", href: "/admin/stuck-shipments", critical: true },
             ].map((card) => {
-              const badge = urgencyBadge(card.value);
+              const isUrgent = card.value > 0 && card.critical;
               return (
                 <Link
                   key={card.label}
                   href={card.href}
-                  className={`flex items-center gap-2 p-3 rounded-xl border transition-all hover:shadow-md ${
-                    card.value > 0 ? "border-red-200 bg-red-50 hover:bg-red-100/50" : "border-green-200 bg-green-50 hover:bg-green-100/50"
+                  className={`flex items-center gap-2 p-2.5 sm:p-3 rounded-xl border transition-all hover:shadow-md ${
+                    isUrgent
+                      ? "border-red-300 bg-red-50 hover:bg-red-100/60 ring-1 ring-red-200"
+                      : card.value > 0
+                        ? "border-amber-200 bg-amber-50 hover:bg-amber-100/50"
+                        : "border-green-200 bg-green-50 hover:bg-green-100/50"
                   }`}
                 >
                   <span className="text-lg">{card.icon}</span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[11px] text-slate-500 truncate">{card.label}</div>
-                    <div className="text-base font-bold text-slate-900">{card.value}</div>
+                    <div className={`text-base font-bold ${
+                      isUrgent ? "text-red-700" : "text-slate-900"
+                    }`}>{card.value}</div>
                   </div>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badge.cls}`}>
-                    {card.value > 0 ? "Cần xử lý" : "OK"}
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    isUrgent
+                      ? "bg-red-600 text-white"
+                      : card.value > 0
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-green-100 text-green-700"
+                  }`}>
+                    {isUrgent ? "Khẩn!" : card.value > 0 ? "Cần xử lý" : "OK"}
                   </span>
                 </Link>
               );
@@ -315,71 +327,84 @@ export default function AdminOperationsPage() {
                   value: quickViews.pendingDeposits,
                   icon: "💳",
                   href: "/admin/finance",
-                  desc: "Yêu cầu nạp tiền cần phê duyệt",
+                  desc: "Khách đã chuyển khoản, chờ admin xác nhận",
+                  urgent: true,
                 },
                 {
-                  label: "Đơn mới cần mua hàng",
+                  label: "Đơn mới — cần mua hàng",
                   value: quickViews.unpaidOrders,
                   icon: "🛒",
                   href: "/admin/orders",
-                  desc: "Đơn hàng PENDING chờ mua từ nhà cung cấp",
+                  desc: "Đơn PENDING chờ đặt mua từ nhà cung cấp",
+                  urgent: false,
                 },
                 {
-                  label: "Đơn chưa có mã tracking",
+                  label: "Đơn thiếu mã vận đơn",
                   value: quickViews.ordersMissingTracking,
                   icon: "🔍",
                   href: "/admin/stuck-shipments",
-                  desc: "Đã mua nhưng chưa có mã vận đơn TQ",
+                  desc: "Đã mua nhưng chưa nhập tracking TQ",
+                  urgent: false,
                 },
                 {
-                  label: "Đơn bị kẹt (>5 ngày)",
+                  label: "Đơn kẹt quá 5 ngày",
                   value: quickViews.staleOrders,
                   icon: "⏰",
                   href: "/admin/stuck-shipments",
-                  desc: "Đơn không cập nhật quá 5 ngày",
+                  desc: "Không cập nhật trạng thái >5 ngày — cần kiểm tra",
+                  urgent: true,
                 },
                 {
-                  label: "Tại kho VN chờ giao",
+                  label: "Đã về kho VN — chờ giao",
                   value: quickViews.allAtVietnamWh,
                   icon: "🏗️",
                   href: "/admin/orders",
-                  desc: "Tất cả đơn đã về kho VN, chờ giao khách",
+                  desc: "Hàng đã đến kho VN, cần sắp xếp giao khách",
+                  urgent: false,
                 },
                 {
-                  label: "Ưu tiên cao / Khẩn",
+                  label: "Đơn ưu tiên cao / Khẩn",
                   value: quickViews.highPriorityActive,
                   icon: "🔴",
                   href: "/admin/orders",
-                  desc: "Đơn HIGH/URGENT đang xử lý",
+                  desc: "Đơn HIGH hoặc URGENT đang xử lý",
+                  urgent: true,
                 },
               ].map((item) => {
                 const hasItems = item.value > 0;
+                const isRed = hasItems && item.urgent;
                 return (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
+                    className={`flex items-center gap-3 px-3 sm:px-4 py-3 transition-colors ${
+                      isRed ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50"
+                    }`}
                   >
                     <span className="text-lg shrink-0">{item.icon}</span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium text-slate-900">{item.label}</div>
-                      <div className="text-[11px] text-slate-400">{item.desc}</div>
+                      <div className="text-[11px] text-slate-400 hidden sm:block">{item.desc}</div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-base font-bold ${
-                        hasItems ? "text-slate-900" : "text-green-600"
+                        isRed ? "text-red-700" : hasItems ? "text-slate-900" : "text-green-600"
                       }`}>{item.value}</span>
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                        hasItems ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        isRed
+                          ? "bg-red-600 text-white"
+                          : hasItems
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-green-100 text-green-700"
                       }`}>
-                        {hasItems ? "Cần kiểm tra" : "OK"}
+                        {isRed ? "Khẩn!" : hasItems ? "Cần xem" : "OK"}
                       </span>
                     </div>
                   </Link>
                 );
               })}
             </div>
-            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <div className="px-3 sm:px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
               <span className="text-[11px] text-slate-400">
                 Đơn mới hôm nay: <span className="font-semibold text-slate-600">{quickViews.newOrdersToday}</span>
               </span>
@@ -450,13 +475,15 @@ export default function AdminOperationsPage() {
       {/* ═══════════════════════════════════════════
           SECTION 3: NẠP TIỀN CHỜ DUYỆT
           ═══════════════════════════════════════════ */}
-      <section className="mb-6">
+      <section className={`mb-5 sm:mb-6 ${
+        pendingTopUps.length > 0 ? "rounded-xl ring-2 ring-red-200 p-3 sm:p-4 bg-red-50/30" : ""
+      }`}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             💳 Nạp tiền chờ duyệt
             {pendingTopUps.length > 0 ? (
-              <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                {pendingTopUps.length} yêu cầu
+              <span className="text-[10px] font-bold bg-red-600 text-white px-2.5 py-0.5 rounded-full animate-pulse shadow-sm">
+                {pendingTopUps.length} chờ duyệt!
               </span>
             ) : (
               <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
@@ -464,29 +491,29 @@ export default function AdminOperationsPage() {
               </span>
             )}
           </h2>
-          <Link href="/admin/finance" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-            Duyệt nạp tiền →
+          <Link href="/admin/finance" className="text-xs font-medium text-blue-600 hover:underline flex items-center gap-1">
+            Duyệt ngay →
           </Link>
         </div>
         {pendingTopUps.length === 0 ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center text-sm text-green-700">
-            ✅ Tất cả yêu cầu nạp tiền đã được duyệt
+            Tất cả yêu cầu nạp tiền đã được duyệt
           </div>
         ) : (
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div className="divide-y divide-slate-100">
               {pendingTopUps.slice(0, 5).map((req) => (
-                <div key={req.id} className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors">
+                <div key={req.id} className="flex items-center justify-between px-3 sm:px-4 py-3 hover:bg-slate-50 transition-colors">
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-slate-900">{req.customer.fullName}</div>
                     <div className="text-xs text-slate-500">
-                      <span className="font-semibold text-emerald-600">{parseFloat(req.amount).toLocaleString()} VND</span>
-                      {" — "}Ref: {req.transferReference}
+                      <span className="font-bold text-red-600">{parseFloat(req.amount).toLocaleString()} VND</span>
+                      <span className="hidden sm:inline">{" — "}Ref: {req.transferReference}</span>
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-2">
-                    <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                      ⏳ Chờ duyệt
+                    <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded">
+                      Chờ duyệt
                     </span>
                     <div className="text-[10px] text-slate-400 mt-0.5">{timeAgo(req.createdAt)} trước</div>
                   </div>
@@ -512,14 +539,14 @@ export default function AdminOperationsPage() {
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
             🟡 Cảnh báo vận hành
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {[
-              { label: "Kho TQ bị kẹt", value: quickViews.stuckChina, icon: "🏭", level: quickViews.stuckChina > 0 ? "yellow" : "green" },
-              { label: "Kho VN bị kẹt", value: quickViews.stuckVietnam, icon: "🏗️", level: quickViews.stuckVietnam > 0 ? "yellow" : "green" },
-              { label: "Câu hỏi chưa trả lời", value: quickViews.unansweredQuestions, icon: "❓", level: quickViews.unansweredQuestions > 0 ? "yellow" : "green" },
-              { label: "Ghi chú chưa xử lý", value: quickViews.unresolvedNotes, icon: "🔖", level: quickViews.unresolvedNotes > 0 ? "yellow" : "green" },
+              { label: "Kho TQ kẹt >5 ngày", value: quickViews.stuckChina, icon: "🏭", level: quickViews.stuckChina > 0 ? "yellow" : "green" },
+              { label: "Kho VN kẹt >3 ngày", value: quickViews.stuckVietnam, icon: "🏗️", level: quickViews.stuckVietnam > 0 ? "yellow" : "green" },
+              { label: "Chatbot chưa trả lời", value: quickViews.unansweredQuestions, icon: "❓", level: quickViews.unansweredQuestions > 0 ? "yellow" : "green" },
+              { label: "Ghi chú nội bộ chờ xử lý", value: quickViews.unresolvedNotes, icon: "🔖", level: quickViews.unresolvedNotes > 0 ? "yellow" : "green" },
             ].map((w) => (
-              <div key={w.label} className={`flex items-center gap-3 p-3 rounded-xl border ${levelBorder(w.level)}`}>
+              <div key={w.label} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border ${levelBorder(w.level)}`}>
                 <span className="text-lg">{w.icon}</span>
                 <div className="min-w-0 flex-1">
                   <div className="text-[11px] text-slate-500">{w.label}</div>
@@ -672,18 +699,21 @@ export default function AdminOperationsPage() {
           ═══════════════════════════════════════════ */}
       <section className="mb-8">
         <h2 className="text-sm font-bold text-slate-900 mb-3">⚡ Hành động nhanh</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { label: "Xem đơn hàng", href: "/admin/orders", icon: "📦", color: "bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700" },
+            { label: "Quản lý đơn hàng", href: "/admin/orders", icon: "📦", color: "bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700" },
             { label: "Duyệt nạp tiền", href: "/admin/finance", icon: "💳", color: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100 text-emerald-700" },
+            { label: "Đơn kẹt / Tracking", href: "/admin/stuck-shipments", icon: "🚚", color: "bg-orange-50 border-orange-200 hover:bg-orange-100 text-orange-700" },
             { label: "Quét kho", href: "/scanner", icon: "📷", color: "bg-violet-50 border-violet-200 hover:bg-violet-100 text-violet-700" },
-            { label: "Xem khiếu nại", href: "/admin/customer-issues", icon: "⚠️", color: "bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-700" },
-            { label: "Xem lỗi thông báo", href: "/admin/notification-failures", icon: "🔔", color: "bg-red-50 border-red-200 hover:bg-red-100 text-red-700" },
+            { label: "Khiếu nại khách", href: "/admin/customer-issues", icon: "⚠️", color: "bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-700" },
+            { label: "Lỗi thông báo", href: "/admin/notification-failures", icon: "🔔", color: "bg-red-50 border-red-200 hover:bg-red-100 text-red-700" },
+            { label: "Quản lý khách hàng", href: "/admin/users", icon: "👥", color: "bg-cyan-50 border-cyan-200 hover:bg-cyan-100 text-cyan-700" },
+            { label: "Quản lý kiện hàng", href: "/admin/packages", icon: "📋", color: "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700" },
           ].map((action) => (
             <Link
               key={action.href}
               href={action.href}
-              className={`flex items-center gap-2.5 p-3.5 rounded-xl border font-medium text-sm transition-all hover:shadow-md ${action.color}`}
+              className={`flex items-center gap-2 sm:gap-2.5 p-3 sm:p-3.5 rounded-xl border font-medium text-sm transition-all hover:shadow-md ${action.color}`}
             >
               <span className="text-xl">{action.icon}</span>
               <span>{action.label}</span>
