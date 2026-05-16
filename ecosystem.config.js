@@ -18,6 +18,7 @@ module.exports = {
       error_file: "logs/error.log",
       out_file: "logs/out.log",
       merge_logs: true,
+      watch: false,
     },
   ],
 };
