@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminPolling, type QuickViewCounts } from "@/lib/useAdminPolling";
+import { playAlertBeep, triggerVibration, isAlertEnabled, setAlertEnabled as persistAlertEnabled } from "@/lib/alertSound";
 import KPICard from "@/components/ui/KPICard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import Link from "next/link";
 
 interface DashboardData {
   totalOrders: number;
@@ -43,16 +45,37 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [alertEnabled, setAlertEnabledState] = useState(() => isAlertEnabled());
+  const alertEnabledRef = useRef(alertEnabled);
+  const prevDepositsRef = useRef<number | null>(null);
 
   const handlePollUpdate = useCallback((qv: QuickViewCounts) => {
     setQuickViews(qv);
     setLastRefreshed(new Date());
   }, []);
 
+  useEffect(() => {
+    alertEnabledRef.current = alertEnabled;
+  }, [alertEnabled]);
+
+  const toggleAlert = useCallback(() => {
+    setAlertEnabledState((prev) => {
+      const next = !prev;
+      persistAlertEnabled(next);
+      return next;
+    });
+  }, []);
+
   const handleAlerts = useCallback((alerts: Array<{ label: string; prev: number; next: number }>) => {
+    let hasDepositAlert = false;
     for (const a of alerts) {
       const diff = a.next - a.prev;
       toast(`${a.label} (+${diff})`, "warning");
+      if (a.label.includes("nạp tiền")) hasDepositAlert = true;
+    }
+    if (hasDepositAlert && alertEnabledRef.current) {
+      playAlertBeep();
+      triggerVibration();
     }
   }, [toast]);
 
@@ -66,6 +89,7 @@ export default function AdminDashboard() {
       setData(d);
       setQuickViews(qv);
       seedPrev(qv);
+      prevDepositsRef.current = qv.pendingDeposits || 0;
       setLoading(false);
     }).catch((err) => {
       console.error("[admin/dashboard] load failed:", err);
@@ -85,7 +109,47 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <PageHeader title={t("admin.dashboard")} subtitle={t("common.tagline")} />
+      <PageHeader
+        title={t("admin.dashboard")}
+        subtitle={t("common.tagline")}
+        action={
+          <button
+            onClick={toggleAlert}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+              alertEnabled
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                : "bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100"
+            }`}
+            title={alertEnabled ? "Tắt âm báo khi có nạp tiền mới" : "Bật âm báo khi có nạp tiền mới"}
+          >
+            <span>{alertEnabled ? "🔔" : "🔕"}</span>
+            <span>{alertEnabled ? "Âm báo: Bật" : "Âm báo: Tắt"}</span>
+          </button>
+        }
+      />
+
+      {/* ═══ PROMINENT PENDING DEPOSIT BANNER ═══ */}
+      {quickViews && quickViews.pendingDeposits > 0 && (
+        <div className="mb-6 rounded-xl border-2 border-red-300 bg-red-50 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse-slow">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">💰</span>
+            <div>
+              <div className="text-sm font-bold text-red-800">
+                Có yêu cầu nạp tiền mới
+              </div>
+              <div className="text-xs text-red-600">
+                Nạp tiền chờ duyệt: <span className="font-bold text-red-800">{quickViews.pendingDeposits}</span> yêu cầu
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/admin/finance"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-colors shadow-md hover:shadow-lg shrink-0"
+          >
+            💳 Duyệt nạp tiền ngay
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <KPICard title={t("admin.totalOrders")} value={data.totalOrders} subtitle={`${t("admin.today")}: ${data.ordersToday}`} icon={<span>📦</span>} color="blue" />
