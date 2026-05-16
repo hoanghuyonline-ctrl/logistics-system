@@ -2,7 +2,8 @@
 
 **Date:** 2026-05-16
 **Branch:** `main`
-**Latest stable commit:** Post PR #278 (customer dashboard UI resilience attempt — unresolved in production)
+**Latest stable commit:** Post PR #280 (docs checkpoint — session-end snapshot)
+**Latest code PR:** PR #278 (customer dashboard UI resilience attempt — unresolved in production)
 
 ---
 
@@ -233,6 +234,7 @@
 - **HOTFIX: Authenticated Dashboard Resilience for All Roles** (PR #275) — Production hotfix resolving "Không thể tải dữ liệu. Vui lòng thử lại." blank-screen failures on all authenticated dashboards. Root cause: server-side `Promise.all` with unsafe Prisma queries (invalid `package: false` in include, unsafe Decimal conversions, null relation access) combined with client-side all-or-nothing error handling. **Server-side fixes (7 API routes):** added `safeQuery(promise, fallback)` and `safeDecimal(val)` utilities to `src/lib/utils.ts`; wrapped every Prisma query in dashboard APIs with `safeQuery()` so one failing query no longer crashes the entire `Promise.all`; fixed `/api/orders` route invalid `package: false` Prisma include (conditionally-built include object instead); safe Decimal conversions in accountant/analytics dashboards; null-safety on user relation access in customer-alerts. **Client-side fixes (6 dashboard pages):** Customer, Admin, Vietnam warehouse dashboards switched from `Promise.all` to `Promise.allSettled` with partial data display; Admin operations page added `safeFetch` wrapper tolerating individual API failures; China/Vietnam warehouse dashboards added null-safety on `user.fullName`. **Roles protected:** CUSTOMER, ADMIN, ACCOUNTANT, WAREHOUSE_CN, WAREHOUSE_VN. 13 files changed; no schema changes; no new dependencies
 - **Docs Checkpoint** (PR #276) — PROJECT_SNAPSHOT.md update after PR #275 authenticated dashboard resilience hotfix
 - **Customer Dashboard UI Resilience Attempt** (PR #278) — Added fallback card rendering on customer dashboard when API calls fail, replacing blank-screen with graceful degradation. **However, production still shows the old full-page error screen** ("Không thể tải dữ liệu. Vui lòng thử lại.") — PR #278 may not affect the production-rendered route, or another component/layout owns that error screen. See Unresolved Issues below
+- **Docs Checkpoint — Post PR #278** (PR #280) — PROJECT_SNAPSHOT.md updated with PRs #273–#278 state, new Unresolved Issues section, deploy notes expanded, Known Risks updated
 
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
@@ -367,8 +369,34 @@ pm2 restart logistics-system
 
 **AuditActions:** ORDER_STATUS_CHANGE, PACKAGE_STATUS_CHANGE, WAREHOUSE_SCAN_LOOKUP, WAREHOUSE_SCAN_UPDATE, WAREHOUSE_RECEIVE_CN, WAREHOUSE_RECEIVE_VN, WAREHOUSE_DELIVERY, ORDER_PRICING_CONFIRMED
 
+## Current Production Deployment Status
+
+**Platform:** Windows Server + PM2 + `next start`
+**Domain:** `thue.eu.cc`
+**PM2 config:** `ecosystem.config.js` — `next start -p 3000 -H 0.0.0.0`, `watch: false`
+**Health endpoint:** `/api/health` (public, no auth) — verified working
+**Static asset requirement:** `.next/static` and `public` must be copied into `.next/standalone/` after every `npm run build`
+
+**Standard deploy sequence:**
+```powershell
+cd /d D:\BacTrungHai\logistics-system
+git pull origin main
+npm install
+npm run build
+xcopy /E /I /Y .next\static .next\standalone\.next\static
+xcopy /E /I /Y public .next\standalone\public
+pm2 restart logistics-system
+```
+
+**Critical rules:**
+- PM2 `watch` must remain `false` (prevents crash loops from file changes)
+- `.next/static` and `public` copy is mandatory after every build (CSS/images break without it)
+- `/api/health` is a public route for healthchecks
+- No migration needed for PRs #272–#280 (all code changes, no schema changes)
+
 ## Remaining Major Tasks
 
+- **🔴 PRIORITY: Fix CUSTOMER /dashboard production error** — See Unresolved Issues; this is the most urgent next task
 - Public landing page visual testing across all 3 locales (VI/EN/ZH)
 - Dashboard redesign (not started — landing page complete)
 - ~~Production Telegram bot/chat configuration~~ ✓ webhook registered, bot `@bactrunghai_bot` verified on `thue.eu.cc`
@@ -381,6 +409,16 @@ pm2 restart logistics-system
 ## Unresolved Issues
 
 1. **CUSTOMER /dashboard full-page error persists in production** — After PRs #275 and #278, the customer dashboard still shows "Không thể tải dữ liệu. Vui lòng thử lại." full-page error screen in production. PR #275 hardened all dashboard APIs with `safeQuery`/`safeDecimal` and switched client-side fetches to `Promise.allSettled`. PR #278 added fallback card rendering on the customer dashboard page. Despite both merges, the production error screen remains unchanged. **Likely root cause:** the component or layout rendering the error may be a different file than what PR #278 modified, or Next.js may be serving a cached/different route. **Next work:** identify which exact component/path renders the old full-page error in production (check `(customer)/dashboard/page.tsx` vs layout vs error boundary vs middleware redirect), and confirm the deployed build includes PR #278 changes.
+
+## Recommended Next Session Task
+
+Investigate and fix the CUSTOMER `/dashboard` production error:
+1. Confirm production build includes PR #278 changes (check deployed commit hash vs main HEAD)
+2. Search all files for the exact error string "Không thể tải dữ liệu. Vui lòng thử lại." to find every component that renders it
+3. Check `(customer)/layout.tsx`, any `error.tsx` boundary files, and middleware redirects
+4. Check if another component wraps/overrides the dashboard page before it renders
+5. Test locally with a customer account that triggers the error condition
+6. Fix the actual rendering component, not just the dashboard page.tsx
 
 ## Known Risks / Issues
 
