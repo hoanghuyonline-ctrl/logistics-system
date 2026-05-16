@@ -226,6 +226,27 @@ docker exec logistics-postgres pg_dump -U postgres -t "SupportKnowledge" logisti
 
 > **🔴 CẢNH BÁO:** Khôi phục database sẽ **ghi đè toàn bộ dữ liệu hiện tại**. Chỉ làm khi thực sự cần thiết.
 
+#### Cách 1: Dùng script tự động (khuyến nghị)
+
+```cmd
+REM Chạy không cần tham số — script sẽ liệt kê file backup để chọn:
+scripts\restore-db.bat
+
+REM Hoặc chỉ định file backup cụ thể:
+scripts\restore-db.bat backups\postgres\postgres-2026-05-16-02-00.sql
+```
+
+Script `restore-db.bat` sẽ tự động:
+1. Kiểm tra Docker container đang chạy
+2. Hiển thị danh sách file backup để chọn (nếu không chỉ định file)
+3. Yêu cầu xác nhận trước khi khôi phục (nhập `YES`)
+4. Dừng PM2 (`pm2 stop logistics-system`)
+5. Xóa database cũ và tạo database mới
+6. Khôi phục dữ liệu từ file backup
+7. Khởi động lại PM2 (`pm2 restart logistics-system`)
+
+#### Cách 2: Khôi phục thủ công
+
 ```bash
 # Bước 1: Dừng app trước
 pm2 stop logistics-system
@@ -253,6 +274,24 @@ docker exec -i logistics-postgres psql -U postgres logistics_db < backups/backup
 ```
 
 ### 4.2 Khôi phục thư mục uploads
+
+#### Cách 1: Dùng script tự động (khuyến nghị)
+
+```cmd
+REM Chạy không cần tham số — script sẽ liệt kê file backup để chọn:
+scripts\restore-uploads.bat
+
+REM Hoặc chỉ định file backup cụ thể:
+scripts\restore-uploads.bat backups\uploads\uploads-2026-05-16-02-00.zip
+```
+
+Script `restore-uploads.bat` sẽ tự động:
+1. Hiển thị danh sách file backup `.zip` để chọn (nếu không chỉ định file)
+2. Yêu cầu xác nhận trước khi khôi phục (nhập `YES`)
+3. Đổi tên thư mục `uploads` hiện tại thành `uploads-old-*` (phòng trường hợp)
+4. Giải nén file backup vào thư mục `uploads`
+
+#### Cách 2: Khôi phục thủ công
 
 ```bash
 # Copy thư mục uploads từ backup
