@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { ORDER_STATUS_TRANSITIONS } from "@/types";
 import { onShipmentStatusChanged } from "@/lib/notifications/triggers";
 import { InvalidTransitionError, toShipmentStatus, isValidTransition } from "@/lib/shipment-status";
@@ -7,7 +7,7 @@ import { OrderStatus } from "@prisma/client";
 import type { NextRequest } from "next/server";
 import { auditLog } from "@/lib/audit";
 
-export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/status">) {
+export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/status">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
     return errorResponse("Forbidden", 403);
@@ -142,4 +142,4 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
     });
 
   return jsonResponse(updated);
-}
+});

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 
-export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/notifications/[id]/read">) {
+export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx: RouteContext<"/api/notifications/[id]/read">) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -14,4 +14,4 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/notificati
   });
 
   return jsonResponse({ message: "Marked as read" });
-}
+});

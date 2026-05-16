@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 
 function normalizeQuestion(q: string): string {
   return q.toLowerCase().trim().replace(/[?？!！.。,，]+$/g, "").trim();
 }
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -62,9 +62,9 @@ export async function GET() {
   );
 
   return jsonResponse(grouped);
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withErrorHandler(async function PATCH(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -90,4 +90,4 @@ export async function PATCH(req: NextRequest) {
   });
 
   return jsonResponse({ updated: result.count });
-}
+});

@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { parseSections } from "@/lib/knowledge-import";
 import type { NextRequest } from "next/server";
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -47,4 +47,4 @@ export async function POST(req: NextRequest) {
   );
 
   return jsonResponse({ count: created.length, entries: created }, 201);
-}
+});

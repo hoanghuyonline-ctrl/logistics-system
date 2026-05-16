@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 
-export async function PATCH(
+export const PATCH = withErrorHandler(async function PATCH(
   req: NextRequest,
   ctx: RouteContext<"/api/admin/support-knowledge/[id]">,
 ) {
@@ -34,9 +34,9 @@ export async function PATCH(
   });
 
   return jsonResponse(updated);
-}
+});
 
-export async function DELETE(
+export const DELETE = withErrorHandler(async function DELETE(
   _req: NextRequest,
   ctx: RouteContext<"/api/admin/support-knowledge/[id]">,
 ) {
@@ -55,4 +55,4 @@ export async function DELETE(
   await prisma.supportKnowledge.delete({ where: { id } });
 
   return jsonResponse({ success: true });
-}
+});

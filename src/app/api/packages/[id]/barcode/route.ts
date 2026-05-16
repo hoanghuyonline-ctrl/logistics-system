@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole } from "@/lib/utils";
+import { getCurrentUser, hasRole, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 
 interface BwipRenderOptions {
@@ -21,7 +21,7 @@ interface BwipJs {
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const bwipjs: BwipJs = require("bwip-js");
 
-export async function GET(
+export const GET = withErrorHandler(async function GET(
   req: NextRequest,
   ctx: RouteContext<"/api/packages/[id]/barcode">,
 ) {
@@ -70,4 +70,4 @@ export async function GET(
       "Cache-Control": "public, max-age=86400",
     },
   });
-}
+});

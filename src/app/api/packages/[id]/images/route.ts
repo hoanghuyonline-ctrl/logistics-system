@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 import { storage } from "@/lib/storage";
 
@@ -12,7 +12,7 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").substring(0, 100);
 }
 
-export async function GET(_req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
+export const GET = withErrorHandler(async function GET(_req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
     return errorResponse("Forbidden", 403);
@@ -25,9 +25,9 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/packages/[i
   });
 
   return jsonResponse(images);
-}
+});
 
-export async function POST(req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
+export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
     return errorResponse("Forbidden", 403);
@@ -63,9 +63,9 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/packages/[i
   });
 
   return jsonResponse(image, 201);
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
+export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN"])) {
     return errorResponse("Forbidden", 403);
@@ -89,4 +89,4 @@ export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/packages/
   await prisma.packageImage.delete({ where: { id: imageId } });
 
   return jsonResponse({ success: true });
-}
+});

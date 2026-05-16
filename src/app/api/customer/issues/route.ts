@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { onCustomerIssueCreated } from "@/lib/notifications";
 
 const ISSUE_TYPES = [
@@ -15,7 +15,7 @@ const ISSUE_TYPES = [
   "KHAC",
 ] as const;
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["CUSTOMER"])) {
     return errorResponse("Forbidden", 403);
@@ -28,9 +28,9 @@ export async function GET() {
   });
 
   return jsonResponse(issues);
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["CUSTOMER"])) {
     return errorResponse("Forbidden", 403);
@@ -80,4 +80,4 @@ export async function POST(request: Request) {
   });
 
   return jsonResponse(issue, 201);
-}
+});

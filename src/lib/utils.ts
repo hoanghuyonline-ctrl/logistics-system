@@ -39,6 +39,20 @@ export function errorResponse(message: string, status = 400) {
   return Response.json({ error: message }, { status });
 }
 
+type RouteHandler = (request: Request, context?: unknown) => Promise<Response>;
+
+export function withErrorHandler(handler: RouteHandler): RouteHandler {
+  return async (request: Request, context?: unknown) => {
+    try {
+      return await handler(request, context);
+    } catch (err) {
+      const pathname = new URL(request.url).pathname;
+      console.error(`[API] ${request.method} ${pathname} failed:`, err);
+      return errorResponse("Internal server error", 500);
+    }
+  };
+}
+
 export function formatVND(amount: number | string): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);

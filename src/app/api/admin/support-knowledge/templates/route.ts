@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { DEFAULT_TEMPLATES } from "@/lib/knowledge-templates";
 
-export async function POST() {
+export const POST = withErrorHandler(async function POST() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -39,4 +39,4 @@ export async function POST() {
   );
 
   return jsonResponse({ created, skipped }, 201);
-}
+});

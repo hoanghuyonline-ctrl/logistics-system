@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/status-log">) {
+export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/status-log">) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -24,4 +24,4 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/
   });
 
   return jsonResponse(logs);
-}
+});

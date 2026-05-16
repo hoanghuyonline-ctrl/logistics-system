@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { onWalletEvent } from "@/lib/notifications";
 
-export async function PATCH(
+export const PATCH = withErrorHandler(async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -106,4 +106,4 @@ export async function PATCH(
   }
 
   return errorResponse("Hành động không hợp lệ (confirm hoặc cancel)");
-}
+});

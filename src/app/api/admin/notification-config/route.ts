@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import {
   getMaskedNotificationConfigs,
   isValidNotificationKey,
 } from "@/lib/notification-config";
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -13,9 +13,9 @@ export async function GET() {
 
   const configs = await getMaskedNotificationConfigs();
   return jsonResponse(configs);
-}
+});
 
-export async function PUT(request: Request) {
+export const PUT = withErrorHandler(async function PUT(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -55,4 +55,4 @@ export async function PUT(request: Request) {
 
   const configs = await getMaskedNotificationConfigs();
   return jsonResponse({ message: "Đã cập nhật cấu hình thông báo", configs });
-}
+});

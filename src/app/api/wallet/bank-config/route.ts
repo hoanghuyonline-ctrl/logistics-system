@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
 const DEFAULTS: Record<string, string> = {
   topup_bank_name: "Vietinbank CN Lạng Sơn",
@@ -9,7 +9,7 @@ const DEFAULTS: Record<string, string> = {
   topup_transfer_prefix: "NAPVI",
 };
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -25,4 +25,4 @@ export async function GET() {
   }
 
   return jsonResponse(result);
-}
+});

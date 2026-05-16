@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { onCustomerVisibleOrderNote } from "@/lib/notifications";
 import type { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/notes">) {
+export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/notes">) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -18,9 +18,9 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/
   });
 
   return jsonResponse(notes);
-}
+});
 
-export async function POST(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/notes">) {
+export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/notes">) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -64,4 +64,4 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/orders/[id]
   }
 
   return jsonResponse(note, 201);
-}
+});
