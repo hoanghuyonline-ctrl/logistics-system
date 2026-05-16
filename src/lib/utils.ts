@@ -39,18 +39,19 @@ export function errorResponse(message: string, status = 400) {
   return Response.json({ error: message }, { status });
 }
 
-type RouteHandler = (request: Request, context?: unknown) => Promise<Response>;
-
-export function withErrorHandler(handler: RouteHandler): RouteHandler {
-  return async (request: Request, context?: unknown) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withErrorHandler<T extends (...args: any[]) => Promise<Response>>(handler: T): T {
+  const wrapped = async (...args: Parameters<T>): Promise<Response> => {
     try {
-      return await handler(request, context);
+      return await handler(...args);
     } catch (err) {
+      const request = args[0] as Request;
       const pathname = new URL(request.url).pathname;
       console.error(`[API] ${request.method} ${pathname} failed:`, err);
       return errorResponse("Internal server error", 500);
     }
   };
+  return wrapped as T;
 }
 
 export function formatVND(amount: number | string): string {
