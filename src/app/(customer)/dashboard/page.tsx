@@ -33,11 +33,11 @@ export default function CustomerDashboard() {
   const [loading, setLoading] = useState(true);
   const [zaloBound, setZaloBound] = useState<boolean | null>(null);
   const [zaloBannerDismissed, setZaloBannerDismissed] = useState(false);
-  const [error, setError] = useState(false);
+  const [ordersError, setOrdersError] = useState(false);
+  const [walletError, setWalletError] = useState(false);
 
   useEffect(() => {
     async function load() {
-      let anySuccess = false;
       try {
         const [ordersRes, walletRes, meRes] = await Promise.allSettled([
           fetch("/api/orders?limit=5"),
@@ -47,22 +47,23 @@ export default function CustomerDashboard() {
         if (ordersRes.status === "fulfilled" && ordersRes.value.ok) {
           const d = await ordersRes.value.json();
           setOrders(d.orders || []);
-          anySuccess = true;
+        } else {
+          setOrdersError(true);
         }
         if (walletRes.status === "fulfilled" && walletRes.value.ok) {
           const d = await walletRes.value.json();
           setWallet(d);
-          anySuccess = true;
+        } else {
+          setWalletError(true);
         }
         if (meRes.status === "fulfilled" && meRes.value.ok) {
           const d = await meRes.value.json();
           setZaloBound(!!d?.zaloRecipientId);
-          anySuccess = true;
         }
-        if (!anySuccess) setError(true);
       } catch (err) {
         console.error("[dashboard] load failed:", err);
-        setError(true);
+        setOrdersError(true);
+        setWalletError(true);
       } finally {
         setLoading(false);
       }
@@ -71,13 +72,6 @@ export default function CustomerDashboard() {
   }, []);
 
   if (loading) return <LoadingSpinner text={t("common.loading")} />;
-  if (error) return (
-    <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <span className="text-4xl">⚠️</span>
-      <p className="text-sm text-slate-600">Không thể tải dữ liệu. Vui lòng thử lại.</p>
-      <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tải lại</button>
-    </div>
-  );
 
   const balance = wallet ? parseFloat(wallet.balance).toLocaleString() : "0";
   const debt = wallet ? parseFloat(wallet.debt).toLocaleString() : "0";
@@ -94,11 +88,20 @@ export default function CustomerDashboard() {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <KPICard title={t("dashboard.walletBalance")} value={`${balance} VND`} icon={<span>💰</span>} color="green" />
-        <KPICard title={t("dashboard.pendingOrders")} value={`${debt} VND`} icon={<span>📊</span>} color="red" />
-        <KPICard title={t("dashboard.totalOrders")} value={orders.length} icon={<span>📦</span>} color="blue" />
-      </div>
+      {walletError ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <div className="col-span-full bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+            <p className="text-sm text-amber-700">Chưa tải được ví</p>
+            <button onClick={() => window.location.reload()} className="mt-2 text-xs text-amber-600 hover:text-amber-800 underline">Thử tải lại</button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <KPICard title={t("dashboard.walletBalance")} value={`${balance} VND`} icon={<span>💰</span>} color="green" />
+          <KPICard title={t("dashboard.pendingOrders")} value={`${debt} VND`} icon={<span>📊</span>} color="red" />
+          <KPICard title={t("dashboard.totalOrders")} value={orders.length} icon={<span>📦</span>} color="blue" />
+        </div>
+      )}
 
       {zaloBound === false && !zaloBannerDismissed && (
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 relative">
@@ -127,56 +130,66 @@ export default function CustomerDashboard() {
         </div>
       )}
 
-      <Card
-        title={t("dashboard.recentOrders")}
-        action={
-          <Link href="/orders" className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
-            {t("common.viewAll")} →
-          </Link>
-        }
-        noPadding
-      >
-        {orders.length === 0 ? (
-          <EmptyState
-            icon="📦"
-            title={t("dashboard.noOrders")}
-            description={t("dashboard.createFirst")}
-            actionLabel={t("nav.newOrder")}
-            actionHref="/orders/new"
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.orderCode")}</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
-                        {order.orderCode}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">{order.productName}</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={order.status} />
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {ordersError ? (
+        <Card title={t("dashboard.recentOrders")} noPadding>
+          <div className="py-10 text-center">
+            <p className="text-sm text-amber-700">Chưa tải được đơn hàng</p>
+            <p className="text-xs text-slate-500 mt-1">Vui lòng thử tải lại từng phần</p>
+            <button onClick={() => window.location.reload()} className="mt-3 px-4 py-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100">Tải lại</button>
           </div>
-        )}
-      </Card>
+        </Card>
+      ) : (
+        <Card
+          title={t("dashboard.recentOrders")}
+          action={
+            <Link href="/orders" className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              {t("common.viewAll")} →
+            </Link>
+          }
+          noPadding
+        >
+          {orders.length === 0 ? (
+            <EmptyState
+              icon="📦"
+              title={t("dashboard.noOrders")}
+              description={t("dashboard.createFirst")}
+              actionLabel={t("nav.newOrder")}
+              actionHref="/orders/new"
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.orderCode")}</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {orders.map((order) => (
+                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                          {order.orderCode}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{order.productName}</td>
+                      <td className="px-6 py-4">
+                        <StatusBadge status={order.status} />
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
