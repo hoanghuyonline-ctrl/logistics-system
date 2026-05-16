@@ -18,6 +18,10 @@ interface QuickViewCounts {
   unansweredQuestions: number;
   unresolvedNotes: number;
   pendingDeposits: number;
+  ordersMissingTracking: number;
+  allAtVietnamWh: number;
+  newOrdersToday: number;
+  highPriorityActive: number;
 }
 
 interface TopUpRequest {
@@ -294,6 +298,98 @@ export default function AdminOperationsPage() {
           </div>
         )}
       </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.5: BẢNG KIỂM VẬN HÀNH HÀNG NGÀY
+          ═══════════════════════════════════════════ */}
+      {quickViews && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            📋 Bảng kiểm vận hành hàng ngày
+          </h2>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="divide-y divide-slate-100">
+              {[
+                {
+                  label: "Nạp tiền chờ duyệt",
+                  value: quickViews.pendingDeposits,
+                  icon: "💳",
+                  href: "/admin/finance",
+                  desc: "Yêu cầu nạp tiền cần phê duyệt",
+                },
+                {
+                  label: "Đơn mới cần mua hàng",
+                  value: quickViews.unpaidOrders,
+                  icon: "🛒",
+                  href: "/admin/orders",
+                  desc: "Đơn hàng PENDING chờ mua từ nhà cung cấp",
+                },
+                {
+                  label: "Đơn chưa có mã tracking",
+                  value: quickViews.ordersMissingTracking,
+                  icon: "🔍",
+                  href: "/admin/stuck-shipments",
+                  desc: "Đã mua nhưng chưa có mã vận đơn TQ",
+                },
+                {
+                  label: "Đơn bị kẹt (>5 ngày)",
+                  value: quickViews.staleOrders,
+                  icon: "⏰",
+                  href: "/admin/stuck-shipments",
+                  desc: "Đơn không cập nhật quá 5 ngày",
+                },
+                {
+                  label: "Tại kho VN chờ giao",
+                  value: quickViews.allAtVietnamWh,
+                  icon: "🏗️",
+                  href: "/admin/orders",
+                  desc: "Tất cả đơn đã về kho VN, chờ giao khách",
+                },
+                {
+                  label: "Ưu tiên cao / Khẩn",
+                  value: quickViews.highPriorityActive,
+                  icon: "🔴",
+                  href: "/admin/orders",
+                  desc: "Đơn HIGH/URGENT đang xử lý",
+                },
+              ].map((item) => {
+                const hasItems = item.value > 0;
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-lg shrink-0">{item.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-slate-900">{item.label}</div>
+                      <div className="text-[11px] text-slate-400">{item.desc}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-base font-bold ${
+                        hasItems ? "text-slate-900" : "text-green-600"
+                      }`}>{item.value}</span>
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                        hasItems ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                      }`}>
+                        {hasItems ? "Cần kiểm tra" : "OK"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                Đơn mới hôm nay: <span className="font-semibold text-slate-600">{quickViews.newOrdersToday}</span>
+              </span>
+              <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">
+                Xem tất cả đơn hàng →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════
           SECTION 2: ĐƠN HÀNG CẦN XỬ LÝ (Stuck)
