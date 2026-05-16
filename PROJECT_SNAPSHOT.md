@@ -360,3 +360,21 @@ Or manually: `npm run build && xcopy /E /Y /I .next\static .next\standalone\.nex
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
 23. **Zalo TOKEN_EXPIRED now auto-recovered** (resolved PR #179) — System automatically refreshes access token on -216 error and retries. Requires ZALO_OA_REFRESH_TOKEN, ZALO_APP_ID, and ZALO_APP_SECRET_KEY to be configured. Manual intervention only needed if refresh token itself expires (~3 months).
+
+## Deployment Lessons Learned (Windows Standalone)
+
+Accumulated from PRs #255, #256, #259 and production incidents:
+
+1. **Next.js `output: "standalone"` does NOT copy static assets** — `.next/static/` and `public/` must be manually copied into `.next/standalone/` after every build. Without this, the app loads with no CSS, no JS, no images. The hardened deploy scripts (`scripts/deploy-standalone.ps1` and `scripts/deploy-standalone.sh`) automate this.
+
+2. **Always validate build output before starting PM2** — Check that `.next/standalone/server.js`, `.next/standalone/.next/static/`, and `.next/standalone/public/` all exist. Missing any one causes white-screen or broken assets.
+
+3. **Dashboard pages must handle fetch failures gracefully** — If the DB is down or an API returns non-200, all dashboard `fetch()` calls must catch errors and call `setLoading(false)`. Otherwise the UI shows infinite "Đang tải..." spinner with no recovery. Fixed in PR #256 with `try/catch` + Vietnamese error UI + reload button.
+
+4. **Never overwrite `.env` during deploy** — The deploy scripts warn if `.env` is missing but never overwrite it. Losing `.env` means losing `DATABASE_URL`, `NEXTAUTH_SECRET`, and all channel tokens.
+
+5. **Safe rebuild sequence on Windows** — When things break: (1) `pm2 stop`, (2) delete `.next/`, (3) `npm install`, (4) `npx prisma generate`, (5) run deploy script, (6) `pm2 start`. Never skip Prisma generate after `npm install`.
+
+6. **PM2 error diagnosis** — If PM2 shows "errored" status, check `pm2 logs logistics-system --lines 50` first. Common causes: missing `.env`, wrong `DATABASE_URL`, port conflict, missing Prisma client.
+
+7. **Interrupted builds leave corrupt `.next/`** — If a build is interrupted (Ctrl+C, power loss), the `.next/` folder may be partially written. Always delete it entirely before rebuilding: `Remove-Item -Recurse -Force .next` (PowerShell) or `rm -rf .next` (bash).
