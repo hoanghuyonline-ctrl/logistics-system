@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-16
 **Branch:** `main`
-**Latest stable commit:** Post PR #266 (ecosystem PM2 next start fix)
+**Latest stable commit:** Post PR #275 (authenticated dashboard resilience hotfix)
 
 ---
 
@@ -227,6 +227,11 @@
 - **Standalone Deploy Script Hardening** (PR #259) — Rewrote both `deploy-standalone.ps1` (Windows) and `deploy-standalone.sh` (Linux/Mac) from ~40 lines to ~180 lines; pre-flight checks (Node.js, npm, package.json, public folder, .env); build output validation (.next/standalone/server.js, .next/static); copy verification with actionable error messages; color-coded terminal output; PM2 command reference; added "Standalone Deploy (Without Docker) — Troubleshooting" section to DEPLOYMENT_WINDOWS.md with common issues table, safe rebuild sequence, and verification commands; no application code changes
 - **Prominent Pending Deposit Alert** (PR #261) — Red urgent banner at top of admin dashboard when `pendingDeposits > 0` showing "Có yêu cầu nạp tiền mới" with count and "Duyệt nạp tiền ngay" quick-action button linking to `/admin/finance`; sound (Web Audio API double-beep) and vibration alerts on dashboard when pending deposit count increases; shared alert toggle (🔔/🔕) synced with operations page via `admin_ops_alert_enabled` localStorage key; extracted `playAlertBeep`, `triggerVibration`, `isAlertEnabled`, `setAlertEnabled` into shared `src/lib/alertSound.ts` (operations page refactored to import from shared module); no schema changes, no new dependencies
 
+- **Systemic withErrorHandler** (PR #273) — Applied `withErrorHandler` wrapper across all Prisma-backed API routes for consistent error logging and 500 responses
+- **withErrorHandler Type Fix** (PR #274) — Fixed TypeScript type mismatch in `withErrorHandler` utility
+- **Dashboard Resilience Improvements** (PR #272) — Initial dashboard resilience improvements
+- **HOTFIX: Authenticated Dashboard Resilience for All Roles** (PR #275) — Production hotfix resolving "Không thể tải dữ liệu. Vui lòng thử lại." blank-screen failures on all authenticated dashboards. Root cause: server-side `Promise.all` with unsafe Prisma queries (invalid `package: false` in include, unsafe Decimal conversions, null relation access) combined with client-side all-or-nothing error handling. **Server-side fixes (7 API routes):** added `safeQuery(promise, fallback)` and `safeDecimal(val)` utilities to `src/lib/utils.ts`; wrapped every Prisma query in dashboard APIs with `safeQuery()` so one failing query no longer crashes the entire `Promise.all`; fixed `/api/orders` route invalid `package: false` Prisma include (conditionally-built include object instead); safe Decimal conversions in accountant/analytics dashboards; null-safety on user relation access in customer-alerts. **Client-side fixes (6 dashboard pages):** Customer, Admin, Vietnam warehouse dashboards switched from `Promise.all` to `Promise.allSettled` with partial data display; Admin operations page added `safeFetch` wrapper tolerating individual API failures; China/Vietnam warehouse dashboards added null-safety on `user.fullName`. **Roles protected:** CUSTOMER, ADMIN, ACCOUNTANT, WAREHOUSE_CN, WAREHOUSE_VN. 13 files changed; no schema changes; no new dependencies
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
@@ -253,6 +258,19 @@ pm2 save
 - PM2 `watch` must remain `false` (prevents crash loops from file changes)
 - `.next/static` and `public` must be copied into `.next/standalone/` after every build (CSS/images break without this)
 - `/api/health` is now a public route (no auth) for Docker/nginx healthchecks
+
+**Deploy notes (PRs #272–#275 — Authenticated Dashboard Resilience):**
+No migration needed. No new dependencies. After merging:
+```powershell
+cd /d D:\BacTrungHai\logistics-system
+git pull origin main
+npm install
+npm run build
+xcopy /E /I /Y .next\static .next\standalone\.next\static
+xcopy /E /I /Y public .next\standalone\public
+pm2 restart logistics-system
+```
+**Critical:** PM2 `watch` must remain `false`. Production deploy style unchanged: Windows + PM2 + `next start -p 3000 -H 0.0.0.0`.
 
 **Deploy notes (PR #251):** No migration needed. Rebuild and restart. After deploy, test PWA install: open `/scanner` on Android Chrome → Menu ⋮ → "Add to Home Screen" → app should open standalone without browser chrome. On iOS Safari → Share → "Add to Home Screen". Icons appear as emerald "QK" on dark background.
 
