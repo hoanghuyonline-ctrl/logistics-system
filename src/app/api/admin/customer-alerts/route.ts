@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler, safeQuery } from "@/lib/utils";
 
 const THRESHOLDS = {
   STUCK_DAYS: 5,
@@ -37,7 +37,7 @@ export const GET = withErrorHandler(async function GET() {
     debtCustomers,
     recentFailures,
   ] = await Promise.all([
-    prisma.order.findMany({
+    safeQuery(prisma.order.findMany({
       where: {
         status: { in: ["PENDING", "PURCHASED", "ARRIVED_CHINA_WH"] },
         updatedAt: { lt: daysAgo(THRESHOLDS.STUCK_DAYS) },
@@ -52,9 +52,9 @@ export const GET = withErrorHandler(async function GET() {
       },
       orderBy: { updatedAt: "asc" },
       take: 20,
-    }),
+    }), []),
 
-    prisma.package.findMany({
+    safeQuery(prisma.package.findMany({
       where: {
         totalWeightKg: null,
         createdAt: { lt: daysAgo(THRESHOLDS.NO_WEIGHT_DAYS) },
@@ -67,9 +67,9 @@ export const GET = withErrorHandler(async function GET() {
       },
       orderBy: { createdAt: "asc" },
       take: 20,
-    }),
+    }), []),
 
-    prisma.order.findMany({
+    safeQuery(prisma.order.findMany({
       where: {
         status: { in: ["PURCHASED", "SELLER_SHIPPED"] },
         trackingCodeChina: null,
@@ -84,9 +84,9 @@ export const GET = withErrorHandler(async function GET() {
       },
       orderBy: { updatedAt: "asc" },
       take: 20,
-    }),
+    }), []),
 
-    prisma.wallet.findMany({
+    safeQuery(prisma.wallet.findMany({
       where: { debt: { gt: THRESHOLDS.DEBT_THRESHOLD_VND } },
       select: {
         userId: true,
@@ -95,9 +95,9 @@ export const GET = withErrorHandler(async function GET() {
       },
       orderBy: { debt: "desc" },
       take: 20,
-    }),
+    }), []),
 
-    prisma.notificationFailure.findMany({
+    safeQuery(prisma.notificationFailure.findMany({
       where: { resolved: false, createdAt: { gt: daysAgo(7) } },
       select: {
         id: true,
@@ -109,7 +109,7 @@ export const GET = withErrorHandler(async function GET() {
       },
       orderBy: { createdAt: "desc" },
       take: 20,
-    }),
+    }), []),
   ]);
 
   const STATUS_LABELS: Record<string, string> = {
@@ -128,7 +128,7 @@ export const GET = withErrorHandler(async function GET() {
       type: "stuck_order",
       level: daysDiff > 7 ? "red" : "yellow",
       title: `Đơn ${o.orderCode} bị kẹt ${daysDiff} ngày`,
-      detail: `${o.user.fullName} — ${STATUS_LABELS[o.status] || o.status} — ${o.productName}`,
+      detail: `${o.user?.fullName ?? "N/A"} — ${STATUS_LABELS[o.status] || o.status} — ${o.productName}`,
       href: `/admin/orders/${o.id}`,
       createdAt: o.updatedAt.toISOString(),
     });
@@ -154,7 +154,7 @@ export const GET = withErrorHandler(async function GET() {
       type: "missing_tracking",
       level: daysDiff > 5 ? "red" : "yellow",
       title: `Đơn ${o.orderCode} chưa có tracking`,
-      detail: `${o.user.fullName} — ${daysDiff} ngày không tracking`,
+      detail: `${o.user?.fullName ?? "N/A"} — ${daysDiff} ngày không tracking`,
       href: `/admin/orders/${o.id}`,
       createdAt: o.updatedAt.toISOString(),
     });
@@ -166,8 +166,8 @@ export const GET = withErrorHandler(async function GET() {
       id: `debt-${w.userId}`,
       type: "unpaid_debt",
       level: debtAmount > 2_000_000 ? "red" : "yellow",
-      title: `${w.user.fullName} nợ ${debtAmount.toLocaleString("vi-VN")}đ`,
-      detail: w.user.email || "Không có email",
+      title: `${w.user?.fullName ?? "N/A"} nợ ${debtAmount.toLocaleString("vi-VN")}đ`,
+      detail: w.user?.email || "Không có email",
       href: `/admin/finance`,
       createdAt: new Date().toISOString(),
     });

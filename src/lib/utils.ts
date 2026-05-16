@@ -54,6 +54,21 @@ export function withErrorHandler<T extends (...args: any[]) => Promise<Response>
   return wrapped as T;
 }
 
+export async function safeQuery<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await promise;
+  } catch (err) {
+    console.error("[prisma] safe query fallback:", err);
+    return fallback;
+  }
+}
+
+export function safeDecimal(val: unknown): number {
+  if (val == null) return 0;
+  const n = typeof val === "number" ? val : parseFloat(String(val));
+  return isNaN(n) ? 0 : n;
+}
+
 export function formatVND(amount: number | string): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);

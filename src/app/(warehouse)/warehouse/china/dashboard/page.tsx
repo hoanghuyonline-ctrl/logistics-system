@@ -27,8 +27,9 @@ export default function ChinaWarehouseDashboard() {
   useEffect(() => {
     fetch("/api/orders?status=SELLER_SHIPPED&limit=20")
       .then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); })
-      .then((d) => { setOrders(d.orders || []); setLoading(false); })
-      .catch((err) => { console.error("[warehouse/china] load failed:", err); setError(true); setLoading(false); });
+      .then((d) => { setOrders(d.orders || []); })
+      .catch((err) => { console.error("[warehouse/china] load failed:", err); setError(true); })
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LoadingSpinner text="Loading dashboard..." />;
@@ -68,7 +69,7 @@ export default function ChinaWarehouseDashboard() {
                 {orders.map((o) => (
                   <tr key={o.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-semibold text-slate-900">{o.orderCode}</td>
-                    <td className="px-6 py-4 text-sm text-slate-700">{o.user.fullName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{o.user?.fullName ?? "N/A"}</td>
                     <td className="px-6 py-4 text-sm text-slate-700">{o.productName}</td>
                     <td className="px-6 py-4"><StatusBadge status={o.status} /></td>
                     <td className="px-6 py-4">

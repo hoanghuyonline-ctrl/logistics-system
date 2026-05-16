@@ -82,20 +82,34 @@ export default function AdminDashboard() {
   const { seedPrev } = useAdminPolling(handlePollUpdate, handleAlerts, 25000);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/analytics/dashboard").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
-      fetch("/api/admin/quick-views").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
-    ]).then(([d, qv]) => {
-      setData(d);
-      setQuickViews(qv);
-      seedPrev(qv);
-      prevDepositsRef.current = qv.pendingDeposits || 0;
-      setLoading(false);
-    }).catch((err) => {
-      console.error("[admin/dashboard] load failed:", err);
-      setError(true);
-      setLoading(false);
-    });
+    async function load() {
+      let anySuccess = false;
+      try {
+        const [dashRes, qvRes] = await Promise.allSettled([
+          fetch("/api/analytics/dashboard"),
+          fetch("/api/admin/quick-views"),
+        ]);
+        if (dashRes.status === "fulfilled" && dashRes.value.ok) {
+          const d = await dashRes.value.json();
+          setData(d);
+          anySuccess = true;
+        }
+        if (qvRes.status === "fulfilled" && qvRes.value.ok) {
+          const qv = await qvRes.value.json();
+          setQuickViews(qv);
+          seedPrev(qv);
+          prevDepositsRef.current = qv.pendingDeposits || 0;
+          anySuccess = true;
+        }
+        if (!anySuccess) setError(true);
+      } catch (err) {
+        console.error("[admin/dashboard] load failed:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [seedPrev]);
 
   if (loading) return <LoadingSpinner text={t("common.loading")} />;

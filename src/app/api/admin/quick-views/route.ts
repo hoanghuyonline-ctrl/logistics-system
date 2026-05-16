@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler, safeQuery } from "@/lib/utils";
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
@@ -29,42 +29,42 @@ export const GET = withErrorHandler(async function GET() {
     newOrdersToday,
     highPriorityActive,
   ] = await Promise.all([
-    prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.count({
+    safeQuery(prisma.order.count({ where: { status: "PENDING" } }), 0),
+    safeQuery(prisma.order.count({
       where: { status: "ARRIVED_CHINA_WH", updatedAt: { lt: fiveDaysAgo } },
-    }),
-    prisma.order.count({
+    }), 0),
+    safeQuery(prisma.order.count({
       where: { status: "ARRIVED_VIETNAM_WH", updatedAt: { lt: threeDaysAgo } },
-    }),
-    prisma.order.count({
+    }), 0),
+    safeQuery(prisma.order.count({
       where: {
         status: { notIn: ["COMPLETED", "CANCELLED"] },
         updatedAt: { lt: fiveDaysAgo },
       },
-    }),
-    prisma.customerIssue.count({ where: { status: { not: "RESOLVED" } } }),
-    prisma.notificationFailure.count({ where: { resolved: false } }),
-    prisma.chatbotUnansweredQuestion.count({ where: { resolved: false } }),
-    prisma.staffNote.count({ where: { resolved: false } }),
-    prisma.walletTopUpRequest.count({ where: { status: "PENDING" } }),
-    prisma.order.count({
+    }), 0),
+    safeQuery(prisma.customerIssue.count({ where: { status: { not: "RESOLVED" } } }), 0),
+    safeQuery(prisma.notificationFailure.count({ where: { resolved: false } }), 0),
+    safeQuery(prisma.chatbotUnansweredQuestion.count({ where: { resolved: false } }), 0),
+    safeQuery(prisma.staffNote.count({ where: { resolved: false } }), 0),
+    safeQuery(prisma.walletTopUpRequest.count({ where: { status: "PENDING" } }), 0),
+    safeQuery(prisma.order.count({
       where: {
         status: { in: ["PURCHASED", "SELLER_SHIPPED"] },
         trackingCodeChina: null,
       },
-    }),
-    prisma.order.count({
+    }), 0),
+    safeQuery(prisma.order.count({
       where: { status: "ARRIVED_VIETNAM_WH" },
-    }),
-    prisma.order.count({
+    }), 0),
+    safeQuery(prisma.order.count({
       where: { createdAt: { gte: todayStart } },
-    }),
-    prisma.order.count({
+    }), 0),
+    safeQuery(prisma.order.count({
       where: {
         priority: { in: ["HIGH", "URGENT"] },
         status: { notIn: ["COMPLETED", "CANCELLED"] },
       },
-    }),
+    }), 0),
   ]);
 
   return jsonResponse({

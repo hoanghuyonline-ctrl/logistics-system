@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler, safeQuery, safeDecimal } from "@/lib/utils";
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
@@ -27,39 +27,39 @@ export const GET = withErrorHandler(async function GET() {
     allOrders,
     statusCounts,
   ] = await Promise.all([
-    prisma.order.count(),
-    prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
-    prisma.order.count({ where: { createdAt: { gte: weekStart } } }),
-    prisma.order.count({ where: { createdAt: { gte: monthStart } } }),
-    prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.count({
+    safeQuery(prisma.order.count(), 0),
+    safeQuery(prisma.order.count({ where: { createdAt: { gte: todayStart } } }), 0),
+    safeQuery(prisma.order.count({ where: { createdAt: { gte: weekStart } } }), 0),
+    safeQuery(prisma.order.count({ where: { createdAt: { gte: monthStart } } }), 0),
+    safeQuery(prisma.order.count({ where: { status: "PENDING" } }), 0),
+    safeQuery(prisma.order.count({
       where: {
         status: { in: ["SHIPPING_TO_VIETNAM", "SELLER_SHIPPED", "ARRIVED_CHINA_WH", "PACKING"] },
       },
-    }),
-    prisma.user.count({ where: { role: "CUSTOMER" } }),
-    prisma.user.count({
+    }), 0),
+    safeQuery(prisma.user.count({ where: { role: "CUSTOMER" } }), 0),
+    safeQuery(prisma.user.count({
       where: {
         role: "CUSTOMER",
         orders: { some: { createdAt: { gte: monthStart } } },
       },
-    }),
-    prisma.order.findMany({
+    }), 0),
+    safeQuery(prisma.order.findMany({
       where: { status: "COMPLETED" },
       select: { totalCostVND: true, totalPriceVND: true },
-    }),
-    prisma.order.groupBy({
+    }), []),
+    safeQuery(prisma.order.groupBy({
       by: ["status"],
       _count: { status: true },
-    }),
+    }), []),
   ]);
 
   const totalRevenue = allOrders.reduce(
-    (sum, o) => sum + parseFloat(o.totalCostVND.toString()),
+    (sum, o) => sum + safeDecimal(o.totalCostVND),
     0
   );
   const totalProductCost = allOrders.reduce(
-    (sum, o) => sum + parseFloat(o.totalPriceVND.toString()),
+    (sum, o) => sum + safeDecimal(o.totalPriceVND),
     0
   );
   const estimatedProfit = totalRevenue - totalProductCost;
