@@ -43,16 +43,21 @@ export default function CustomerDashboard() {
           fetch("/api/wallet"),
           fetch("/api/auth/me"),
         ]);
-        if (!ordersRes.ok || !walletRes.ok || !meRes.ok) {
-          setError(true);
-          return;
-        }
-        const ordersData = await ordersRes.json();
-        const walletData = await walletRes.json();
-        const meData = await meRes.json();
-        setOrders(ordersData.orders || []);
+        if (!ordersRes.ok) console.error("[dashboard] /api/orders failed:", ordersRes.status);
+        if (!walletRes.ok) console.error("[dashboard] /api/wallet failed:", walletRes.status);
+        if (!meRes.ok) console.error("[dashboard] /api/auth/me failed:", meRes.status);
+
+        const ordersData = ordersRes.ok ? await ordersRes.json() : null;
+        const walletData = walletRes.ok ? await walletRes.json() : null;
+        const meData = meRes.ok ? await meRes.json() : null;
+
+        setOrders(ordersData?.orders || []);
         setWallet(walletData);
-        setZaloBound(!!meData?.zaloRecipientId);
+        setZaloBound(meData ? !!meData.zaloRecipientId : null);
+
+        if (!ordersRes.ok && !walletRes.ok && !meRes.ok) {
+          setError(true);
+        }
       } catch (err) {
         console.error("[dashboard] load failed:", err);
         setError(true);
