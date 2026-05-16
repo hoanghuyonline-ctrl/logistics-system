@@ -199,6 +199,7 @@ const en: Record<string, string> = {
     "nav.customerIssues": "Issues",
     "nav.customerAlerts": "Alerts",
     "nav.staffNotes": "Handover",
+    "nav.leads": "Leads",
 
   // Warehouse scan
   "scan.title": "Scan Package",

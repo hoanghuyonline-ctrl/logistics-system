@@ -7,3 +7,7 @@ export { default as LandingOrderTracking } from "./LandingOrderTracking";
 export { default as LandingCTA } from "./LandingCTA";
 export { default as LandingLocations } from "./LandingLocations";
 export { default as LandingFooter } from "./LandingFooter";
+export { default as LandingTrust } from "./LandingTrust";
+export { default as LandingLeadForm } from "./LandingLeadForm";
+export { default as LandingFloatingCTA } from "./LandingFloatingCTA";
+export { default as LandingMobileBar } from "./LandingMobileBar";

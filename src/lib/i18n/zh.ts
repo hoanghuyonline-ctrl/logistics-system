@@ -199,6 +199,7 @@ const zh: Record<string, string> = {
     "nav.customerIssues": "客户投诉",
     "nav.customerAlerts": "客户警报",
     "nav.staffNotes": "交接记录",
+    "nav.leads": "潜在客户",
 
   // Warehouse scan
   "scan.title": "扫描包裹",
