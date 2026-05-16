@@ -22,14 +22,23 @@ interface Order {
 export default function ChinaWarehouseDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch("/api/orders?status=SELLER_SHIPPED&limit=20")
-      .then((r) => r.json())
-      .then((d) => { setOrders(d.orders || []); setLoading(false); });
+      .then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); })
+      .then((d) => { setOrders(d.orders || []); setLoading(false); })
+      .catch((err) => { console.error("[warehouse/china] load failed:", err); setError(true); setLoading(false); });
   }, []);
 
   if (loading) return <LoadingSpinner text="Loading dashboard..." />;
+  if (error) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <span className="text-4xl">⚠️</span>
+      <p className="text-sm text-slate-600">Không thể tải dữ liệu. Vui lòng thử lại.</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tải lại</button>
+    </div>
+  );
 
   return (
     <div>

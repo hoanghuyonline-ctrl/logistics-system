@@ -33,26 +33,44 @@ export default function CustomerDashboard() {
   const [loading, setLoading] = useState(true);
   const [zaloBound, setZaloBound] = useState<boolean | null>(null);
   const [zaloBannerDismissed, setZaloBannerDismissed] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const [ordersRes, walletRes, meRes] = await Promise.all([
-        fetch("/api/orders?limit=5"),
-        fetch("/api/wallet"),
-        fetch("/api/auth/me"),
-      ]);
-      const ordersData = await ordersRes.json();
-      const walletData = await walletRes.json();
-      const meData = await meRes.json();
-      setOrders(ordersData.orders || []);
-      setWallet(walletData);
-      setZaloBound(!!meData?.zaloRecipientId);
-      setLoading(false);
+      try {
+        const [ordersRes, walletRes, meRes] = await Promise.all([
+          fetch("/api/orders?limit=5"),
+          fetch("/api/wallet"),
+          fetch("/api/auth/me"),
+        ]);
+        if (!ordersRes.ok || !walletRes.ok || !meRes.ok) {
+          setError(true);
+          return;
+        }
+        const ordersData = await ordersRes.json();
+        const walletData = await walletRes.json();
+        const meData = await meRes.json();
+        setOrders(ordersData.orders || []);
+        setWallet(walletData);
+        setZaloBound(!!meData?.zaloRecipientId);
+      } catch (err) {
+        console.error("[dashboard] load failed:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
 
   if (loading) return <LoadingSpinner text={t("common.loading")} />;
+  if (error) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <span className="text-4xl">⚠️</span>
+      <p className="text-sm text-slate-600">Không thể tải dữ liệu. Vui lòng thử lại.</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tải lại</button>
+    </div>
+  );
 
   const balance = wallet ? parseFloat(wallet.balance).toLocaleString() : "0";
   const debt = wallet ? parseFloat(wallet.debt).toLocaleString() : "0";

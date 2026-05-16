@@ -79,6 +79,7 @@ export default function AccountantDashboard() {
   const router = useRouter();
   const [data, setData] = useState<AccountantDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const refreshFetcher = useCallback(async () => {
     const res = await fetch("/api/accountant/dashboard");
@@ -100,14 +101,21 @@ export default function AccountantDashboard() {
       return;
     }
     fetch("/api/accountant/dashboard")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); })
       .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch((err) => { console.error("[accountant/dashboard] load failed:", err); setError(true); setLoading(false); });
   }, [session, authStatus, router]);
 
-  if (authStatus === "loading" || loading || !data) {
+  if (authStatus === "loading" || loading) {
     return <LoadingSpinner text={t("common.loading")} />;
   }
+  if (error || !data) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <span className="text-4xl">⚠️</span>
+      <p className="text-sm text-slate-600">Không thể tải dữ liệu. Vui lòng thử lại.</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tải lại</button>
+    </div>
+  );
 
   const healthIndicators: HealthIndicator[] = [
     {
