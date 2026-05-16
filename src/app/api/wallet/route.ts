@@ -7,10 +7,11 @@ export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
-  const wallet = await prisma.wallet.findUnique({
+  const wallet = await prisma.wallet.upsert({
     where: { userId: user.id },
+    update: {},
+    create: { userId: user.id, balance: 0, debt: 0 },
   });
 
-  if (!wallet) return errorResponse("Wallet not found", 404);
   return jsonResponse(wallet);
 });
