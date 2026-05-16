@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { jsonResponse, errorResponse } from "@/lib/utils";
+import { jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const body = await request.json();
   const { email, password, fullName, phone, address } = body;
 
@@ -31,4 +31,4 @@ export async function POST(request: Request) {
   });
 
   return jsonResponse(user, 201);
-}
+});

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 
-export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/tracking">) {
+export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/tracking">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -20,4 +20,4 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
   });
 
   return jsonResponse(updated);
-}
+});

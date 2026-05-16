@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import bcrypt from "bcryptjs";
 
-export async function PUT(request: Request) {
+export const PUT = withErrorHandler(async function PUT(request: Request) {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) return errorResponse("Unauthorized", 401);
 
@@ -25,9 +25,9 @@ export async function PUT(request: Request) {
   });
 
   return jsonResponse(user);
-}
+});
 
-export async function PATCH(request: Request) {
+export const PATCH = withErrorHandler(async function PATCH(request: Request) {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) return errorResponse("Unauthorized", 401);
 
@@ -51,4 +51,4 @@ export async function PATCH(request: Request) {
   });
 
   return jsonResponse({ message: "Password updated" });
-}
+});

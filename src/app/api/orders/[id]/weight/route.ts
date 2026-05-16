@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { calculateOrderCost } from "@/lib/cost-calculator";
 import type { NextRequest } from "next/server";
 
-export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/weight">) {
+export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/weight">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN"])) {
     return errorResponse("Forbidden", 403);
@@ -41,4 +41,4 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id
   });
 
   return jsonResponse(updated);
-}
+});

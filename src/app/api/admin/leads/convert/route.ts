@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import bcrypt from "bcryptjs";
 import { recordLeadActivity } from "@/lib/lead-activity";
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -71,4 +71,4 @@ export async function POST(request: Request) {
   recordLeadActivity(leadId, "CONVERTED", `userId=${convertedUserId}`, user.id).catch(() => {});
 
   return jsonResponse(updatedLead);
-}
+});

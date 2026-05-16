@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -48,4 +48,4 @@ export async function GET() {
       : null,
     topRepeated,
   });
-}
+});

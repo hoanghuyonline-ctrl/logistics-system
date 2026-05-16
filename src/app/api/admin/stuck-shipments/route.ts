@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
 // Configurable thresholds (days)
 const THRESHOLDS = {
@@ -18,7 +18,7 @@ function daysAgo(days: number): Date {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -109,4 +109,4 @@ export async function GET() {
       { key: "noTracking", label: "Đơn chưa có tracking", level: noTrackingOrders.length > 0 ? "yellow" : "green", items: noTrackingOrders },
     ],
   });
-}
+});

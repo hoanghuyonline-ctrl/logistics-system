@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
@@ -42,9 +42,9 @@ export async function GET(request: Request) {
   const unresolved = counts.find((c) => !c.resolved)?._count ?? 0;
 
   return jsonResponse({ notes, total, unresolved, resolved: total - unresolved });
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
@@ -72,9 +72,9 @@ export async function POST(request: Request) {
   });
 
   return jsonResponse(note, 201);
-}
+});
 
-export async function PUT(request: Request) {
+export const PUT = withErrorHandler(async function PUT(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
@@ -95,4 +95,4 @@ export async function PUT(request: Request) {
   });
 
   return jsonResponse(updated);
-}
+});

@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, generateOrderCode, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, generateOrderCode, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { calculateOrderCost } from "@/lib/cost-calculator";
 import { createNotification } from "@/lib/notifications";
 import { onOrderCreated } from "@/lib/notifications/triggers";
 
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -114,9 +114,9 @@ export async function GET(request: Request) {
   }
 
   return jsonResponse(response);
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -207,4 +207,4 @@ export async function POST(request: Request) {
   });
 
   return jsonResponse(order, 201);
-}
+});

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, errorResponse, withErrorHandler } from "@/lib/utils";
 import * as XLSX from "xlsx";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -12,7 +12,7 @@ const ROLE_LABELS: Record<string, string> = {
   ACCOUNTANT: "Kế toán",
 };
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -50,4 +50,4 @@ export async function GET() {
       "Content-Disposition": `attachment; filename="users-export-${today}.xlsx"`,
     },
   });
-}
+});

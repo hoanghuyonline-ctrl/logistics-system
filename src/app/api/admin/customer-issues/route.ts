@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { onCustomerIssueStatusChanged } from "@/lib/notifications";
 
 const ISSUE_TYPES = [
@@ -17,7 +17,7 @@ const ISSUE_TYPES = [
 
 const STATUSES = ["NEW", "IN_PROGRESS", "WAITING_CUSTOMER", "RESOLVED"] as const;
 
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -59,9 +59,9 @@ export async function GET(request: Request) {
   for (const c of counts) statusCounts[c.status] = c._count;
 
   return jsonResponse({ issues, statusCounts, issueTypes: ISSUE_TYPES, statuses: STATUSES });
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -96,9 +96,9 @@ export async function POST(request: Request) {
   });
 
   return jsonResponse(issue, 201);
-}
+});
 
-export async function PUT(request: Request) {
+export const PUT = withErrorHandler(async function PUT(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -156,4 +156,4 @@ export async function PUT(request: Request) {
   }
 
   return jsonResponse(updated);
-}
+});

@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -13,4 +13,4 @@ export async function GET() {
 
   if (!wallet) return errorResponse("Wallet not found", 404);
   return jsonResponse(wallet);
-}
+});

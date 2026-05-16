@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
@@ -15,9 +15,9 @@ export async function GET() {
     result[c.key] = c.value;
   }
   return jsonResponse(result);
-}
+});
 
-export async function PUT(request: Request) {
+export const PUT = withErrorHandler(async function PUT(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -35,4 +35,4 @@ export async function PUT(request: Request) {
 
   await Promise.all(updates);
   return jsonResponse({ message: "Settings updated" });
-}
+});

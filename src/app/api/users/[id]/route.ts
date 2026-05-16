@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
+export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -29,9 +29,9 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/users/[id]">
 
   if (!found) return errorResponse("User not found", 404);
   return jsonResponse(found);
-}
+});
 
-export async function PUT(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
+export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -61,9 +61,9 @@ export async function PUT(req: NextRequest, ctx: RouteContext<"/api/users/[id]">
   });
 
   return jsonResponse(updated);
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
+export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -81,4 +81,4 @@ export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/users/[id
   });
 
   return jsonResponse({ message: "User deactivated" });
-}
+});

@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -23,4 +23,4 @@ export async function GET(request: Request) {
   ]);
 
   return jsonResponse({ notifications, total, unreadCount, page, totalPages: Math.ceil(total / limit) });
-}
+});

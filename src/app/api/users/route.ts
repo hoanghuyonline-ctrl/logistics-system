@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import bcrypt from "bcryptjs";
 
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -54,9 +54,9 @@ export async function GET(request: Request) {
   ]);
 
   return jsonResponse({ users, total, page, totalPages: Math.ceil(total / limit) });
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -88,4 +88,4 @@ export async function POST(request: Request) {
   });
 
   return jsonResponse(newUser, 201);
-}
+});

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, jsonResponse, errorResponse } from "@/lib/utils";
+import { getCurrentUser, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 
-export async function GET() {
+export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -12,9 +12,9 @@ export async function GET() {
   });
 
   return jsonResponse(pending);
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -70,9 +70,9 @@ export async function POST(request: Request) {
     });
 
   return jsonResponse(record, 201);
-}
+});
 
-export async function DELETE() {
+export const DELETE = withErrorHandler(async function DELETE() {
   const user = await getCurrentUser();
   if (!user) return errorResponse("Unauthorized", 401);
 
@@ -90,4 +90,4 @@ export async function DELETE() {
   });
 
   return jsonResponse({ success: true });
-}
+});
