@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-16
 **Branch:** `main`
-**Latest stable commit:** Post PR #258 (smart customer alerts)
+**Latest stable commit:** Post PR #266 (ecosystem PM2 next start fix)
 
 ---
 
@@ -219,6 +219,9 @@
 - **Admin Operations Alert Feedback** (PR #254) — Sound + vibration alerts on `/admin/operations` when urgent count increases between 30s polling cycles; Web Audio API double-beep (880Hz + 1100Hz square wave, 0.15 volume); Vibration API pattern (200ms-100ms-200ms) on supported mobile browsers; "Âm báo: Bật/Tắt" toggle button (🔔/🔕) in page header with localStorage persistence (`admin_ops_alert_enabled`); alerts only fire when urgent count increases (not on initial load); ref-based alert state to avoid useCallback dependency churn; no schema changes, no new dependencies
 - **HOTFIX: Standalone Deploy CSS/Static Fix** (PR #255) — Root cause: Next.js `output: "standalone"` does NOT copy `.next/static/` or `public/` into standalone output; when running `pm2 start .next\standalone\server.js`, all CSS/JS/fonts/images return 404; landing page appears as unstyled raw HTML. Fix: deploy helper scripts (`scripts/deploy-standalone.sh` for Linux, `scripts/deploy-standalone.ps1` for Windows) that automate build → copy static → copy public → copy Prisma; updated `DEPLOYMENT_PM2.md` with standalone deploy section explaining the copy requirement and why CSS breaks without it; no code changes, no schema changes, no new dependencies
 - **HOTFIX: Infinite Dashboard Loading** (PR #256) — All 5 dashboard pages (customer, admin, warehouse CN, warehouse VN, accountant) had zero error handling on API fetches; if any fetch failed (DB timeout, auth error, non-200 response), `setLoading(false)` never executed → infinite "Đang tải..." spinner. Fix: added `try/catch` + response status checking to all dashboard fetch calls; on failure shows Vietnamese error UI ("Không thể tải dữ liệu") with reload button; `setLoading(false)` always executes via `finally`; no schema changes
+- **HOTFIX: Dashboard API Auth + Prisma Standalone** (PR #264) — `/api/health` was blocked by auth middleware (proxy.ts `publicPaths`), returning 401 for Docker/nginx healthchecks and preventing the app container from reaching "healthy" state; added `/api/health` to `publicPaths`. Also added `@prisma/adapter-pg` to `serverExternalPackages` in `next.config.ts` so the Prisma adapter is properly externalized alongside `@prisma/client` in standalone builds, preventing module-state mismatch in Docker/standalone deployments.
+- **HOTFIX: PM2 Standalone Server Entry** (PR #265) — `ecosystem.config.js` pointed to `.next/standalone/server.js` with `PORT`/`HOSTNAME` env vars; added `watch: false` to prevent file-watching in production.
+- **HOTFIX: PM2 Switch to next start** (PR #266) — Switched PM2 entry from `.next/standalone/server.js` to `node_modules/next/dist/bin/next` with `args: "start -p 3000 -H 0.0.0.0"`; avoids standalone server directly and uses standard `next start` command; `watch: false` preserved.
 - **Global System Health Bar** (PR #257) — Compact health indicator bar in admin layout header; 5 status pills: DB (online/offline via Prisma query), Telegram (configured/not), Zalo (configured/not), Email/SMTP (configured/not), Environment (production/development); green/yellow/red color states; 60-second cached polling via `GET /api/admin/health-bar`; Vietnamese labels; `SystemHealthBar` client component; no schema changes, no new dependencies
 - **Smart Customer Alerts** (PR #258) — Admin page `/admin/customer-alerts` with automatic operational alerts; scans for: orders stuck >5 days without status update, orders missing weight after China warehouse, orders missing tracking codes, customers with unpaid debt >500,000 VND, failed notification deliveries; `GET /api/admin/customer-alerts` endpoint with parallel Prisma queries; severity badges (Cao/Trung bình); Vietnamese admin-friendly wording; sidebar nav "Cảnh báo KH" (⚠️); auto-refresh button; no schema changes
 - **Standalone Deploy Script Hardening** (PR #259) — Rewrote both `deploy-standalone.ps1` (Windows) and `deploy-standalone.sh` (Linux/Mac) from ~40 lines to ~180 lines; pre-flight checks (Node.js, npm, package.json, public folder, .env); build output validation (.next/standalone/server.js, .next/static); copy verification with actionable error messages; color-coded terminal output; PM2 command reference; added "Standalone Deploy (Without Docker) — Troubleshooting" section to DEPLOYMENT_WINDOWS.md with common issues table, safe rebuild sequence, and verification commands; no application code changes
@@ -232,6 +235,24 @@ powershell -File scripts\deploy-standalone.ps1
 pm2 restart logistics-system
 ```
 Or manually: `npm run build && xcopy /E /Y /I .next\static .next\standalone\.next\static && xcopy /E /Y /I public .next\standalone\public && pm2 restart logistics-system`
+
+**Deploy notes (PRs #264–#266 — Production Server Stabilization):**
+Windows standalone deployment is now stable. Runtime uses `next start -p 3000 -H 0.0.0.0` via PM2 (`ecosystem.config.js`). After any rebuild:
+```powershell
+cd /d D:\BacTrungHai\logistics-system
+git pull origin main
+npm install
+npm run build
+xcopy /E /I /Y .next\static .next\standalone\.next\static
+xcopy /E /I /Y public .next\standalone\public
+pm2 delete all
+pm2 start ecosystem.config.js
+pm2 save
+```
+**Critical rules:**
+- PM2 `watch` must remain `false` (prevents crash loops from file changes)
+- `.next/static` and `public` must be copied into `.next/standalone/` after every build (CSS/images break without this)
+- `/api/health` is now a public route (no auth) for Docker/nginx healthchecks
 
 **Deploy notes (PR #251):** No migration needed. Rebuild and restart. After deploy, test PWA install: open `/scanner` on Android Chrome → Menu ⋮ → "Add to Home Screen" → app should open standalone without browser chrome. On iOS Safari → Share → "Add to Home Screen". Icons appear as emerald "QK" on dark background.
 
@@ -357,6 +378,7 @@ Or manually: `npm run build && xcopy /E /Y /I .next\static .next\standalone\.nex
 18. **Zalo auto-bind requires customer initiative** — customers must message the OA at least once with a valid order code to bind their Zalo recipient ID; no admin-side manual binding yet.
 18. **Smoke tests cover storage only** — 5 Vitest tests for `LocalStorageProvider`; API route and E2E tests not yet implemented.
 19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
+24. **Windows standalone deployment now stable** (resolved PRs #264–#266) — PM2 runs `next start` via `node_modules/next/dist/bin/next`; `/api/health` public; `@prisma/adapter-pg` externalized; CSS/static assets require manual copy after build.
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
