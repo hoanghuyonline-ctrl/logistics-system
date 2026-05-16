@@ -33,11 +33,26 @@
 
 ## Webhook / Public Routes
 - `/api/telegram/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
+- `/api/zalo/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
+- `/api/messenger/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
+- `/api/health` is a public route (no auth) — used for healthchecks
 - Any new external webhook must also be added to `publicPaths` in `src/proxy.ts`
 
-## Current Priorities
-1. Vietnamese default locale
-2. Scan workflow
-3. Audit log
-4. Notification delivery
-5. CI pipeline
+## Production Deployment Rules
+- Windows Server + PM2 + `next start -p 3000 -H 0.0.0.0`
+- PM2 `watch` must remain `false` — enabling it causes crash loops from file changes
+- After every `npm run build`, must copy `.next/static` and `public` into `.next/standalone/` (CSS/images break without this)
+- No direct push to main — all changes via PR
+- Always run `npm run build` locally to verify before creating PR
+
+## Current Priorities (updated 2026-05-16)
+1. ~~Vietnamese default locale~~ ✓ complete
+2. ~~Scan workflow~~ ✓ complete
+3. ~~Audit log~~ ✓ complete
+4. ~~Notification delivery~~ ✓ complete (Zalo, Telegram, Messenger, Email, System)
+5. ~~CI pipeline~~ ✓ complete
+6. **Fix CUSTOMER /dashboard production error** — unresolved, see PROJECT_SNAPSHOT.md Unresolved Issues
+7. Production SMTP configuration
+8. Cloud storage provider (S3/R2/MinIO)
+9. API route smoke tests
+10. E2E test suite (Playwright)
