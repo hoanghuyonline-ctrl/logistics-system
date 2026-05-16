@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [quickViews, setQuickViews] = useState<QuickViewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   const handlePollUpdate = useCallback((qv: QuickViewCounts) => {
@@ -59,17 +60,28 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/analytics/dashboard").then((r) => r.json()),
-      fetch("/api/admin/quick-views").then((r) => r.json()),
+      fetch("/api/analytics/dashboard").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
+      fetch("/api/admin/quick-views").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
     ]).then(([d, qv]) => {
       setData(d);
       setQuickViews(qv);
       seedPrev(qv);
       setLoading(false);
+    }).catch((err) => {
+      console.error("[admin/dashboard] load failed:", err);
+      setError(true);
+      setLoading(false);
     });
   }, [seedPrev]);
 
-  if (loading || !data) return <LoadingSpinner text={t("common.loading")} />;
+  if (loading) return <LoadingSpinner text={t("common.loading")} />;
+  if (error || !data) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <span className="text-4xl">⚠️</span>
+      <p className="text-sm text-slate-600">Không thể tải dữ liệu. Vui lòng thử lại.</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tải lại</button>
+    </div>
+  );
 
   return (
     <div>

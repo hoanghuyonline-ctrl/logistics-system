@@ -20,19 +20,31 @@ export default function VietnamWarehouseDashboard() {
   const [arrivedOrders, setArrivedOrders] = useState<Order[]>([]);
   const [deliveryOrders, setDeliveryOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/orders?status=SHIPPING_TO_VIETNAM&limit=20").then((r) => r.json()),
-      fetch("/api/orders?status=ARRIVED_VIETNAM_WH&limit=20").then((r) => r.json()),
+      fetch("/api/orders?status=SHIPPING_TO_VIETNAM&limit=20").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
+      fetch("/api/orders?status=ARRIVED_VIETNAM_WH&limit=20").then((r) => { if (!r.ok) throw new Error("API error"); return r.json(); }),
     ]).then(([shipping, arrived]) => {
       setArrivedOrders(shipping.orders || []);
       setDeliveryOrders(arrived.orders || []);
+      setLoading(false);
+    }).catch((err) => {
+      console.error("[warehouse/vietnam] load failed:", err);
+      setError(true);
       setLoading(false);
     });
   }, []);
 
   if (loading) return <LoadingSpinner text="Loading dashboard..." />;
+  if (error) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <span className="text-4xl">⚠️</span>
+      <p className="text-sm text-slate-600">Không thể tải dữ liệu. Vui lòng thử lại.</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tải lại</button>
+    </div>
+  );
 
   return (
     <div>
