@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getChatbotConfig, isTopicAllowed, logQualityFlag, QUALITY_FLAGS } from "@/lib/chatbot-config";
 
 interface KnowledgeMatch {
   id: string;
@@ -103,19 +104,24 @@ export interface KnowledgeAnswerResult {
   matchSource: string;
   score: number;
   candidateCount: number;
+  qualityFlag?: string;
 }
 
 export async function findSupportKnowledgeAnswer(
   messageText: string,
   channel?: string,
+  senderId?: string,
 ): Promise<KnowledgeAnswerResult | null> {
+  const config = await getChatbotConfig();
+
   const entries = await prisma.supportKnowledge.findMany({
     where: { isActive: true },
+    select: { id: true, title: true, content: true, category: true, keywords: true },
   });
 
   if (entries.length === 0) return null;
 
-  const matches: KnowledgeMatch[] = entries
+  const matches: (KnowledgeMatch & { category: string })[] = entries
     .map((entry) => {
       const result = scoreMatch(messageText, entry.title, entry.content, entry.category, entry.keywords);
       return {
@@ -123,8 +129,9 @@ export async function findSupportKnowledgeAnswer(
         title: entry.title,
         content: entry.content,
         keywords: entry.keywords,
+        category: entry.category,
         score: result.score,
-        matchSource: result.matchSource === "none" ? "content" : result.matchSource,
+        matchSource: result.matchSource === "none" ? "content" as const : result.matchSource,
       };
     })
     .filter((m) => m.score > 0)
@@ -133,10 +140,54 @@ export async function findSupportKnowledgeAnswer(
   if (matches.length === 0) return null;
 
   const best = matches[0];
-  const content =
+
+  // Quality control: minimum score threshold
+  if (best.score < config.minMatchScore) {
+    logQualityFlag(channel || "UNKNOWN", senderId ?? null, messageText, QUALITY_FLAGS.LOW_SCORE, `score=${best.score} min=${config.minMatchScore}`, best.id, best.score);
+    console.log(`[chatbot/quality] LOW_SCORE | channel=${channel} score=${best.score} min=${config.minMatchScore} query="${messageText}"`);
+    return null;
+  }
+
+  // Quality control: allowed topics filter
+  if (config.allowedTopics.length > 0 && !isTopicAllowed(best.category, config.allowedTopics)) {
+    logQualityFlag(channel || "UNKNOWN", senderId ?? null, messageText, QUALITY_FLAGS.TOPIC_BLOCKED, `category=${best.category}`, best.id, best.score);
+    console.log(`[chatbot/quality] TOPIC_BLOCKED | channel=${channel} category="${best.category}" query="${messageText}"`);
+    return null;
+  }
+
+  // Quality control: avoid repeated questions (same sender, same entry, within 5 min)
+  if (config.avoidRepeat && senderId && channel) {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const recent = await prisma.chatbotQualityLog.findFirst({
+      where: {
+        channel,
+        senderId,
+        knowledgeId: best.id,
+        flag: QUALITY_FLAGS.CONCISE_APPLIED,
+        createdAt: { gte: fiveMinAgo },
+      },
+    }).catch(() => null);
+    if (recent) {
+      logQualityFlag(channel, senderId, messageText, QUALITY_FLAGS.REPEATED_QUESTION, `knowledgeId=${best.id}`, best.id, best.score);
+      console.log(`[chatbot/quality] REPEATED_QUESTION | channel=${channel} senderId=${senderId} knowledgeId=${best.id}`);
+    }
+  }
+
+  let content =
     best.content.length > MAX_REPLY_LENGTH
       ? best.content.slice(0, MAX_REPLY_LENGTH) + "..."
       : best.content;
+
+  // Quality control: concise replies — trim to first paragraph
+  let qualityFlag: string | undefined;
+  if (config.conciseReplies && content.includes("\n\n")) {
+    const firstParagraph = content.split("\n\n")[0];
+    if (firstParagraph.length >= 30) {
+      content = firstParagraph;
+      qualityFlag = QUALITY_FLAGS.CONCISE_APPLIED;
+      logQualityFlag(channel || "UNKNOWN", senderId ?? null, messageText, QUALITY_FLAGS.CONCISE_APPLIED, undefined, best.id, best.score);
+    }
+  }
 
   trackKnowledgeMatch(best.id, channel);
 
@@ -148,6 +199,7 @@ export async function findSupportKnowledgeAnswer(
     matchSource: best.matchSource,
     score: best.score,
     candidateCount: matches.length,
+    qualityFlag,
   };
 }
 
