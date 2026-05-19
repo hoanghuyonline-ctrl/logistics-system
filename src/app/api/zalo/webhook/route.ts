@@ -5,6 +5,7 @@ import { getNotificationConfig } from "@/lib/notification-config";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 import { getCachedAccessToken, refreshZaloAccessToken } from "@/lib/zalo-token";
 import { upsertLeadFromChannel } from "@/lib/lead-intake";
+import { getChatbotConfig, logQualityFlag, QUALITY_FLAGS } from "@/lib/chatbot-config";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -251,8 +252,8 @@ async function handleTextMessage(userId: string, text: string): Promise<void> {
       return;
     }
 
-    // 3. FAQ / SupportKnowledge matching
-    const match = await findSupportKnowledgeAnswer(text, "ZALO");
+    // 3. FAQ / SupportKnowledge matching (with quality controls)
+    const match = await findSupportKnowledgeAnswer(text, "ZALO", userId);
     if (match) {
       branch = "support_knowledge";
       console.log(
@@ -267,7 +268,7 @@ async function handleTextMessage(userId: string, text: string): Promise<void> {
       return;
     }
 
-    // 4. Fallback — no match found
+    // 4. Fallback — no match found; check if human support fallback is enabled
     branch = "fallback";
     console.log(
       `[zalo/chat] branch=${branch} | senderId=${userId} query="${text}"`
@@ -275,7 +276,14 @@ async function handleTextMessage(userId: string, text: string): Promise<void> {
     prisma.chatbotUnansweredQuestion.create({
       data: { channel: "ZALO", question: text, senderId: userId },
     }).catch((e: unknown) => console.error("[zalo/unanswered] save error:", e));
-    await replyToUser(userId, FALLBACK_REPLY);
+
+    const config = await getChatbotConfig();
+    if (config.fallbackHuman) {
+      logQualityFlag("ZALO", userId, text, QUALITY_FLAGS.FALLBACK_HUMAN);
+      await replyToUser(userId, FALLBACK_REPLY);
+    } else {
+      await replyToUser(userId, FALLBACK_REPLY);
+    }
     console.log(`[zalo/chat] reply_success=true | branch=${branch} senderId=${userId}`);
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);

@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 import { upsertLeadFromChannel } from "@/lib/lead-intake";
+import { getChatbotConfig, logQualityFlag, QUALITY_FLAGS } from "@/lib/chatbot-config";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -176,7 +177,7 @@ export async function POST(request: Request) {
               await handleOrderLookup(senderId, text);
             } else {
               try {
-                const match = await findSupportKnowledgeAnswer(text, "MESSENGER");
+                const match = await findSupportKnowledgeAnswer(text, "MESSENGER", senderId);
                 if (match) {
                   console.log(
                     `[messenger/knowledge] matched=true | channel=MESSENGER score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
@@ -193,6 +194,10 @@ export async function POST(request: Request) {
                   prisma.chatbotUnansweredQuestion.create({
                     data: { channel: "MESSENGER", question: text, senderId },
                   }).catch((e: unknown) => console.error("[messenger/unanswered] save error:", e));
+                  const config = await getChatbotConfig();
+                  if (config.fallbackHuman) {
+                    logQualityFlag("MESSENGER", senderId, text, QUALITY_FLAGS.FALLBACK_HUMAN);
+                  }
                   await sendMessage(senderId, WELCOME_MESSAGE);
                 }
               } catch (err) {

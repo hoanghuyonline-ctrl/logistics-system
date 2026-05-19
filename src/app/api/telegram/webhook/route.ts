@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getNotificationConfig } from "@/lib/notification-config";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
+import { getChatbotConfig, logQualityFlag, QUALITY_FLAGS } from "@/lib/chatbot-config";
 
 const FALLBACK_GUIDANCE =
   "Để tra cứu đơn hàng, vui lòng gửi đúng mã đơn hàng.\n\n" +
@@ -165,7 +166,8 @@ export async function POST(request: Request) {
       await handleOrderLookup(chatId, text);
     } else {
       try {
-        const match = await findSupportKnowledgeAnswer(text, "TELEGRAM");
+        const senderId = String(chatId);
+        const match = await findSupportKnowledgeAnswer(text, "TELEGRAM", senderId);
         if (match) {
           console.log(
             `[telegram/knowledge] matched=true | channel=TELEGRAM score=${match.score} candidates=${match.candidateCount} matchSource=${match.matchSource} id=${match.id} title="${match.title}" keywords="${match.keywords || ""}" query="${text}"`
@@ -180,8 +182,12 @@ export async function POST(request: Request) {
             `[telegram/knowledge] matched=false | channel=TELEGRAM score=0 candidates=0 matchSource=none query="${text}"`
           );
           prisma.chatbotUnansweredQuestion.create({
-            data: { channel: "TELEGRAM", question: text, senderId: String(chatId) },
+            data: { channel: "TELEGRAM", question: text, senderId },
           }).catch((e: unknown) => console.error("[telegram/unanswered] save error:", e));
+          const config = await getChatbotConfig();
+          if (config.fallbackHuman) {
+            logQualityFlag("TELEGRAM", senderId, text, QUALITY_FLAGS.FALLBACK_HUMAN);
+          }
           await replyToChat(chatId, FALLBACK_GUIDANCE);
         }
       } catch (err) {
