@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import { useI18n } from "@/lib/i18n";
 
 interface SmokeCheck {
   key: string;
@@ -111,6 +112,7 @@ function timeSince(iso: string): string {
 }
 
 export default function SystemHealthPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -156,13 +158,13 @@ export default function SystemHealthPage() {
       });
   };
 
-  if (loading && !data) return <LoadingSpinner text="Đang kiểm tra hệ thống..." />;
+  if (loading && !data) return <LoadingSpinner text={t("sysHealth.checking")} />;
 
   return (
     <div>
       <PageHeader
-        title="Tình Trạng Hệ Thống"
-        subtitle="Tổng quan sức khỏe hệ thống và vận hành"
+        title={t("sysHealth.title")}
+        subtitle={t("sysHealth.subtitle")}
       />
 
       {/* Refresh button */}
@@ -172,40 +174,40 @@ export default function SystemHealthPage() {
           disabled={loading}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          {loading ? "Đang tải..." : "Làm mới"}
+          {loading ? t("sysHealth.loading") : t("sysHealth.refresh")}
         </button>
         <span className="text-xs text-slate-400">
-          Cập nhật lúc: {lastRefresh.toLocaleTimeString("vi-VN")}
+          {t("sysHealth.updatedAt")}: {lastRefresh.toLocaleTimeString("vi-VN")}
         </span>
       </div>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          Không thể kết nối API. Kiểm tra lại hệ thống.
+          {t("sysHealth.connError")}
         </div>
       )}
 
       {data && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* System Health */}
-          <Card title="Hệ Thống">
+          <Card title={t("sysHealth.system")}>
             <StatusRow
-              label="Ứng dụng"
-              value={data.system.appOnline ? "Đang chạy" : "Ngừng"}
+              label={t("sysHealth.app")}
+              value={data.system.appOnline ? t("sysHealth.appRunning") : t("sysHealth.appStopped")}
               status={data.system.appOnline ? "green" : "red"}
             />
             <StatusRow
-              label="Database"
-              value={data.system.database === "connected" ? "Kết nối OK" : "Mất kết nối"}
+              label={t("sysHealth.database")}
+              value={data.system.database === "connected" ? t("sysHealth.dbOk") : t("sysHealth.dbFail")}
               status={data.system.database === "connected" ? "green" : "red"}
             />
             <StatusRow
-              label="Môi trường"
+              label={t("sysHealth.env")}
               value={data.system.environment === "production" ? "Production" : "Development"}
               status={data.system.environment === "production" ? "green" : "yellow"}
             />
             <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-slate-600">Giờ server</span>
+              <span className="text-sm text-slate-600">{t("sysHealth.serverTime")}</span>
               <span className="text-sm font-medium text-slate-900">
                 {formatTime(data.system.serverTime)}
               </span>
@@ -213,25 +215,25 @@ export default function SystemHealthPage() {
           </Card>
 
           {/* Chatbot Health */}
-          <Card title="Kênh Chatbot">
+          <Card title={t("sysHealth.chatbot")}>
             <StatusRow
               label="Zalo OA"
-              value={data.chatbot.zalo === "enabled" ? "Bật" : "Tắt"}
+              value={data.chatbot.zalo === "enabled" ? t("sysHealth.enabled") : t("sysHealth.disabled")}
               status={data.chatbot.zalo === "enabled" ? "green" : "red"}
             />
             <StatusRow
               label="Telegram"
-              value={data.chatbot.telegram === "enabled" ? "Bật" : "Tắt"}
+              value={data.chatbot.telegram === "enabled" ? t("sysHealth.enabled") : t("sysHealth.disabled")}
               status={data.chatbot.telegram === "enabled" ? "green" : "red"}
             />
             <StatusRow
               label="Messenger"
-              value={data.chatbot.messenger === "enabled" ? "Bật" : "Tắt"}
+              value={data.chatbot.messenger === "enabled" ? t("sysHealth.enabled") : t("sysHealth.disabled")}
               status={data.chatbot.messenger === "enabled" ? "green" : "red"}
             />
             {data.operational.lastChatbotActivity && (
               <div className="flex items-center justify-between py-3 mt-1 border-t border-slate-100">
-                <span className="text-xs text-slate-400">Hoạt động cuối</span>
+                <span className="text-xs text-slate-400">{t("sysHealth.lastActivity")}</span>
                 <span className="text-xs text-slate-500">
                   {data.operational.lastChatbotActivity.channel} — {timeSince(data.operational.lastChatbotActivity.time)}
                 </span>
@@ -241,33 +243,33 @@ export default function SystemHealthPage() {
 
           {/* Zalo Diagnostics */}
           {data.zaloDiagnostics && (
-            <Card title="Chẩn Đoán Zalo OA">
+            <Card title={t("sysHealth.zaloDiag")}>
               {data.zaloDiagnostics.tokenExpired && (
                 <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl">
                   <div className="flex items-center gap-2 mb-1">
                     <StatusDot status="red" />
                     <span className="text-sm font-semibold text-red-700">
-                      Zalo token đã hết hạn — cần cập nhật ZALO_OA_ACCESS_TOKEN
+                      {t("sysHealth.zaloTokenExpired")}
                     </span>
                   </div>
                   {data.zaloDiagnostics.tokenExpiredAt && (
                     <p className="text-xs text-red-600 ml-4">
-                      Phát hiện lúc: {formatTime(data.zaloDiagnostics.tokenExpiredAt)}
+                      {t("sysHealth.zaloDetected")}: {formatTime(data.zaloDiagnostics.tokenExpiredAt)}
                     </p>
                   )}
                   <p className="text-xs text-red-500 mt-1 ml-4">
-                    Cập nhật token trong .env và khởi động lại PM2.
+                    {t("sysHealth.zaloUpdateHint")}
                   </p>
                 </div>
               )}
               <StatusRow
                 label="ZALO_SEND_ENABLED"
-                value={data.zaloDiagnostics.configPresent.sendEnabled ? "Đã bật" : "Chưa bật"}
+                value={data.zaloDiagnostics.configPresent.sendEnabled ? t("sysHealth.zaloSendEnabled") : t("sysHealth.zaloSendDisabled")}
                 status={data.zaloDiagnostics.configPresent.sendEnabled ? "green" : "red"}
               />
               <StatusRow
                 label="ZALO_OA_ACCESS_TOKEN"
-                value={data.zaloDiagnostics.configPresent.accessToken ? "Đã có" : "Thiếu"}
+                value={data.zaloDiagnostics.configPresent.accessToken ? t("sysHealth.zaloTokenPresent") : t("sysHealth.zaloTokenMissing")}
                 status={
                   !data.zaloDiagnostics.configPresent.accessToken
                     ? "red"
@@ -277,22 +279,22 @@ export default function SystemHealthPage() {
                 }
               />
               <MetricRow
-                label="Khách hàng đã liên kết Zalo"
+                label={t("sysHealth.zaloBound")}
                 value={data.zaloDiagnostics.boundCustomers}
               />
               <MetricRow
-                label="Lỗi Zalo chưa xử lý"
+                label={t("sysHealth.zaloErrors")}
                 value={data.zaloDiagnostics.unresolvedFailures}
                 alert={data.zaloDiagnostics.unresolvedFailures > 0}
               />
               {data.zaloDiagnostics.tokenRefresh && (
                 <div className="mt-2 pt-2 border-t border-slate-100">
                   <StatusRow
-                    label="Lần refresh token gần nhất"
+                    label={t("sysHealth.zaloLastRefresh")}
                     value={
                       data.zaloDiagnostics.tokenRefresh.success
-                        ? `Thành công — ${timeSince(data.zaloDiagnostics.tokenRefresh.lastRefreshAt)}`
-                        : `Thất bại — ${timeSince(data.zaloDiagnostics.tokenRefresh.lastRefreshAt)}`
+                        ? `${t("sysHealth.zaloRefreshOk")} — ${timeSince(data.zaloDiagnostics.tokenRefresh.lastRefreshAt)}`
+                        : `${t("sysHealth.zaloRefreshFail")} — ${timeSince(data.zaloDiagnostics.tokenRefresh.lastRefreshAt)}`
                     }
                     status={data.zaloDiagnostics.tokenRefresh.success ? "green" : "red"}
                   />
@@ -307,7 +309,7 @@ export default function SystemHealthPage() {
           )}
 
           {/* Smoke Test Panel */}
-          <Card title="Ki\u1ec3m Tra Sau Deploy">
+          <Card title={t("sysHealth.smoke.title")}>
             <div className="mb-3">
               <button
                 onClick={runSmokeTest}
@@ -317,10 +319,10 @@ export default function SystemHealthPage() {
                 {smokeLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    \u0110ang ki\u1ec3m tra...
+                    {t("sysHealth.smoke.running")}
                   </span>
                 ) : (
-                  "\ud83d\udee1\ufe0f Ch\u1ea1y ki\u1ec3m tra"
+                  `\ud83d\udee1\ufe0f ${t("sysHealth.smoke.run")}`
                 )}
               </button>
             </div>
@@ -334,7 +336,7 @@ export default function SystemHealthPage() {
                       ? "bg-amber-50 text-amber-700 border border-amber-200"
                       : "bg-red-50 text-red-700 border border-red-200"
                 }`}>
-                  {smokeTest.overall === "ok" ? "T\u1ea5t c\u1ea3 OK" : smokeTest.overall === "warning" ? "C\u00f3 c\u1ea3nh b\u00e1o" : "C\u00f3 l\u1ed7i"}
+                  {smokeTest.overall === "ok" ? t("sysHealth.smoke.allOk") : smokeTest.overall === "warning" ? t("sysHealth.smoke.hasWarning") : t("sysHealth.smoke.hasError")}
                   <span className="text-xs font-normal ml-2">({smokeTest.summary.totalMs}ms)</span>
                 </div>
 
@@ -359,36 +361,36 @@ export default function SystemHealthPage() {
                 {/* Summary footer */}
                 <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-xs text-slate-400">
-                    Ki\u1ec3m tra l\u00fac: {formatTime(smokeTest.checkedAt)}
+                    {t("sysHealth.smoke.checkedAt")}: {formatTime(smokeTest.checkedAt)}
                   </span>
                   <div className="flex items-center gap-2 text-xs">
-                    {smokeTest.summary.ok > 0 && <span className="text-green-600">{smokeTest.summary.ok} OK</span>}
-                    {smokeTest.summary.warning > 0 && <span className="text-amber-600">{smokeTest.summary.warning} c\u1ea3nh b\u00e1o</span>}
-                    {smokeTest.summary.error > 0 && <span className="text-red-600">{smokeTest.summary.error} l\u1ed7i</span>}
+                    {smokeTest.summary.ok > 0 && <span className="text-green-600">{smokeTest.summary.ok} {t("sysHealth.smoke.ok")}</span>}
+                    {smokeTest.summary.warning > 0 && <span className="text-amber-600">{smokeTest.summary.warning} {t("sysHealth.smoke.warnings")}</span>}
+                    {smokeTest.summary.error > 0 && <span className="text-red-600">{smokeTest.summary.error} {t("sysHealth.smoke.errors")}</span>}
                   </div>
                 </div>
               </>
             ) : (
               <p className="text-sm text-slate-400 text-center py-4">
-                B\u1ea5m \u201cCh\u1ea1y ki\u1ec3m tra\u201d \u0111\u1ec3 ki\u1ec3m tra h\u1ec7 th\u1ed1ng sau deploy.
+                {t("sysHealth.smoke.hint")}
               </p>
             )}
           </Card>
 
           {/* Operational Indicators */}
-          <Card title="Chỉ Số Vận Hành">
+          <Card title={t("sysHealth.operational")}>
             <MetricRow
-              label="Câu hỏi chưa trả lời"
+              label={t("sysHealth.unanswered")}
               value={data.operational.unansweredQuestions}
               alert={data.operational.unansweredQuestions > 10}
             />
             <MetricRow
-              label="Đơn PENDING > 3 ngày"
+              label={t("sysHealth.stuckPending")}
               value={data.operational.stuckPending}
               alert={data.operational.stuckPending > 0}
             />
             <MetricRow
-              label="Đơn giao > 2 ngày"
+              label={t("sysHealth.stuckDelivery")}
               value={data.operational.stuckDelivery}
               alert={data.operational.stuckDelivery > 0}
             />
