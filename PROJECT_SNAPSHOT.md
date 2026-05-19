@@ -256,6 +256,10 @@
 
 - **Global Admin Search Intelligence** — Compact search box in admin layout header (below SystemHealthBar) for quick record lookup. New `GET /api/admin/global-search?q=` endpoint (ADMIN-only) searches 5 categories in parallel with `take: 5` limits: (1) Orders by orderCode, trackingCodeChina, trackingCodeIntl. (2) Packages by packageCode, barcode. (3) Customers by name, phone, email. (4) CRM leads by name, phone. (5) Customer issues by description, orderCode. Results grouped by category with Vietnamese labels (Đơn hàng, Kiện hàng, Khách hàng, Lead, Khiếu nại), category icons, status badges, and direct links to detail pages. 300ms debounce, min 2 chars, click-outside/Escape to close, loading spinner. Component: `src/components/admin/GlobalSearch.tsx`. Does not replace existing page-specific search. **No schema changes; no new dependencies; backward compatible.**
 
+- **Backup Now Action** — "Backup ngay" buttons added to each backup card in the Backup Health section on `/admin/operations`. New `POST /api/admin/backup/database` and `POST /api/admin/backup/uploads` endpoints (ADMIN-only). Database backup: runs `docker exec logistics-postgres pg_dump` to create timestamped `postgres-*.sql` file in `backups/postgres/`. Uploads backup: runs PowerShell `Compress-Archive` (Windows) or `zip` (Linux) to create timestamped `uploads-*.zip` in `backups/uploads/`. Both endpoints: validate directories, 2-minute timeout, verify output is non-empty, clean up on failure, return filename/size/timestamp. UI: loading spinner with "Đang backup..." text, disabled button during execution, success/error message inline, auto-refresh backup health after completion. **No schema changes; no new dependencies; no scheduled backup changes; no old backup deletion; backward compatible.**
+
+**Deploy notes (Backup Now):** Requires Docker container `logistics-postgres` to be running for database backup. Uploads backup requires `uploads/` directory to have content. No PM2 changes needed.
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
@@ -377,6 +381,8 @@ pm2 restart logistics-system
 | `/api/admin/finance-alerts` | GET | Finance danger alerts — debt, negative balances, stale top-ups, unconfirmed pricing, unreconciled orders, refunds (ADMIN-only) |
 | `/api/admin/backup-health` | GET | Backup health check — DB/uploads backup file status, age, size, overall health, recovery guide link (ADMIN-only) |
 | `/api/admin/global-search` | GET | Global search — orders, packages, customers, leads, issues by keyword with grouped results (ADMIN-only) |
+| `/api/admin/backup/database` | POST | Manual database backup — runs pg_dump via Docker, creates timestamped .sql file (ADMIN-only) |
+| `/api/admin/backup/uploads` | POST | Manual uploads backup — compresses uploads/ into timestamped .zip file (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models
