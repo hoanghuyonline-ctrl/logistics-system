@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, hasRole, generateOrderCode, jsonResponse, errorResponse, withErrorHandler, safeQuery } from "@/lib/utils";
+import { getCurrentUser, hasRole, generateOrderCode, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { calculateOrderCost } from "@/lib/cost-calculator";
 import { createNotification } from "@/lib/notifications";
 import { onOrderCreated } from "@/lib/notifications/triggers";
@@ -71,53 +71,44 @@ export const GET = withErrorHandler(async function GET(request: Request) {
   const baseWhere: Record<string, unknown> = {};
   if (hasRole(user.role, ["CUSTOMER"])) baseWhere.userId = user.id;
 
-  const includeObj: Record<string, unknown> = {
-    user: { select: { id: true, fullName: true, email: true, phone: true } },
-    orderNotes: {
+  const isAdminOrAccountant = hasRole(user.role, ["ADMIN", "ACCOUNTANT"]);
+
+  const [orders, total, ...extra] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
       orderBy: { createdAt: "desc" },
-      take: 1,
-      select: { content: true, createdAt: true, user: { select: { fullName: true, role: true } } },
-    },
-    statusLogs: {
-      orderBy: { createdAt: "desc" },
-      take: 1,
-      select: { createdAt: true, toStatus: true, changer: { select: { fullName: true, role: true } } },
-    },
-  };
-  if (hasRole(user.role, ["ADMIN", "ACCOUNTANT"])) {
-    includeObj.package = { select: { totalWeightKg: true, barcode: true } };
-  }
-
-  const queries: [Promise<unknown>, Promise<number>, Promise<unknown[]>?, Promise<number>?] = [
-    safeQuery(
-      prisma.order.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: includeObj,
-      }),
-      [],
-    ),
-    safeQuery(prisma.order.count({ where }), 0),
-  ];
-
-  if (includeSummary) {
-    queries.push(
-      safeQuery(prisma.order.groupBy({ by: ["status"], where: baseWhere, _count: { status: true } }), []),
-      safeQuery(prisma.order.count({ where: { ...baseWhere, priority: "URGENT" } }), 0),
-    );
-  }
-
-  const results = await Promise.all(queries);
-  const [orders, total] = results as [unknown, number, unknown[]?, number?];
+      include: {
+        user: { select: { id: true, fullName: true, email: true, phone: true } },
+        package: isAdminOrAccountant ? { select: { totalWeightKg: true, barcode: true } } : undefined,
+        orderNotes: {
+          orderBy: { createdAt: "desc" as const },
+          take: 1,
+          select: { content: true, createdAt: true, user: { select: { fullName: true, role: true } } },
+        },
+        statusLogs: {
+          orderBy: { createdAt: "desc" as const },
+          take: 1,
+          select: { createdAt: true, toStatus: true, changer: { select: { fullName: true, role: true } } },
+        },
+      },
+    }),
+    prisma.order.count({ where }),
+    ...(includeSummary
+      ? [
+          prisma.order.groupBy({ by: ["status"], where: baseWhere, _count: { status: true } }),
+          prisma.order.count({ where: { ...baseWhere, priority: "URGENT" } }),
+        ]
+      : []),
+  ]);
 
   const response: Record<string, unknown> = { orders, total, page, totalPages: Math.ceil(total / limit) };
 
-  if (includeSummary) {
-    const statusCounts = (results[2] as Array<{ status: string; _count: { status: number } }>)
+  if (includeSummary && extra.length >= 2) {
+    const statusCounts = (extra[0] as Array<{ status: string; _count: { status: number } }>)
       .reduce((acc, g) => { acc[g.status] = g._count.status; return acc; }, {} as Record<string, number>);
-    response.summary = { statusCounts, urgentCount: results[3] as number };
+    response.summary = { statusCounts, urgentCount: extra[1] as number };
   }
 
   return jsonResponse(response);
