@@ -5,6 +5,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Link from "next/link";
 import { playAlertBeep, triggerVibration, isAlertEnabled, setAlertEnabled as persistAlertEnabled } from "@/lib/alertSound";
+import { useI18n } from "@/lib/i18n";
 
 /* ─── types ─── */
 
@@ -362,6 +363,7 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
 /* ─── main component ─── */
 
 export default function AdminOperationsPage() {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [quickViews, setQuickViews] = useState<QuickViewCounts | null>(null);
@@ -506,7 +508,7 @@ export default function AdminOperationsPage() {
     return () => clearInterval(id);
   }, [fetchAll]);
 
-  if (loading) return <LoadingSpinner text="Đang tải dữ liệu..." />;
+  if (loading) return <LoadingSpinner text={t("ops.refreshing")} />;
 
   const totalStuck = stuckCategories.reduce((sum, c) => sum + c.items.length, 0);
   const activeStuck = stuckCategories.filter((c) => c.items.length > 0);
@@ -521,8 +523,8 @@ export default function AdminOperationsPage() {
   return (
     <div>
       <PageHeader
-        title="🏠 Trung tâm điều hành"
-        subtitle="Trang chủ làm việc hàng ngày cho Admin"
+        title={`🏠 ${t("ops.title")}`}
+        subtitle={t("ops.subtitle")}
         action={
           <div className="flex items-center gap-3">
             {/* Alert toggle */}
@@ -544,7 +546,7 @@ export default function AdminOperationsPage() {
               <span>Tự động cập nhật</span>
               {lastUpdated && (
                 <span className="text-slate-500 font-medium">
-                  — Cập nhật lúc {lastUpdated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                  — {t("ops.lastUpdated")} {lastUpdated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
                 </span>
               )}
             </div>
@@ -1176,13 +1178,13 @@ export default function AdminOperationsPage() {
       {activityIntel && (activityIntel.activities.length > 0 || activityIntel.anomalies.length > 0) && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            📋 Hoạt động hôm nay
+            {`📋 ${t("ops.activity.title")}`}
             <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              {activityIntel.activities.length} hoạt động
+              {activityIntel.activities.length} {t("ops.activity.statusChanges")}
             </span>
             {activityIntel.anomalies.length > 0 && (
               <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full animate-pulse">
-                {activityIntel.anomalies.length} bất thường
+                {activityIntel.anomalies.length} {t("ops.activity.anomalies")}
               </span>
             )}
           </h2>
@@ -1190,11 +1192,11 @@ export default function AdminOperationsPage() {
           {/* Summary bar */}
           <div className="flex flex-wrap gap-2 mb-3">
             {[
-              { label: "Trạng thái", count: activityIntel.summary.statusChanges, icon: "🔄" },
-              { label: "Xác nhận giá", count: activityIntel.summary.pricingConfirmed, icon: "💰" },
-              { label: "Nạp tiền", count: activityIntel.summary.topupConfirmed, icon: "💳" },
-              { label: "Khiếu nại", count: activityIntel.summary.issueUpdates, icon: "📝" },
-              { label: "Ghi chú", count: activityIntel.summary.staffNotes, icon: "📌" },
+              { label: t("ops.activity.statusChanges"), count: activityIntel.summary.statusChanges, icon: "🔄" },
+              { label: t("ops.activity.pricingConfirmed"), count: activityIntel.summary.pricingConfirmed, icon: "💰" },
+              { label: t("ops.activity.topupConfirmed"), count: activityIntel.summary.topupConfirmed, icon: "💳" },
+              { label: t("ops.activity.issueUpdates"), count: activityIntel.summary.issueUpdates, icon: "📝" },
+              { label: t("ops.activity.staffNotes"), count: activityIntel.summary.staffNotes, icon: "📌" },
             ].filter((s) => s.count > 0).map((s) => (
               <span key={s.label} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                 {s.icon} {s.label}: {s.count}
@@ -1205,7 +1207,7 @@ export default function AdminOperationsPage() {
           {/* Anomalies */}
           {activityIntel.anomalies.length > 0 && (
             <div className="rounded-xl border border-red-200 bg-red-50/50 p-3 mb-3">
-              <div className="text-[11px] font-semibold text-red-700 mb-2">⚠️ Hoạt động bất thường</div>
+              <div className="text-[11px] font-semibold text-red-700 mb-2">{`⚠️ ${t("ops.activity.anomalies")}`}</div>
               <div className="space-y-1.5">
                 {activityIntel.anomalies.map((a) => (
                   <div key={a.id} className="flex items-start gap-2">
@@ -1276,15 +1278,15 @@ export default function AdminOperationsPage() {
       {customerRisk && customerRisk.customers.length > 0 && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            ⚠️ Rủi ro khách hàng / Công nợ
+            {`⚠️ ${t("ops.risk.title")}`}
             {customerRisk.summary.criticalCount > 0 && (
               <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
-                {customerRisk.summary.criticalCount} nguy hiểm
+                {customerRisk.summary.criticalCount} {t("ops.risk.critical")}
               </span>
             )}
             {customerRisk.summary.highCount > 0 && (
               <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full">
-                {customerRisk.summary.highCount} cao
+                {customerRisk.summary.highCount} {t("ops.risk.high")}
               </span>
             )}
           </h2>
@@ -1292,13 +1294,13 @@ export default function AdminOperationsPage() {
           {/* Summary */}
           <div className="flex flex-wrap gap-2 mb-3">
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-700">
-              Tổng nợ: {customerRisk.summary.totalDebt.toLocaleString("vi-VN")} VND
+              {t("ops.risk.totalDebt")}: {customerRisk.summary.totalDebt.toLocaleString("vi-VN")} VND
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-              {customerRisk.summary.totalUnfinished} đơn chưa xong
+              {customerRisk.summary.totalUnfinished} {t("ops.risk.unfinished")}
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-              {customerRisk.summary.totalRiskCustomers} khách cần chú ý
+              {customerRisk.summary.totalRiskCustomers} {t("ops.risk.needAttention")}
             </span>
           </div>
 
@@ -1318,10 +1320,10 @@ export default function AdminOperationsPage() {
                 LOW: "bg-slate-200 text-slate-600",
               };
               const badgeLabels: Record<string, string> = {
-                CRITICAL: "Nguy hi\u1ec3m",
-                HIGH: "Cao",
-                MEDIUM: "Trung b\u00ecnh",
-                LOW: "Th\u1ea5p",
+                CRITICAL: t("ops.risk.criticalLabel"),
+                HIGH: t("ops.risk.highLabel"),
+                MEDIUM: t("ops.risk.medium"),
+                LOW: t("ops.risk.low"),
               };
               return (
                 <div key={c.id} className={`rounded-lg border p-2.5 ${levelStyles[c.riskLevel] ?? "border-slate-200 bg-white"}`}>
@@ -1335,10 +1337,10 @@ export default function AdminOperationsPage() {
                     {c.phone && <span className="text-[10px] text-slate-400 ml-auto shrink-0">{c.phone}</span>}
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
-                    {c.debt > 0 && <span className="text-red-600 font-medium">N\u1ee3: {c.debt.toLocaleString("vi-VN")}\u0111</span>}
-                    <span>Ch\u01b0a xong: {c.unfinishedOrders}</span>
-                    {c.cancelledOrders > 0 && <span className="text-amber-600">H\u1ee7y: {c.cancelledOrders}</span>}
-                    {c.lastActivity && <span>Ho\u1ea1t \u0111\u1ed9ng: {timeAgo(c.lastActivity)}</span>}
+                    {c.debt > 0 && <span className="text-red-600 font-medium">{t("ops.risk.debt")}: {c.debt.toLocaleString("vi-VN")}\u0111</span>}
+                    <span>{t("ops.risk.unfinished")}: {c.unfinishedOrders}</span>
+                    {c.cancelledOrders > 0 && <span className="text-amber-600">{t("ops.risk.cancelled")}: {c.cancelledOrders}</span>}
+                    {c.lastActivity && <span>{t("ops.risk.lastActivity")}: {timeAgo(c.lastActivity)}</span>}
                   </div>
                   {c.riskReasons.length > 0 && (
                     <div className="mt-1 text-[10px] text-slate-400 truncate">
@@ -1358,7 +1360,7 @@ export default function AdminOperationsPage() {
       {slaReport && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            📊 Hiệu suất SLA 7 ngày
+            {`📊 ${t("ops.sla.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               slaReport.trend === "good"
                 ? "bg-green-100 text-green-700"
@@ -1373,13 +1375,13 @@ export default function AdminOperationsPage() {
           {/* KPI cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
             <div className="rounded-lg border border-slate-200 bg-white p-2.5">
-              <div className="text-[10px] text-slate-500 mb-0.5">Đơn cập nhật 7 ngày</div>
+              <div className="text-[10px] text-slate-500 mb-0.5">{t("ops.sla.ordersUpdated")}</div>
               <div className="text-lg font-bold text-slate-800">{slaReport.ordersUpdated7d}</div>
             </div>
             <div className={`rounded-lg border p-2.5 ${
               slaReport.totalOverSla > 5 ? "border-red-200 bg-red-50/50" : slaReport.totalOverSla > 0 ? "border-amber-200 bg-amber-50/50" : "border-green-200 bg-green-50/50"
             }`}>
-              <div className="text-[10px] text-slate-500 mb-0.5">Đơn vượt SLA</div>
+              <div className="text-[10px] text-slate-500 mb-0.5">{t("ops.sla.overSla")}</div>
               <div className={`text-lg font-bold ${
                 slaReport.totalOverSla > 5 ? "text-red-600" : slaReport.totalOverSla > 0 ? "text-amber-600" : "text-green-600"
               }`}>{slaReport.totalOverSla}</div>
@@ -1387,7 +1389,7 @@ export default function AdminOperationsPage() {
             <div className={`rounded-lg border p-2.5 ${
               slaReport.breachRate > 15 ? "border-red-200 bg-red-50/50" : slaReport.breachRate > 5 ? "border-amber-200 bg-amber-50/50" : "border-green-200 bg-green-50/50"
             }`}>
-              <div className="text-[10px] text-slate-500 mb-0.5">Tỷ lệ vi phạm SLA</div>
+              <div className="text-[10px] text-slate-500 mb-0.5">{t("ops.sla.breachRate")}</div>
               <div className={`text-lg font-bold ${
                 slaReport.breachRate > 15 ? "text-red-600" : slaReport.breachRate > 5 ? "text-amber-600" : "text-green-600"
               }`}>{slaReport.breachRate}%</div>
@@ -1397,7 +1399,7 @@ export default function AdminOperationsPage() {
           {/* Bottlenecks */}
           {slaReport.bottlenecks.some((b) => b.count > 0) && (
             <div className="rounded-xl border border-slate-200 bg-white p-3">
-              <div className="text-[11px] font-semibold text-slate-700 mb-2">🚧 Nút thắt cổ chai</div>
+              <div className="text-[11px] font-semibold text-slate-700 mb-2">{`🚧 ${t("ops.sla.bottlenecks")}`}</div>
               <div className="space-y-1.5">
                 {slaReport.bottlenecks.filter((b) => b.count > 0).map((b) => (
                   <div key={b.key} className="flex items-center gap-2">
@@ -1417,7 +1419,7 @@ export default function AdminOperationsPage() {
           {/* Quick link */}
           <div className="mt-2">
             <Link href="/admin/orders?status=stuck" className="text-[11px] text-blue-600 hover:underline">
-              🔗 Xem đơn hàng cần xử lý →
+              {`🔗 ${t("ops.sla.viewStuck")} →`}
             </Link>
           </div>
         </section>
@@ -1707,7 +1709,7 @@ export default function AdminOperationsPage() {
       {backupHealth && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            🛡️ An toàn dữ liệu / Backup
+            {`🛡️ ${t("ops.backup.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing"
                 ? "bg-red-600 text-white animate-pulse"
@@ -1723,28 +1725,28 @@ export default function AdminOperationsPage() {
           <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 mb-3 text-[11px] text-slate-500 space-y-1">
             <div className="flex items-center gap-1.5">
               <span>🕐</span>
-              <span className="font-medium text-slate-600">{backupHealth.schedule?.expected || "Backup tự động hằng ngày (Windows Task Scheduler)"}</span>
+              <span className="font-medium text-slate-600">{backupHealth.schedule?.expected || t("ops.backup.autoSchedule")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span>📋</span>
-              <span>Giữ lại {backupHealth.retentionDays} bản backup gần nhất</span>
+              <span>{t("ops.backup.retention").replace("{n}", String(backupHealth.retentionDays))}</span>
             </div>
             {(backupHealth.overall.status === "warning" || backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing") && (
               <div className="flex items-center gap-1.5 text-amber-600">
                 <span>⚠️</span>
-                <span>{backupHealth.schedule?.staleHint || "Nếu quá 24h chưa có backup mới, kiểm tra Windows Task Scheduler"}</span>
+                <span>{backupHealth.schedule?.staleHint || t("ops.backup.staleHint")}</span>
               </div>
             )}
             <div className="flex items-center gap-1.5">
               <span>💡</span>
-              <span>{backupHealth.schedule?.manualHint || "Có thể bấm Backup ngay để chạy thủ công"}</span>
+              <span>{backupHealth.schedule?.manualHint || t("ops.backup.manualHint")}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {([
-              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database, type: "database" as const, btnLabel: "Backup DB ngay", hasScript: backupHealth.hasDbScript, scriptPath: backupHealth.schedule?.dbScriptPath },
-              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads, type: "uploads" as const, btnLabel: "Backup uploads ngay", hasScript: backupHealth.hasUploadsScript, scriptPath: backupHealth.schedule?.uploadsScriptPath },
+              { label: t("ops.backup.database"), icon: "🗄️", info: backupHealth.database, type: "database" as const, btnLabel: t("ops.backup.backupDbNow"), hasScript: backupHealth.hasDbScript, scriptPath: backupHealth.schedule?.dbScriptPath },
+              { label: t("ops.backup.uploads"), icon: "📁", info: backupHealth.uploads, type: "uploads" as const, btnLabel: t("ops.backup.backupUploadsNow"), hasScript: backupHealth.hasUploadsScript, scriptPath: backupHealth.schedule?.uploadsScriptPath },
             ]).map((item) => {
               const borderColor =
                 item.info.status === "danger" || item.info.status === "missing"
@@ -1769,7 +1771,7 @@ export default function AdminOperationsPage() {
                   <div className="text-[11px] text-slate-600 mb-1">{item.info.statusLabel}</div>
                   {item.info.latestFile && (
                     <div className="text-[10px] text-slate-400 truncate">
-                      File: {item.info.latestFile}
+                      {t("ops.backup.file")}: {item.info.latestFile}
                     </div>
                   )}
                   <div className="flex items-center gap-3 mt-1.5">
@@ -1779,7 +1781,7 @@ export default function AdminOperationsPage() {
                       </span>
                     )}
                     <span className="text-[10px] text-slate-400">
-                      📦 {item.info.fileCount} file
+                      📦 {item.info.fileCount} {t("ops.backup.files")}
                     </span>
                     {item.info.totalSizeMB > 0 && (
                       <span className="text-[10px] text-slate-400">
@@ -1803,17 +1805,17 @@ export default function AdminOperationsPage() {
                       {isRunning ? (
                         <span className="flex items-center gap-1">
                           <span className="w-3 h-3 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
-                          Đang backup...
+                          {t("ops.backup.backing")}
                         </span>
                       ) : (
                         `💾 ${item.btnLabel}`
                       )}
                     </button>
                     {item.hasScript && (
-                      <span className="text-[10px] text-green-500">script sẵn sàng</span>
+                      <span className="text-[10px] text-green-500">{t("ops.backup.scriptReady")}</span>
                     )}
                     {item.hasScript === false && item.scriptPath && (
-                      <span className="text-[10px] text-amber-500" title={`Thiếu: ${item.scriptPath}`}>fallback mode</span>
+                      <span className="text-[10px] text-amber-500" title={item.scriptPath || ""}>{t("ops.backup.fallbackMode")}</span>
                     )}
                   </div>
                   {msg && (
@@ -1829,12 +1831,12 @@ export default function AdminOperationsPage() {
           </div>
 
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-slate-400">Giữ lại: {backupHealth.retentionDays} bản backup</span>
+            <span className="text-[10px] text-slate-400">{t("ops.backup.retentionShort").replace("{n}", String(backupHealth.retentionDays))}</span>
             {backupHealth.hasRecoveryGuide && (
               <>
                 <span className="text-slate-300">|</span>
                 <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
-                  Hướng dẫn backup/phục hồi →
+                  {t("ops.backup.guide")} →
                 </Link>
               </>
             )}
@@ -1848,7 +1850,7 @@ export default function AdminOperationsPage() {
       {disasterRecovery && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            🔄 Khả năng phục hồi / Disaster Recovery
+            {`🔄 ${t("ops.dr.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               disasterRecovery.readiness === "READY"
                 ? "bg-green-100 text-green-700"
@@ -1856,7 +1858,7 @@ export default function AdminOperationsPage() {
                   ? "bg-amber-100 text-amber-700"
                   : "bg-red-600 text-white animate-pulse"
             }`}>
-              {disasterRecovery.readiness === "READY" ? "SẴN SÀNG" : disasterRecovery.readiness === "PARTIAL" ? "MỘT PHẦN" : "CẢNH BÁO"}
+              {disasterRecovery.readiness === "READY" ? t("ops.dr.ready") : disasterRecovery.readiness === "PARTIAL" ? t("ops.dr.partial") : t("ops.dr.warning")}
             </span>
           </h2>
 
@@ -1864,27 +1866,27 @@ export default function AdminOperationsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
             {[
               {
-                label: "Backup DB",
+                label: t("ops.dr.backupDb"),
                 ok: disasterRecovery.database.backupExists,
                 detail: disasterRecovery.database.backupExists
                   ? `${disasterRecovery.database.latestFile}`
-                  : "Không có",
+                  : t("ops.dr.notAvailable"),
               },
               {
-                label: "Backup uploads",
+                label: t("ops.dr.backupUploads"),
                 ok: disasterRecovery.uploads.backupExists,
                 detail: disasterRecovery.uploads.backupExists
                   ? `${disasterRecovery.uploads.latestFile}`
-                  : "Không có",
+                  : t("ops.dr.notAvailable"),
               },
               {
-                label: "Tuổi backup",
+                label: t("ops.dr.backupAge"),
                 ok: disasterRecovery.backupAgeAcceptable,
                 detail: disasterRecovery.backupAgeAcceptable
-                  ? `${disasterRecovery.database.ageHours ?? "?"}h - ch\u1ea5p nh\u1eadn`
+                  ? `${disasterRecovery.database.ageHours ?? "?"}h - ${t("ops.dr.acceptable")}`
                   : disasterRecovery.database.ageHours !== null
-                    ? `${disasterRecovery.database.ageHours}h - qu\u00e1 c\u0169`
-                    : "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh",
+                    ? `${disasterRecovery.database.ageHours}h - ${t("ops.dr.tooOld")}`
+                    : t("ops.dr.unknown"),
               },
             ].map((item) => (
               <div key={item.label} className={`rounded-lg border p-2.5 ${
@@ -1908,7 +1910,7 @@ export default function AdminOperationsPage() {
 
           {/* Restore checklist */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 mb-3">
-            <div className="text-[11px] font-semibold text-slate-700 mb-2">📋 Checklist phục hồi</div>
+            <div className="text-[11px] font-semibold text-slate-700 mb-2">{`📋 ${t("ops.dr.checklist")}`}</div>
             <div className="space-y-1.5">
               {disasterRecovery.checklist.map((item) => (
                 <div key={item.key} className="flex items-start gap-2 group">
@@ -1932,7 +1934,7 @@ export default function AdminOperationsPage() {
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 shrink-0"
                     title={`Copy: ${item.command}`}
                   >
-                    {copiedCommand === item.key ? "Đã sao chép ✓" : "📋 Copy lệnh"}
+                    {copiedCommand === item.key ? t("ops.dr.copied") : `📋 ${t("ops.dr.copyCmd")}`}
                   </button>
                 </div>
               ))}
@@ -1943,19 +1945,19 @@ export default function AdminOperationsPage() {
           <div className="flex items-center gap-2">
             {disasterRecovery.hasRecoveryGuide && (
               <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
-                📖 Hướng dẫn khôi phục toàn bộ →
+                {`📖 ${t("ops.dr.guideLink")} →`}
               </Link>
             )}
             {disasterRecovery.hasRestoreDbScript && (
               <>
                 <span className="text-slate-300">|</span>
-                <span className="text-[10px] text-green-600">✓ Script restore DB sẵn sàng</span>
+                <span className="text-[10px] text-green-600">{`✓ ${t("ops.dr.restoreDbReady")}`}</span>
               </>
             )}
             {disasterRecovery.hasRestoreUploadsScript && (
               <>
                 <span className="text-slate-300">|</span>
-                <span className="text-[10px] text-green-600">✓ Script restore uploads sẵn sàng</span>
+                <span className="text-[10px] text-green-600">{`✓ ${t("ops.dr.restoreUploadsReady")}`}</span>
               </>
             )}
           </div>
@@ -1966,7 +1968,7 @@ export default function AdminOperationsPage() {
           QUICK ACTION BUTTONS
           ═══════════════════════════════════════════ */}
       <section className="mb-8">
-        <h2 className="text-sm font-bold text-slate-900 mb-3">⚡ Hành động nhanh</h2>
+        <h2 className="text-sm font-bold text-slate-900 mb-3">{`⚡ ${t("ops.quickActions")}`}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
           {[
             { label: "Quản lý đơn hàng", href: "/admin/orders", icon: "📦", color: "bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700" },
