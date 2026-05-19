@@ -13,6 +13,8 @@ export const POST = withErrorHandler(async function POST() {
 
   const projectRoot = path.resolve(/* turbopackIgnore: true */ process.cwd());
   const backupDir = path.join(projectRoot, "backups", "postgres");
+  const scriptPath = path.join(projectRoot, "scripts", "backup-db.bat");
+  const isWindows = process.platform === "win32";
 
   // Ensure backup directory exists
   if (!fs.existsSync(backupDir)) {
@@ -23,31 +25,69 @@ export const POST = withErrorHandler(async function POST() {
     }
   }
 
-  // Generate timestamped filename
+  // Strategy 1: Try existing .bat script on Windows
+  if (isWindows && fs.existsSync(scriptPath)) {
+    try {
+      const output = execSync(`cmd /c "${scriptPath}"`, {
+        timeout: 180000,
+        encoding: "utf-8",
+        cwd: projectRoot,
+      });
+
+      // Find the latest file after script ran
+      const files = fs.readdirSync(backupDir).filter((f) => /^postgres-.*\.sql$/i.test(f));
+      if (files.length === 0) {
+        return errorResponse("Script chạy xong nhưng không tìm thấy file backup", 500);
+      }
+
+      let latestFile = files[0];
+      let latestMtime = 0;
+      for (const f of files) {
+        const stat = fs.statSync(path.join(backupDir, f));
+        if (stat.mtimeMs > latestMtime) {
+          latestMtime = stat.mtimeMs;
+          latestFile = f;
+        }
+      }
+
+      const stat = fs.statSync(path.join(backupDir, latestFile));
+      const sizeMB = Math.round((stat.size / (1024 * 1024)) * 10) / 10;
+      const summary = output.split("\n").filter((l) => l.includes("[OK]") || l.includes("[INFO]") || l.includes("[LOI]")).map((l) => l.trim()).join(" | ").slice(0, 300);
+
+      return jsonResponse({
+        success: true,
+        message: "Backup database thành công (via script)",
+        filename: latestFile,
+        sizeMB,
+        createdAt: new Date(latestMtime).toISOString(),
+        method: "script",
+        summary: summary || "Script hoàn tất",
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return errorResponse(`Script backup-db.bat thất bại: ${errMsg.slice(0, 200)}`, 500);
+    }
+  }
+
+  // Strategy 2: Direct docker pg_dump (fallback or Linux)
   const now = new Date();
   const timestamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const filename = `postgres-${timestamp}.sql`;
   const filepath = path.join(backupDir, filename);
 
-  // Check if file already exists
   if (fs.existsSync(filepath)) {
     return errorResponse("File backup đã tồn tại, vui lòng thử lại sau", 409);
   }
 
-  const isWindows = process.platform === "win32";
   const containerName = "logistics-postgres";
   const dbUser = "postgres";
   const dbName = "logistics_db";
 
   try {
-    // Try docker pg_dump first (production path)
-    const cmd = isWindows
-      ? `docker exec ${containerName} pg_dump -U ${dbUser} ${dbName}`
-      : `docker exec ${containerName} pg_dump -U ${dbUser} ${dbName}`;
-
+    const cmd = `docker exec ${containerName} pg_dump -U ${dbUser} ${dbName}`;
     const output = execSync(cmd, {
-      timeout: 120000, // 2 minute timeout
-      maxBuffer: 100 * 1024 * 1024, // 100MB
+      timeout: 120000,
+      maxBuffer: 100 * 1024 * 1024,
       encoding: "utf-8",
     });
 
@@ -56,31 +96,32 @@ export const POST = withErrorHandler(async function POST() {
     }
 
     fs.writeFileSync(filepath, output, "utf-8");
-
     const stat = fs.statSync(filepath);
     const sizeMB = Math.round((stat.size / (1024 * 1024)) * 10) / 10;
 
     return jsonResponse({
       success: true,
-      message: `Backup database thành công`,
+      message: "Backup database thành công",
       filename,
       sizeMB,
       createdAt: now.toISOString(),
+      method: "docker",
+      summary: `pg_dump via Docker container ${containerName}`,
     });
   } catch (err) {
-    // Clean up empty/partial file
     if (fs.existsSync(filepath)) {
       try { fs.unlinkSync(filepath); } catch { /* ignore */ }
     }
 
     const errMsg = err instanceof Error ? err.message : String(err);
 
-    // Check if Docker is not available
     if (errMsg.includes("not found") || errMsg.includes("not recognized") || errMsg.includes("ENOENT")) {
-      return errorResponse("Docker không khả dụng — không thể backup database. Chạy backup thủ công: scripts\\backup-db.bat", 500);
+      const hint = isWindows
+        ? `Docker không khả dụng. Script backup cũng không tìm thấy tại: scripts\\backup-db.bat`
+        : "Docker không khả dụng — không thể backup database";
+      return errorResponse(hint, 500);
     }
 
-    // Check if container is not running
     if (errMsg.includes("No such container") || errMsg.includes("is not running")) {
       return errorResponse(`Container "${containerName}" không chạy. Chạy: docker start ${containerName}`, 500);
     }
