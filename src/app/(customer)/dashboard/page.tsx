@@ -44,21 +44,49 @@ export default function CustomerDashboard() {
           fetch("/api/wallet"),
           fetch("/api/auth/me"),
         ]);
-        if (ordersRes.status === "fulfilled" && ordersRes.value.ok) {
-          const d = await ordersRes.value.json();
-          setOrders(d.orders || []);
-        } else {
+
+        // Orders — isolated try/catch so JSON parse failure doesn't block wallet
+        try {
+          if (ordersRes.status === "fulfilled" && ordersRes.value.ok) {
+            const d = await ordersRes.value.json();
+            setOrders(d.orders || []);
+          } else {
+            const reason = ordersRes.status === "rejected"
+              ? ordersRes.reason?.message
+              : `status ${ordersRes.status === "fulfilled" ? ordersRes.value.status : "unknown"}`;
+            console.warn("[dashboard] orders fetch failed:", reason);
+            setOrdersError(true);
+          }
+        } catch (err) {
+          console.warn("[dashboard] orders parse error:", err);
           setOrdersError(true);
         }
-        if (walletRes.status === "fulfilled" && walletRes.value.ok) {
-          const d = await walletRes.value.json();
-          setWallet(d);
-        } else {
+
+        // Wallet — isolated try/catch
+        try {
+          if (walletRes.status === "fulfilled" && walletRes.value.ok) {
+            const d = await walletRes.value.json();
+            setWallet(d);
+          } else {
+            const reason = walletRes.status === "rejected"
+              ? walletRes.reason?.message
+              : `status ${walletRes.status === "fulfilled" ? walletRes.value.status : "unknown"}`;
+            console.warn("[dashboard] wallet fetch failed:", reason);
+            setWalletError(true);
+          }
+        } catch (err) {
+          console.warn("[dashboard] wallet parse error:", err);
           setWalletError(true);
         }
-        if (meRes.status === "fulfilled" && meRes.value.ok) {
-          const d = await meRes.value.json();
-          setZaloBound(!!d?.zaloRecipientId);
+
+        // Zalo binding check — non-critical, silent fail
+        try {
+          if (meRes.status === "fulfilled" && meRes.value.ok) {
+            const d = await meRes.value.json();
+            setZaloBound(!!d?.zaloRecipientId);
+          }
+        } catch {
+          // Zalo binding is non-critical — ignore
         }
       } catch (err) {
         console.error("[dashboard] load failed:", err);
@@ -73,8 +101,8 @@ export default function CustomerDashboard() {
 
   if (loading) return <LoadingSpinner text={t("common.loading")} />;
 
-  const balance = wallet ? parseFloat(wallet.balance).toLocaleString() : "0";
-  const debt = wallet ? parseFloat(wallet.debt).toLocaleString() : "0";
+  const balance = wallet ? (parseFloat(wallet.balance) || 0).toLocaleString() : "0";
+  const debt = wallet ? (parseFloat(wallet.debt) || 0).toLocaleString() : "0";
 
   return (
     <div>
@@ -180,8 +208,8 @@ export default function CustomerDashboard() {
                       <td className="px-6 py-4">
                         <StatusBadge status={order.status} />
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{(parseFloat(order.totalCostVND) || 0).toLocaleString()} VND</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
