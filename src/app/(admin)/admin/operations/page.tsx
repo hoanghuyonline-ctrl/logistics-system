@@ -95,6 +95,20 @@ interface SlaData {
   totalAlerts: number;
 }
 
+interface InboxItem {
+  type: string;
+  title: string;
+  reason: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  time: string;
+  href: string;
+}
+
+interface InboxData {
+  items: InboxItem[];
+  total: number;
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -152,6 +166,7 @@ export default function AdminOperationsPage() {
   const [issues, setIssues] = useState<CustomerIssue[]>([]);
   const [issueCounts, setIssueCounts] = useState<Record<string, number>>({});
   const [slaData, setSlaData] = useState<SlaData | null>(null);
+  const [inbox, setInbox] = useState<InboxData | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
@@ -183,13 +198,14 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
         safeFetch("/api/admin/notifications/failures?filter=unresolved"),
         safeFetch("/api/admin/customer-issues?status=NEW"),
         safeFetch("/api/admin/sla-alerts"),
+        safeFetch("/api/admin/daily-inbox"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -199,6 +215,7 @@ export default function AdminOperationsPage() {
       setIssues(issueData?.issues?.slice(0, 10) || []);
       setIssueCounts(issueData?.statusCounts || {});
       if (sla) setSlaData(sla);
+      if (inboxData) setInbox(inboxData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -281,6 +298,70 @@ export default function AdminOperationsPage() {
           </div>
         }
       />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 0: VIỆC CẦN XỬ LÝ HÔM NAY (Inbox)
+          ═══════════════════════════════════════════ */}
+      {inbox && inbox.items.length > 0 && (
+        <section className="mb-5 sm:mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            📥 Việc cần xử lý hôm nay
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              inbox.items.some((i) => i.severity === "URGENT")
+                ? "bg-red-600 text-white animate-pulse"
+                : inbox.items.some((i) => i.severity === "HIGH")
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700"
+            }`}>
+              {inbox.total} việc
+            </span>
+          </h2>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="divide-y divide-slate-100">
+              {inbox.items.map((item, idx) => {
+                const sevStyle: Record<string, { dot: string; badge: string; bg: string }> = {
+                  URGENT: { dot: "bg-red-500 animate-pulse", badge: "bg-red-600 text-white", bg: "bg-red-50/50" },
+                  HIGH: { dot: "bg-red-400", badge: "bg-red-100 text-red-700", bg: "bg-red-50/30" },
+                  MEDIUM: { dot: "bg-amber-400", badge: "bg-amber-100 text-amber-700", bg: "" },
+                  LOW: { dot: "bg-slate-400", badge: "bg-slate-100 text-slate-600", bg: "" },
+                };
+                const s = sevStyle[item.severity] || sevStyle.LOW;
+                const typeIcon: Record<string, string> = {
+                  topup: "💳", issue: "⚠️", sla: "⏰",
+                  notif_failure: "🔔", missing_tracking: "🔍", missing_weight: "⚖️",
+                };
+                return (
+                  <Link
+                    key={`${item.type}-${idx}`}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 transition-colors hover:bg-slate-50 ${s.bg}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
+                    <span className="text-base shrink-0">{typeIcon[item.type] || "📋"}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-slate-900 truncate">{item.title}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{item.reason}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] text-slate-400 hidden sm:block">{timeAgo(item.time)}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${s.badge}`}>
+                        {item.severity === "URGENT" ? "Khẩn!" : item.severity === "HIGH" ? "Cao" : item.severity === "MEDIUM" ? "TB" : "Thấp"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {inbox.total > inbox.items.length && (
+              <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
+                <span className="text-[11px] text-slate-400">
+                  Hiển thị {inbox.items.length}/{inbox.total} việc — xem từng mục để xử lý
+                </span>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════
           SECTION 1: VIỆC CẦN LÀM NGAY (Urgent)
