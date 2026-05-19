@@ -3,7 +3,38 @@ export const dynamic = "force-dynamic";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
+
+function findLatestFile(dir: string, pattern: RegExp): { name: string; mtimeMs: number } | null {
+  let files: string[];
+  try {
+    files = fs.readdirSync(dir).filter((f) => pattern.test(f));
+  } catch {
+    return null;
+  }
+  if (files.length === 0) return null;
+
+  let latest = files[0];
+  let latestMtime = 0;
+  for (const f of files) {
+    try {
+      const stat = fs.statSync(path.join(dir, f));
+      if (stat.mtimeMs > latestMtime) {
+        latestMtime = stat.mtimeMs;
+        latest = f;
+      }
+    } catch { /* skip */ }
+  }
+  return { name: latest, mtimeMs: latestMtime };
+}
+
+function summarizeOutput(output: string): string {
+  return output.split("\n")
+    .filter((l) => l.includes("[OK]") || l.includes("[INFO]") || l.includes("[LOI]") || l.includes("ERROR"))
+    .map((l) => l.trim())
+    .join(" | ")
+    .slice(0, 300) || "Script hoàn tất";
+}
 
 export const POST = withErrorHandler(async function POST() {
   const user = await getCurrentUser();
@@ -17,11 +48,19 @@ export const POST = withErrorHandler(async function POST() {
   const scriptPath = path.join(projectRoot, "scripts", "backup-uploads.bat");
   const isWindows = process.platform === "win32";
 
-  // Check uploads directory exists and has content
+  // If uploads/ does not exist, create it and return friendly message
   if (!fs.existsSync(uploadsDir)) {
-    return errorResponse("Thư mục uploads không tồn tại — không có gì để backup", 404);
+    try {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    } catch { /* ignore */ }
+    return jsonResponse({
+      success: false,
+      message: "Thư mục uploads chưa tồn tại — đã tạo thư mục trống. Chưa có file nào để backup.",
+      created: true,
+    });
   }
 
+  // Check if uploads has content
   let hasFiles = false;
   try {
     const entries = fs.readdirSync(uploadsDir);
@@ -31,7 +70,10 @@ export const POST = withErrorHandler(async function POST() {
   }
 
   if (!hasFiles) {
-    return errorResponse("Thư mục uploads trống — không có gì để backup", 404);
+    return jsonResponse({
+      success: false,
+      message: "Thư mục uploads trống — chưa có file nào để backup. Upload file trước khi backup.",
+    });
   }
 
   // Ensure backup directory exists
@@ -43,51 +85,42 @@ export const POST = withErrorHandler(async function POST() {
     }
   }
 
-  // Strategy 1: Try existing .bat script on Windows
+  // Strategy 1: Try existing .bat script on Windows using execFileSync
   if (isWindows && fs.existsSync(scriptPath)) {
     try {
-      const output = execSync(`cmd /c "${scriptPath}"`, {
+      const output = execFileSync("cmd.exe", ["/c", scriptPath], {
         timeout: 180000,
         encoding: "utf-8",
         cwd: projectRoot,
+        windowsHide: true,
       });
 
-      // Find the latest file after script ran
-      const files = fs.readdirSync(backupDir).filter((f) => /^uploads-.*\.zip$/i.test(f));
-      if (files.length === 0) {
-        return errorResponse("Script chạy xong nhưng không tìm thấy file backup", 500);
+      const latest = findLatestFile(backupDir, /^uploads-.*\.zip$/i);
+      if (!latest) {
+        return errorResponse("Script chạy xong nhưng không tìm thấy file backup trong backups/uploads/", 500);
       }
 
-      let latestFile = files[0];
-      let latestMtime = 0;
-      for (const f of files) {
-        const stat = fs.statSync(path.join(backupDir, f));
-        if (stat.mtimeMs > latestMtime) {
-          latestMtime = stat.mtimeMs;
-          latestFile = f;
-        }
-      }
-
-      const stat = fs.statSync(path.join(backupDir, latestFile));
+      const stat = fs.statSync(path.join(backupDir, latest.name));
       if (stat.size === 0) {
         return errorResponse("Script tạo file backup trống (0 bytes)", 500);
       }
 
       const sizeMB = Math.round((stat.size / (1024 * 1024)) * 10) / 10;
-      const summary = output.split("\n").filter((l) => l.includes("[OK]") || l.includes("[INFO]") || l.includes("[LOI]")).map((l) => l.trim()).join(" | ").slice(0, 300);
 
       return jsonResponse({
         success: true,
         message: "Backup uploads thành công (via script)",
-        filename: latestFile,
+        filename: latest.name,
         sizeMB,
-        createdAt: new Date(latestMtime).toISOString(),
+        createdAt: new Date(latest.mtimeMs).toISOString(),
         method: "script",
-        summary: summary || "Script hoàn tất",
+        summary: summarizeOutput(output),
       });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      return errorResponse(`Script backup-uploads.bat thất bại: ${errMsg.slice(0, 200)}. Script path: scripts\\backup-uploads.bat`, 500);
+      const stderr = (err as { stderr?: string }).stderr;
+      const detail = stderr ? stderr.trim().slice(0, 150) : errMsg.slice(0, 200);
+      return errorResponse(`Backup uploads thất bại khi chạy scripts\\backup-uploads.bat: ${detail}`, 500);
     }
   }
 
@@ -103,10 +136,12 @@ export const POST = withErrorHandler(async function POST() {
 
   try {
     if (isWindows) {
-      const psCmd = `powershell -NoProfile -Command "Compress-Archive -Path '${uploadsDir}\\*' -DestinationPath '${filepath}'"`;
-      execSync(psCmd, { timeout: 120000 });
+      execFileSync("powershell.exe", [
+        "-NoProfile", "-Command",
+        `Compress-Archive -Path '${uploadsDir}\\*' -DestinationPath '${filepath}'`,
+      ], { timeout: 120000, windowsHide: true });
     } else {
-      execSync(`zip -r "${filepath}" .`, {
+      execFileSync("zip", ["-r", filepath, "."], {
         cwd: uploadsDir,
         timeout: 120000,
       });
@@ -140,7 +175,7 @@ export const POST = withErrorHandler(async function POST() {
 
     const errMsg = err instanceof Error ? err.message : String(err);
     const hint = isWindows
-      ? `Backup uploads thất bại. Script không tìm thấy tại: scripts\\backup-uploads.bat. Lỗi: ${errMsg.slice(0, 150)}`
+      ? `Backup uploads thất bại. Lỗi: ${errMsg.slice(0, 200)}`
       : `Backup uploads thất bại: ${errMsg.slice(0, 200)}`;
     return errorResponse(hint, 500);
   }
