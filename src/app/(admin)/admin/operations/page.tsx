@@ -176,6 +176,29 @@ interface FinanceAlertData {
   };
 }
 
+interface BackupInfo {
+  exists: boolean;
+  folderPath: string;
+  latestFile: string | null;
+  latestTime: string | null;
+  ageHours: number | null;
+  fileCount: number;
+  totalSizeMB: number;
+  status: "ok" | "warning" | "danger" | "missing";
+  statusLabel: string;
+}
+
+interface BackupHealthData {
+  database: BackupInfo;
+  uploads: BackupInfo;
+  overall: {
+    status: "ok" | "warning" | "danger" | "missing";
+    label: string;
+  };
+  hasRecoveryGuide: boolean;
+  retentionDays: number;
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -237,6 +260,7 @@ export default function AdminOperationsPage() {
   const [customerIntel, setCustomerIntel] = useState<CustomerIntelData | null>(null);
   const [warehouseData, setWarehouseData] = useState<WarehouseProductivity | null>(null);
   const [financeAlerts, setFinanceAlerts] = useState<FinanceAlertData | null>(null);
+  const [backupHealth, setBackupHealth] = useState<BackupHealthData | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
@@ -268,7 +292,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -279,6 +303,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/customer-intelligence"),
         safeFetch("/api/admin/warehouse-productivity"),
         safeFetch("/api/admin/finance-alerts"),
+        safeFetch("/api/admin/backup-health"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -292,6 +317,7 @@ export default function AdminOperationsPage() {
       if (ciData) setCustomerIntel(ciData);
       if (whData) setWarehouseData(whData);
       if (finData) setFinanceAlerts(finData);
+      if (bkHealthData) setBackupHealth(bkHealthData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -989,6 +1015,90 @@ export default function AdminOperationsPage() {
             <Link href="/admin/users" className="text-[11px] text-blue-600 hover:underline">Khách hàng →</Link>
             <span className="text-slate-300">|</span>
             <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">Đơn hàng →</Link>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.98: AN TOÀN DỮ LIỆU / BACKUP
+          ═══════════════════════════════════════════ */}
+      {backupHealth && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            🛡️ An toàn dữ liệu / Backup
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing"
+                ? "bg-red-600 text-white animate-pulse"
+                : backupHealth.overall.status === "warning"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-green-100 text-green-700"
+            }`}>
+              {backupHealth.overall.label}
+            </span>
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+            {([
+              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database },
+              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads },
+            ] as const).map((item) => {
+              const borderColor =
+                item.info.status === "danger" || item.info.status === "missing"
+                  ? "border-red-200 bg-red-50/50"
+                  : item.info.status === "warning"
+                    ? "border-amber-200 bg-amber-50/50"
+                    : "border-green-200 bg-green-50";
+              const dotColor =
+                item.info.status === "danger" || item.info.status === "missing"
+                  ? "bg-red-500 animate-pulse"
+                  : item.info.status === "warning"
+                    ? "bg-amber-400"
+                    : "bg-green-500";
+              return (
+                <div key={item.label} className={`rounded-xl border p-3 ${borderColor}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
+                    <span className="text-xs font-semibold text-slate-700">{item.icon} {item.label}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 mb-1">{item.info.statusLabel}</div>
+                  {item.info.latestFile && (
+                    <div className="text-[10px] text-slate-400 truncate">
+                      File: {item.info.latestFile}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 mt-1.5">
+                    {item.info.latestTime && (
+                      <span className="text-[10px] text-slate-400">
+                        🕐 {timeAgo(item.info.latestTime)}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400">
+                      📦 {item.info.fileCount} file
+                    </span>
+                    {item.info.totalSizeMB > 0 && (
+                      <span className="text-[10px] text-slate-400">
+                        💾 {item.info.totalSizeMB} MB
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-300 mt-1 truncate">
+                    📂 {item.info.folderPath}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[10px] text-slate-400">Giữ lại: {backupHealth.retentionDays} ngày</span>
+            {backupHealth.hasRecoveryGuide && (
+              <>
+                <span className="text-slate-300">|</span>
+                <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
+                  Hướng dẫn backup/phục hồi →
+                </Link>
+              </>
+            )}
           </div>
         </section>
       )}
