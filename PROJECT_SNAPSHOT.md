@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-19
 **Branch:** `main`
-**Latest stable commit:** Post PR #306 (complete Vietnamese customer manual + PDF export)
+**Latest stable commit:** Post PR #307 (complete Vietnamese admin operations handbook + PDF export)
 
 ---
 
@@ -267,6 +267,8 @@
 - **Landing Page i18n Audit** (PR #304) — Audited all public-facing landing page components and replaced remaining hardcoded Vietnamese text with `useI18n()` / `t()`. 43 new `landing.*` keys added across `vi.ts`, `en.ts`, `zh.ts`. Components: LandingTrust, LandingLeadForm, LandingFloatingCTA, LandingMobileBar, ZaloQRWidget. **No design/layout/schema/dependency changes; backward compatible.**
 
 - **Complete Vietnamese Customer Manual + PDF** (PR #306) — Full customer-facing usage manual (`docs/CUSTOMER_GUIDE_VI.md`, 1000+ lines) covering all 20 sections: company intro, registration/login, dashboard, order creation, A→Z shipping workflow, order tracking, wallet/QR top-up, company price confirmation, Zalo/Telegram integration, notifications, complaints, FAQ, common errors, mobile usage, best practices, account security, real-world walkthrough, support channels, full status reference, screenshot placeholders. Professional PDF export (`docs/CUSTOMER_GUIDE_VI.pdf`) with cover page, table of contents, page numbers, and Vietnamese typography. **Documentation-only; no code/schema/dependency changes.**
+
+- **Complete Vietnamese Admin Operations Handbook + PDF** (PR #307) — Full internal staff operations handbook (`docs/ADMIN_OPERATIONS_GUIDE_VI.md`, 1600+ lines) covering all 30 sections: system overview, role permissions, admin dashboard, operations center, full order workflow, shipment status reference, China warehouse ops, Vietnam warehouse ops, mini scanner app, barcode/package scanning, wallet top-up confirmation, system vs confirmed pricing, CRM/leads, customer care/knowledge base, customer complaints, notification center, Zalo OA operations, Telegram bot support, notification failures, SLA alerts & stuck shipments, audit log, staff notes/handover, finance & analytics, daily workflow examples, morning/evening checklists per role, common operational mistakes, emergency troubleshooting, backup/recovery, production safety tips, internal FAQ. Target audience: Admin, Accountant, Warehouse CN, Warehouse VN, Customer Support. Professional PDF export (`docs/ADMIN_OPERATIONS_GUIDE_VI.pdf`) with cover page, table of contents, page numbers, and Vietnamese typography. **Documentation-only; no code/schema/dependency changes.**
 
 - **SLA Performance Report** — Compact "Hiệu suất SLA 7 ngày" section on Operations Center (`/admin/operations`). New `GET /api/admin/sla-report` endpoint runs parallel lightweight queries against existing Order model. Features: (1) Three KPI cards — orders updated in 7 days, orders currently over SLA, SLA breach rate percentage. (2) Trend label — Đang ổn (green, breach ≤5%), Cần chú ý (amber, breach ≤15%), Nguy hiểm (red, breach >15%). (3) Top bottleneck list — pending too long (>3d), missing tracking (>3d), international shipping slow (>7d), Vietnam warehouse waiting (>2d), delivery too long (>3d) — each with severity dot and count badge. (4) Quick link to stuck shipments/orders. SLA thresholds aligned with existing sla-alerts endpoint. All queries capped with `take` limits. Vietnamese-first wording. Auto-refreshes with existing 30s polling. **No schema changes; no new dependencies; no change to SLA business logic; existing SLA alerts unchanged; backward compatible.**
 
