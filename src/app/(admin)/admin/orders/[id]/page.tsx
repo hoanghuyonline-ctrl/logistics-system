@@ -86,6 +86,7 @@ export default function AdminOrderDetailPage() {
     confirmedTotalCost: "",
   });
   const [pricingSaving, setPricingSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function copyToClipboard(value: string) {
     navigator.clipboard.writeText(value).then(() => {
@@ -93,44 +94,41 @@ export default function AdminOrderDetailPage() {
     });
   }
 
+  function applyOrder(d: OrderDetail) {
+    setOrder(d);
+    setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
+    setWeight(d.weightKg || "");
+    setCustomNote(d.customStatusNote || "");
+    setPricingForm({
+      confirmedProductCost: d.confirmedProductCost || "",
+      confirmedShippingCost: d.confirmedShippingCost || "",
+      confirmedServiceFee: d.confirmedServiceFee || "",
+      confirmedTotalCost: d.confirmedTotalCost || "",
+    });
+  }
+
   const loadOrder = useCallback(() => {
     fetch(`/api/orders/${params.id}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((d) => {
-        setOrder(d);
-        setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
-        setWeight(d.weightKg || "");
-        setCustomNote(d.customStatusNote || "");
-        setPricingForm({
-          confirmedProductCost: d.confirmedProductCost || "",
-          confirmedShippingCost: d.confirmedShippingCost || "",
-          confirmedServiceFee: d.confirmedServiceFee || "",
-          confirmedTotalCost: d.confirmedTotalCost || "",
-        });
-        setLoading(false);
-      });
+        if (!d || d.error) throw new Error(d?.error || "Invalid response");
+        applyOrder(d);
+        setError(null);
+      })
+      .catch((err) => {
+        console.error("[admin/orders/detail] load failed:", err);
+        setError(err?.message || "Không thể tải đơn hàng");
+      })
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/orders/${params.id}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled) return;
-        setOrder(d);
-        setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
-        setWeight(d.weightKg || "");
-        setCustomNote(d.customStatusNote || "");
-        setPricingForm({
-          confirmedProductCost: d.confirmedProductCost || "",
-          confirmedShippingCost: d.confirmedShippingCost || "",
-          confirmedServiceFee: d.confirmedServiceFee || "",
-          confirmedTotalCost: d.confirmedTotalCost || "",
-        });
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [params.id]);
+    loadOrder();
+  }, [loadOrder]);
 
   async function updateStatus(newStatus: string) {
     const res = await fetch(`/api/orders/${params.id}/status`, {
@@ -261,9 +259,29 @@ export default function AdminOrderDetailPage() {
     setPricingSaving(false);
   }
 
-  if (loading || !order) return <LoadingSpinner text={t("orderDetail.loading")} />;
+  if (loading) return <LoadingSpinner text={t("orderDetail.loading")} />;
 
-  const fmt = (v: string) => parseFloat(v).toLocaleString();
+  if (error || !order) {
+    return (
+      <div className="max-w-lg mx-auto mt-12 text-center">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8">
+          <span className="text-4xl mb-4 block">⚠️</span>
+          <h2 className="text-lg font-semibold text-slate-800 mb-2">Không thể tải chi tiết đơn hàng</h2>
+          <p className="text-sm text-slate-600 mb-4">{error || "Đơn hàng không tồn tại hoặc đã bị xoá."}</p>
+          <div className="flex items-center justify-center gap-3">
+            <button onClick={loadOrder} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors">Thử lại</button>
+            <a href="/admin/orders" className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Quay lại danh sách</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const fmt = (v: string | null | undefined) => {
+    if (v == null) return "0";
+    const n = parseFloat(String(v));
+    return isNaN(n) ? "0" : n.toLocaleString();
+  };
   const nextStatuses = TRANSITIONS[order.status] || [];
 
   return (
@@ -285,7 +303,7 @@ export default function AdminOrderDetailPage() {
             </button>
           </span>
         }
-        subtitle={`${t("orders.customer")}: ${order.user.fullName} · ${new Date(order.createdAt).toLocaleDateString()}`}
+        subtitle={`${t("orders.customer")}: ${order.user?.fullName || "—"} · ${order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "—"}`}
         action={<StatusBadge status={order.status} />}
       />
 
@@ -404,16 +422,16 @@ export default function AdminOrderDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.customerInfo")}>
           <dl className="space-y-3 text-sm">
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.name")}</dt><dd className="font-medium text-slate-900">{order.user.fullName}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.email")}</dt><dd className="font-medium text-slate-900">{order.user.email}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.phone")}</dt><dd className="font-medium text-slate-900">{order.user.phone || "—"}</dd></div>
-            <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.address")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.user.address || "—"}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">Zalo</dt><dd className={`font-medium ${order.user.zaloRecipientId ? "text-emerald-600" : "text-amber-600"}`}>{order.user.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.name")}</dt><dd className="font-medium text-slate-900">{order.user?.fullName || "—"}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.email")}</dt><dd className="font-medium text-slate-900">{order.user?.email || "—"}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.phone")}</dt><dd className="font-medium text-slate-900">{order.user?.phone || "—"}</dd></div>
+            <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.address")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.user?.address || "—"}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">Zalo</dt><dd className={`font-medium ${order.user?.zaloRecipientId ? "text-emerald-600" : "text-amber-600"}`}>{order.user?.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}</dd></div>
           </dl>
 
           {/* Quick contact actions */}
           <div className="mt-3 flex flex-wrap gap-2">
-            {order.user.phone && (
+            {order.user?.phone && (
               <>
                 <button
                   onClick={() => copyToClipboard(order.user.phone!)}
@@ -422,7 +440,7 @@ export default function AdminOrderDetailPage() {
                   Sao chép SĐT
                 </button>
                 <a
-                  href={`https://zalo.me/${order.user.phone.replace(/^0/, "84")}`}
+                  href={`https://zalo.me/${order.user?.phone?.replace(/^0/, "84") || ""}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 transition-colors"
@@ -432,7 +450,7 @@ export default function AdminOrderDetailPage() {
               </>
             )}
             <button
-              onClick={() => copyToClipboard(order.user.email)}
+              onClick={() => copyToClipboard(order.user?.email || "")}
               className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors"
             >
               Sao chép email
@@ -445,14 +463,14 @@ export default function AdminOrderDetailPage() {
             </button>
           </div>
 
-          {order.user.zaloRecipientId && (
+          {order.user?.zaloRecipientId && (
             <div className="mt-2 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               <span className="text-xs font-medium text-emerald-700">Đã liên kết Zalo OA</span>
             </div>
           )}
 
-          {!order.user.zaloRecipientId && (
+          {!order.user?.zaloRecipientId && (
             <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 space-y-2">
               <p className="font-medium">Khách chưa liên kết Zalo — không nhận được thông báo qua Zalo</p>
               <p>Hướng dẫn khách liên kết: Mở Zalo, quét mã QR OA Bắc Trung Hải, rồi nhắn mã đơn bên dưới.</p>
@@ -488,7 +506,7 @@ export default function AdminOrderDetailPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="text-sm font-semibold text-emerald-800">{t("pricing.companyConfirmed")}</span>
-                <span className="text-xs text-emerald-600 ml-auto">{new Date(order.confirmedAt!).toLocaleString("vi-VN")}</span>
+                <span className="text-xs text-emerald-600 ml-auto">{order.confirmedAt ? new Date(order.confirmedAt).toLocaleString("vi-VN") : ""}</span>
               </div>
               <dl className="space-y-2 text-sm">
                 {order.confirmedProductCost && (
@@ -684,7 +702,7 @@ export default function AdminOrderDetailPage() {
             <div key={note.id} className="bg-slate-50 rounded-xl p-4">
               <p className="text-sm text-slate-700">{note.content}</p>
               <p className="text-xs text-slate-400 mt-2">
-                {note.user.fullName} ({t(`role.${note.user.role}`, note.user.role)}) — {new Date(note.createdAt).toLocaleString()}
+                {note.user?.fullName || "—"} ({t(`role.${note.user?.role}`, note.user?.role || "")}) — {note.createdAt ? new Date(note.createdAt).toLocaleString("vi-VN") : "—"}
               </p>
             </div>
           ))}
@@ -717,7 +735,7 @@ export default function AdminOrderDetailPage() {
               <div className="pb-6">
                 <StatusBadge status={log.toStatus} />
                 {log.note && <p className="text-sm text-slate-500 mt-1.5">{log.note}</p>}
-                <p className="text-xs text-slate-400 mt-1">{log.changer.fullName} — {new Date(log.createdAt).toLocaleString()}</p>
+                <p className="text-xs text-slate-400 mt-1">{log.changer?.fullName || "—"} — {log.createdAt ? new Date(log.createdAt).toLocaleString("vi-VN") : "—"}</p>
               </div>
             </div>
           ))}
