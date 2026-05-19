@@ -3,7 +3,38 @@ export const dynamic = "force-dynamic";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
+
+function findLatestFile(dir: string, pattern: RegExp): { name: string; mtimeMs: number } | null {
+  let files: string[];
+  try {
+    files = fs.readdirSync(dir).filter((f) => pattern.test(f));
+  } catch {
+    return null;
+  }
+  if (files.length === 0) return null;
+
+  let latest = files[0];
+  let latestMtime = 0;
+  for (const f of files) {
+    try {
+      const stat = fs.statSync(path.join(dir, f));
+      if (stat.mtimeMs > latestMtime) {
+        latestMtime = stat.mtimeMs;
+        latest = f;
+      }
+    } catch { /* skip */ }
+  }
+  return { name: latest, mtimeMs: latestMtime };
+}
+
+function summarizeOutput(output: string): string {
+  return output.split("\n")
+    .filter((l) => l.includes("[OK]") || l.includes("[INFO]") || l.includes("[LOI]") || l.includes("ERROR"))
+    .map((l) => l.trim())
+    .join(" | ")
+    .slice(0, 300) || "Script hoàn tất";
+}
 
 export const POST = withErrorHandler(async function POST() {
   const user = await getCurrentUser();
@@ -25,47 +56,39 @@ export const POST = withErrorHandler(async function POST() {
     }
   }
 
-  // Strategy 1: Try existing .bat script on Windows
+  // Strategy 1: Try existing .bat script on Windows using execFileSync
   if (isWindows && fs.existsSync(scriptPath)) {
     try {
-      const output = execSync(`cmd /c "${scriptPath}"`, {
+      const output = execFileSync("cmd.exe", ["/c", scriptPath], {
         timeout: 180000,
         encoding: "utf-8",
         cwd: projectRoot,
+        windowsHide: true,
       });
 
-      // Find the latest file after script ran
-      const files = fs.readdirSync(backupDir).filter((f) => /^postgres-.*\.sql$/i.test(f));
-      if (files.length === 0) {
-        return errorResponse("Script chạy xong nhưng không tìm thấy file backup", 500);
+      const latest = findLatestFile(backupDir, /^postgres-.*\.sql$/i);
+      if (!latest) {
+        return errorResponse("Script chạy xong nhưng không tìm thấy file backup trong backups/postgres/", 500);
       }
 
-      let latestFile = files[0];
-      let latestMtime = 0;
-      for (const f of files) {
-        const stat = fs.statSync(path.join(backupDir, f));
-        if (stat.mtimeMs > latestMtime) {
-          latestMtime = stat.mtimeMs;
-          latestFile = f;
-        }
-      }
-
-      const stat = fs.statSync(path.join(backupDir, latestFile));
+      const stat = fs.statSync(path.join(backupDir, latest.name));
       const sizeMB = Math.round((stat.size / (1024 * 1024)) * 10) / 10;
-      const summary = output.split("\n").filter((l) => l.includes("[OK]") || l.includes("[INFO]") || l.includes("[LOI]")).map((l) => l.trim()).join(" | ").slice(0, 300);
 
       return jsonResponse({
         success: true,
         message: "Backup database thành công (via script)",
-        filename: latestFile,
+        filename: latest.name,
         sizeMB,
-        createdAt: new Date(latestMtime).toISOString(),
+        createdAt: new Date(latest.mtimeMs).toISOString(),
         method: "script",
-        summary: summary || "Script hoàn tất",
+        summary: summarizeOutput(output),
       });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      return errorResponse(`Script backup-db.bat thất bại: ${errMsg.slice(0, 200)}`, 500);
+      // Extract stderr if available
+      const stderr = (err as { stderr?: string }).stderr;
+      const detail = stderr ? stderr.trim().slice(0, 150) : errMsg.slice(0, 200);
+      return errorResponse(`Backup DB thất bại khi chạy scripts\\backup-db.bat: ${detail}`, 500);
     }
   }
 
@@ -84,8 +107,7 @@ export const POST = withErrorHandler(async function POST() {
   const dbName = "logistics_db";
 
   try {
-    const cmd = `docker exec ${containerName} pg_dump -U ${dbUser} ${dbName}`;
-    const output = execSync(cmd, {
+    const output = execFileSync("docker", ["exec", containerName, "pg_dump", "-U", dbUser, dbName], {
       timeout: 120000,
       maxBuffer: 100 * 1024 * 1024,
       encoding: "utf-8",
@@ -117,7 +139,7 @@ export const POST = withErrorHandler(async function POST() {
 
     if (errMsg.includes("not found") || errMsg.includes("not recognized") || errMsg.includes("ENOENT")) {
       const hint = isWindows
-        ? `Docker không khả dụng. Script backup cũng không tìm thấy tại: scripts\\backup-db.bat`
+        ? "Docker không khả dụng và script backup-db.bat không tìm thấy tại: scripts\\backup-db.bat"
         : "Docker không khả dụng — không thể backup database";
       return errorResponse(hint, 500);
     }

@@ -363,7 +363,8 @@ export default function AdminOperationsPage() {
         setBackupMessage((prev) => ({ ...prev, [type]: { type: "success", text: `${data.message} — ${data.filename} (${data.sizeMB} MB)` } }));
         fetchAll();
       } else {
-        setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: data.error || "Backup thất bại" } }));
+        const errText = data.error || data.message || "Backup thất bại";
+        setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: errText } }));
       }
     } catch {
       setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: "Lỗi kết nối — không thể backup" } }));

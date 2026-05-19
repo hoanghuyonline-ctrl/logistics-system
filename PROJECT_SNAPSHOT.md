@@ -260,6 +260,8 @@
 
 **Deploy notes (Backup):** For best results, ensure `scripts/backup-db.bat` and `scripts/backup-uploads.bat` exist on Windows production. APIs will use these scripts when available, falling back to direct Docker pg_dump / PowerShell Compress-Archive otherwise. Set up Windows Task Scheduler to run these scripts daily for automatic backups. No PM2 changes needed.
 
+**Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
