@@ -239,6 +239,22 @@ interface DisasterRecoveryData {
   hasRestoreUploadsScript: boolean;
 }
 
+interface SlaBottleneck {
+  key: string;
+  label: string;
+  count: number;
+  severity: "ok" | "warning" | "danger";
+}
+
+interface SlaReportData {
+  ordersUpdated7d: number;
+  totalOverSla: number;
+  breachRate: number;
+  trend: "good" | "attention" | "danger";
+  trendLabel: string;
+  bottlenecks: SlaBottleneck[];
+}
+
 interface CustomerRiskItem {
   id: string;
   name: string;
@@ -365,6 +381,7 @@ export default function AdminOperationsPage() {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const [activityIntel, setActivityIntel] = useState<ActivityIntelligenceData | null>(null);
   const [customerRisk, setCustomerRisk] = useState<CustomerRiskData | null>(null);
+  const [slaReport, setSlaReport] = useState<SlaReportData | null>(null);
   const [backupRunning, setBackupRunning] = useState<Record<string, boolean>>({});
   const [backupMessage, setBackupMessage] = useState<Record<string, { type: "success" | "error"; text: string }>>({});
   const inFlightRef = useRef(false);
@@ -398,7 +415,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData, drData, aiData, crData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData, drData, aiData, crData, slaRptData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -413,6 +430,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/disaster-recovery"),
         safeFetch("/api/admin/activity-intelligence"),
         safeFetch("/api/admin/customer-risk"),
+        safeFetch("/api/admin/sla-report"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -430,6 +448,7 @@ export default function AdminOperationsPage() {
       if (drData) setDisasterRecovery(drData);
       if (aiData) setActivityIntel(aiData);
       if (crData) setCustomerRisk(crData);
+      if (slaRptData) setSlaReport(slaRptData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -1590,6 +1609,77 @@ export default function AdminOperationsPage() {
                 </div>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.96: HIỆU SUẤT SLA 7 NGÀY
+          ═══════════════════════════════════════════ */}
+      {slaReport && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            📊 Hiệu suất SLA 7 ngày
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              slaReport.trend === "good"
+                ? "bg-green-100 text-green-700"
+                : slaReport.trend === "attention"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-red-600 text-white animate-pulse"
+            }`}>
+              {slaReport.trendLabel}
+            </span>
+          </h2>
+
+          {/* KPI cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+            <div className="rounded-lg border border-slate-200 bg-white p-2.5">
+              <div className="text-[10px] text-slate-500 mb-0.5">Đơn cập nhật 7 ngày</div>
+              <div className="text-lg font-bold text-slate-800">{slaReport.ordersUpdated7d}</div>
+            </div>
+            <div className={`rounded-lg border p-2.5 ${
+              slaReport.totalOverSla > 5 ? "border-red-200 bg-red-50/50" : slaReport.totalOverSla > 0 ? "border-amber-200 bg-amber-50/50" : "border-green-200 bg-green-50/50"
+            }`}>
+              <div className="text-[10px] text-slate-500 mb-0.5">Đơn vượt SLA</div>
+              <div className={`text-lg font-bold ${
+                slaReport.totalOverSla > 5 ? "text-red-600" : slaReport.totalOverSla > 0 ? "text-amber-600" : "text-green-600"
+              }`}>{slaReport.totalOverSla}</div>
+            </div>
+            <div className={`rounded-lg border p-2.5 ${
+              slaReport.breachRate > 15 ? "border-red-200 bg-red-50/50" : slaReport.breachRate > 5 ? "border-amber-200 bg-amber-50/50" : "border-green-200 bg-green-50/50"
+            }`}>
+              <div className="text-[10px] text-slate-500 mb-0.5">Tỷ lệ vi phạm SLA</div>
+              <div className={`text-lg font-bold ${
+                slaReport.breachRate > 15 ? "text-red-600" : slaReport.breachRate > 5 ? "text-amber-600" : "text-green-600"
+              }`}>{slaReport.breachRate}%</div>
+            </div>
+          </div>
+
+          {/* Bottlenecks */}
+          {slaReport.bottlenecks.some((b) => b.count > 0) && (
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="text-[11px] font-semibold text-slate-700 mb-2">🚧 Nút thắt cổ chai</div>
+              <div className="space-y-1.5">
+                {slaReport.bottlenecks.filter((b) => b.count > 0).map((b) => (
+                  <div key={b.key} className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${
+                      b.severity === "danger" ? "bg-red-500 animate-pulse" : b.severity === "warning" ? "bg-amber-500" : "bg-green-500"
+                    }`} />
+                    <span className="text-[11px] text-slate-700 flex-1">{b.label}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                      b.severity === "danger" ? "bg-red-100 text-red-700" : b.severity === "warning" ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                    }`}>{b.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick link */}
+          <div className="mt-2">
+            <Link href="/admin/orders?status=stuck" className="text-[11px] text-blue-600 hover:underline">
+              🔗 Xem đơn hàng cần xử lý →
+            </Link>
           </div>
         </section>
       )}
