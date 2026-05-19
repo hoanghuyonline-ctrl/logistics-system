@@ -261,6 +261,8 @@ export default function AdminOperationsPage() {
   const [warehouseData, setWarehouseData] = useState<WarehouseProductivity | null>(null);
   const [financeAlerts, setFinanceAlerts] = useState<FinanceAlertData | null>(null);
   const [backupHealth, setBackupHealth] = useState<BackupHealthData | null>(null);
+  const [backupRunning, setBackupRunning] = useState<Record<string, boolean>>({});
+  const [backupMessage, setBackupMessage] = useState<Record<string, { type: "success" | "error"; text: string }>>({});
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
@@ -341,6 +343,25 @@ export default function AdminOperationsPage() {
       inFlightRef.current = false;
     }
   }, []);
+
+  const triggerBackup = useCallback(async (type: "database" | "uploads") => {
+    setBackupRunning((prev) => ({ ...prev, [type]: true }));
+    setBackupMessage((prev) => { const next = { ...prev }; delete next[type]; return next; });
+    try {
+      const r = await fetch(`/api/admin/backup/${type}`, { method: "POST" });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        setBackupMessage((prev) => ({ ...prev, [type]: { type: "success", text: `${data.message} — ${data.filename} (${data.sizeMB} MB)` } }));
+        fetchAll();
+      } else {
+        setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: data.error || "Backup thất bại" } }));
+      }
+    } catch {
+      setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: "Lỗi kết nối — không thể backup" } }));
+    } finally {
+      setBackupRunning((prev) => ({ ...prev, [type]: false }));
+    }
+  }, [fetchAll]);
 
   /* initial load + auto-refresh every 30s */
   useEffect(() => {
@@ -1039,9 +1060,9 @@ export default function AdminOperationsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {([
-              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database },
-              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads },
-            ] as const).map((item) => {
+              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database, type: "database" as const },
+              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads, type: "uploads" as const },
+            ]).map((item) => {
               const borderColor =
                 item.info.status === "danger" || item.info.status === "missing"
                   ? "border-red-200 bg-red-50/50"
@@ -1054,6 +1075,8 @@ export default function AdminOperationsPage() {
                   : item.info.status === "warning"
                     ? "bg-amber-400"
                     : "bg-green-500";
+              const isRunning = backupRunning[item.type] || false;
+              const msg = backupMessage[item.type];
               return (
                 <div key={item.label} className={`rounded-xl border p-3 ${borderColor}`}>
                   <div className="flex items-center gap-2 mb-2">
@@ -1084,6 +1107,33 @@ export default function AdminOperationsPage() {
                   <div className="text-[10px] text-slate-300 mt-1 truncate">
                     📂 {item.info.folderPath}
                   </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      onClick={() => triggerBackup(item.type)}
+                      disabled={isRunning}
+                      className={`text-[11px] font-medium px-3 py-1 rounded-lg transition-all ${
+                        isRunning
+                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                      }`}
+                    >
+                      {isRunning ? (
+                        <span className="flex items-center gap-1">
+                          <span className="w-3 h-3 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+                          Đang backup...
+                        </span>
+                      ) : (
+                        "💾 Backup ngay"
+                      )}
+                    </button>
+                  </div>
+                  {msg && (
+                    <div className={`mt-1.5 text-[11px] px-2 py-1 rounded ${
+                      msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                    }`}>
+                      {msg.type === "success" ? "✓ " : "✗ "}{msg.text}
+                    </div>
+                  )}
                 </div>
               );
             })}
