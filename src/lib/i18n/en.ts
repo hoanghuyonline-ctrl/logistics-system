@@ -861,6 +861,184 @@ const en: Record<string, string> = {
   "sysHealth.smoke.errors": "errors",
   "sysHealth.smoke.hint": "Click \"Run check\" to verify system after deploy.",
 
+  // Operations — Time labels
+  "ops.time.justNow": "just now",
+  "ops.time.minutesSuffix": "min",
+  "ops.time.hoursSuffix": "hr",
+  "ops.time.daysSuffix": "d",
+
+  // Operations — Issue type labels
+  "ops.issueType.shortage": "Shortage",
+  "ops.issueType.slowDelivery": "Slow delivery",
+  "ops.issueType.wrongWeight": "Wrong weight",
+  "ops.issueType.damaged": "Damaged goods",
+  "ops.issueType.notReceived": "Not received",
+  "ops.issueType.wrongFee": "Wrong fee",
+  "ops.issueType.chatbot": "Chatbot",
+  "ops.issueType.other": "Other",
+
+  // Operations — Backup errors
+  "ops.backup.failedDefault": "Backup failed",
+  "ops.backup.connError": "Connection error — cannot backup",
+
+  // Operations — Header / Global
+  "ops.alertOn": "Alert: On",
+  "ops.alertOff": "Alert: Off",
+  "ops.alertOnTitle": "Disable urgent alert sound",
+  "ops.alertOffTitle": "Enable urgent alert sound",
+  "ops.autoUpdate": "Auto-update",
+
+  // Operations — Severity labels (shared)
+  "ops.sev.urgent": "Urgent!",
+  "ops.sev.high": "High",
+  "ops.sev.medium": "Med",
+  "ops.sev.low": "Low",
+  "ops.sev.urgentFull": "Urgent",
+  "ops.sev.mediumFull": "Medium",
+  "ops.sev.needAction": "Action needed",
+  "ops.sev.needReview": "Review",
+  "ops.sev.ok": "OK",
+  "ops.sev.highPriority": "High priority",
+
+  // Operations — Section 0: Inbox
+  "ops.inbox.title": "Tasks to handle today",
+  "ops.inbox.countSuffix": "tasks",
+  "ops.inbox.showingItems": "Showing {shown}/{total} tasks — view each to handle",
+
+  // Operations — Section 1: Urgent
+  "ops.urgent.title": "Urgent tasks",
+  "ops.urgent.countSuffix": "urgent tasks",
+  "ops.urgent.none": "No urgent tasks",
+  "ops.urgent.pendingDeposits": "Deposits pending",
+  "ops.urgent.unpaidOrders": "Orders to purchase",
+  "ops.urgent.unresolvedIssues": "Unresolved complaints",
+  "ops.urgent.notifFailures": "Notification failures",
+  "ops.urgent.staleOrders": "Stuck >5 days",
+
+  // Operations — Section 1.5: Daily checklist
+  "ops.checklist.title": "Daily operations checklist",
+  "ops.checklist.pendingDeposits": "Deposits pending approval",
+  "ops.checklist.pendingDepositsDesc": "Customer transferred, waiting for admin confirmation",
+  "ops.checklist.newOrders": "New orders — need purchasing",
+  "ops.checklist.newOrdersDesc": "PENDING orders waiting to be purchased from supplier",
+  "ops.checklist.missingTracking": "Orders missing tracking",
+  "ops.checklist.missingTrackingDesc": "Purchased but no CN tracking entered",
+  "ops.checklist.staleOrders": "Orders stuck >5 days",
+  "ops.checklist.staleOrdersDesc": "No status update >5 days — needs checking",
+  "ops.checklist.arrivedVN": "Arrived VN warehouse — pending delivery",
+  "ops.checklist.arrivedVNDesc": "Goods at VN warehouse, arrange delivery to customer",
+  "ops.checklist.highPriority": "High priority / Urgent orders",
+  "ops.checklist.highPriorityDesc": "HIGH or URGENT orders being processed",
+  "ops.checklist.newOrdersToday": "New orders today",
+  "ops.checklist.viewAllOrders": "View all orders →",
+
+  // Operations — Section 1.8: SLA alerts
+  "ops.slaAlert.title": "SLA operations alerts",
+  "ops.slaAlert.countSuffix": "orders need attention",
+  "ops.slaAlert.moreOrders": "more orders",
+
+  // Operations — Section 1.9: Customer attention
+  "ops.custWatch.title": "Customers needing attention",
+  "ops.custWatch.countSuffix": "customers",
+  "ops.custWatch.ordersSuffix": "orders",
+  "ops.custWatch.issuesSuffix": "issues",
+  "ops.custWatch.showingItems": "Showing {shown}/{total} customers",
+
+  // Operations — Section 1.95: Warehouse performance
+  "ops.warehouse.title": "Warehouse performance today",
+  "ops.warehouse.packagesCreated": "Packages received today",
+  "ops.warehouse.ordersProcessed": "Orders processed today",
+  "ops.warehouse.chinaActivity": "CN warehouse activity",
+  "ops.warehouse.vietnamActivity": "VN warehouse activity",
+  "ops.warehouse.missingWeight": "Missing weight",
+  "ops.warehouse.stuckPackages": "Stuck packages",
+  "ops.warehouse.chinaWh": "China Warehouse",
+  "ops.warehouse.vietnamWh": "Vietnam Warehouse",
+  "ops.warehouse.packagesSuffix": "packages",
+  "ops.warehouse.stuckChina": "packages stuck >5 days",
+  "ops.warehouse.stuckVietnam": "packages stuck >3 days",
+  "ops.warehouse.noStuck": "No stuck",
+  "ops.warehouse.recentActivity": "Recent activity",
+  "ops.warehouse.viewMore": "View more →",
+  "ops.warehouse.scanWh": "Scan warehouse →",
+  "ops.warehouse.managePackages": "Manage packages →",
+  "ops.warehouse.stuckOrders": "Stuck orders →",
+  "ops.warehouse.statusArrivedCN": "Arrived CN WH",
+  "ops.warehouse.statusPacking": "Packing",
+  "ops.warehouse.statusShippingVN": "Shipping to VN",
+  "ops.warehouse.statusArrivedVN": "Arrived VN WH",
+  "ops.warehouse.statusDelivering": "Delivering",
+  "ops.warehouse.statusCompleted": "Completed",
+  "ops.warehouse.statusPurchased": "Purchased",
+  "ops.warehouse.statusSellerShipped": "Seller shipped",
+
+  // Operations — Section 1.97: Finance alerts
+  "ops.finance.title": "Finance alerts",
+  "ops.finance.countSuffix": "alerts",
+  "ops.finance.totalDebt": "Total debt",
+  "ops.finance.negativeBalance": "Negative balance",
+  "ops.finance.staleTopUp": "Stale top-up",
+  "ops.finance.unconfirmedPricing": "Unconfirmed pricing",
+  "ops.finance.refundsToday": "Refunds today",
+  "ops.finance.showingItems": "Showing {shown}/{total} alerts",
+  "ops.finance.linkFinance": "Finance →",
+  "ops.finance.linkCustomers": "Customers →",
+  "ops.finance.linkOrders": "Orders →",
+
+  // Operations — Section 2: Stuck orders
+  "ops.stuck.title": "Orders needing attention",
+  "ops.stuck.countSuffix": "orders",
+  "ops.stuck.allNormal": "All normal",
+  "ops.stuck.viewDetail": "View details →",
+  "ops.stuck.noStuck": "No stuck orders — operations running normally",
+  "ops.stuck.moreOrders": "more orders",
+
+  // Operations — Section 3: Pending top-ups
+  "ops.topup.title": "Deposits pending approval",
+  "ops.topup.countPending": "pending!",
+  "ops.topup.allApproved": "All approved",
+  "ops.topup.approveNow": "Approve now →",
+  "ops.topup.allDone": "All deposit requests have been approved",
+  "ops.topup.pendingBadge": "Pending",
+  "ops.topup.ago": "ago",
+  "ops.topup.moreRequests": "more requests →",
+
+  // Operations — Section 4: Warnings
+  "ops.warnings.title": "Operational warnings",
+  "ops.warnings.stuckChina": "CN WH stuck >5 days",
+  "ops.warnings.stuckVietnam": "VN WH stuck >3 days",
+  "ops.warnings.unanswered": "Chatbot unanswered",
+  "ops.warnings.unresolvedNotes": "Internal notes pending",
+
+  // Operations — Section 5: Customer issues
+  "ops.issues.title": "Customer complaints",
+  "ops.issues.newCount": "new",
+  "ops.issues.inProgressCount": "in progress",
+  "ops.issues.noIssues": "No complaints",
+  "ops.issues.viewIssues": "View complaints →",
+  "ops.issues.noNewIssues": "No new complaints to handle",
+  "ops.issues.statusNew": "New",
+  "ops.issues.statusInProgress": "In Progress",
+  "ops.issues.moreIssues": "more complaints →",
+
+  // Operations — Section 6: Notification failures
+  "ops.notif.title": "Notification errors",
+  "ops.notif.unresolvedCount": "unresolved",
+  "ops.notif.noErrors": "No errors",
+  "ops.notif.viewErrors": "View notification errors →",
+  "ops.notif.allSuccess": "All notifications sent successfully",
+  "ops.notif.unknownError": "Unknown error",
+
+  // Operations — Quick Actions
+  "ops.qa.orders": "Manage orders",
+  "ops.qa.approveTopUp": "Approve deposits",
+  "ops.qa.stuckTracking": "Stuck / Tracking",
+  "ops.qa.scanWh": "Scan warehouse",
+  "ops.qa.customerIssues": "Customer complaints",
+  "ops.qa.notifErrors": "Notification errors",
+  "ops.qa.manageCustomers": "Manage customers",
+  "ops.qa.managePackages": "Manage packages",
+
   "nav.analyticsSummary": "Summary",
   "analytics.summaryTitle": "CRM / Marketing / Support Overview",
   "analytics.leadsBySource": "Leads by source",

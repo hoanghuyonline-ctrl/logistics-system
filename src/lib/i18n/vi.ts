@@ -861,6 +861,184 @@ const vi: Record<string, string> = {
   "sysHealth.smoke.errors": "lỗi",
   "sysHealth.smoke.hint": "Bấm \"Chạy kiểm tra\" để kiểm tra hệ thống sau deploy.",
 
+  // Operations — Time labels
+  "ops.time.justNow": "vừa xong",
+  "ops.time.minutesSuffix": "phút",
+  "ops.time.hoursSuffix": "giờ",
+  "ops.time.daysSuffix": "ngày",
+
+  // Operations — Issue type labels
+  "ops.issueType.shortage": "Thiếu hàng",
+  "ops.issueType.slowDelivery": "Giao chậm",
+  "ops.issueType.wrongWeight": "Sai cân",
+  "ops.issueType.damaged": "Hỏng hàng",
+  "ops.issueType.notReceived": "Chưa nhận",
+  "ops.issueType.wrongFee": "Phí sai",
+  "ops.issueType.chatbot": "Chatbot",
+  "ops.issueType.other": "Khác",
+
+  // Operations — Backup errors
+  "ops.backup.failedDefault": "Backup thất bại",
+  "ops.backup.connError": "Lỗi kết nối — không thể backup",
+
+  // Operations — Header / Global
+  "ops.alertOn": "Âm báo: Bật",
+  "ops.alertOff": "Âm báo: Tắt",
+  "ops.alertOnTitle": "Tắt âm báo khi có việc khẩn",
+  "ops.alertOffTitle": "Bật âm báo khi có việc khẩn",
+  "ops.autoUpdate": "Tự động cập nhật",
+
+  // Operations — Severity labels (shared)
+  "ops.sev.urgent": "Khẩn!",
+  "ops.sev.high": "Cao",
+  "ops.sev.medium": "TB",
+  "ops.sev.low": "Thấp",
+  "ops.sev.urgentFull": "Khẩn cấp",
+  "ops.sev.mediumFull": "Trung bình",
+  "ops.sev.needAction": "Cần xử lý",
+  "ops.sev.needReview": "Cần xem",
+  "ops.sev.ok": "OK",
+  "ops.sev.highPriority": "Ưu tiên cao",
+
+  // Operations — Section 0: Inbox
+  "ops.inbox.title": "Việc cần xử lý hôm nay",
+  "ops.inbox.countSuffix": "việc",
+  "ops.inbox.showingItems": "Hiển thị {shown}/{total} việc — xem từng mục để xử lý",
+
+  // Operations — Section 1: Urgent
+  "ops.urgent.title": "Việc cần làm ngay",
+  "ops.urgent.countSuffix": "việc khẩn",
+  "ops.urgent.none": "Không có việc khẩn",
+  "ops.urgent.pendingDeposits": "Nạp tiền chờ duyệt",
+  "ops.urgent.unpaidOrders": "Đơn chờ mua hàng",
+  "ops.urgent.unresolvedIssues": "Khiếu nại chưa xử lý",
+  "ops.urgent.notifFailures": "Gửi thông báo lỗi",
+  "ops.urgent.staleOrders": "Đơn kẹt >5 ngày",
+
+  // Operations — Section 1.5: Daily checklist
+  "ops.checklist.title": "Bảng kiểm vận hành hàng ngày",
+  "ops.checklist.pendingDeposits": "Nạp tiền chờ duyệt",
+  "ops.checklist.pendingDepositsDesc": "Khách đã chuyển khoản, chờ admin xác nhận",
+  "ops.checklist.newOrders": "Đơn mới — cần mua hàng",
+  "ops.checklist.newOrdersDesc": "Đơn PENDING chờ đặt mua từ nhà cung cấp",
+  "ops.checklist.missingTracking": "Đơn thiếu mã vận đơn",
+  "ops.checklist.missingTrackingDesc": "Đã mua nhưng chưa nhập tracking TQ",
+  "ops.checklist.staleOrders": "Đơn kẹt quá 5 ngày",
+  "ops.checklist.staleOrdersDesc": "Không cập nhật trạng thái >5 ngày — cần kiểm tra",
+  "ops.checklist.arrivedVN": "Đã về kho VN — chờ giao",
+  "ops.checklist.arrivedVNDesc": "Hàng đã đến kho VN, cần sắp xếp giao khách",
+  "ops.checklist.highPriority": "Đơn ưu tiên cao / Khẩn",
+  "ops.checklist.highPriorityDesc": "Đơn HIGH hoặc URGENT đang xử lý",
+  "ops.checklist.newOrdersToday": "Đơn mới hôm nay",
+  "ops.checklist.viewAllOrders": "Xem tất cả đơn hàng →",
+
+  // Operations — Section 1.8: SLA alerts
+  "ops.slaAlert.title": "Cảnh báo SLA vận hành",
+  "ops.slaAlert.countSuffix": "đơn cần chú ý",
+  "ops.slaAlert.moreOrders": "đơn khác",
+
+  // Operations — Section 1.9: Customer attention
+  "ops.custWatch.title": "Khách hàng cần chú ý",
+  "ops.custWatch.countSuffix": "khách",
+  "ops.custWatch.ordersSuffix": "đơn",
+  "ops.custWatch.issuesSuffix": "KN",
+  "ops.custWatch.showingItems": "Hiển thị {shown}/{total} khách hàng",
+
+  // Operations — Section 1.95: Warehouse performance
+  "ops.warehouse.title": "Hiệu suất kho hôm nay",
+  "ops.warehouse.packagesCreated": "Kiện nhập hôm nay",
+  "ops.warehouse.ordersProcessed": "Đơn xử lý hôm nay",
+  "ops.warehouse.chinaActivity": "Hoạt động kho TQ",
+  "ops.warehouse.vietnamActivity": "Hoạt động kho VN",
+  "ops.warehouse.missingWeight": "Thiếu cân",
+  "ops.warehouse.stuckPackages": "Kiện kẹt",
+  "ops.warehouse.chinaWh": "Kho Trung Quốc",
+  "ops.warehouse.vietnamWh": "Kho Việt Nam",
+  "ops.warehouse.packagesSuffix": "kiện",
+  "ops.warehouse.stuckChina": "kiện kẹt >5 ngày",
+  "ops.warehouse.stuckVietnam": "kiện kẹt >3 ngày",
+  "ops.warehouse.noStuck": "Không kẹt",
+  "ops.warehouse.recentActivity": "Hoạt động gần nhất",
+  "ops.warehouse.viewMore": "Xem thêm →",
+  "ops.warehouse.scanWh": "Quét kho →",
+  "ops.warehouse.managePackages": "Quản lý kiện →",
+  "ops.warehouse.stuckOrders": "Đơn kẹt →",
+  "ops.warehouse.statusArrivedCN": "Đến kho TQ",
+  "ops.warehouse.statusPacking": "Đóng gói",
+  "ops.warehouse.statusShippingVN": "Gửi về VN",
+  "ops.warehouse.statusArrivedVN": "Đến kho VN",
+  "ops.warehouse.statusDelivering": "Đang giao",
+  "ops.warehouse.statusCompleted": "Hoàn thành",
+  "ops.warehouse.statusPurchased": "Đã mua",
+  "ops.warehouse.statusSellerShipped": "NCC gửi",
+
+  // Operations — Section 1.97: Finance alerts
+  "ops.finance.title": "Cảnh báo tài chính",
+  "ops.finance.countSuffix": "cảnh báo",
+  "ops.finance.totalDebt": "Tổng nợ",
+  "ops.finance.negativeBalance": "Số dư âm",
+  "ops.finance.staleTopUp": "Nạp chờ lâu",
+  "ops.finance.unconfirmedPricing": "Chưa xác nhận giá",
+  "ops.finance.refundsToday": "Hoàn tiền hôm nay",
+  "ops.finance.showingItems": "Hiển thị {shown}/{total} cảnh báo",
+  "ops.finance.linkFinance": "Tài chính →",
+  "ops.finance.linkCustomers": "Khách hàng →",
+  "ops.finance.linkOrders": "Đơn hàng →",
+
+  // Operations — Section 2: Stuck orders
+  "ops.stuck.title": "Đơn hàng cần xử lý",
+  "ops.stuck.countSuffix": "đơn",
+  "ops.stuck.allNormal": "Tất cả bình thường",
+  "ops.stuck.viewDetail": "Xem chi tiết →",
+  "ops.stuck.noStuck": "Không có đơn hàng bị kẹt — vận hành bình thường",
+  "ops.stuck.moreOrders": "đơn khác",
+
+  // Operations — Section 3: Pending top-ups
+  "ops.topup.title": "Nạp tiền chờ duyệt",
+  "ops.topup.countPending": "chờ duyệt!",
+  "ops.topup.allApproved": "Đã duyệt hết",
+  "ops.topup.approveNow": "Duyệt ngay →",
+  "ops.topup.allDone": "Tất cả yêu cầu nạp tiền đã được duyệt",
+  "ops.topup.pendingBadge": "Chờ duyệt",
+  "ops.topup.ago": "trước",
+  "ops.topup.moreRequests": "yêu cầu khác →",
+
+  // Operations — Section 4: Warnings
+  "ops.warnings.title": "Cảnh báo vận hành",
+  "ops.warnings.stuckChina": "Kho TQ kẹt >5 ngày",
+  "ops.warnings.stuckVietnam": "Kho VN kẹt >3 ngày",
+  "ops.warnings.unanswered": "Chatbot chưa trả lời",
+  "ops.warnings.unresolvedNotes": "Ghi chú nội bộ chờ xử lý",
+
+  // Operations — Section 5: Customer issues
+  "ops.issues.title": "Khiếu nại khách hàng",
+  "ops.issues.newCount": "mới",
+  "ops.issues.inProgressCount": "đang xử lý",
+  "ops.issues.noIssues": "Không có khiếu nại",
+  "ops.issues.viewIssues": "Xem khiếu nại →",
+  "ops.issues.noNewIssues": "Không có khiếu nại mới cần xử lý",
+  "ops.issues.statusNew": "Mới",
+  "ops.issues.statusInProgress": "Đang xử lý",
+  "ops.issues.moreIssues": "khiếu nại khác →",
+
+  // Operations — Section 6: Notification failures
+  "ops.notif.title": "Lỗi thông báo",
+  "ops.notif.unresolvedCount": "chưa xử lý",
+  "ops.notif.noErrors": "Không có lỗi",
+  "ops.notif.viewErrors": "Xem lỗi thông báo →",
+  "ops.notif.allSuccess": "Tất cả thông báo gửi thành công",
+  "ops.notif.unknownError": "Không rõ lỗi",
+
+  // Operations — Quick Actions
+  "ops.qa.orders": "Quản lý đơn hàng",
+  "ops.qa.approveTopUp": "Duyệt nạp tiền",
+  "ops.qa.stuckTracking": "Đơn kẹt / Tracking",
+  "ops.qa.scanWh": "Quét kho",
+  "ops.qa.customerIssues": "Khiếu nại khách",
+  "ops.qa.notifErrors": "Lỗi thông báo",
+  "ops.qa.manageCustomers": "Quản lý khách hàng",
+  "ops.qa.managePackages": "Quản lý kiện hàng",
+
   "nav.analyticsSummary": "Tổng quan",
   "analytics.summaryTitle": "Tổng quan CRM / Marketing / Hỗ trợ",
   "analytics.leadsBySource": "Leads theo nguồn",
