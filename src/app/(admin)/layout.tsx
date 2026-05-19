@@ -1,6 +1,7 @@
 import Sidebar from "@/components/layouts/Sidebar";
 import ZaloQRWidget from "@/components/ui/ZaloQRWidget";
 import SystemHealthBar from "@/components/ui/SystemHealthBar";
+import GlobalSearch from "@/components/admin/GlobalSearch";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
         <div className="hidden md:block">
           <SystemHealthBar />
+        </div>
+        <div className="hidden md:block px-4 md:px-6 lg:px-8 pt-3">
+          <GlobalSearch />
         </div>
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">{children}</div>
       </main>
