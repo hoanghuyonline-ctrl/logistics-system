@@ -1171,267 +1171,6 @@ export default function AdminOperationsPage() {
       )}
 
       {/* ═══════════════════════════════════════════
-          SECTION 1.98: AN TOÀN DỮ LIỆU / BACKUP
-          ═══════════════════════════════════════════ */}
-      {backupHealth && (
-        <section className="mb-6">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            🛡️ An toàn dữ liệu / Backup
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-              backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing"
-                ? "bg-red-600 text-white animate-pulse"
-                : backupHealth.overall.status === "warning"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-green-100 text-green-700"
-            }`}>
-              {backupHealth.overall.label}
-            </span>
-          </h2>
-
-          {/* Scheduled backup guidance */}
-          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 mb-3 text-[11px] text-slate-500 space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span>🕐</span>
-              <span className="font-medium text-slate-600">{backupHealth.schedule?.expected || "Backup tự động hằng ngày (Windows Task Scheduler)"}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span>📋</span>
-              <span>Giữ lại {backupHealth.retentionDays} bản backup gần nhất</span>
-            </div>
-            {(backupHealth.overall.status === "warning" || backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing") && (
-              <div className="flex items-center gap-1.5 text-amber-600">
-                <span>⚠️</span>
-                <span>{backupHealth.schedule?.staleHint || "Nếu quá 24h chưa có backup mới, kiểm tra Windows Task Scheduler"}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1.5">
-              <span>💡</span>
-              <span>{backupHealth.schedule?.manualHint || "Có thể bấm Backup ngay để chạy thủ công"}</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-            {([
-              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database, type: "database" as const, btnLabel: "Backup DB ngay", hasScript: backupHealth.hasDbScript, scriptPath: backupHealth.schedule?.dbScriptPath },
-              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads, type: "uploads" as const, btnLabel: "Backup uploads ngay", hasScript: backupHealth.hasUploadsScript, scriptPath: backupHealth.schedule?.uploadsScriptPath },
-            ]).map((item) => {
-              const borderColor =
-                item.info.status === "danger" || item.info.status === "missing"
-                  ? "border-red-200 bg-red-50/50"
-                  : item.info.status === "warning"
-                    ? "border-amber-200 bg-amber-50/50"
-                    : "border-green-200 bg-green-50";
-              const dotColor =
-                item.info.status === "danger" || item.info.status === "missing"
-                  ? "bg-red-500 animate-pulse"
-                  : item.info.status === "warning"
-                    ? "bg-amber-400"
-                    : "bg-green-500";
-              const isRunning = backupRunning[item.type] || false;
-              const msg = backupMessage[item.type];
-              return (
-                <div key={item.label} className={`rounded-xl border p-3 ${borderColor}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
-                    <span className="text-xs font-semibold text-slate-700">{item.icon} {item.label}</span>
-                  </div>
-                  <div className="text-[11px] text-slate-600 mb-1">{item.info.statusLabel}</div>
-                  {item.info.latestFile && (
-                    <div className="text-[10px] text-slate-400 truncate">
-                      File: {item.info.latestFile}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 mt-1.5">
-                    {item.info.latestTime && (
-                      <span className="text-[10px] text-slate-400">
-                        🕐 {timeAgo(item.info.latestTime)}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-slate-400">
-                      📦 {item.info.fileCount} file
-                    </span>
-                    {item.info.totalSizeMB > 0 && (
-                      <span className="text-[10px] text-slate-400">
-                        💾 {item.info.totalSizeMB} MB
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-slate-300 mt-1 truncate">
-                    📂 {item.info.folderPath}
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <button
-                      onClick={() => triggerBackup(item.type)}
-                      disabled={isRunning}
-                      className={`text-[11px] font-medium px-3 py-1 rounded-lg transition-all ${
-                        isRunning
-                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                          : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
-                      }`}
-                    >
-                      {isRunning ? (
-                        <span className="flex items-center gap-1">
-                          <span className="w-3 h-3 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
-                          Đang backup...
-                        </span>
-                      ) : (
-                        `💾 ${item.btnLabel}`
-                      )}
-                    </button>
-                    {item.hasScript && (
-                      <span className="text-[10px] text-green-500">script sẵn sàng</span>
-                    )}
-                    {item.hasScript === false && item.scriptPath && (
-                      <span className="text-[10px] text-amber-500" title={`Thiếu: ${item.scriptPath}`}>fallback mode</span>
-                    )}
-                  </div>
-                  {msg && (
-                    <div className={`mt-1.5 text-[11px] px-2 py-1 rounded ${
-                      msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-                    }`}>
-                      {msg.type === "success" ? "✓ " : "✗ "}{msg.text}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-slate-400">Giữ lại: {backupHealth.retentionDays} bản backup</span>
-            {backupHealth.hasRecoveryGuide && (
-              <>
-                <span className="text-slate-300">|</span>
-                <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
-                  Hướng dẫn backup/phục hồi →
-                </Link>
-              </>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ═══════════════════════════════════════════
-          SECTION 1.99: KHẢ NĂNG PHỤC HỒI / DISASTER RECOVERY
-          ═══════════════════════════════════════════ */}
-      {disasterRecovery && (
-        <section className="mb-6">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            🔄 Khả năng phục hồi / Disaster Recovery
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-              disasterRecovery.readiness === "READY"
-                ? "bg-green-100 text-green-700"
-                : disasterRecovery.readiness === "PARTIAL"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-red-600 text-white animate-pulse"
-            }`}>
-              {disasterRecovery.readiness === "READY" ? "SẴN SÀNG" : disasterRecovery.readiness === "PARTIAL" ? "MỘT PHẦN" : "CẢNH BÁO"}
-            </span>
-          </h2>
-
-          {/* Readiness indicators */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-            {[
-              {
-                label: "Backup DB",
-                ok: disasterRecovery.database.backupExists,
-                detail: disasterRecovery.database.backupExists
-                  ? `${disasterRecovery.database.latestFile}`
-                  : "Không có",
-              },
-              {
-                label: "Backup uploads",
-                ok: disasterRecovery.uploads.backupExists,
-                detail: disasterRecovery.uploads.backupExists
-                  ? `${disasterRecovery.uploads.latestFile}`
-                  : "Không có",
-              },
-              {
-                label: "Tuổi backup",
-                ok: disasterRecovery.backupAgeAcceptable,
-                detail: disasterRecovery.backupAgeAcceptable
-                  ? `${disasterRecovery.database.ageHours ?? "?"}h - ch\u1ea5p nh\u1eadn`
-                  : disasterRecovery.database.ageHours !== null
-                    ? `${disasterRecovery.database.ageHours}h - qu\u00e1 c\u0169`
-                    : "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh",
-              },
-            ].map((item) => (
-              <div key={item.label} className={`rounded-lg border p-2.5 ${
-                item.ok ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"
-              }`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${
-                    item.ok ? "bg-green-500" : "bg-red-500 animate-pulse"
-                  }`} />
-                  <span className="text-[11px] font-semibold text-slate-700">{item.label}</span>
-                  <span className={`text-[10px] font-bold ml-auto px-1.5 py-0.5 rounded-full ${
-                    item.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                  }`}>
-                    {item.ok ? "OK" : "✗"}
-                  </span>
-                </div>
-                <div className="text-[10px] text-slate-500 truncate">{item.detail}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Restore checklist */}
-          <div className="rounded-xl border border-slate-200 bg-white p-3 mb-3">
-            <div className="text-[11px] font-semibold text-slate-700 mb-2">📋 Checklist phục hồi</div>
-            <div className="space-y-1.5">
-              {disasterRecovery.checklist.map((item) => (
-                <div key={item.key} className="flex items-start gap-2 group">
-                  <span className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center text-[10px] shrink-0 ${
-                    item.available
-                      ? "border-green-300 bg-green-50 text-green-600"
-                      : "border-red-300 bg-red-50 text-red-400"
-                  }`}>
-                    {item.available ? "✓" : "✗"}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[11px] font-medium text-slate-700">{item.label}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{item.hint}</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(item.command);
-                      setCopiedCommand(item.key);
-                      setTimeout(() => setCopiedCommand(null), 2000);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 shrink-0"
-                    title={`Copy: ${item.command}`}
-                  >
-                    {copiedCommand === item.key ? "Đã sao chép ✓" : "📋 Copy lệnh"}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Footer links */}
-          <div className="flex items-center gap-2">
-            {disasterRecovery.hasRecoveryGuide && (
-              <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
-                📖 Hướng dẫn khôi phục toàn bộ →
-              </Link>
-            )}
-            {disasterRecovery.hasRestoreDbScript && (
-              <>
-                <span className="text-slate-300">|</span>
-                <span className="text-[10px] text-green-600">✓ Script restore DB sẵn sàng</span>
-              </>
-            )}
-            {disasterRecovery.hasRestoreUploadsScript && (
-              <>
-                <span className="text-slate-300">|</span>
-                <span className="text-[10px] text-green-600">✓ Script restore uploads sẵn sàng</span>
-              </>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ═══════════════════════════════════════════
           SECTION 1.98: HOẠT ĐỘNG HÔM NAY
           ═══════════════════════════════════════════ */}
       {activityIntel && (activityIntel.activities.length > 0 || activityIntel.anomalies.length > 0) && (
@@ -1961,6 +1700,267 @@ export default function AdminOperationsPage() {
           </div>
         )}
       </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 7: AN TOÀN DỮ LIỆU / BACKUP
+          ═══════════════════════════════════════════ */}
+      {backupHealth && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            🛡️ An toàn dữ liệu / Backup
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing"
+                ? "bg-red-600 text-white animate-pulse"
+                : backupHealth.overall.status === "warning"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-green-100 text-green-700"
+            }`}>
+              {backupHealth.overall.label}
+            </span>
+          </h2>
+
+          {/* Scheduled backup guidance */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 mb-3 text-[11px] text-slate-500 space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span>🕐</span>
+              <span className="font-medium text-slate-600">{backupHealth.schedule?.expected || "Backup tự động hằng ngày (Windows Task Scheduler)"}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span>📋</span>
+              <span>Giữ lại {backupHealth.retentionDays} bản backup gần nhất</span>
+            </div>
+            {(backupHealth.overall.status === "warning" || backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing") && (
+              <div className="flex items-center gap-1.5 text-amber-600">
+                <span>⚠️</span>
+                <span>{backupHealth.schedule?.staleHint || "Nếu quá 24h chưa có backup mới, kiểm tra Windows Task Scheduler"}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span>💡</span>
+              <span>{backupHealth.schedule?.manualHint || "Có thể bấm Backup ngay để chạy thủ công"}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+            {([
+              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database, type: "database" as const, btnLabel: "Backup DB ngay", hasScript: backupHealth.hasDbScript, scriptPath: backupHealth.schedule?.dbScriptPath },
+              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads, type: "uploads" as const, btnLabel: "Backup uploads ngay", hasScript: backupHealth.hasUploadsScript, scriptPath: backupHealth.schedule?.uploadsScriptPath },
+            ]).map((item) => {
+              const borderColor =
+                item.info.status === "danger" || item.info.status === "missing"
+                  ? "border-red-200 bg-red-50/50"
+                  : item.info.status === "warning"
+                    ? "border-amber-200 bg-amber-50/50"
+                    : "border-green-200 bg-green-50";
+              const dotColor =
+                item.info.status === "danger" || item.info.status === "missing"
+                  ? "bg-red-500 animate-pulse"
+                  : item.info.status === "warning"
+                    ? "bg-amber-400"
+                    : "bg-green-500";
+              const isRunning = backupRunning[item.type] || false;
+              const msg = backupMessage[item.type];
+              return (
+                <div key={item.label} className={`rounded-xl border p-3 ${borderColor}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
+                    <span className="text-xs font-semibold text-slate-700">{item.icon} {item.label}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 mb-1">{item.info.statusLabel}</div>
+                  {item.info.latestFile && (
+                    <div className="text-[10px] text-slate-400 truncate">
+                      File: {item.info.latestFile}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 mt-1.5">
+                    {item.info.latestTime && (
+                      <span className="text-[10px] text-slate-400">
+                        🕐 {timeAgo(item.info.latestTime)}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400">
+                      📦 {item.info.fileCount} file
+                    </span>
+                    {item.info.totalSizeMB > 0 && (
+                      <span className="text-[10px] text-slate-400">
+                        💾 {item.info.totalSizeMB} MB
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-300 mt-1 truncate">
+                    📂 {item.info.folderPath}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      onClick={() => triggerBackup(item.type)}
+                      disabled={isRunning}
+                      className={`text-[11px] font-medium px-3 py-1 rounded-lg transition-all ${
+                        isRunning
+                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                      }`}
+                    >
+                      {isRunning ? (
+                        <span className="flex items-center gap-1">
+                          <span className="w-3 h-3 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+                          Đang backup...
+                        </span>
+                      ) : (
+                        `💾 ${item.btnLabel}`
+                      )}
+                    </button>
+                    {item.hasScript && (
+                      <span className="text-[10px] text-green-500">script sẵn sàng</span>
+                    )}
+                    {item.hasScript === false && item.scriptPath && (
+                      <span className="text-[10px] text-amber-500" title={`Thiếu: ${item.scriptPath}`}>fallback mode</span>
+                    )}
+                  </div>
+                  {msg && (
+                    <div className={`mt-1.5 text-[11px] px-2 py-1 rounded ${
+                      msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                    }`}>
+                      {msg.type === "success" ? "✓ " : "✗ "}{msg.text}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[10px] text-slate-400">Giữ lại: {backupHealth.retentionDays} bản backup</span>
+            {backupHealth.hasRecoveryGuide && (
+              <>
+                <span className="text-slate-300">|</span>
+                <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
+                  Hướng dẫn backup/phục hồi →
+                </Link>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 8: KHẢ NĂNG PHỤC HỒI / DISASTER RECOVERY
+          ═══════════════════════════════════════════ */}
+      {disasterRecovery && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            🔄 Khả năng phục hồi / Disaster Recovery
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              disasterRecovery.readiness === "READY"
+                ? "bg-green-100 text-green-700"
+                : disasterRecovery.readiness === "PARTIAL"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-red-600 text-white animate-pulse"
+            }`}>
+              {disasterRecovery.readiness === "READY" ? "SẴN SÀNG" : disasterRecovery.readiness === "PARTIAL" ? "MỘT PHẦN" : "CẢNH BÁO"}
+            </span>
+          </h2>
+
+          {/* Readiness indicators */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+            {[
+              {
+                label: "Backup DB",
+                ok: disasterRecovery.database.backupExists,
+                detail: disasterRecovery.database.backupExists
+                  ? `${disasterRecovery.database.latestFile}`
+                  : "Không có",
+              },
+              {
+                label: "Backup uploads",
+                ok: disasterRecovery.uploads.backupExists,
+                detail: disasterRecovery.uploads.backupExists
+                  ? `${disasterRecovery.uploads.latestFile}`
+                  : "Không có",
+              },
+              {
+                label: "Tuổi backup",
+                ok: disasterRecovery.backupAgeAcceptable,
+                detail: disasterRecovery.backupAgeAcceptable
+                  ? `${disasterRecovery.database.ageHours ?? "?"}h - ch\u1ea5p nh\u1eadn`
+                  : disasterRecovery.database.ageHours !== null
+                    ? `${disasterRecovery.database.ageHours}h - qu\u00e1 c\u0169`
+                    : "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh",
+              },
+            ].map((item) => (
+              <div key={item.label} className={`rounded-lg border p-2.5 ${
+                item.ok ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    item.ok ? "bg-green-500" : "bg-red-500 animate-pulse"
+                  }`} />
+                  <span className="text-[11px] font-semibold text-slate-700">{item.label}</span>
+                  <span className={`text-[10px] font-bold ml-auto px-1.5 py-0.5 rounded-full ${
+                    item.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  }`}>
+                    {item.ok ? "OK" : "✗"}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">{item.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Restore checklist */}
+          <div className="rounded-xl border border-slate-200 bg-white p-3 mb-3">
+            <div className="text-[11px] font-semibold text-slate-700 mb-2">📋 Checklist phục hồi</div>
+            <div className="space-y-1.5">
+              {disasterRecovery.checklist.map((item) => (
+                <div key={item.key} className="flex items-start gap-2 group">
+                  <span className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center text-[10px] shrink-0 ${
+                    item.available
+                      ? "border-green-300 bg-green-50 text-green-600"
+                      : "border-red-300 bg-red-50 text-red-400"
+                  }`}>
+                    {item.available ? "✓" : "✗"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-medium text-slate-700">{item.label}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{item.hint}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(item.command);
+                      setCopiedCommand(item.key);
+                      setTimeout(() => setCopiedCommand(null), 2000);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 shrink-0"
+                    title={`Copy: ${item.command}`}
+                  >
+                    {copiedCommand === item.key ? "Đã sao chép ✓" : "📋 Copy lệnh"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer links */}
+          <div className="flex items-center gap-2">
+            {disasterRecovery.hasRecoveryGuide && (
+              <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
+                📖 Hướng dẫn khôi phục toàn bộ →
+              </Link>
+            )}
+            {disasterRecovery.hasRestoreDbScript && (
+              <>
+                <span className="text-slate-300">|</span>
+                <span className="text-[10px] text-green-600">✓ Script restore DB sẵn sàng</span>
+              </>
+            )}
+            {disasterRecovery.hasRestoreUploadsScript && (
+              <>
+                <span className="text-slate-300">|</span>
+                <span className="text-[10px] text-green-600">✓ Script restore uploads sẵn sàng</span>
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════
           QUICK ACTION BUTTONS
