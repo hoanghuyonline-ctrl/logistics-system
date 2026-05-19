@@ -39,12 +39,28 @@ function logChannelResult(
   }
 }
 
+const NON_RETRYABLE_CATEGORIES = new Set([
+  "INVALID_RECIPIENT",
+  "CONFIG_MISSING",
+]);
+
+const NON_RETRYABLE_ERRORS = new Set([
+  "TELEGRAM_NOT_BOUND",
+  "ZALO_NOT_BOUND",
+]);
+
+function isNonRetryable(category: string, error: string): boolean {
+  return NON_RETRYABLE_CATEGORIES.has(category) || NON_RETRYABLE_ERRORS.has(error);
+}
+
 function persistFailure(
   channel: string,
   payload: NotificationPayload,
   error: string,
   recipient?: string,
 ): void {
+  const category = classifyFailure(error);
+  const autoResolved = isNonRetryable(category, error);
   prisma.notificationFailure
     .create({
       data: {
@@ -52,9 +68,10 @@ function persistFailure(
         orderCode: payload.orderCode ?? null,
         customerId: payload.userId,
         recipient: recipient ?? null,
-        failureCategory: classifyFailure(error),
+        failureCategory: category,
         shortReason: error.slice(0, 500),
         payloadSummary: `${payload.title}: ${payload.message}`.slice(0, 500),
+        resolved: autoResolved,
       },
     })
     .catch((e) => console.error("[notify/failure] persist error:", e instanceof Error ? e.message : String(e)));
