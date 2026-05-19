@@ -6,6 +6,37 @@ import { sendTelegram } from "@/lib/notifications/channels/telegram";
 import { sendZalo } from "@/lib/notifications/channels/zalo";
 import { sendEmail } from "@/lib/notifications/channels/email";
 
+const NON_RETRYABLE_CATEGORIES = new Set(["INVALID_RECIPIENT", "CONFIG_MISSING"]);
+const NON_RETRYABLE_ERRORS = new Set(["TELEGRAM_NOT_BOUND", "ZALO_NOT_BOUND"]);
+const RETENTION_DAYS = 30;
+const MAX_RESOLVED_KEEP = 500;
+
+function runCleanup(): void {
+  const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  prisma.notificationFailure
+    .deleteMany({ where: { resolved: true, createdAt: { lt: cutoff } } })
+    .then((r) => { if (r.count > 0) console.log(`[notify/cleanup] purged ${r.count} resolved failures older than ${RETENTION_DAYS}d`); })
+    .catch((e) => console.error("[notify/cleanup] error:", e instanceof Error ? e.message : String(e)));
+
+  prisma.notificationFailure
+    .count({ where: { resolved: true } })
+    .then(async (count) => {
+      if (count <= MAX_RESOLVED_KEEP) return;
+      const keep = await prisma.notificationFailure.findMany({
+        where: { resolved: true },
+        orderBy: { createdAt: "desc" },
+        take: MAX_RESOLVED_KEEP,
+        select: { id: true },
+      });
+      const keepIds = keep.map((r) => r.id);
+      const del = await prisma.notificationFailure.deleteMany({
+        where: { resolved: true, id: { notIn: keepIds } },
+      });
+      if (del.count > 0) console.log(`[notify/cleanup] trimmed ${del.count} resolved failures (cap=${MAX_RESOLVED_KEEP})`);
+    })
+    .catch((e) => console.error("[notify/cleanup] trim error:", e instanceof Error ? e.message : String(e)));
+}
+
 export async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
@@ -13,7 +44,9 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const filter = searchParams.get("filter"); // "unresolved" | "resolved" | null (all)
+  const filter = searchParams.get("filter");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50")));
 
   const where = filter === "unresolved"
     ? { resolved: false }
@@ -21,12 +54,14 @@ export async function GET(request: Request) {
     ? { resolved: true }
     : {};
 
-  const [failures, counts] = await Promise.all([
+  const [failures, filteredTotal, counts] = await Promise.all([
     prisma.notificationFailure.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 100,
+      skip: (page - 1) * limit,
+      take: limit,
     }),
+    prisma.notificationFailure.count({ where }),
     prisma.notificationFailure.groupBy({
       by: ["resolved"],
       _count: true,
@@ -36,7 +71,17 @@ export async function GET(request: Request) {
   const total = counts.reduce((s, c) => s + c._count, 0);
   const unresolved = counts.find((c) => !c.resolved)?._count ?? 0;
 
-  return jsonResponse({ failures, total, unresolved, resolved: total - unresolved });
+  // Background cleanup — fire-and-forget, doesn't delay response
+  runCleanup();
+
+  return jsonResponse({
+    failures,
+    total,
+    unresolved,
+    resolved: total - unresolved,
+    page,
+    totalPages: Math.ceil(filteredTotal / limit),
+  });
 }
 
 export async function POST(request: Request) {
@@ -64,6 +109,12 @@ export async function POST(request: Request) {
   if (action === "retry") {
     if (failure.resolved) return errorResponse("Already resolved", 400);
     if (failure.retryCount >= 3) return errorResponse("Max retries reached (3)", 400);
+
+    const cat = failure.failureCategory || "";
+    const reason = failure.shortReason || "";
+    if (NON_RETRYABLE_CATEGORIES.has(cat) || NON_RETRYABLE_ERRORS.has(reason)) {
+      return errorResponse("Lỗi này không thể thử lại — cần khách hàng liên kết kênh trước", 400);
+    }
 
     const text = failure.payloadSummary || "Thông báo từ Bắc Trung Hải Logistics";
     let success = false;

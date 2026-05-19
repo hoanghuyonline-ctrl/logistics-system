@@ -25,6 +25,17 @@ interface FailureData {
   total: number;
   unresolved: number;
   resolved: number;
+  page: number;
+  totalPages: number;
+}
+
+const NON_RETRYABLE = new Set([
+  "INVALID_RECIPIENT", "CONFIG_MISSING",
+  "TELEGRAM_NOT_BOUND", "ZALO_NOT_BOUND",
+]);
+
+function isNonRetryable(f: Failure): boolean {
+  return NON_RETRYABLE.has(f.failureCategory || "") || NON_RETRYABLE.has(f.shortReason || "");
 }
 
 const CHANNEL_LABELS: Record<string, string> = {
@@ -61,16 +72,18 @@ export default function NotificationFailuresPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("unresolved");
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    fetch(`/api/admin/notifications/failures?filter=${filter}`)
+    fetch(`/api/admin/notifications/failures?filter=${filter}&page=${page}&limit=50`)
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [filter]);
+  }, [filter, page]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { setPage(1); }, [filter]);
 
   const handleAction = async (failureId: string, action: "retry" | "resolve") => {
     setRetryingId(failureId);
@@ -197,6 +210,7 @@ export default function NotificationFailuresPage() {
                         <span className="text-xs text-emerald-600 font-medium">Đã xử lý</span>
                       ) : (
                         <div className="flex items-center gap-2">
+                          {!isNonRetryable(f) && (
                           <button
                             onClick={() => handleAction(f.id, "retry")}
                             disabled={retryingId === f.id || f.retryCount >= 3}
@@ -204,6 +218,7 @@ export default function NotificationFailuresPage() {
                           >
                             {retryingId === f.id ? "..." : "Thử lại"}
                           </button>
+                          )}
                           <button
                             onClick={() => handleAction(f.id, "resolve")}
                             disabled={retryingId === f.id}
@@ -220,7 +235,32 @@ export default function NotificationFailuresPage() {
             </table>
           </div>
         </Card>
-      ) : (
+      ) : null}
+
+      {/* Pagination */}
+      {data && data.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-40 transition-colors"
+          >
+            Trang trước
+          </button>
+          <span className="text-sm text-slate-500">
+            Trang {data.page} / {data.totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+            disabled={page >= data.totalPages}
+            className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-40 transition-colors"
+          >
+            Trang sau
+          </button>
+        </div>
+      )}
+
+      {data && data.failures.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
           <div className="text-4xl mb-3">✅</div>
           <div className="text-lg font-medium">
@@ -228,7 +268,7 @@ export default function NotificationFailuresPage() {
           </div>
           <div className="text-sm mt-1">Tất cả thông báo đang gửi bình thường</div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
