@@ -239,6 +239,35 @@ interface DisasterRecoveryData {
   hasRestoreUploadsScript: boolean;
 }
 
+interface ActivityItem {
+  id: string;
+  type: "status_change" | "pricing_confirmed" | "topup_confirmed" | "issue_update" | "staff_note" | "anomaly";
+  title: string;
+  actor: string | null;
+  target: string | null;
+  targetLink: string | null;
+  time: string;
+  severity: "info" | "warning" | "danger" | null;
+  detail: string | null;
+}
+
+interface ActivitySummary {
+  statusChanges: number;
+  pricingConfirmed: number;
+  topupConfirmed: number;
+  issueUpdates: number;
+  staffNotes: number;
+  failedNotifications: number;
+  cancelledOrders: number;
+  frequentlyUpdatedOrders: number;
+}
+
+interface ActivityIntelligenceData {
+  activities: ActivityItem[];
+  anomalies: ActivityItem[];
+  summary: ActivitySummary;
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -303,6 +332,7 @@ export default function AdminOperationsPage() {
   const [backupHealth, setBackupHealth] = useState<BackupHealthData | null>(null);
   const [disasterRecovery, setDisasterRecovery] = useState<DisasterRecoveryData | null>(null);
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+  const [activityIntel, setActivityIntel] = useState<ActivityIntelligenceData | null>(null);
   const [backupRunning, setBackupRunning] = useState<Record<string, boolean>>({});
   const [backupMessage, setBackupMessage] = useState<Record<string, { type: "success" | "error"; text: string }>>({});
   const inFlightRef = useRef(false);
@@ -336,7 +366,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData, drData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData, drData, aiData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -349,6 +379,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/finance-alerts"),
         safeFetch("/api/admin/backup-health"),
         safeFetch("/api/admin/disaster-recovery"),
+        safeFetch("/api/admin/activity-intelligence"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -364,6 +395,7 @@ export default function AdminOperationsPage() {
       if (finData) setFinanceAlerts(finData);
       if (bkHealthData) setBackupHealth(bkHealthData);
       if (drData) setDisasterRecovery(drData);
+      if (aiData) setActivityIntel(aiData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -1342,6 +1374,106 @@ export default function AdminOperationsPage() {
                 <span className="text-[10px] text-green-600">✓ Script restore uploads sẵn sàng</span>
               </>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.98: HOẠT ĐỘNG HÔM NAY
+          ═══════════════════════════════════════════ */}
+      {activityIntel && (activityIntel.activities.length > 0 || activityIntel.anomalies.length > 0) && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            📋 Hoạt động hôm nay
+            <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              {activityIntel.activities.length} hoạt động
+            </span>
+            {activityIntel.anomalies.length > 0 && (
+              <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full animate-pulse">
+                {activityIntel.anomalies.length} bất thường
+              </span>
+            )}
+          </h2>
+
+          {/* Summary bar */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {[
+              { label: "Trạng thái", count: activityIntel.summary.statusChanges, icon: "🔄" },
+              { label: "Xác nhận giá", count: activityIntel.summary.pricingConfirmed, icon: "💰" },
+              { label: "Nạp tiền", count: activityIntel.summary.topupConfirmed, icon: "💳" },
+              { label: "Khiếu nại", count: activityIntel.summary.issueUpdates, icon: "📝" },
+              { label: "Ghi chú", count: activityIntel.summary.staffNotes, icon: "📌" },
+            ].filter((s) => s.count > 0).map((s) => (
+              <span key={s.label} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                {s.icon} {s.label}: {s.count}
+              </span>
+            ))}
+          </div>
+
+          {/* Anomalies */}
+          {activityIntel.anomalies.length > 0 && (
+            <div className="rounded-xl border border-red-200 bg-red-50/50 p-3 mb-3">
+              <div className="text-[11px] font-semibold text-red-700 mb-2">⚠️ Hoạt động bất thường</div>
+              <div className="space-y-1.5">
+                {activityIntel.anomalies.map((a) => (
+                  <div key={a.id} className="flex items-start gap-2">
+                    <span className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${
+                      a.severity === "danger" ? "bg-red-500 animate-pulse" : "bg-amber-500"
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      {a.targetLink ? (
+                        <Link href={a.targetLink} className="text-[11px] font-medium text-red-800 hover:underline truncate block">
+                          {a.title}
+                        </Link>
+                      ) : (
+                        <div className="text-[11px] font-medium text-red-800 truncate">{a.title}</div>
+                      )}
+                      <div className="text-[10px] text-red-500">
+                        {a.actor && <span>{a.actor} · </span>}
+                        {a.detail && <span>{a.detail} · </span>}
+                        <span>{timeAgo(a.time)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Activity list */}
+          <div className="rounded-xl border border-slate-200 bg-white p-3">
+            <div className="space-y-1">
+              {activityIntel.activities.map((a) => {
+                const typeIcons: Record<string, string> = {
+                  status_change: "🔄",
+                  pricing_confirmed: "💰",
+                  topup_confirmed: "💳",
+                  issue_update: "📝",
+                  staff_note: "📌",
+                  anomaly: "⚠️",
+                };
+                return (
+                  <div key={a.id} className={`flex items-start gap-2 py-1 border-b border-slate-50 last:border-0 ${
+                    a.severity === "danger" ? "bg-red-50/50" : a.severity === "warning" ? "bg-amber-50/50" : ""
+                  }`}>
+                    <span className="text-[11px] mt-0.5 shrink-0">{typeIcons[a.type] ?? "·"}</span>
+                    <div className="flex-1 min-w-0">
+                      {a.targetLink ? (
+                        <Link href={a.targetLink} className="text-[11px] text-slate-800 hover:underline truncate block">
+                          {a.title}
+                        </Link>
+                      ) : (
+                        <div className="text-[11px] text-slate-800 truncate">{a.title}</div>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-slate-400 whitespace-nowrap shrink-0">
+                      {a.actor && <span className="text-slate-500">{a.actor} · </span>}
+                      {timeAgo(a.time)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
       )}
