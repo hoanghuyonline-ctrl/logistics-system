@@ -71,6 +71,30 @@ interface CustomerIssue {
   assignee: { fullName: string } | null;
 }
 
+interface SlaOrder {
+  id: string;
+  orderCode: string;
+  productName: string;
+  customer: string;
+  status: string;
+  daysSince: number;
+  totalCostVND: number;
+}
+
+interface SlaAlert {
+  key: string;
+  title: string;
+  description: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  count: number;
+  orders: SlaOrder[];
+}
+
+interface SlaData {
+  alerts: SlaAlert[];
+  totalAlerts: number;
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -127,6 +151,7 @@ export default function AdminOperationsPage() {
   const [unresolvedNotifCount, setUnresolvedNotifCount] = useState(0);
   const [issues, setIssues] = useState<CustomerIssue[]>([]);
   const [issueCounts, setIssueCounts] = useState<Record<string, number>>({});
+  const [slaData, setSlaData] = useState<SlaData | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
@@ -158,12 +183,13 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
         safeFetch("/api/admin/notifications/failures?filter=unresolved"),
         safeFetch("/api/admin/customer-issues?status=NEW"),
+        safeFetch("/api/admin/sla-alerts"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -172,6 +198,7 @@ export default function AdminOperationsPage() {
       setUnresolvedNotifCount(notifs?.unresolved || 0);
       setIssues(issueData?.issues?.slice(0, 10) || []);
       setIssueCounts(issueData?.statusCounts || {});
+      if (sla) setSlaData(sla);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -418,6 +445,73 @@ export default function AdminOperationsPage() {
                 Xem tất cả đơn hàng →
               </Link>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.8: CẢNH BÁO SLA VẬN HÀNH
+          ═══════════════════════════════════════════ */}
+      {slaData && slaData.alerts.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            🎯 Cảnh báo SLA vận hành
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              slaData.alerts.some((a) => a.severity === "URGENT")
+                ? "bg-red-600 text-white animate-pulse"
+                : slaData.alerts.some((a) => a.severity === "HIGH")
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700"
+            }`}>
+              {slaData.totalAlerts} đơn cần chú ý
+            </span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {slaData.alerts.map((alert) => {
+              const sevColors: Record<string, { border: string; bg: string; badge: string; dot: string }> = {
+                URGENT: { border: "border-red-300", bg: "bg-red-50", badge: "bg-red-600 text-white", dot: "bg-red-500 animate-pulse" },
+                HIGH: { border: "border-red-200", bg: "bg-red-50/50", badge: "bg-red-100 text-red-700", dot: "bg-red-400" },
+                MEDIUM: { border: "border-amber-200", bg: "bg-amber-50/50", badge: "bg-amber-100 text-amber-700", dot: "bg-amber-400" },
+                LOW: { border: "border-slate-200", bg: "bg-slate-50", badge: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
+              };
+              const c = sevColors[alert.severity] || sevColors.LOW;
+              const sevLabel: Record<string, string> = { URGENT: "Khẩn cấp", HIGH: "Cao", MEDIUM: "Trung bình", LOW: "Thấp" };
+              return (
+                <div key={alert.key} className={`rounded-xl border p-3 ${c.border} ${c.bg}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.dot}`} />
+                    <span className="text-xs font-semibold text-slate-800 flex-1 truncate">{alert.title}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${c.badge}`}>
+                      {alert.count} · {sevLabel[alert.severity]}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mb-2">{alert.description}</p>
+                  <div className="space-y-1">
+                    {alert.orders.slice(0, 4).map((o) => (
+                      <Link
+                        key={o.id}
+                        href={`/admin/orders/${o.id}`}
+                        className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-blue-600 transition-colors"
+                      >
+                        <span className="font-medium text-blue-600">{o.orderCode}</span>
+                        <span className="text-slate-400 truncate flex-1">— {o.customer}</span>
+                        <span className="text-slate-400 shrink-0">{o.daysSince}d</span>
+                        {o.totalCostVND >= 5000000 && (
+                          <span className="text-[9px] font-bold bg-purple-100 text-purple-700 px-1 py-0.5 rounded shrink-0">
+                            {(o.totalCostVND / 1000000).toFixed(1)}M
+                          </span>
+                        )}
+                      </Link>
+                    ))}
+                    {alert.orders.length > 4 && (
+                      <div className="text-[10px] text-slate-400 pt-0.5">
+                        +{alert.orders.length - 4} đơn khác
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
