@@ -154,6 +154,28 @@ interface WarehouseProductivity {
   }[];
 }
 
+interface FinanceAlert {
+  id: string;
+  title: string;
+  reason: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  amount: number | null;
+  type: string;
+  href: string;
+}
+
+interface FinanceAlertData {
+  alerts: FinanceAlert[];
+  total: number;
+  summary: {
+    totalDebt: number;
+    negativeCount: number;
+    staleTopUpCount: number;
+    unconfirmedCount: number;
+    refundCount: number;
+  };
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -214,6 +236,7 @@ export default function AdminOperationsPage() {
   const [inbox, setInbox] = useState<InboxData | null>(null);
   const [customerIntel, setCustomerIntel] = useState<CustomerIntelData | null>(null);
   const [warehouseData, setWarehouseData] = useState<WarehouseProductivity | null>(null);
+  const [financeAlerts, setFinanceAlerts] = useState<FinanceAlertData | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
@@ -245,7 +268,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -255,6 +278,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/daily-inbox"),
         safeFetch("/api/admin/customer-intelligence"),
         safeFetch("/api/admin/warehouse-productivity"),
+        safeFetch("/api/admin/finance-alerts"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -267,6 +291,7 @@ export default function AdminOperationsPage() {
       if (inboxData) setInbox(inboxData);
       if (ciData) setCustomerIntel(ciData);
       if (whData) setWarehouseData(whData);
+      if (finData) setFinanceAlerts(finData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -868,6 +893,102 @@ export default function AdminOperationsPage() {
             <Link href="/admin/packages" className="text-[11px] text-blue-600 hover:underline">Quản lý kiện →</Link>
             <span className="text-slate-300">|</span>
             <Link href="/admin/stuck-shipments" className="text-[11px] text-blue-600 hover:underline">Đơn kẹt →</Link>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.97: CẢNH BÁO TÀI CHÍNH
+          ═══════════════════════════════════════════ */}
+      {financeAlerts && financeAlerts.alerts.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            💰 Cảnh báo tài chính
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              financeAlerts.alerts.some((a) => a.severity === "URGENT")
+                ? "bg-red-600 text-white animate-pulse"
+                : financeAlerts.alerts.some((a) => a.severity === "HIGH")
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700"
+            }`}>
+              {financeAlerts.total} cảnh báo
+            </span>
+          </h2>
+
+          {/* Summary bar */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {[
+              { label: "Tổng nợ", value: `${(financeAlerts.summary.totalDebt / 1000000).toFixed(1)}M`, show: financeAlerts.summary.totalDebt > 0, color: "bg-red-100 text-red-700" },
+              { label: "Số dư âm", value: financeAlerts.summary.negativeCount, show: financeAlerts.summary.negativeCount > 0, color: "bg-red-100 text-red-700" },
+              { label: "Nạp chờ lâu", value: financeAlerts.summary.staleTopUpCount, show: financeAlerts.summary.staleTopUpCount > 0, color: "bg-amber-100 text-amber-700" },
+              { label: "Chưa xác nhận giá", value: financeAlerts.summary.unconfirmedCount, show: financeAlerts.summary.unconfirmedCount > 0, color: "bg-amber-100 text-amber-700" },
+              { label: "Hoàn tiền hôm nay", value: financeAlerts.summary.refundCount, show: financeAlerts.summary.refundCount > 0, color: "bg-blue-100 text-blue-700" },
+            ].filter((s) => s.show).map((s) => (
+              <span key={s.label} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.color}`}>
+                {s.label}: {s.value}
+              </span>
+            ))}
+          </div>
+
+          {/* Alert list */}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="divide-y divide-slate-100">
+              {financeAlerts.alerts.map((a) => {
+                const sevStyle: Record<string, { dot: string; badge: string; bg: string }> = {
+                  URGENT: { dot: "bg-red-500 animate-pulse", badge: "bg-red-600 text-white", bg: "bg-red-50/50" },
+                  HIGH: { dot: "bg-red-400", badge: "bg-red-100 text-red-700", bg: "bg-red-50/30" },
+                  MEDIUM: { dot: "bg-amber-400", badge: "bg-amber-100 text-amber-700", bg: "" },
+                  LOW: { dot: "bg-slate-400", badge: "bg-slate-100 text-slate-600", bg: "" },
+                };
+                const s = sevStyle[a.severity] || sevStyle.LOW;
+                const typeIcon: Record<string, string> = {
+                  debt: "💳", negative_balance: "🚨", stale_topup: "⏳",
+                  unconfirmed_pricing: "📋", unreconciled: "🔄", refund: "💸",
+                };
+                return (
+                  <Link
+                    key={a.id}
+                    href={a.href}
+                    className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 transition-colors hover:bg-slate-50 ${s.bg}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
+                    <span className="text-base shrink-0">{typeIcon[a.type] || "💰"}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-slate-900 truncate">{a.title}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{a.reason}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {a.amount !== null && (
+                        <span className="text-[10px] font-semibold text-red-600 hidden sm:block">
+                          {Math.abs(a.amount) >= 1000000
+                            ? `${(Math.abs(a.amount) / 1000000).toFixed(1)}M`
+                            : `${Math.abs(a.amount).toLocaleString("vi-VN")}`}
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${s.badge}`}>
+                        {a.severity === "URGENT" ? "Khẩn!" : a.severity === "HIGH" ? "Cao" : a.severity === "MEDIUM" ? "TB" : "Thấp"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {financeAlerts.total > financeAlerts.alerts.length && (
+              <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
+                <span className="text-[11px] text-slate-400">
+                  Hiển thị {financeAlerts.alerts.length}/{financeAlerts.total} cảnh báo
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Quick links */}
+          <div className="flex items-center gap-2 mt-2">
+            <Link href="/admin/finance" className="text-[11px] text-blue-600 hover:underline">Tài chính →</Link>
+            <span className="text-slate-300">|</span>
+            <Link href="/admin/users" className="text-[11px] text-blue-600 hover:underline">Khách hàng →</Link>
+            <span className="text-slate-300">|</span>
+            <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">Đơn hàng →</Link>
           </div>
         </section>
       )}
