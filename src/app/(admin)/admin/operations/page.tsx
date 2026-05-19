@@ -208,6 +208,37 @@ interface BackupHealthData {
   };
 }
 
+interface DisasterRecoveryChecklistItem {
+  key: string;
+  label: string;
+  command: string;
+  available: boolean;
+  hint: string;
+}
+
+interface DisasterRecoveryData {
+  readiness: "READY" | "PARTIAL" | "WARNING";
+  database: {
+    backupExists: boolean;
+    latestFile: string | null;
+    latestTime: string | null;
+    ageHours: number | null;
+    status: "ok" | "warning" | "danger" | "missing";
+  };
+  uploads: {
+    backupExists: boolean;
+    latestFile: string | null;
+    latestTime: string | null;
+    ageHours: number | null;
+    status: "ok" | "warning" | "danger" | "missing";
+  };
+  backupAgeAcceptable: boolean;
+  checklist: DisasterRecoveryChecklistItem[];
+  hasRecoveryGuide: boolean;
+  hasRestoreDbScript: boolean;
+  hasRestoreUploadsScript: boolean;
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -270,6 +301,8 @@ export default function AdminOperationsPage() {
   const [warehouseData, setWarehouseData] = useState<WarehouseProductivity | null>(null);
   const [financeAlerts, setFinanceAlerts] = useState<FinanceAlertData | null>(null);
   const [backupHealth, setBackupHealth] = useState<BackupHealthData | null>(null);
+  const [disasterRecovery, setDisasterRecovery] = useState<DisasterRecoveryData | null>(null);
+  const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const [backupRunning, setBackupRunning] = useState<Record<string, boolean>>({});
   const [backupMessage, setBackupMessage] = useState<Record<string, { type: "success" | "error"; text: string }>>({});
   const inFlightRef = useRef(false);
@@ -303,7 +336,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData, drData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -315,6 +348,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/warehouse-productivity"),
         safeFetch("/api/admin/finance-alerts"),
         safeFetch("/api/admin/backup-health"),
+        safeFetch("/api/admin/disaster-recovery"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -329,6 +363,7 @@ export default function AdminOperationsPage() {
       if (whData) setWarehouseData(whData);
       if (finData) setFinanceAlerts(finData);
       if (bkHealthData) setBackupHealth(bkHealthData);
+      if (drData) setDisasterRecovery(drData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -1185,6 +1220,126 @@ export default function AdminOperationsPage() {
                 <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
                   Hướng dẫn backup/phục hồi →
                 </Link>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.99: KHẢ NĂNG PHỤC HỒI / DISASTER RECOVERY
+          ═══════════════════════════════════════════ */}
+      {disasterRecovery && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            🔄 Khả năng phục hồi / Disaster Recovery
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              disasterRecovery.readiness === "READY"
+                ? "bg-green-100 text-green-700"
+                : disasterRecovery.readiness === "PARTIAL"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-red-600 text-white animate-pulse"
+            }`}>
+              {disasterRecovery.readiness === "READY" ? "SẴN SÀNG" : disasterRecovery.readiness === "PARTIAL" ? "MỘT PHẦN" : "CẢNH BÁO"}
+            </span>
+          </h2>
+
+          {/* Readiness indicators */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+            {[
+              {
+                label: "Backup DB",
+                ok: disasterRecovery.database.backupExists,
+                detail: disasterRecovery.database.backupExists
+                  ? `${disasterRecovery.database.latestFile}`
+                  : "Không có",
+              },
+              {
+                label: "Backup uploads",
+                ok: disasterRecovery.uploads.backupExists,
+                detail: disasterRecovery.uploads.backupExists
+                  ? `${disasterRecovery.uploads.latestFile}`
+                  : "Không có",
+              },
+              {
+                label: "Tuổi backup",
+                ok: disasterRecovery.backupAgeAcceptable,
+                detail: disasterRecovery.backupAgeAcceptable
+                  ? `${disasterRecovery.database.ageHours ?? "?"}h - ch\u1ea5p nh\u1eadn`
+                  : disasterRecovery.database.ageHours !== null
+                    ? `${disasterRecovery.database.ageHours}h - qu\u00e1 c\u0169`
+                    : "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh",
+              },
+            ].map((item) => (
+              <div key={item.label} className={`rounded-lg border p-2.5 ${
+                item.ok ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    item.ok ? "bg-green-500" : "bg-red-500 animate-pulse"
+                  }`} />
+                  <span className="text-[11px] font-semibold text-slate-700">{item.label}</span>
+                  <span className={`text-[10px] font-bold ml-auto px-1.5 py-0.5 rounded-full ${
+                    item.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  }`}>
+                    {item.ok ? "OK" : "✗"}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">{item.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Restore checklist */}
+          <div className="rounded-xl border border-slate-200 bg-white p-3 mb-3">
+            <div className="text-[11px] font-semibold text-slate-700 mb-2">📋 Checklist phục hồi</div>
+            <div className="space-y-1.5">
+              {disasterRecovery.checklist.map((item) => (
+                <div key={item.key} className="flex items-start gap-2 group">
+                  <span className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center text-[10px] shrink-0 ${
+                    item.available
+                      ? "border-green-300 bg-green-50 text-green-600"
+                      : "border-red-300 bg-red-50 text-red-400"
+                  }`}>
+                    {item.available ? "✓" : "✗"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-medium text-slate-700">{item.label}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{item.hint}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(item.command);
+                      setCopiedCommand(item.key);
+                      setTimeout(() => setCopiedCommand(null), 2000);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 shrink-0"
+                    title={`Copy: ${item.command}`}
+                  >
+                    {copiedCommand === item.key ? "Đã sao chép ✓" : "📋 Copy lệnh"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer links */}
+          <div className="flex items-center gap-2">
+            {disasterRecovery.hasRecoveryGuide && (
+              <Link href="/docs/BACKUP_AND_RECOVERY.md" className="text-[11px] text-blue-600 hover:underline">
+                📖 Hướng dẫn khôi phục toàn bộ →
+              </Link>
+            )}
+            {disasterRecovery.hasRestoreDbScript && (
+              <>
+                <span className="text-slate-300">|</span>
+                <span className="text-[10px] text-green-600">✓ Script restore DB sẵn sàng</span>
+              </>
+            )}
+            {disasterRecovery.hasRestoreUploadsScript && (
+              <>
+                <span className="text-slate-300">|</span>
+                <span className="text-[10px] text-green-600">✓ Script restore uploads sẵn sàng</span>
               </>
             )}
           </div>
