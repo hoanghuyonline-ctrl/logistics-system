@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-19
 **Branch:** `main`
-**Latest stable commit:** Post PR #304 (landing page i18n audit — remaining hardcoded Vietnamese externalized)
+**Latest stable commit:** Post PR #306 (complete Vietnamese customer manual + PDF export)
 
 ---
 
@@ -264,7 +264,9 @@
 
 - **Admin Operations & System Health i18n Audit** — Externalized ~90 hardcoded Vietnamese strings from `/admin/operations` and `/admin/system-health` pages into existing i18n structure (`vi.ts`, `en.ts`, `zh.ts`). Covers: page headers, Backup section, Disaster Recovery section, Activity Intelligence section, Customer Risk section, SLA Performance section, System Health cards (system status, chatbot channels, Zalo diagnostics, operational indicators), and Smoke Test panel. Added `useI18n()` hook to both pages. All three languages (VI/EN/ZH) have matching key sets. Existing Vietnamese wording preserved exactly. **No logic changes; no UI redesign; no schema changes; no new dependencies; backward compatible.**
 
-- **Landing Page i18n Audit** (PR #304) — Audited all public-facing landing page components and replaced remaining hardcoded Vietnamese text with existing `useI18n()` / `t()` system. 43 new `landing.*` i18n keys added across `vi.ts`, `en.ts`, `zh.ts`. **5 components updated:** LandingTrust (section title, subtitle, 4 trust item titles + descriptions), LandingLeadForm (form title, field labels, placeholders, validation messages, success/error states, submit button, privacy text), LandingFloatingCTA ("Chat Zalo", "Message Facebook", "Create Order" button labels), LandingMobileBar ("Register" and "Track Order" labels), ZaloQRWidget (support title, QR scan instructions, phone link text, config warning, button label). **No design/layout changes; no schema changes; no new dependencies; no logic changes; backward compatible.**
+- **Landing Page i18n Audit** (PR #304) — Audited all public-facing landing page components and replaced remaining hardcoded Vietnamese text with `useI18n()` / `t()`. 43 new `landing.*` keys added across `vi.ts`, `en.ts`, `zh.ts`. Components: LandingTrust, LandingLeadForm, LandingFloatingCTA, LandingMobileBar, ZaloQRWidget. **No design/layout/schema/dependency changes; backward compatible.**
+
+- **Complete Vietnamese Customer Manual + PDF** (PR #306) — Full customer-facing usage manual (`docs/CUSTOMER_GUIDE_VI.md`, 1000+ lines) covering all 20 sections: company intro, registration/login, dashboard, order creation, A→Z shipping workflow, order tracking, wallet/QR top-up, company price confirmation, Zalo/Telegram integration, notifications, complaints, FAQ, common errors, mobile usage, best practices, account security, real-world walkthrough, support channels, full status reference, screenshot placeholders. Professional PDF export (`docs/CUSTOMER_GUIDE_VI.pdf`) with cover page, table of contents, page numbers, and Vietnamese typography. **Documentation-only; no code/schema/dependency changes.**
 
 - **SLA Performance Report** — Compact "Hiệu suất SLA 7 ngày" section on Operations Center (`/admin/operations`). New `GET /api/admin/sla-report` endpoint runs parallel lightweight queries against existing Order model. Features: (1) Three KPI cards — orders updated in 7 days, orders currently over SLA, SLA breach rate percentage. (2) Trend label — Đang ổn (green, breach ≤5%), Cần chú ý (amber, breach ≤15%), Nguy hiểm (red, breach >15%). (3) Top bottleneck list — pending too long (>3d), missing tracking (>3d), international shipping slow (>7d), Vietnam warehouse waiting (>2d), delivery too long (>3d) — each with severity dot and count badge. (4) Quick link to stuck shipments/orders. SLA thresholds aligned with existing sla-alerts endpoint. All queries capped with `take` limits. Vietnamese-first wording. Auto-refreshes with existing 30s polling. **No schema changes; no new dependencies; no change to SLA business logic; existing SLA alerts unchanged; backward compatible.**
 
@@ -429,7 +431,8 @@ pm2 restart logistics-system
 
 ## Remaining Major Tasks
 
-- ~~Public landing page visual testing across all 3 locales (VI/EN/ZH)~~ ✓ All landing components externalized to i18n (PR #304)
+- ~~Public landing page visual testing across all 3 locales (VI/EN/ZH)~~ (completed PR #304)
+- Customer-facing documentation for English and Chinese locales
 - Dashboard redesign (not started — landing page complete)
 - ~~Production Telegram bot/chat configuration~~ ✓ webhook registered, bot `@bactrunghai_bot` verified on `thue.eu.cc`
 - Production SMTP configuration
