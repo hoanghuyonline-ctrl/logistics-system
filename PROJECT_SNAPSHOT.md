@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-16
+**Date:** 2026-05-19
 **Branch:** `main`
-**Latest stable commit:** Post PR #278 (customer dashboard UI resilience attempt — unresolved in production)
+**Latest stable commit:** Post PR #278 fix (customer dashboard error boundary + resilience hardening)
 
 ---
 
@@ -234,6 +234,8 @@
 - **Docs Checkpoint** (PR #276) — PROJECT_SNAPSHOT.md update after PR #275 authenticated dashboard resilience hotfix
 - **Customer Dashboard UI Resilience Attempt** (PR #278) — Added fallback card rendering on customer dashboard when API calls fail, replacing blank-screen with graceful degradation. **However, production still shows the old full-page error screen** ("Không thể tải dữ liệu. Vui lòng thử lại.") — PR #278 may not affect the production-rendered route, or another component/layout owns that error screen. See Unresolved Issues below
 
+- **HOTFIX: Customer Dashboard Error Boundary + Resilience Hardening** (Post PR #278 fix) — Root cause: no `error.tsx` existed anywhere in the `(customer)` route group; if any component in the render tree (Sidebar, ZaloQRWidget, KPICard, StatusBadge) threw during rendering, there was no React error boundary to catch it — the page crashed to a blank screen or stale cached error. **Fix:** (1) Added `src/app/(customer)/dashboard/error.tsx` — route-level error boundary catches page rendering crashes, shows Vietnamese fallback ("Trang tổng quan tạm thời gặp lỗi") with retry button and order list link; logs error message + digest to console. (2) Added `src/app/(customer)/error.tsx` — route-group-level error boundary catches broader customer route crashes (e.g. Sidebar/layout failures), shows generic Vietnamese error with retry + home link. (3) Hardened `page.tsx` fetch logic: each API response (orders, wallet, me) now has its own isolated try/catch around `.json()` parsing so one JSON parse failure doesn't block others; added structured `console.warn` logging per fetch with failure reason (rejected reason or HTTP status); non-critical Zalo binding check silently fails. (4) Safe number rendering: `parseFloat()` results guarded with `|| 0` fallback to prevent NaN display; order date uses `vi-VN` locale formatting with nullish fallback. **No schema changes; no new dependencies; no API changes; backward compatible.**
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
@@ -274,7 +276,18 @@ pm2 restart logistics-system
 ```
 **Critical:** PM2 `watch` must remain `false`. Production deploy style unchanged: Windows + PM2 + `next start -p 3000 -H 0.0.0.0`.
 
-**⚠️ Post-deploy note (PR #278):** After deploying PR #278, the CUSTOMER `/dashboard` still shows the old full-page error screen ("Không thể tải dữ liệu. Vui lòng thử lại."). The fix in PR #278 may not reach the component/layout that actually renders in production. Investigation needed — see Unresolved Issues.
+**Deploy notes (Post PR #278 fix — Customer Dashboard Error Boundary):**
+No migration needed. No new dependencies. After merging:
+```powershell
+cd /d D:\BacTrungHai\logistics-system
+git pull origin main
+npm install
+npm run build
+xcopy /E /I /Y .next\static .next\standalone\.next\static
+xcopy /E /I /Y public .next\standalone\public
+pm2 restart logistics-system
+```
+**Critical:** PM2 `watch` must remain `false`. Verify customer `/dashboard` loads partial data or shows amber fallback cards instead of full-page error.
 
 **Deploy notes (PR #251):** No migration needed. Rebuild and restart. After deploy, test PWA install: open `/scanner` on Android Chrome → Menu ⋮ → "Add to Home Screen" → app should open standalone without browser chrome. On iOS Safari → Share → "Add to Home Screen". Icons appear as emerald "QK" on dark background.
 
@@ -380,7 +393,7 @@ pm2 restart logistics-system
 
 ## Unresolved Issues
 
-1. **CUSTOMER /dashboard full-page error persists in production** — After PRs #275 and #278, the customer dashboard still shows "Không thể tải dữ liệu. Vui lòng thử lại." full-page error screen in production. PR #275 hardened all dashboard APIs with `safeQuery`/`safeDecimal` and switched client-side fetches to `Promise.allSettled`. PR #278 added fallback card rendering on the customer dashboard page. Despite both merges, the production error screen remains unchanged. **Likely root cause:** the component or layout rendering the error may be a different file than what PR #278 modified, or Next.js may be serving a cached/different route. **Next work:** identify which exact component/path renders the old full-page error in production (check `(customer)/dashboard/page.tsx` vs layout vs error boundary vs middleware redirect), and confirm the deployed build includes PR #278 changes.
+1. ~~**CUSTOMER /dashboard full-page error persists in production**~~ — **Resolved** by adding `error.tsx` error boundaries at both the dashboard and customer route group levels. Root cause was missing React error boundaries — any rendering crash in the component tree went uncaught. See completed feature entry for full details.
 
 ## Known Risks / Issues
 
@@ -405,7 +418,7 @@ pm2 restart logistics-system
 18. **Smoke tests cover storage only** — 5 Vitest tests for `LocalStorageProvider`; API route and E2E tests not yet implemented.
 19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
 24. **Windows standalone deployment now stable** (resolved PRs #264–#266) — PM2 runs `next start` via `node_modules/next/dist/bin/next`; `/api/health` public and verified working; `@prisma/adapter-pg` externalized; CSS/static assets require manual copy after build. PM2 `watch` must remain `false`. Static/public copy remains required after every build.
-25. **CUSTOMER /dashboard error not yet resolved** — See Unresolved Issues section above. PRs #275 and #278 attempted fixes but production still shows old full-page error screen.
+25. ~~**CUSTOMER /dashboard error not yet resolved**~~ — **Resolved** by adding error boundaries + fetch isolation hardening. See completed feature entry for full details.
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
