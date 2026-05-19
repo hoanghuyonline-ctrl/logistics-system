@@ -197,6 +197,15 @@ interface BackupHealthData {
   };
   hasRecoveryGuide: boolean;
   retentionDays: number;
+  hasDbScript?: boolean;
+  hasUploadsScript?: boolean;
+  schedule?: {
+    expected: string;
+    staleHint: string;
+    manualHint: string;
+    dbScriptPath: string;
+    uploadsScriptPath: string;
+  };
 }
 
 /* ─── helpers ─── */
@@ -1058,10 +1067,32 @@ export default function AdminOperationsPage() {
             </span>
           </h2>
 
+          {/* Scheduled backup guidance */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 mb-3 text-[11px] text-slate-500 space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span>🕐</span>
+              <span className="font-medium text-slate-600">{backupHealth.schedule?.expected || "Backup tự động hằng ngày (Windows Task Scheduler)"}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span>📋</span>
+              <span>Giữ lại {backupHealth.retentionDays} bản backup gần nhất</span>
+            </div>
+            {(backupHealth.overall.status === "warning" || backupHealth.overall.status === "danger" || backupHealth.overall.status === "missing") && (
+              <div className="flex items-center gap-1.5 text-amber-600">
+                <span>⚠️</span>
+                <span>{backupHealth.schedule?.staleHint || "Nếu quá 24h chưa có backup mới, kiểm tra Windows Task Scheduler"}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span>💡</span>
+              <span>{backupHealth.schedule?.manualHint || "Có thể bấm Backup ngay để chạy thủ công"}</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {([
-              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database, type: "database" as const },
-              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads, type: "uploads" as const },
+              { label: "Database (PostgreSQL)", icon: "🗄️", info: backupHealth.database, type: "database" as const, btnLabel: "Backup DB ngay", hasScript: backupHealth.hasDbScript, scriptPath: backupHealth.schedule?.dbScriptPath },
+              { label: "Uploads (File)", icon: "📁", info: backupHealth.uploads, type: "uploads" as const, btnLabel: "Backup uploads ngay", hasScript: backupHealth.hasUploadsScript, scriptPath: backupHealth.schedule?.uploadsScriptPath },
             ]).map((item) => {
               const borderColor =
                 item.info.status === "danger" || item.info.status === "missing"
@@ -1123,9 +1154,15 @@ export default function AdminOperationsPage() {
                           Đang backup...
                         </span>
                       ) : (
-                        "💾 Backup ngay"
+                        `💾 ${item.btnLabel}`
                       )}
                     </button>
+                    {item.hasScript && (
+                      <span className="text-[10px] text-green-500">script sẵn sàng</span>
+                    )}
+                    {item.hasScript === false && item.scriptPath && (
+                      <span className="text-[10px] text-amber-500" title={`Thiếu: ${item.scriptPath}`}>fallback mode</span>
+                    )}
                   </div>
                   {msg && (
                     <div className={`mt-1.5 text-[11px] px-2 py-1 rounded ${
@@ -1140,7 +1177,7 @@ export default function AdminOperationsPage() {
           </div>
 
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-slate-400">Giữ lại: {backupHealth.retentionDays} ngày</span>
+            <span className="text-[10px] text-slate-400">Giữ lại: {backupHealth.retentionDays} bản backup</span>
             {backupHealth.hasRecoveryGuide && (
               <>
                 <span className="text-slate-300">|</span>

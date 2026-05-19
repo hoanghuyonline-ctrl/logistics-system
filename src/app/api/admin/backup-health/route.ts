@@ -153,6 +153,9 @@ export const GET = withErrorHandler(async function GET() {
     path.join(projectRoot, "docs", "BACKUP_AND_RECOVERY.md"),
   );
 
+  const hasDbScript = fs.existsSync(path.join(projectRoot, "scripts", "backup-db.bat"));
+  const hasUploadsScript = fs.existsSync(path.join(projectRoot, "scripts", "backup-uploads.bat"));
+
   return jsonResponse({
     database,
     uploads,
@@ -162,5 +165,14 @@ export const GET = withErrorHandler(async function GET() {
     },
     hasRecoveryGuide,
     retentionDays: 7,
+    hasDbScript,
+    hasUploadsScript,
+    schedule: {
+      expected: "Backup tự động hằng ngày (Windows Task Scheduler)",
+      staleHint: "Nếu quá 24h chưa có backup mới, kiểm tra Windows Task Scheduler",
+      manualHint: "Có thể bấm Backup ngay để chạy thủ công",
+      dbScriptPath: "scripts\\backup-db.bat",
+      uploadsScriptPath: "scripts\\backup-uploads.bat",
+    },
   });
 });
