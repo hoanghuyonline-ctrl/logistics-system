@@ -239,6 +239,37 @@ interface DisasterRecoveryData {
   hasRestoreUploadsScript: boolean;
 }
 
+interface CustomerRiskItem {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string;
+  debt: number;
+  balance: number;
+  totalOrders: number;
+  unfinishedOrders: number;
+  cancelledOrders: number;
+  lastActivity: string | null;
+  totalRevenue: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  riskReasons: string[];
+  link: string;
+}
+
+interface CustomerRiskSummary {
+  totalRiskCustomers: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  totalDebt: number;
+  totalUnfinished: number;
+}
+
+interface CustomerRiskData {
+  customers: CustomerRiskItem[];
+  summary: CustomerRiskSummary;
+}
+
 interface ActivityItem {
   id: string;
   type: "status_change" | "pricing_confirmed" | "topup_confirmed" | "issue_update" | "staff_note" | "anomaly";
@@ -333,6 +364,7 @@ export default function AdminOperationsPage() {
   const [disasterRecovery, setDisasterRecovery] = useState<DisasterRecoveryData | null>(null);
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const [activityIntel, setActivityIntel] = useState<ActivityIntelligenceData | null>(null);
+  const [customerRisk, setCustomerRisk] = useState<CustomerRiskData | null>(null);
   const [backupRunning, setBackupRunning] = useState<Record<string, boolean>>({});
   const [backupMessage, setBackupMessage] = useState<Record<string, { type: "success" | "error"; text: string }>>({});
   const inFlightRef = useRef(false);
@@ -366,7 +398,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData, drData, aiData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData, finData, bkHealthData, drData, aiData, crData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -380,6 +412,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/backup-health"),
         safeFetch("/api/admin/disaster-recovery"),
         safeFetch("/api/admin/activity-intelligence"),
+        safeFetch("/api/admin/customer-risk"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -396,6 +429,7 @@ export default function AdminOperationsPage() {
       if (bkHealthData) setBackupHealth(bkHealthData);
       if (drData) setDisasterRecovery(drData);
       if (aiData) setActivityIntel(aiData);
+      if (crData) setCustomerRisk(crData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -1474,6 +1508,88 @@ export default function AdminOperationsPage() {
                 );
               })}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.97: RỦI RO KHÁCH HÀNG / CÔNG NỢ
+          ═══════════════════════════════════════════ */}
+      {customerRisk && customerRisk.customers.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            ⚠️ Rủi ro khách hàng / Công nợ
+            {customerRisk.summary.criticalCount > 0 && (
+              <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
+                {customerRisk.summary.criticalCount} nguy hiểm
+              </span>
+            )}
+            {customerRisk.summary.highCount > 0 && (
+              <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full">
+                {customerRisk.summary.highCount} cao
+              </span>
+            )}
+          </h2>
+
+          {/* Summary */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-700">
+              Tổng nợ: {customerRisk.summary.totalDebt.toLocaleString("vi-VN")} VND
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              {customerRisk.summary.totalUnfinished} đơn chưa xong
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              {customerRisk.summary.totalRiskCustomers} khách cần chú ý
+            </span>
+          </div>
+
+          {/* Customer cards */}
+          <div className="space-y-2">
+            {customerRisk.customers.map((c) => {
+              const levelStyles: Record<string, string> = {
+                CRITICAL: "border-red-300 bg-red-50/50",
+                HIGH: "border-amber-300 bg-amber-50/50",
+                MEDIUM: "border-yellow-200 bg-yellow-50/30",
+                LOW: "border-slate-200 bg-white",
+              };
+              const badgeStyles: Record<string, string> = {
+                CRITICAL: "bg-red-600 text-white",
+                HIGH: "bg-amber-500 text-white",
+                MEDIUM: "bg-yellow-400 text-yellow-900",
+                LOW: "bg-slate-200 text-slate-600",
+              };
+              const badgeLabels: Record<string, string> = {
+                CRITICAL: "Nguy hi\u1ec3m",
+                HIGH: "Cao",
+                MEDIUM: "Trung b\u00ecnh",
+                LOW: "Th\u1ea5p",
+              };
+              return (
+                <div key={c.id} className={`rounded-lg border p-2.5 ${levelStyles[c.riskLevel] ?? "border-slate-200 bg-white"}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Link href={c.link} className="text-[11px] font-semibold text-slate-800 hover:underline truncate">
+                      {c.name}
+                    </Link>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${badgeStyles[c.riskLevel] ?? ""}`}>
+                      {badgeLabels[c.riskLevel] ?? c.riskLevel}
+                    </span>
+                    {c.phone && <span className="text-[10px] text-slate-400 ml-auto shrink-0">{c.phone}</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                    {c.debt > 0 && <span className="text-red-600 font-medium">N\u1ee3: {c.debt.toLocaleString("vi-VN")}\u0111</span>}
+                    <span>Ch\u01b0a xong: {c.unfinishedOrders}</span>
+                    {c.cancelledOrders > 0 && <span className="text-amber-600">H\u1ee7y: {c.cancelledOrders}</span>}
+                    {c.lastActivity && <span>Ho\u1ea1t \u0111\u1ed9ng: {timeAgo(c.lastActivity)}</span>}
+                  </div>
+                  {c.riskReasons.length > 0 && (
+                    <div className="mt-1 text-[10px] text-slate-400 truncate">
+                      {c.riskReasons.join(" \u00b7 ")}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
