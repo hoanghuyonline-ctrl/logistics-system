@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 const ZALO_URL = "https://zalo.me/0123456789";
 const FB_URL = "https://m.me/bactrunghai";
 
 export default function LandingMobileBar() {
+  const { t } = useI18n();
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
       <div className="grid grid-cols-4 gap-0">
@@ -32,14 +35,14 @@ export default function LandingMobileBar() {
           className="flex flex-col items-center py-2.5 text-emerald-600 hover:bg-emerald-50 transition-colors"
         >
           <span className="text-lg">📝</span>
-          <span className="text-[10px] font-medium mt-0.5">Đăng ký</span>
+          <span className="text-[10px] font-medium mt-0.5">{t("landing.mobileRegister")}</span>
         </Link>
         <Link
           href="/tracking"
           className="flex flex-col items-center py-2.5 text-amber-600 hover:bg-amber-50 transition-colors"
         >
           <span className="text-lg">🔍</span>
-          <span className="text-[10px] font-medium mt-0.5">Theo dõi đơn</span>
+          <span className="text-[10px] font-medium mt-0.5">{t("landing.mobileTrackOrder")}</span>
         </Link>
       </div>
     </div>
