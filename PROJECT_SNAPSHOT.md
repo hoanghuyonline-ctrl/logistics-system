@@ -248,6 +248,8 @@
 
 - **VIP / Danger Customer Intelligence** — Compact "Khách hàng cần chú ý" section on Operations Center (`/admin/operations`). New `GET /api/admin/customer-intelligence` endpoint runs 6 lightweight Prisma queries to detect: (1) Customers with large unpaid debt (>500k VND, severity tiers at 2M/5M). (2) Customers with repeated delayed orders (>2 orders stuck >5 days). (3) Customers with many unresolved issues (>=2 open). (4) VIP/high-value customers with active SLA alerts (orders >5M VND delayed >3 days). (5) Customers with recent failed notifications (>=2 failures in last 7 days). (6) Inactive high-value customers (had >5M orders but no activity in 30+ days). Each signal includes customer name, phone, short reason, severity (LOW/MEDIUM/HIGH/URGENT), type badge, and summary data (debt amount, order count, issue count). Deduplicated by customer (keeps highest severity); sorted by severity first; capped at 10 results. Section placed between SLA alerts and stuck orders. Auto-refreshes with existing 30s polling. Hides when no signals. **No schema changes; no new dependencies; backward compatible.**
 
+- **Warehouse Productivity Intelligence** — Compact "Hiệu suất kho hôm nay" section on Operations Center (`/admin/operations`). New `GET /api/admin/warehouse-productivity` endpoint runs 10 lightweight Prisma queries in parallel: (1) Packages created today. (2) Orders processed today (status changes to COMPLETED/ARRIVED_VIETNAM_WH/OUT_FOR_DELIVERY). (3) China warehouse activity count (ARRIVED_CHINA_WH/PACKING/SHIPPING_TO_VIETNAM). (4) Vietnam warehouse activity count. (5) Packages missing weight. (6) Packages stuck at China WH >5 days. (7) Packages stuck at Vietnam WH >3 days. (8-9) Total package counts per warehouse. (10) Last 10 order status changes today with order code, status label, changer name, and time. Bottleneck auto-label: "Tắc ở kho VN"/"Tắc ở kho TQ"/"Thiếu cân"/"Đang ổn" with red/yellow/green level. UI shows 6 KPI cards, 2 warehouse breakdown panels, recent activity list with Vietnamese status labels, and quick links to scanner/packages/stuck-shipments. Auto-refreshes with existing 30s polling. **No schema changes; no new dependencies; backward compatible.**
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
@@ -365,6 +367,7 @@ pm2 restart logistics-system
 | `/api/admin/analytics/summary` | GET | CRM/marketing/support aggregated stats (ADMIN-only) |
 | `/api/scanner/stats` | GET | Package status counts for Mini Scanner dashboard (ADMIN/WAREHOUSE_CN/WAREHOUSE_VN) |
 | `/api/admin/customer-intelligence` | GET | VIP/danger customer signals — debt, delayed orders, issues, SLA, notif failures, inactive VIPs (ADMIN-only) |
+| `/api/admin/warehouse-productivity` | GET | Daily warehouse KPIs — packages/orders processed, China/Vietnam activity, stuck packages, bottleneck label (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models

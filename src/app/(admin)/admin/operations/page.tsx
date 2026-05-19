@@ -127,6 +127,33 @@ interface CustomerIntelData {
   total: number;
 }
 
+interface WarehouseProductivity {
+  today: {
+    packagesCreated: number;
+    ordersProcessed: number;
+    chinaActivity: number;
+    vietnamActivity: number;
+  };
+  warehouse: {
+    missingWeight: number;
+    stuckAtChina: number;
+    stuckAtVietnam: number;
+    totalAtChina: number;
+    totalAtVietnam: number;
+  };
+  bottleneck: {
+    label: string;
+    level: "green" | "yellow" | "red";
+  };
+  recentActivity: {
+    orderCode: string;
+    orderId: string;
+    status: string;
+    changedBy: string;
+    time: string;
+  }[];
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -186,6 +213,7 @@ export default function AdminOperationsPage() {
   const [slaData, setSlaData] = useState<SlaData | null>(null);
   const [inbox, setInbox] = useState<InboxData | null>(null);
   const [customerIntel, setCustomerIntel] = useState<CustomerIntelData | null>(null);
+  const [warehouseData, setWarehouseData] = useState<WarehouseProductivity | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
@@ -217,7 +245,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData, whData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -226,6 +254,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/sla-alerts"),
         safeFetch("/api/admin/daily-inbox"),
         safeFetch("/api/admin/customer-intelligence"),
+        safeFetch("/api/admin/warehouse-productivity"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -237,6 +266,7 @@ export default function AdminOperationsPage() {
       if (sla) setSlaData(sla);
       if (inboxData) setInbox(inboxData);
       if (ciData) setCustomerIntel(ciData);
+      if (whData) setWarehouseData(whData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -695,6 +725,149 @@ export default function AdminOperationsPage() {
                 </span>
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.95: HIỆU SUẤT KHO HÔM NAY
+          ═══════════════════════════════════════════ */}
+      {warehouseData && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            🏭 Hiệu suất kho hôm nay
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              warehouseData.bottleneck.level === "red"
+                ? "bg-red-600 text-white animate-pulse"
+                : warehouseData.bottleneck.level === "yellow"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-green-100 text-green-700"
+            }`}>
+              {warehouseData.bottleneck.label}
+            </span>
+          </h2>
+
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-3">
+            {[
+              { label: "Kiện nhập hôm nay", value: warehouseData.today.packagesCreated, icon: "📦", href: "/admin/packages" },
+              { label: "Đơn xử lý hôm nay", value: warehouseData.today.ordersProcessed, icon: "✅", href: "/admin/orders" },
+              { label: "Hoạt động kho TQ", value: warehouseData.today.chinaActivity, icon: "🇨🇳", href: "/admin/packages" },
+              { label: "Hoạt động kho VN", value: warehouseData.today.vietnamActivity, icon: "🇻🇳", href: "/admin/packages" },
+              { label: "Thiếu cân", value: warehouseData.warehouse.missingWeight, icon: "⚖️", href: "/admin/packages", warn: warehouseData.warehouse.missingWeight > 0 },
+              { label: "Kiện kẹt", value: warehouseData.warehouse.stuckAtChina + warehouseData.warehouse.stuckAtVietnam, icon: "⏳", href: "/admin/stuck-shipments", warn: (warehouseData.warehouse.stuckAtChina + warehouseData.warehouse.stuckAtVietnam) > 0 },
+            ].map((card) => (
+              <Link
+                key={card.label}
+                href={card.href}
+                className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all hover:shadow-md ${
+                  card.warn
+                    ? "border-amber-200 bg-amber-50 hover:bg-amber-100/50"
+                    : card.value > 0
+                      ? "border-slate-200 bg-white hover:bg-slate-50"
+                      : "border-green-200 bg-green-50 hover:bg-green-100/50"
+                }`}
+              >
+                <span className="text-lg">{card.icon}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] text-slate-500 truncate">{card.label}</div>
+                  <div className={`text-base font-bold ${
+                    card.warn ? "text-amber-700" : "text-slate-900"
+                  }`}>{card.value}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Warehouse breakdown */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
+            <div className={`rounded-xl border p-3 ${
+              warehouseData.warehouse.stuckAtChina > 5
+                ? "border-red-200 bg-red-50/50"
+                : warehouseData.warehouse.stuckAtChina > 0
+                  ? "border-amber-200 bg-amber-50/50"
+                  : "border-green-200 bg-green-50"
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-slate-700">🇨🇳 Kho Trung Quốc</span>
+                <span className="text-[10px] text-slate-500">{warehouseData.warehouse.totalAtChina} kiện</span>
+              </div>
+              <div className="text-[11px] text-slate-500">
+                {warehouseData.warehouse.stuckAtChina > 0
+                  ? <span className="text-amber-700 font-semibold">{warehouseData.warehouse.stuckAtChina} kiện kẹt &gt;5 ngày</span>
+                  : <span className="text-green-600">Không kẹt</span>}
+              </div>
+            </div>
+            <div className={`rounded-xl border p-3 ${
+              warehouseData.warehouse.stuckAtVietnam > 3
+                ? "border-red-200 bg-red-50/50"
+                : warehouseData.warehouse.stuckAtVietnam > 0
+                  ? "border-amber-200 bg-amber-50/50"
+                  : "border-green-200 bg-green-50"
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-slate-700">🇻🇳 Kho Việt Nam</span>
+                <span className="text-[10px] text-slate-500">{warehouseData.warehouse.totalAtVietnam} kiện</span>
+              </div>
+              <div className="text-[11px] text-slate-500">
+                {warehouseData.warehouse.stuckAtVietnam > 0
+                  ? <span className="text-amber-700 font-semibold">{warehouseData.warehouse.stuckAtVietnam} kiện kẹt &gt;3 ngày</span>
+                  : <span className="text-green-600">Không kẹt</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Recent activity */}
+          {warehouseData.recentActivity.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+              <div className="px-3 sm:px-4 py-2 bg-slate-50 border-b border-slate-100">
+                <span className="text-[11px] font-semibold text-slate-600">Hoạt động gần nhất</span>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {warehouseData.recentActivity.slice(0, 5).map((a, idx) => {
+                  const statusLabels: Record<string, string> = {
+                    ARRIVED_CHINA_WH: "Đến kho TQ",
+                    PACKING: "Đóng gói",
+                    SHIPPING_TO_VIETNAM: "Gửi về VN",
+                    ARRIVED_VIETNAM_WH: "Đến kho VN",
+                    OUT_FOR_DELIVERY: "Đang giao",
+                    COMPLETED: "Hoàn thành",
+                    PURCHASED: "Đã mua",
+                    SELLER_SHIPPED: "NCC gửi",
+                  };
+                  return (
+                    <Link
+                      key={`${a.orderId}-${idx}`}
+                      href={`/admin/orders/${a.orderId}`}
+                      className="flex items-center gap-3 px-3 sm:px-4 py-2 hover:bg-slate-50 transition-colors"
+                    >
+                      <span className="text-[11px] font-medium text-blue-600 shrink-0">{a.orderCode}</span>
+                      <span className="text-[11px] text-slate-500 flex-1 truncate">
+                        → {statusLabels[a.status] || a.status}
+                      </span>
+                      <span className="text-[10px] text-slate-400 shrink-0">{a.changedBy}</span>
+                      <span className="text-[10px] text-slate-400 shrink-0">{timeAgo(a.time)}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+              {warehouseData.recentActivity.length > 5 && (
+                <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
+                  <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">
+                    Xem thêm →
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick links */}
+          <div className="flex items-center gap-2 mt-3">
+            <Link href="/scanner" className="text-[11px] text-blue-600 hover:underline">Quét kho →</Link>
+            <span className="text-slate-300">|</span>
+            <Link href="/admin/packages" className="text-[11px] text-blue-600 hover:underline">Quản lý kiện →</Link>
+            <span className="text-slate-300">|</span>
+            <Link href="/admin/stuck-shipments" className="text-[11px] text-blue-600 hover:underline">Đơn kẹt →</Link>
           </div>
         </section>
       )}
