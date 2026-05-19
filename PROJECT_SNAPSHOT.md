@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-19
 **Branch:** `main`
-**Latest stable commit:** Post PR #278 fix (customer dashboard error boundary + resilience hardening)
+**Latest stable commit:** Post PR #306 (complete Vietnamese customer manual + PDF export)
 
 ---
 
@@ -264,6 +264,10 @@
 
 - **Admin Operations & System Health i18n Audit** — Externalized ~90 hardcoded Vietnamese strings from `/admin/operations` and `/admin/system-health` pages into existing i18n structure (`vi.ts`, `en.ts`, `zh.ts`). Covers: page headers, Backup section, Disaster Recovery section, Activity Intelligence section, Customer Risk section, SLA Performance section, System Health cards (system status, chatbot channels, Zalo diagnostics, operational indicators), and Smoke Test panel. Added `useI18n()` hook to both pages. All three languages (VI/EN/ZH) have matching key sets. Existing Vietnamese wording preserved exactly. **No logic changes; no UI redesign; no schema changes; no new dependencies; backward compatible.**
 
+- **Landing Page i18n Audit** (PR #304) — Audited all public-facing landing page components and replaced remaining hardcoded Vietnamese text with `useI18n()` / `t()`. 43 new `landing.*` keys added across `vi.ts`, `en.ts`, `zh.ts`. Components: LandingTrust, LandingLeadForm, LandingFloatingCTA, LandingMobileBar, ZaloQRWidget. **No design/layout/schema/dependency changes; backward compatible.**
+
+- **Complete Vietnamese Customer Manual + PDF** (PR #306) — Full customer-facing usage manual (`docs/CUSTOMER_GUIDE_VI.md`, 1000+ lines) covering all 20 sections: company intro, registration/login, dashboard, order creation, A→Z shipping workflow, order tracking, wallet/QR top-up, company price confirmation, Zalo/Telegram integration, notifications, complaints, FAQ, common errors, mobile usage, best practices, account security, real-world walkthrough, support channels, full status reference, screenshot placeholders. Professional PDF export (`docs/CUSTOMER_GUIDE_VI.pdf`) with cover page, table of contents, page numbers, and Vietnamese typography. **Documentation-only; no code/schema/dependency changes.**
+
 - **SLA Performance Report** — Compact "Hiệu suất SLA 7 ngày" section on Operations Center (`/admin/operations`). New `GET /api/admin/sla-report` endpoint runs parallel lightweight queries against existing Order model. Features: (1) Three KPI cards — orders updated in 7 days, orders currently over SLA, SLA breach rate percentage. (2) Trend label — Đang ổn (green, breach ≤5%), Cần chú ý (amber, breach ≤15%), Nguy hiểm (red, breach >15%). (3) Top bottleneck list — pending too long (>3d), missing tracking (>3d), international shipping slow (>7d), Vietnam warehouse waiting (>2d), delivery too long (>3d) — each with severity dot and count badge. (4) Quick link to stuck shipments/orders. SLA thresholds aligned with existing sla-alerts endpoint. All queries capped with `take` limits. Vietnamese-first wording. Auto-refreshes with existing 30s polling. **No schema changes; no new dependencies; no change to SLA business logic; existing SLA alerts unchanged; backward compatible.**
 
 - **Customer Risk & Debt Intelligence** — Compact "Rủi ro khách hàng / Công nợ" section on Operations Center (`/admin/operations`). New `GET /api/admin/customer-risk` endpoint runs parallel lightweight Prisma queries against existing User, Wallet, Order models. Features: (1) Top debt customers sorted by risk severity. (2) Risk scoring — CRITICAL/HIGH/MEDIUM/LOW based on debt amount, negative balance, cancelled orders, unfinished orders, and inactivity. (3) Summary bar showing total debt, unfinished orders, and at-risk customer count. (4) Compact mobile-friendly cards per customer showing name, phone, debt amount, unfinished/cancelled order counts, last activity time-ago, risk reasons, and quick link to orders. (5) Anomaly detection for inactive customers with pending orders (30+ days). All queries capped with `take` limits. Section hides when no risk customers found. Vietnamese-first wording. Auto-refreshes with existing 30s polling. **No schema changes; no new dependencies; uses existing data models only; no changes to finance/customer pages; backward compatible.**
@@ -427,7 +431,8 @@ pm2 restart logistics-system
 
 ## Remaining Major Tasks
 
-- Public landing page visual testing across all 3 locales (VI/EN/ZH)
+- ~~Public landing page visual testing across all 3 locales (VI/EN/ZH)~~ (completed PR #304)
+- Customer-facing documentation for English and Chinese locales
 - Dashboard redesign (not started — landing page complete)
 - ~~Production Telegram bot/chat configuration~~ ✓ webhook registered, bot `@bactrunghai_bot` verified on `thue.eu.cc`
 - Production SMTP configuration
