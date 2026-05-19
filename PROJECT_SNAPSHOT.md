@@ -246,6 +246,8 @@
 
 - **Daily Operations Inbox** — Added "Việc cần xử lý hôm nay" inbox section at the top of the Operations Center (`/admin/operations`). New `/api/admin/daily-inbox` endpoint aggregates actionable items from 6 sources: (1) Pending top-up requests (URGENT). (2) Urgent/new customer issues (severity based on priority). (3) Vietnam warehouse stuck >4 days (HIGH/URGENT SLA). (4) International shipping >14 days (HIGH/URGENT SLA). (5) Unresolved notification failures (MEDIUM). (6) Orders missing China tracking >3 days. (7) Orders missing weight after warehouse receive. Each item includes type, title, short reason, severity, timestamp, and direct action link. Sorted by severity first then newest. Capped at 20 items. Compact list UI with severity dots, type icons, time-ago labels, and clickable rows. Auto-refreshes with existing 30s polling. Section hides when no items. **No schema changes; no new dependencies; backward compatible.**
 
+- **VIP / Danger Customer Intelligence** — Compact "Khách hàng cần chú ý" section on Operations Center (`/admin/operations`). New `GET /api/admin/customer-intelligence` endpoint runs 6 lightweight Prisma queries to detect: (1) Customers with large unpaid debt (>500k VND, severity tiers at 2M/5M). (2) Customers with repeated delayed orders (>2 orders stuck >5 days). (3) Customers with many unresolved issues (>=2 open). (4) VIP/high-value customers with active SLA alerts (orders >5M VND delayed >3 days). (5) Customers with recent failed notifications (>=2 failures in last 7 days). (6) Inactive high-value customers (had >5M orders but no activity in 30+ days). Each signal includes customer name, phone, short reason, severity (LOW/MEDIUM/HIGH/URGENT), type badge, and summary data (debt amount, order count, issue count). Deduplicated by customer (keeps highest severity); sorted by severity first; capped at 10 results. Section placed between SLA alerts and stuck orders. Auto-refreshes with existing 30s polling. Hides when no signals. **No schema changes; no new dependencies; backward compatible.**
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
@@ -362,6 +364,7 @@ pm2 restart logistics-system
 | `/api/admin/campaigns` | GET/POST/PUT | Campaign list (status/channel filters), create, update (ADMIN-only) |
 | `/api/admin/analytics/summary` | GET | CRM/marketing/support aggregated stats (ADMIN-only) |
 | `/api/scanner/stats` | GET | Package status counts for Mini Scanner dashboard (ADMIN/WAREHOUSE_CN/WAREHOUSE_VN) |
+| `/api/admin/customer-intelligence` | GET | VIP/danger customer signals — debt, delayed orders, issues, SLA, notif failures, inactive VIPs (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models

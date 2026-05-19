@@ -109,6 +109,24 @@ interface InboxData {
   total: number;
 }
 
+interface CustomerSignal {
+  customerId: string;
+  customerName: string;
+  phone: string | null;
+  reason: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  type: string;
+  debt: number | null;
+  orderCount: number | null;
+  issueCount: number | null;
+  href: string;
+}
+
+interface CustomerIntelData {
+  customers: CustomerSignal[];
+  total: number;
+}
+
 /* ─── helpers ─── */
 
 function timeAgo(dateStr: string): string {
@@ -167,6 +185,7 @@ export default function AdminOperationsPage() {
   const [issueCounts, setIssueCounts] = useState<Record<string, number>>({});
   const [slaData, setSlaData] = useState<SlaData | null>(null);
   const [inbox, setInbox] = useState<InboxData | null>(null);
+  const [customerIntel, setCustomerIntel] = useState<CustomerIntelData | null>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(false);
   const prevUrgentRef = useRef<number | null>(null);
@@ -198,7 +217,7 @@ export default function AdminOperationsPage() {
           return await r.json();
         } catch { return null; }
       };
-      const [qv, topups, stuck, notifs, issueData, sla, inboxData] = await Promise.all([
+      const [qv, topups, stuck, notifs, issueData, sla, inboxData, ciData] = await Promise.all([
         safeFetch("/api/admin/quick-views"),
         safeFetch("/api/admin/topup-requests"),
         safeFetch("/api/admin/stuck-shipments"),
@@ -206,6 +225,7 @@ export default function AdminOperationsPage() {
         safeFetch("/api/admin/customer-issues?status=NEW"),
         safeFetch("/api/admin/sla-alerts"),
         safeFetch("/api/admin/daily-inbox"),
+        safeFetch("/api/admin/customer-intelligence"),
       ]);
       if (qv) setQuickViews(qv);
       setPendingTopUps(Array.isArray(topups) ? topups.filter((t: TopUpRequest) => t.status === "PENDING") : []);
@@ -216,6 +236,7 @@ export default function AdminOperationsPage() {
       setIssueCounts(issueData?.statusCounts || {});
       if (sla) setSlaData(sla);
       if (inboxData) setInbox(inboxData);
+      if (ciData) setCustomerIntel(ciData);
       setLastUpdated(new Date());
       setLoading(false);
 
@@ -593,6 +614,87 @@ export default function AdminOperationsPage() {
                 </div>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.9: KHÁCH HÀNG CẦN CHÚ Ý
+          ═══════════════════════════════════════════ */}
+      {customerIntel && customerIntel.customers.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            👥 Khách hàng cần chú ý
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              customerIntel.customers.some((c) => c.severity === "URGENT")
+                ? "bg-red-600 text-white animate-pulse"
+                : customerIntel.customers.some((c) => c.severity === "HIGH")
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700"
+            }`}>
+              {customerIntel.total} khách
+            </span>
+          </h2>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="divide-y divide-slate-100">
+              {customerIntel.customers.map((c) => {
+                const sevStyle: Record<string, { dot: string; badge: string; bg: string }> = {
+                  URGENT: { dot: "bg-red-500 animate-pulse", badge: "bg-red-600 text-white", bg: "bg-red-50/50" },
+                  HIGH: { dot: "bg-red-400", badge: "bg-red-100 text-red-700", bg: "bg-red-50/30" },
+                  MEDIUM: { dot: "bg-amber-400", badge: "bg-amber-100 text-amber-700", bg: "" },
+                  LOW: { dot: "bg-slate-400", badge: "bg-slate-100 text-slate-600", bg: "" },
+                };
+                const s = sevStyle[c.severity] || sevStyle.LOW;
+                const typeIcon: Record<string, string> = {
+                  debt: "💳", delayed_orders: "⏰", unresolved_issues: "⚠️",
+                  vip_sla: "💎", notif_failures: "🔔", inactive_vip: "😴",
+                };
+                return (
+                  <Link
+                    key={c.customerId}
+                    href={c.href}
+                    className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 transition-colors hover:bg-slate-50 ${s.bg}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
+                    <span className="text-base shrink-0">{typeIcon[c.type] || "👤"}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-slate-900 truncate">
+                        {c.customerName}
+                        {c.phone && <span className="text-[11px] text-slate-400 ml-1.5">{c.phone}</span>}
+                      </div>
+                      <div className="text-[11px] text-slate-400 truncate">{c.reason}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {c.debt !== null && (
+                        <span className="text-[10px] font-semibold text-red-600 hidden sm:block">
+                          {(c.debt / 1000000).toFixed(1)}M
+                        </span>
+                      )}
+                      {c.orderCount !== null && (
+                        <span className="text-[10px] text-slate-400 hidden sm:block">
+                          {c.orderCount} đơn
+                        </span>
+                      )}
+                      {c.issueCount !== null && (
+                        <span className="text-[10px] text-slate-400 hidden sm:block">
+                          {c.issueCount} KN
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${s.badge}`}>
+                        {c.severity === "URGENT" ? "Khẩn!" : c.severity === "HIGH" ? "Cao" : c.severity === "MEDIUM" ? "TB" : "Thấp"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {customerIntel.total > customerIntel.customers.length && (
+              <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
+                <span className="text-[11px] text-slate-400">
+                  Hiển thị {customerIntel.customers.length}/{customerIntel.total} khách hàng
+                </span>
+              </div>
+            )}
           </div>
         </section>
       )}
