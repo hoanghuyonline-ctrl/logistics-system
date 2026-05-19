@@ -254,6 +254,8 @@
 
 - **Backup Health & Disaster Warning** — Compact "An toàn dữ liệu / Backup" section on Operations Center (`/admin/operations`). New `GET /api/admin/backup-health` endpoint checks filesystem for backup files using existing conventions: (1) Database backups in `backups/postgres/postgres-*.sql`. (2) Uploads backups in `backups/uploads/uploads-*.zip`. For each backup type reports: folder exists, latest file name/time, age in hours, file count, total size MB, status (ok/warning/danger/missing) with Vietnamese labels. Warning threshold at 24h, danger at 48h. Overall health computed from both. Shows 7-day retention info. Links to `docs/BACKUP_AND_RECOVERY.md` if it exists. Gracefully handles missing folders. Section placed between finance alerts and stuck orders. Auto-refreshes with existing 30s polling. **No schema changes; no new dependencies; no backup execution; read-only filesystem checks; backward compatible.**
 
+- **Global Admin Search Intelligence** — Compact search box in admin layout header (below SystemHealthBar) for quick record lookup. New `GET /api/admin/global-search?q=` endpoint (ADMIN-only) searches 5 categories in parallel with `take: 5` limits: (1) Orders by orderCode, trackingCodeChina, trackingCodeIntl. (2) Packages by packageCode, barcode. (3) Customers by name, phone, email. (4) CRM leads by name, phone. (5) Customer issues by description, orderCode. Results grouped by category with Vietnamese labels (Đơn hàng, Kiện hàng, Khách hàng, Lead, Khiếu nại), category icons, status badges, and direct links to detail pages. 300ms debounce, min 2 chars, click-outside/Escape to close, loading spinner. Component: `src/components/admin/GlobalSearch.tsx`. Does not replace existing page-specific search. **No schema changes; no new dependencies; backward compatible.**
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
@@ -374,6 +376,7 @@ pm2 restart logistics-system
 | `/api/admin/warehouse-productivity` | GET | Daily warehouse KPIs — packages/orders processed, China/Vietnam activity, stuck packages, bottleneck label (ADMIN-only) |
 | `/api/admin/finance-alerts` | GET | Finance danger alerts — debt, negative balances, stale top-ups, unconfirmed pricing, unreconciled orders, refunds (ADMIN-only) |
 | `/api/admin/backup-health` | GET | Backup health check — DB/uploads backup file status, age, size, overall health, recovery guide link (ADMIN-only) |
+| `/api/admin/global-search` | GET | Global search — orders, packages, customers, leads, issues by keyword with grouped results (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models
