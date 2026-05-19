@@ -5,6 +5,21 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 
+interface SmokeCheck {
+  key: string;
+  label: string;
+  status: "ok" | "warning" | "error";
+  detail: string;
+  durationMs: number;
+}
+
+interface SmokeTestData {
+  overall: "ok" | "warning" | "error";
+  checks: SmokeCheck[];
+  summary: { ok: number; warning: number; error: number; totalMs: number };
+  checkedAt: string;
+}
+
 interface ZaloTokenRefresh {
   lastRefreshAt: string;
   success: boolean;
@@ -100,6 +115,8 @@ export default function SystemHealthPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [smokeTest, setSmokeTest] = useState<SmokeTestData | null>(null);
+  const [smokeLoading, setSmokeLoading] = useState(false);
 
   const fetchHealth = () => {
     setLoading(true);
@@ -121,6 +138,23 @@ export default function SystemHealthPage() {
   };
 
   useEffect(() => { fetchHealth(); }, []);
+
+  const runSmokeTest = () => {
+    setSmokeLoading(true);
+    fetch("/api/admin/smoke-test")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed");
+        return r.json();
+      })
+      .then((d) => {
+        setSmokeTest(d);
+        setSmokeLoading(false);
+      })
+      .catch(() => {
+        setSmokeTest(null);
+        setSmokeLoading(false);
+      });
+  };
 
   if (loading && !data) return <LoadingSpinner text="Đang kiểm tra hệ thống..." />;
 
@@ -271,6 +305,75 @@ export default function SystemHealthPage() {
               )}
             </Card>
           )}
+
+          {/* Smoke Test Panel */}
+          <Card title="Ki\u1ec3m Tra Sau Deploy">
+            <div className="mb-3">
+              <button
+                onClick={runSmokeTest}
+                disabled={smokeLoading}
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              >
+                {smokeLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    \u0110ang ki\u1ec3m tra...
+                  </span>
+                ) : (
+                  "\ud83d\udee1\ufe0f Ch\u1ea1y ki\u1ec3m tra"
+                )}
+              </button>
+            </div>
+            {smokeTest ? (
+              <>
+                {/* Overall status */}
+                <div className={`mb-3 p-2.5 rounded-xl text-center text-sm font-semibold ${
+                  smokeTest.overall === "ok"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : smokeTest.overall === "warning"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                }`}>
+                  {smokeTest.overall === "ok" ? "T\u1ea5t c\u1ea3 OK" : smokeTest.overall === "warning" ? "C\u00f3 c\u1ea3nh b\u00e1o" : "C\u00f3 l\u1ed7i"}
+                  <span className="text-xs font-normal ml-2">({smokeTest.summary.totalMs}ms)</span>
+                </div>
+
+                {/* Individual checks */}
+                {smokeTest.checks.map((check) => (
+                  <div key={check.key} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <StatusDot status={check.status === "ok" ? "green" : check.status === "warning" ? "yellow" : "red"} />
+                      <span className="text-sm text-slate-600 truncate">{check.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-xs font-medium ${
+                        check.status === "ok" ? "text-green-600" : check.status === "warning" ? "text-amber-600" : "text-red-600"
+                      }`}>
+                        {check.detail}
+                      </span>
+                      <span className="text-[10px] text-slate-300">{check.durationMs}ms</span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Summary footer */}
+                <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs text-slate-400">
+                    Ki\u1ec3m tra l\u00fac: {formatTime(smokeTest.checkedAt)}
+                  </span>
+                  <div className="flex items-center gap-2 text-xs">
+                    {smokeTest.summary.ok > 0 && <span className="text-green-600">{smokeTest.summary.ok} OK</span>}
+                    {smokeTest.summary.warning > 0 && <span className="text-amber-600">{smokeTest.summary.warning} c\u1ea3nh b\u00e1o</span>}
+                    {smokeTest.summary.error > 0 && <span className="text-red-600">{smokeTest.summary.error} l\u1ed7i</span>}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-4">
+                B\u1ea5m \u201cCh\u1ea1y ki\u1ec3m tra\u201d \u0111\u1ec3 ki\u1ec3m tra h\u1ec7 th\u1ed1ng sau deploy.
+              </p>
+            )}
+          </Card>
 
           {/* Operational Indicators */}
           <Card title="Chỉ Số Vận Hành">
