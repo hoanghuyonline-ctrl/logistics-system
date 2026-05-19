@@ -318,15 +318,15 @@ interface ActivityIntelligenceData {
 
 /* ─── helpers ─── */
 
-function timeAgo(dateStr: string): string {
+function timeAgoRaw(dateStr: string): { value: number; unit: "justNow" | "min" | "hr" | "d" } {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / (1000 * 60));
-  if (mins < 1) return "vừa xong";
-  if (mins < 60) return `${mins} phút`;
+  if (mins < 1) return { value: 0, unit: "justNow" };
+  if (mins < 60) return { value: mins, unit: "min" };
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} giờ`;
+  if (hours < 24) return { value: hours, unit: "hr" };
   const days = Math.floor(hours / 24);
-  return `${days} ngày`;
+  return { value: days, unit: "d" };
 }
 
 function levelBorder(level: string) {
@@ -347,16 +347,7 @@ function urgencyBadge(count: number, thresholdRed = 1, thresholdYellow = 0) {
   return { text: "0", cls: "bg-green-100 text-green-700" };
 }
 
-const ISSUE_TYPE_LABELS: Record<string, string> = {
-  THIEU_HANG: "Thiếu hàng",
-  GIAO_CHAM: "Giao chậm",
-  SAI_CAN: "Sai cân",
-  HONG_HANG: "Hỏng hàng",
-  CHUA_NHAN: "Chưa nhận",
-  PHI_SAI: "Phí sai",
-  CHATBOT: "Chatbot",
-  KHAC: "Khác",
-};
+/* ISSUE_TYPE_LABELS moved inside component for i18n access */
 
 /* ─── alert helpers ─── */
 
@@ -364,6 +355,26 @@ const ISSUE_TYPE_LABELS: Record<string, string> = {
 
 export default function AdminOperationsPage() {
   const { t } = useI18n();
+
+  const timeAgo = (dateStr: string): string => {
+    const r = timeAgoRaw(dateStr);
+    if (r.unit === "justNow") return t("ops.time.justNow");
+    if (r.unit === "min") return `${r.value} ${t("ops.time.minutesSuffix")}`;
+    if (r.unit === "hr") return `${r.value} ${t("ops.time.hoursSuffix")}`;
+    return `${r.value} ${t("ops.time.daysSuffix")}`;
+  };
+
+  const ISSUE_TYPE_LABELS: Record<string, string> = {
+    THIEU_HANG: t("ops.issueType.shortage"),
+    GIAO_CHAM: t("ops.issueType.slowDelivery"),
+    SAI_CAN: t("ops.issueType.wrongWeight"),
+    HONG_HANG: t("ops.issueType.damaged"),
+    CHUA_NHAN: t("ops.issueType.notReceived"),
+    PHI_SAI: t("ops.issueType.wrongFee"),
+    CHATBOT: t("ops.issueType.chatbot"),
+    KHAC: t("ops.issueType.other"),
+  };
+
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [quickViews, setQuickViews] = useState<QuickViewCounts | null>(null);
@@ -485,11 +496,11 @@ export default function AdminOperationsPage() {
         setBackupMessage((prev) => ({ ...prev, [type]: { type: "success", text: `${data.message} — ${data.filename} (${data.sizeMB} MB)` } }));
         fetchAll();
       } else {
-        const errText = data.error || data.message || "Backup thất bại";
+        const errText = data.error || data.message || t("ops.backup.failedDefault");
         setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: errText } }));
       }
     } catch {
-      setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: "Lỗi kết nối — không thể backup" } }));
+      setBackupMessage((prev) => ({ ...prev, [type]: { type: "error", text: t("ops.backup.connError") } }));
     } finally {
       setBackupRunning((prev) => ({ ...prev, [type]: false }));
     }
@@ -535,15 +546,15 @@ export default function AdminOperationsPage() {
                   ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
                   : "bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100"
               }`}
-              title={alertEnabled ? "Tắt âm báo khi có việc khẩn" : "Bật âm báo khi có việc khẩn"}
+              title={alertEnabled ? t("ops.alertOnTitle") : t("ops.alertOffTitle")}
             >
               <span>{alertEnabled ? "🔔" : "🔕"}</span>
-              <span>{alertEnabled ? "Âm báo: Bật" : "Âm báo: Tắt"}</span>
+              <span>{alertEnabled ? t("ops.alertOn") : t("ops.alertOff")}</span>
             </button>
             {/* Last updated time */}
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span>Tự động cập nhật</span>
+              <span>{t("ops.autoUpdate")}</span>
               {lastUpdated && (
                 <span className="text-slate-500 font-medium">
                   — {t("ops.lastUpdated")} {lastUpdated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
@@ -560,7 +571,7 @@ export default function AdminOperationsPage() {
       {inbox && inbox.items.length > 0 && (
         <section className="mb-5 sm:mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            📥 Việc cần xử lý hôm nay
+            {`📥 ${t("ops.inbox.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               inbox.items.some((i) => i.severity === "URGENT")
                 ? "bg-red-600 text-white animate-pulse"
@@ -568,7 +579,7 @@ export default function AdminOperationsPage() {
                   ? "bg-red-100 text-red-700"
                   : "bg-amber-100 text-amber-700"
             }`}>
-              {inbox.total} việc
+              {inbox.total} {t("ops.inbox.countSuffix")}
             </span>
           </h2>
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -600,7 +611,7 @@ export default function AdminOperationsPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] text-slate-400 hidden sm:block">{timeAgo(item.time)}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${s.badge}`}>
-                        {item.severity === "URGENT" ? "Khẩn!" : item.severity === "HIGH" ? "Cao" : item.severity === "MEDIUM" ? "TB" : "Thấp"}
+                        {item.severity === "URGENT" ? t("ops.sev.urgent") : item.severity === "HIGH" ? t("ops.sev.high") : item.severity === "MEDIUM" ? t("ops.sev.medium") : t("ops.sev.low")}
                       </span>
                     </div>
                   </Link>
@@ -610,7 +621,7 @@ export default function AdminOperationsPage() {
             {inbox.total > inbox.items.length && (
               <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
                 <span className="text-[11px] text-slate-400">
-                  Hiển thị {inbox.items.length}/{inbox.total} việc — xem từng mục để xử lý
+                  {t("ops.inbox.showingItems").replace("{shown}", String(inbox.items.length)).replace("{total}", String(inbox.total))}
                 </span>
               </div>
             )}
@@ -623,14 +634,14 @@ export default function AdminOperationsPage() {
           ═══════════════════════════════════════════ */}
       <section className="mb-5 sm:mb-6">
         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-          🔴 Việc cần làm ngay
+          {`🔴 ${t("ops.urgent.title")}`}
           {urgentCount > 0 ? (
             <span className="text-[10px] font-bold bg-red-600 text-white px-2.5 py-0.5 rounded-full animate-pulse shadow-sm">
-              {urgentCount} việc khẩn
+              {urgentCount} {t("ops.urgent.countSuffix")}
             </span>
           ) : (
             <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-              Không có việc khẩn
+              {t("ops.urgent.none")}
             </span>
           )}
         </h2>
@@ -638,11 +649,11 @@ export default function AdminOperationsPage() {
         {quickViews && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
             {[
-              { label: "Nạp tiền chờ duyệt", value: quickViews.pendingDeposits, icon: "💳", href: "/admin/finance", critical: true },
-              { label: "Đơn chờ mua hàng", value: quickViews.unpaidOrders, icon: "🛒", href: "/admin/orders", critical: false },
-              { label: "Khiếu nại chưa xử lý", value: quickViews.unresolvedIssues, icon: "⚠️", href: "/admin/customer-issues", critical: true },
-              { label: "Gửi thông báo lỗi", value: quickViews.notifFailures, icon: "🔔", href: "/admin/notification-failures", critical: false },
-              { label: "Đơn kẹt >5 ngày", value: quickViews.staleOrders, icon: "⏰", href: "/admin/stuck-shipments", critical: true },
+              { label: t("ops.urgent.pendingDeposits"), value: quickViews.pendingDeposits, icon: "💳", href: "/admin/finance", critical: true },
+              { label: t("ops.urgent.unpaidOrders"), value: quickViews.unpaidOrders, icon: "🛒", href: "/admin/orders", critical: false },
+              { label: t("ops.urgent.unresolvedIssues"), value: quickViews.unresolvedIssues, icon: "⚠️", href: "/admin/customer-issues", critical: true },
+              { label: t("ops.urgent.notifFailures"), value: quickViews.notifFailures, icon: "🔔", href: "/admin/notification-failures", critical: false },
+              { label: t("ops.urgent.staleOrders"), value: quickViews.staleOrders, icon: "⏰", href: "/admin/stuck-shipments", critical: true },
             ].map((card) => {
               const isUrgent = card.value > 0 && card.critical;
               return (
@@ -671,7 +682,7 @@ export default function AdminOperationsPage() {
                         ? "bg-amber-100 text-amber-700"
                         : "bg-green-100 text-green-700"
                   }`}>
-                    {isUrgent ? "Khẩn!" : card.value > 0 ? "Cần xử lý" : "OK"}
+                    {isUrgent ? t("ops.sev.urgent") : card.value > 0 ? t("ops.sev.needAction") : t("ops.sev.ok")}
                   </span>
                 </Link>
               );
@@ -686,57 +697,57 @@ export default function AdminOperationsPage() {
       {quickViews && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            📋 Bảng kiểm vận hành hàng ngày
+            {`📋 ${t("ops.checklist.title")}`}
           </h2>
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div className="divide-y divide-slate-100">
               {[
                 {
-                  label: "Nạp tiền chờ duyệt",
+                  label: t("ops.checklist.pendingDeposits"),
                   value: quickViews.pendingDeposits,
                   icon: "💳",
                   href: "/admin/finance",
-                  desc: "Khách đã chuyển khoản, chờ admin xác nhận",
+                  desc: t("ops.checklist.pendingDepositsDesc"),
                   urgent: true,
                 },
                 {
-                  label: "Đơn mới — cần mua hàng",
+                  label: t("ops.checklist.newOrders"),
                   value: quickViews.unpaidOrders,
                   icon: "🛒",
                   href: "/admin/orders",
-                  desc: "Đơn PENDING chờ đặt mua từ nhà cung cấp",
+                  desc: t("ops.checklist.newOrdersDesc"),
                   urgent: false,
                 },
                 {
-                  label: "Đơn thiếu mã vận đơn",
+                  label: t("ops.checklist.missingTracking"),
                   value: quickViews.ordersMissingTracking,
                   icon: "🔍",
                   href: "/admin/stuck-shipments",
-                  desc: "Đã mua nhưng chưa nhập tracking TQ",
+                  desc: t("ops.checklist.missingTrackingDesc"),
                   urgent: false,
                 },
                 {
-                  label: "Đơn kẹt quá 5 ngày",
+                  label: t("ops.checklist.staleOrders"),
                   value: quickViews.staleOrders,
                   icon: "⏰",
                   href: "/admin/stuck-shipments",
-                  desc: "Không cập nhật trạng thái >5 ngày — cần kiểm tra",
+                  desc: t("ops.checklist.staleOrdersDesc"),
                   urgent: true,
                 },
                 {
-                  label: "Đã về kho VN — chờ giao",
+                  label: t("ops.checklist.arrivedVN"),
                   value: quickViews.allAtVietnamWh,
                   icon: "🏗️",
                   href: "/admin/orders",
-                  desc: "Hàng đã đến kho VN, cần sắp xếp giao khách",
+                  desc: t("ops.checklist.arrivedVNDesc"),
                   urgent: false,
                 },
                 {
-                  label: "Đơn ưu tiên cao / Khẩn",
+                  label: t("ops.checklist.highPriority"),
                   value: quickViews.highPriorityActive,
                   icon: "🔴",
                   href: "/admin/orders",
-                  desc: "Đơn HIGH hoặc URGENT đang xử lý",
+                  desc: t("ops.checklist.highPriorityDesc"),
                   urgent: true,
                 },
               ].map((item) => {
@@ -766,7 +777,7 @@ export default function AdminOperationsPage() {
                             ? "bg-amber-100 text-amber-700"
                             : "bg-green-100 text-green-700"
                       }`}>
-                        {isRed ? "Khẩn!" : hasItems ? "Cần xem" : "OK"}
+                        {isRed ? t("ops.sev.urgent") : hasItems ? t("ops.sev.needReview") : t("ops.sev.ok")}
                       </span>
                     </div>
                   </Link>
@@ -775,10 +786,10 @@ export default function AdminOperationsPage() {
             </div>
             <div className="px-3 sm:px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
               <span className="text-[11px] text-slate-400">
-                Đơn mới hôm nay: <span className="font-semibold text-slate-600">{quickViews.newOrdersToday}</span>
+                {t("ops.checklist.newOrdersToday")}: <span className="font-semibold text-slate-600">{quickViews.newOrdersToday}</span>
               </span>
               <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">
-                Xem tất cả đơn hàng →
+                {t("ops.checklist.viewAllOrders")}
               </Link>
             </div>
           </div>
@@ -791,7 +802,7 @@ export default function AdminOperationsPage() {
       {slaData && slaData.alerts.length > 0 && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            🎯 Cảnh báo SLA vận hành
+            {`🎯 ${t("ops.slaAlert.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               slaData.alerts.some((a) => a.severity === "URGENT")
                 ? "bg-red-600 text-white animate-pulse"
@@ -799,7 +810,7 @@ export default function AdminOperationsPage() {
                   ? "bg-red-100 text-red-700"
                   : "bg-amber-100 text-amber-700"
             }`}>
-              {slaData.totalAlerts} đơn cần chú ý
+              {slaData.totalAlerts} {t("ops.slaAlert.countSuffix")}
             </span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -811,7 +822,7 @@ export default function AdminOperationsPage() {
                 LOW: { border: "border-slate-200", bg: "bg-slate-50", badge: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
               };
               const c = sevColors[alert.severity] || sevColors.LOW;
-              const sevLabel: Record<string, string> = { URGENT: "Khẩn cấp", HIGH: "Cao", MEDIUM: "Trung bình", LOW: "Thấp" };
+              const sevLabel: Record<string, string> = { URGENT: t("ops.sev.urgentFull"), HIGH: t("ops.sev.high"), MEDIUM: t("ops.sev.mediumFull"), LOW: t("ops.sev.low") };
               return (
                 <div key={alert.key} className={`rounded-xl border p-3 ${c.border} ${c.bg}`}>
                   <div className="flex items-center gap-2 mb-2">
@@ -841,7 +852,7 @@ export default function AdminOperationsPage() {
                     ))}
                     {alert.orders.length > 4 && (
                       <div className="text-[10px] text-slate-400 pt-0.5">
-                        +{alert.orders.length - 4} đơn khác
+                        +{alert.orders.length - 4} {t("ops.slaAlert.moreOrders")}
                       </div>
                     )}
                   </div>
@@ -858,7 +869,7 @@ export default function AdminOperationsPage() {
       {customerIntel && customerIntel.customers.length > 0 && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            👥 Khách hàng cần chú ý
+            {`👥 ${t("ops.custWatch.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               customerIntel.customers.some((c) => c.severity === "URGENT")
                 ? "bg-red-600 text-white animate-pulse"
@@ -866,7 +877,7 @@ export default function AdminOperationsPage() {
                   ? "bg-red-100 text-red-700"
                   : "bg-amber-100 text-amber-700"
             }`}>
-              {customerIntel.total} khách
+              {customerIntel.total} {t("ops.custWatch.countSuffix")}
             </span>
           </h2>
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -906,16 +917,16 @@ export default function AdminOperationsPage() {
                       )}
                       {c.orderCount !== null && (
                         <span className="text-[10px] text-slate-400 hidden sm:block">
-                          {c.orderCount} đơn
+                          {c.orderCount} {t("ops.custWatch.ordersSuffix")}
                         </span>
                       )}
                       {c.issueCount !== null && (
                         <span className="text-[10px] text-slate-400 hidden sm:block">
-                          {c.issueCount} KN
+                          {c.issueCount} {t("ops.custWatch.issuesSuffix")}
                         </span>
                       )}
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${s.badge}`}>
-                        {c.severity === "URGENT" ? "Khẩn!" : c.severity === "HIGH" ? "Cao" : c.severity === "MEDIUM" ? "TB" : "Thấp"}
+                        {c.severity === "URGENT" ? t("ops.sev.urgent") : c.severity === "HIGH" ? t("ops.sev.high") : c.severity === "MEDIUM" ? t("ops.sev.medium") : t("ops.sev.low")}
                       </span>
                     </div>
                   </Link>
@@ -925,7 +936,7 @@ export default function AdminOperationsPage() {
             {customerIntel.total > customerIntel.customers.length && (
               <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
                 <span className="text-[11px] text-slate-400">
-                  Hiển thị {customerIntel.customers.length}/{customerIntel.total} khách hàng
+                  {t("ops.custWatch.showingItems").replace("{shown}", String(customerIntel.customers.length)).replace("{total}", String(customerIntel.total))}
                 </span>
               </div>
             )}
@@ -939,7 +950,7 @@ export default function AdminOperationsPage() {
       {warehouseData && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            🏭 Hiệu suất kho hôm nay
+            {`🏭 ${t("ops.warehouse.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               warehouseData.bottleneck.level === "red"
                 ? "bg-red-600 text-white animate-pulse"
@@ -954,12 +965,12 @@ export default function AdminOperationsPage() {
           {/* KPI cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-3">
             {[
-              { label: "Kiện nhập hôm nay", value: warehouseData.today.packagesCreated, icon: "📦", href: "/admin/packages" },
-              { label: "Đơn xử lý hôm nay", value: warehouseData.today.ordersProcessed, icon: "✅", href: "/admin/orders" },
-              { label: "Hoạt động kho TQ", value: warehouseData.today.chinaActivity, icon: "🇨🇳", href: "/admin/packages" },
-              { label: "Hoạt động kho VN", value: warehouseData.today.vietnamActivity, icon: "🇻🇳", href: "/admin/packages" },
-              { label: "Thiếu cân", value: warehouseData.warehouse.missingWeight, icon: "⚖️", href: "/admin/packages", warn: warehouseData.warehouse.missingWeight > 0 },
-              { label: "Kiện kẹt", value: warehouseData.warehouse.stuckAtChina + warehouseData.warehouse.stuckAtVietnam, icon: "⏳", href: "/admin/stuck-shipments", warn: (warehouseData.warehouse.stuckAtChina + warehouseData.warehouse.stuckAtVietnam) > 0 },
+              { label: t("ops.warehouse.packagesCreated"), value: warehouseData.today.packagesCreated, icon: "📦", href: "/admin/packages" },
+              { label: t("ops.warehouse.ordersProcessed"), value: warehouseData.today.ordersProcessed, icon: "✅", href: "/admin/orders" },
+              { label: t("ops.warehouse.chinaActivity"), value: warehouseData.today.chinaActivity, icon: "🇨🇳", href: "/admin/packages" },
+              { label: t("ops.warehouse.vietnamActivity"), value: warehouseData.today.vietnamActivity, icon: "🇻🇳", href: "/admin/packages" },
+              { label: t("ops.warehouse.missingWeight"), value: warehouseData.warehouse.missingWeight, icon: "⚖️", href: "/admin/packages", warn: warehouseData.warehouse.missingWeight > 0 },
+              { label: t("ops.warehouse.stuckPackages"), value: warehouseData.warehouse.stuckAtChina + warehouseData.warehouse.stuckAtVietnam, icon: "⏳", href: "/admin/stuck-shipments", warn: (warehouseData.warehouse.stuckAtChina + warehouseData.warehouse.stuckAtVietnam) > 0 },
             ].map((card) => (
               <Link
                 key={card.label}
@@ -993,13 +1004,13 @@ export default function AdminOperationsPage() {
                   : "border-green-200 bg-green-50"
             }`}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-slate-700">🇨🇳 Kho Trung Quốc</span>
-                <span className="text-[10px] text-slate-500">{warehouseData.warehouse.totalAtChina} kiện</span>
+                <span className="text-xs font-semibold text-slate-700">{`🇨🇳 ${t("ops.warehouse.chinaWh")}`}</span>
+                <span className="text-[10px] text-slate-500">{warehouseData.warehouse.totalAtChina} {t("ops.warehouse.packagesSuffix")}</span>
               </div>
               <div className="text-[11px] text-slate-500">
                 {warehouseData.warehouse.stuckAtChina > 0
-                  ? <span className="text-amber-700 font-semibold">{warehouseData.warehouse.stuckAtChina} kiện kẹt &gt;5 ngày</span>
-                  : <span className="text-green-600">Không kẹt</span>}
+                  ? <span className="text-amber-700 font-semibold">{warehouseData.warehouse.stuckAtChina} {t("ops.warehouse.stuckChina")}</span>
+                  : <span className="text-green-600">{t("ops.warehouse.noStuck")}</span>}
               </div>
             </div>
             <div className={`rounded-xl border p-3 ${
@@ -1010,13 +1021,13 @@ export default function AdminOperationsPage() {
                   : "border-green-200 bg-green-50"
             }`}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-slate-700">🇻🇳 Kho Việt Nam</span>
-                <span className="text-[10px] text-slate-500">{warehouseData.warehouse.totalAtVietnam} kiện</span>
+                <span className="text-xs font-semibold text-slate-700">{`🇻🇳 ${t("ops.warehouse.vietnamWh")}`}</span>
+                <span className="text-[10px] text-slate-500">{warehouseData.warehouse.totalAtVietnam} {t("ops.warehouse.packagesSuffix")}</span>
               </div>
               <div className="text-[11px] text-slate-500">
                 {warehouseData.warehouse.stuckAtVietnam > 0
-                  ? <span className="text-amber-700 font-semibold">{warehouseData.warehouse.stuckAtVietnam} kiện kẹt &gt;3 ngày</span>
-                  : <span className="text-green-600">Không kẹt</span>}
+                  ? <span className="text-amber-700 font-semibold">{warehouseData.warehouse.stuckAtVietnam} {t("ops.warehouse.stuckVietnam")}</span>
+                  : <span className="text-green-600">{t("ops.warehouse.noStuck")}</span>}
               </div>
             </div>
           </div>
@@ -1025,19 +1036,19 @@ export default function AdminOperationsPage() {
           {warehouseData.recentActivity.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
               <div className="px-3 sm:px-4 py-2 bg-slate-50 border-b border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-600">Hoạt động gần nhất</span>
+                <span className="text-[11px] font-semibold text-slate-600">{t("ops.warehouse.recentActivity")}</span>
               </div>
               <div className="divide-y divide-slate-100">
                 {warehouseData.recentActivity.slice(0, 5).map((a, idx) => {
                   const statusLabels: Record<string, string> = {
-                    ARRIVED_CHINA_WH: "Đến kho TQ",
-                    PACKING: "Đóng gói",
-                    SHIPPING_TO_VIETNAM: "Gửi về VN",
-                    ARRIVED_VIETNAM_WH: "Đến kho VN",
-                    OUT_FOR_DELIVERY: "Đang giao",
-                    COMPLETED: "Hoàn thành",
-                    PURCHASED: "Đã mua",
-                    SELLER_SHIPPED: "NCC gửi",
+                    ARRIVED_CHINA_WH: t("ops.warehouse.statusArrivedCN"),
+                    PACKING: t("ops.warehouse.statusPacking"),
+                    SHIPPING_TO_VIETNAM: t("ops.warehouse.statusShippingVN"),
+                    ARRIVED_VIETNAM_WH: t("ops.warehouse.statusArrivedVN"),
+                    OUT_FOR_DELIVERY: t("ops.warehouse.statusDelivering"),
+                    COMPLETED: t("ops.warehouse.statusCompleted"),
+                    PURCHASED: t("ops.warehouse.statusPurchased"),
+                    SELLER_SHIPPED: t("ops.warehouse.statusSellerShipped"),
                   };
                   return (
                     <Link
@@ -1058,7 +1069,7 @@ export default function AdminOperationsPage() {
               {warehouseData.recentActivity.length > 5 && (
                 <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
                   <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">
-                    Xem thêm →
+                    {t("ops.warehouse.viewMore")}
                   </Link>
                 </div>
               )}
@@ -1067,11 +1078,11 @@ export default function AdminOperationsPage() {
 
           {/* Quick links */}
           <div className="flex items-center gap-2 mt-3">
-            <Link href="/scanner" className="text-[11px] text-blue-600 hover:underline">Quét kho →</Link>
+            <Link href="/scanner" className="text-[11px] text-blue-600 hover:underline">{t("ops.warehouse.scanWh")}</Link>
             <span className="text-slate-300">|</span>
-            <Link href="/admin/packages" className="text-[11px] text-blue-600 hover:underline">Quản lý kiện →</Link>
+            <Link href="/admin/packages" className="text-[11px] text-blue-600 hover:underline">{t("ops.warehouse.managePackages")}</Link>
             <span className="text-slate-300">|</span>
-            <Link href="/admin/stuck-shipments" className="text-[11px] text-blue-600 hover:underline">Đơn kẹt →</Link>
+            <Link href="/admin/stuck-shipments" className="text-[11px] text-blue-600 hover:underline">{t("ops.warehouse.stuckOrders")}</Link>
           </div>
         </section>
       )}
@@ -1082,7 +1093,7 @@ export default function AdminOperationsPage() {
       {financeAlerts && financeAlerts.alerts.length > 0 && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            💰 Cảnh báo tài chính
+            {`💰 ${t("ops.finance.title")}`}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               financeAlerts.alerts.some((a) => a.severity === "URGENT")
                 ? "bg-red-600 text-white animate-pulse"
@@ -1090,18 +1101,18 @@ export default function AdminOperationsPage() {
                   ? "bg-red-100 text-red-700"
                   : "bg-amber-100 text-amber-700"
             }`}>
-              {financeAlerts.total} cảnh báo
+              {financeAlerts.total} {t("ops.finance.countSuffix")}
             </span>
           </h2>
 
           {/* Summary bar */}
           <div className="flex flex-wrap gap-2 mb-3">
             {[
-              { label: "Tổng nợ", value: `${(financeAlerts.summary.totalDebt / 1000000).toFixed(1)}M`, show: financeAlerts.summary.totalDebt > 0, color: "bg-red-100 text-red-700" },
-              { label: "Số dư âm", value: financeAlerts.summary.negativeCount, show: financeAlerts.summary.negativeCount > 0, color: "bg-red-100 text-red-700" },
-              { label: "Nạp chờ lâu", value: financeAlerts.summary.staleTopUpCount, show: financeAlerts.summary.staleTopUpCount > 0, color: "bg-amber-100 text-amber-700" },
-              { label: "Chưa xác nhận giá", value: financeAlerts.summary.unconfirmedCount, show: financeAlerts.summary.unconfirmedCount > 0, color: "bg-amber-100 text-amber-700" },
-              { label: "Hoàn tiền hôm nay", value: financeAlerts.summary.refundCount, show: financeAlerts.summary.refundCount > 0, color: "bg-blue-100 text-blue-700" },
+              { label: t("ops.finance.totalDebt"), value: `${(financeAlerts.summary.totalDebt / 1000000).toFixed(1)}M`, show: financeAlerts.summary.totalDebt > 0, color: "bg-red-100 text-red-700" },
+              { label: t("ops.finance.negativeBalance"), value: financeAlerts.summary.negativeCount, show: financeAlerts.summary.negativeCount > 0, color: "bg-red-100 text-red-700" },
+              { label: t("ops.finance.staleTopUp"), value: financeAlerts.summary.staleTopUpCount, show: financeAlerts.summary.staleTopUpCount > 0, color: "bg-amber-100 text-amber-700" },
+              { label: t("ops.finance.unconfirmedPricing"), value: financeAlerts.summary.unconfirmedCount, show: financeAlerts.summary.unconfirmedCount > 0, color: "bg-amber-100 text-amber-700" },
+              { label: t("ops.finance.refundsToday"), value: financeAlerts.summary.refundCount, show: financeAlerts.summary.refundCount > 0, color: "bg-blue-100 text-blue-700" },
             ].filter((s) => s.show).map((s) => (
               <span key={s.label} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.color}`}>
                 {s.label}: {s.value}
@@ -1145,7 +1156,7 @@ export default function AdminOperationsPage() {
                         </span>
                       )}
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${s.badge}`}>
-                        {a.severity === "URGENT" ? "Khẩn!" : a.severity === "HIGH" ? "Cao" : a.severity === "MEDIUM" ? "TB" : "Thấp"}
+                        {a.severity === "URGENT" ? t("ops.sev.urgent") : a.severity === "HIGH" ? t("ops.sev.high") : a.severity === "MEDIUM" ? t("ops.sev.medium") : t("ops.sev.low")}
                       </span>
                     </div>
                   </Link>
@@ -1155,7 +1166,7 @@ export default function AdminOperationsPage() {
             {financeAlerts.total > financeAlerts.alerts.length && (
               <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 text-center">
                 <span className="text-[11px] text-slate-400">
-                  Hiển thị {financeAlerts.alerts.length}/{financeAlerts.total} cảnh báo
+                  {t("ops.finance.showingItems").replace("{shown}", String(financeAlerts.alerts.length)).replace("{total}", String(financeAlerts.total))}
                 </span>
               </div>
             )}
@@ -1163,11 +1174,11 @@ export default function AdminOperationsPage() {
 
           {/* Quick links */}
           <div className="flex items-center gap-2 mt-2">
-            <Link href="/admin/finance" className="text-[11px] text-blue-600 hover:underline">Tài chính →</Link>
+            <Link href="/admin/finance" className="text-[11px] text-blue-600 hover:underline">{t("ops.finance.linkFinance")}</Link>
             <span className="text-slate-300">|</span>
-            <Link href="/admin/users" className="text-[11px] text-blue-600 hover:underline">Khách hàng →</Link>
+            <Link href="/admin/users" className="text-[11px] text-blue-600 hover:underline">{t("ops.finance.linkCustomers")}</Link>
             <span className="text-slate-300">|</span>
-            <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">Đơn hàng →</Link>
+            <Link href="/admin/orders" className="text-[11px] text-blue-600 hover:underline">{t("ops.finance.linkOrders")}</Link>
           </div>
         </section>
       )}
@@ -1431,24 +1442,24 @@ export default function AdminOperationsPage() {
       <section className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            🚚 Đơn hàng cần xử lý
+            {`🚚 ${t("ops.stuck.title")}`}
             {totalStuck > 0 ? (
               <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                {totalStuck} đơn
+                {totalStuck} {t("ops.stuck.countSuffix")}
               </span>
             ) : (
               <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Tất cả bình thường
+                {t("ops.stuck.allNormal")}
               </span>
             )}
           </h2>
           <Link href="/admin/stuck-shipments" className="text-xs text-blue-600 hover:underline">
-            Xem chi tiết →
+            {t("ops.stuck.viewDetail")}
           </Link>
         </div>
         {activeStuck.length === 0 ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center text-sm text-green-700">
-            ✅ Không có đơn hàng bị kẹt — vận hành bình thường
+            {`✅ ${t("ops.stuck.noStuck")}`}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1472,7 +1483,7 @@ export default function AdminOperationsPage() {
                     </div>
                   ))}
                   {cat.items.length > 3 && (
-                    <div className="text-[10px] text-slate-400">+{cat.items.length - 3} đơn khác</div>
+                    <div className="text-[10px] text-slate-400">+{cat.items.length - 3} {t("ops.stuck.moreOrders")}</div>
                   )}
                 </div>
               </div>
@@ -1489,24 +1500,24 @@ export default function AdminOperationsPage() {
       }`}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            💳 Nạp tiền chờ duyệt
+            {`💳 ${t("ops.topup.title")}`}
             {pendingTopUps.length > 0 ? (
               <span className="text-[10px] font-bold bg-red-600 text-white px-2.5 py-0.5 rounded-full animate-pulse shadow-sm">
-                {pendingTopUps.length} chờ duyệt!
+                {pendingTopUps.length} {t("ops.topup.countPending")}
               </span>
             ) : (
               <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Đã duyệt hết
+                {t("ops.topup.allApproved")}
               </span>
             )}
           </h2>
           <Link href="/admin/finance" className="text-xs font-medium text-blue-600 hover:underline flex items-center gap-1">
-            Duyệt ngay →
+            {t("ops.topup.approveNow")}
           </Link>
         </div>
         {pendingTopUps.length === 0 ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center text-sm text-green-700">
-            Tất cả yêu cầu nạp tiền đã được duyệt
+            {t("ops.topup.allDone")}
           </div>
         ) : (
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -1522,9 +1533,9 @@ export default function AdminOperationsPage() {
                   </div>
                   <div className="text-right shrink-0 ml-2">
                     <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded">
-                      Chờ duyệt
+                      {t("ops.topup.pendingBadge")}
                     </span>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{timeAgo(req.createdAt)} trước</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{timeAgo(req.createdAt)} {t("ops.topup.ago")}</div>
                   </div>
                 </div>
               ))}
@@ -1532,7 +1543,7 @@ export default function AdminOperationsPage() {
             {pendingTopUps.length > 5 && (
               <div className="px-4 py-2 bg-slate-50 text-center">
                 <Link href="/admin/finance" className="text-xs text-blue-600 hover:underline">
-                  +{pendingTopUps.length - 5} yêu cầu khác →
+                  +{pendingTopUps.length - 5} {t("ops.topup.moreRequests")}
                 </Link>
               </div>
             )}
@@ -1546,14 +1557,14 @@ export default function AdminOperationsPage() {
       {quickViews && (
         <section className="mb-6">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            🟡 Cảnh báo vận hành
+            {`🟡 ${t("ops.warnings.title")}`}
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {[
-              { label: "Kho TQ kẹt >5 ngày", value: quickViews.stuckChina, icon: "🏭", level: quickViews.stuckChina > 0 ? "yellow" : "green" },
-              { label: "Kho VN kẹt >3 ngày", value: quickViews.stuckVietnam, icon: "🏗️", level: quickViews.stuckVietnam > 0 ? "yellow" : "green" },
-              { label: "Chatbot chưa trả lời", value: quickViews.unansweredQuestions, icon: "❓", level: quickViews.unansweredQuestions > 0 ? "yellow" : "green" },
-              { label: "Ghi chú nội bộ chờ xử lý", value: quickViews.unresolvedNotes, icon: "🔖", level: quickViews.unresolvedNotes > 0 ? "yellow" : "green" },
+              { label: t("ops.warnings.stuckChina"), value: quickViews.stuckChina, icon: "🏭", level: quickViews.stuckChina > 0 ? "yellow" : "green" },
+              { label: t("ops.warnings.stuckVietnam"), value: quickViews.stuckVietnam, icon: "🏗️", level: quickViews.stuckVietnam > 0 ? "yellow" : "green" },
+              { label: t("ops.warnings.unanswered"), value: quickViews.unansweredQuestions, icon: "❓", level: quickViews.unansweredQuestions > 0 ? "yellow" : "green" },
+              { label: t("ops.warnings.unresolvedNotes"), value: quickViews.unresolvedNotes, icon: "🔖", level: quickViews.unresolvedNotes > 0 ? "yellow" : "green" },
             ].map((w) => (
               <div key={w.label} className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border ${levelBorder(w.level)}`}>
                 <span className="text-lg">{w.icon}</span>
@@ -1574,30 +1585,30 @@ export default function AdminOperationsPage() {
       <section className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            ⚠️ Khiếu nại khách hàng
+            {`⚠️ ${t("ops.issues.title")}`}
             {(issueCounts["NEW"] || 0) > 0 && (
               <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full animate-pulse">
-                {issueCounts["NEW"]} mới
+                {issueCounts["NEW"]} {t("ops.issues.newCount")}
               </span>
             )}
             {(issueCounts["IN_PROGRESS"] || 0) > 0 && (
               <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                {issueCounts["IN_PROGRESS"]} đang xử lý
+                {issueCounts["IN_PROGRESS"]} {t("ops.issues.inProgressCount")}
               </span>
             )}
             {!issueCounts["NEW"] && !issueCounts["IN_PROGRESS"] && (
               <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Không có khiếu nại
+                {t("ops.issues.noIssues")}
               </span>
             )}
           </h2>
           <Link href="/admin/customer-issues" className="text-xs text-blue-600 hover:underline">
-            Xem khiếu nại →
+            {t("ops.issues.viewIssues")}
           </Link>
         </div>
         {issues.length === 0 ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center text-sm text-green-700">
-            ✅ Không có khiếu nại mới cần xử lý
+            {`✅ ${t("ops.issues.noNewIssues")}`}
           </div>
         ) : (
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -1612,7 +1623,7 @@ export default function AdminOperationsPage() {
                       </span>
                       {issue.priority === "HIGH" && (
                         <span className="text-[10px] font-semibold bg-red-100 text-red-600 px-1.5 py-0.5 rounded">
-                          🔴 Ưu tiên cao
+                          {`🔴 ${t("ops.sev.highPriority")}`}
                         </span>
                       )}
                     </div>
@@ -1625,9 +1636,9 @@ export default function AdminOperationsPage() {
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                       issue.status === "NEW" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
                     }`}>
-                      {issue.status === "NEW" ? "🔴 Mới" : "🟡 Đang xử lý"}
+                      {issue.status === "NEW" ? `🔴 ${t("ops.issues.statusNew")}` : `🟡 ${t("ops.issues.statusInProgress")}`}
                     </span>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{timeAgo(issue.createdAt)} trước</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{timeAgo(issue.createdAt)} {t("ops.topup.ago")}</div>
                   </div>
                 </div>
               ))}
@@ -1635,7 +1646,7 @@ export default function AdminOperationsPage() {
             {issues.length > 5 && (
               <div className="px-4 py-2 bg-slate-50 text-center">
                 <Link href="/admin/customer-issues" className="text-xs text-blue-600 hover:underline">
-                  +{issues.length - 5} khiếu nại khác →
+                  +{issues.length - 5} {t("ops.issues.moreIssues")}
                 </Link>
               </div>
             )}
@@ -1649,24 +1660,24 @@ export default function AdminOperationsPage() {
       <section className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            🔔 Lỗi thông báo
+            {`🔔 ${t("ops.notif.title")}`}
             {unresolvedNotifCount > 0 ? (
               <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                {unresolvedNotifCount} chưa xử lý
+                {unresolvedNotifCount} {t("ops.notif.unresolvedCount")}
               </span>
             ) : (
               <span className="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Không có lỗi
+                {t("ops.notif.noErrors")}
               </span>
             )}
           </h2>
           <Link href="/admin/notification-failures" className="text-xs text-blue-600 hover:underline">
-            Xem lỗi thông báo →
+            {t("ops.notif.viewErrors")}
           </Link>
         </div>
         {notifFailures.length === 0 ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center text-sm text-green-700">
-            ✅ Tất cả thông báo gửi thành công
+            {`✅ ${t("ops.notif.allSuccess")}`}
           </div>
         ) : (
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -1687,7 +1698,7 @@ export default function AdminOperationsPage() {
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[300px]">
-                      {f.shortReason || "Không rõ lỗi"}
+                      {f.shortReason || t("ops.notif.unknownError")}
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-2">
@@ -1971,14 +1982,14 @@ export default function AdminOperationsPage() {
         <h2 className="text-sm font-bold text-slate-900 mb-3">{`⚡ ${t("ops.quickActions")}`}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { label: "Quản lý đơn hàng", href: "/admin/orders", icon: "📦", color: "bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700" },
-            { label: "Duyệt nạp tiền", href: "/admin/finance", icon: "💳", color: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100 text-emerald-700" },
-            { label: "Đơn kẹt / Tracking", href: "/admin/stuck-shipments", icon: "🚚", color: "bg-orange-50 border-orange-200 hover:bg-orange-100 text-orange-700" },
-            { label: "Quét kho", href: "/scanner", icon: "📷", color: "bg-violet-50 border-violet-200 hover:bg-violet-100 text-violet-700" },
-            { label: "Khiếu nại khách", href: "/admin/customer-issues", icon: "⚠️", color: "bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-700" },
-            { label: "Lỗi thông báo", href: "/admin/notification-failures", icon: "🔔", color: "bg-red-50 border-red-200 hover:bg-red-100 text-red-700" },
-            { label: "Quản lý khách hàng", href: "/admin/users", icon: "👥", color: "bg-cyan-50 border-cyan-200 hover:bg-cyan-100 text-cyan-700" },
-            { label: "Quản lý kiện hàng", href: "/admin/packages", icon: "📋", color: "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700" },
+            { label: t("ops.qa.orders"), href: "/admin/orders", icon: "📦", color: "bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700" },
+            { label: t("ops.qa.approveTopUp"), href: "/admin/finance", icon: "💳", color: "bg-emerald-50 border-emerald-200 hover:bg-emerald-100 text-emerald-700" },
+            { label: t("ops.qa.stuckTracking"), href: "/admin/stuck-shipments", icon: "🚚", color: "bg-orange-50 border-orange-200 hover:bg-orange-100 text-orange-700" },
+            { label: t("ops.qa.scanWh"), href: "/scanner", icon: "📷", color: "bg-violet-50 border-violet-200 hover:bg-violet-100 text-violet-700" },
+            { label: t("ops.qa.customerIssues"), href: "/admin/customer-issues", icon: "⚠️", color: "bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-700" },
+            { label: t("ops.qa.notifErrors"), href: "/admin/notification-failures", icon: "🔔", color: "bg-red-50 border-red-200 hover:bg-red-100 text-red-700" },
+            { label: t("ops.qa.manageCustomers"), href: "/admin/users", icon: "👥", color: "bg-cyan-50 border-cyan-200 hover:bg-cyan-100 text-cyan-700" },
+            { label: t("ops.qa.managePackages"), href: "/admin/packages", icon: "📋", color: "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700" },
           ].map((action) => (
             <Link
               key={action.href}

@@ -861,6 +861,184 @@ const zh: Record<string, string> = {
   "sysHealth.smoke.errors": "错误",
   "sysHealth.smoke.hint": "点击'运行检查'以验证部署后系统状态。",
 
+  // Operations — Time labels
+  "ops.time.justNow": "刚刚",
+  "ops.time.minutesSuffix": "分钟",
+  "ops.time.hoursSuffix": "小时",
+  "ops.time.daysSuffix": "天",
+
+  // Operations — Issue type labels
+  "ops.issueType.shortage": "缺货",
+  "ops.issueType.slowDelivery": "配送慢",
+  "ops.issueType.wrongWeight": "称重错误",
+  "ops.issueType.damaged": "货物损坏",
+  "ops.issueType.notReceived": "未收到",
+  "ops.issueType.wrongFee": "费用错误",
+  "ops.issueType.chatbot": "聊天机器人",
+  "ops.issueType.other": "其他",
+
+  // Operations — Backup errors
+  "ops.backup.failedDefault": "备份失败",
+  "ops.backup.connError": "连接错误 — 无法备份",
+
+  // Operations — Header / Global
+  "ops.alertOn": "提醒：开启",
+  "ops.alertOff": "提醒：关闭",
+  "ops.alertOnTitle": "关闭紧急提醒声音",
+  "ops.alertOffTitle": "开启紧急提醒声音",
+  "ops.autoUpdate": "自动更新",
+
+  // Operations — Severity labels (shared)
+  "ops.sev.urgent": "紧急!",
+  "ops.sev.high": "高",
+  "ops.sev.medium": "中",
+  "ops.sev.low": "低",
+  "ops.sev.urgentFull": "紧急",
+  "ops.sev.mediumFull": "中等",
+  "ops.sev.needAction": "需处理",
+  "ops.sev.needReview": "待查看",
+  "ops.sev.ok": "OK",
+  "ops.sev.highPriority": "高优先级",
+
+  // Operations — Section 0: Inbox
+  "ops.inbox.title": "今日待处理事项",
+  "ops.inbox.countSuffix": "项",
+  "ops.inbox.showingItems": "显示 {shown}/{total} 项 — 逐一查看处理",
+
+  // Operations — Section 1: Urgent
+  "ops.urgent.title": "紧急待办",
+  "ops.urgent.countSuffix": "项紧急",
+  "ops.urgent.none": "无紧急事项",
+  "ops.urgent.pendingDeposits": "充值待审批",
+  "ops.urgent.unpaidOrders": "待采购订单",
+  "ops.urgent.unresolvedIssues": "未解决投诉",
+  "ops.urgent.notifFailures": "通知发送失败",
+  "ops.urgent.staleOrders": "滞留 >5 天",
+
+  // Operations — Section 1.5: Daily checklist
+  "ops.checklist.title": "每日运营检查清单",
+  "ops.checklist.pendingDeposits": "充值待审批",
+  "ops.checklist.pendingDepositsDesc": "客户已转账，等待管理员确认",
+  "ops.checklist.newOrders": "新订单 — 需采购",
+  "ops.checklist.newOrdersDesc": "PENDING 订单等待向供应商采购",
+  "ops.checklist.missingTracking": "缺少运单号",
+  "ops.checklist.missingTrackingDesc": "已采购但未录入中国运单号",
+  "ops.checklist.staleOrders": "滞留超过5天",
+  "ops.checklist.staleOrdersDesc": "超过5天未更新状态 — 需检查",
+  "ops.checklist.arrivedVN": "已到越南仓 — 待配送",
+  "ops.checklist.arrivedVNDesc": "货物已到越南仓，安排配送给客户",
+  "ops.checklist.highPriority": "高优先级 / 紧急订单",
+  "ops.checklist.highPriorityDesc": "HIGH 或 URGENT 订单处理中",
+  "ops.checklist.newOrdersToday": "今日新订单",
+  "ops.checklist.viewAllOrders": "查看所有订单 →",
+
+  // Operations — Section 1.8: SLA alerts
+  "ops.slaAlert.title": "SLA 运营警报",
+  "ops.slaAlert.countSuffix": "订单需关注",
+  "ops.slaAlert.moreOrders": "更多订单",
+
+  // Operations — Section 1.9: Customer attention
+  "ops.custWatch.title": "需关注客户",
+  "ops.custWatch.countSuffix": "客户",
+  "ops.custWatch.ordersSuffix": "订单",
+  "ops.custWatch.issuesSuffix": "投诉",
+  "ops.custWatch.showingItems": "显示 {shown}/{total} 位客户",
+
+  // Operations — Section 1.95: Warehouse performance
+  "ops.warehouse.title": "今日仓库绩效",
+  "ops.warehouse.packagesCreated": "今日入库包裹",
+  "ops.warehouse.ordersProcessed": "今日处理订单",
+  "ops.warehouse.chinaActivity": "中国仓活动",
+  "ops.warehouse.vietnamActivity": "越南仓活动",
+  "ops.warehouse.missingWeight": "缺少称重",
+  "ops.warehouse.stuckPackages": "滞留包裹",
+  "ops.warehouse.chinaWh": "中国仓库",
+  "ops.warehouse.vietnamWh": "越南仓库",
+  "ops.warehouse.packagesSuffix": "包裹",
+  "ops.warehouse.stuckChina": "包裹滞留 >5 天",
+  "ops.warehouse.stuckVietnam": "包裹滞留 >3 天",
+  "ops.warehouse.noStuck": "无滞留",
+  "ops.warehouse.recentActivity": "最近活动",
+  "ops.warehouse.viewMore": "查看更多 →",
+  "ops.warehouse.scanWh": "扫描仓库 →",
+  "ops.warehouse.managePackages": "管理包裹 →",
+  "ops.warehouse.stuckOrders": "滞留订单 →",
+  "ops.warehouse.statusArrivedCN": "到达中国仓",
+  "ops.warehouse.statusPacking": "打包中",
+  "ops.warehouse.statusShippingVN": "运往越南",
+  "ops.warehouse.statusArrivedVN": "到达越南仓",
+  "ops.warehouse.statusDelivering": "配送中",
+  "ops.warehouse.statusCompleted": "已完成",
+  "ops.warehouse.statusPurchased": "已采购",
+  "ops.warehouse.statusSellerShipped": "卖家已发货",
+
+  // Operations — Section 1.97: Finance alerts
+  "ops.finance.title": "财务警报",
+  "ops.finance.countSuffix": "警报",
+  "ops.finance.totalDebt": "总欠款",
+  "ops.finance.negativeBalance": "余额为负",
+  "ops.finance.staleTopUp": "充值等待过久",
+  "ops.finance.unconfirmedPricing": "未确认定价",
+  "ops.finance.refundsToday": "今日退款",
+  "ops.finance.showingItems": "显示 {shown}/{total} 条警报",
+  "ops.finance.linkFinance": "财务 →",
+  "ops.finance.linkCustomers": "客户 →",
+  "ops.finance.linkOrders": "订单 →",
+
+  // Operations — Section 2: Stuck orders
+  "ops.stuck.title": "需处理订单",
+  "ops.stuck.countSuffix": "订单",
+  "ops.stuck.allNormal": "一切正常",
+  "ops.stuck.viewDetail": "查看详情 →",
+  "ops.stuck.noStuck": "无滞留订单 — 运营正常",
+  "ops.stuck.moreOrders": "更多订单",
+
+  // Operations — Section 3: Pending top-ups
+  "ops.topup.title": "充值待审批",
+  "ops.topup.countPending": "待审批!",
+  "ops.topup.allApproved": "全部已审批",
+  "ops.topup.approveNow": "立即审批 →",
+  "ops.topup.allDone": "所有充值请求均已审批",
+  "ops.topup.pendingBadge": "待审批",
+  "ops.topup.ago": "前",
+  "ops.topup.moreRequests": "更多请求 →",
+
+  // Operations — Section 4: Warnings
+  "ops.warnings.title": "运营警告",
+  "ops.warnings.stuckChina": "中国仓滞留 >5 天",
+  "ops.warnings.stuckVietnam": "越南仓滞留 >3 天",
+  "ops.warnings.unanswered": "聊天机器人未回复",
+  "ops.warnings.unresolvedNotes": "内部备注待处理",
+
+  // Operations — Section 5: Customer issues
+  "ops.issues.title": "客户投诉",
+  "ops.issues.newCount": "新",
+  "ops.issues.inProgressCount": "处理中",
+  "ops.issues.noIssues": "无投诉",
+  "ops.issues.viewIssues": "查看投诉 →",
+  "ops.issues.noNewIssues": "无新投诉需处理",
+  "ops.issues.statusNew": "新",
+  "ops.issues.statusInProgress": "处理中",
+  "ops.issues.moreIssues": "更多投诉 →",
+
+  // Operations — Section 6: Notification failures
+  "ops.notif.title": "通知错误",
+  "ops.notif.unresolvedCount": "未处理",
+  "ops.notif.noErrors": "无错误",
+  "ops.notif.viewErrors": "查看通知错误 →",
+  "ops.notif.allSuccess": "所有通知发送成功",
+  "ops.notif.unknownError": "未知错误",
+
+  // Operations — Quick Actions
+  "ops.qa.orders": "管理订单",
+  "ops.qa.approveTopUp": "审批充值",
+  "ops.qa.stuckTracking": "滞留 / 物流",
+  "ops.qa.scanWh": "扫描仓库",
+  "ops.qa.customerIssues": "客户投诉",
+  "ops.qa.notifErrors": "通知错误",
+  "ops.qa.manageCustomers": "管理客户",
+  "ops.qa.managePackages": "管理包裹",
+
   "nav.analyticsSummary": "总览",
   "analytics.summaryTitle": "CRM / 营销 / 支持总览",
   "analytics.leadsBySource": "按来源统计线索",
