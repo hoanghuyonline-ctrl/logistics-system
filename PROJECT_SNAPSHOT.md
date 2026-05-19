@@ -252,6 +252,8 @@
 
 - **Finance Danger Alerts** — Compact "Cảnh báo tài chính" section on Operations Center (`/admin/operations`). New `GET /api/admin/finance-alerts` endpoint detects 6 financial risk signals: (1) Customers with high unpaid debt (>500k VND, severity tiers at 2M/5M). (2) Negative wallet balances (always URGENT). (3) Pending top-up requests older than 24h (severity tiers at 48h/72h). (4) High-value orders (>2M VND) without confirmed pricing. (5) Completed orders with unreconciled customer debt. (6) Today's refunds with amount-based severity. Each alert includes title, short reason, severity (LOW/MEDIUM/HIGH/URGENT), amount, type icon, and quick link. Summary bar shows total debt, negative balance count, stale top-ups, unconfirmed pricing count, and today's refund count. Sorted by severity then amount; capped at 20 results. Section placed between warehouse productivity and stuck orders. Auto-refreshes with existing 30s polling. Hides when no alerts. **No schema changes; no new dependencies; backward compatible.**
 
+- **Backup Health & Disaster Warning** — Compact "An toàn dữ liệu / Backup" section on Operations Center (`/admin/operations`). New `GET /api/admin/backup-health` endpoint checks filesystem for backup files using existing conventions: (1) Database backups in `backups/postgres/postgres-*.sql`. (2) Uploads backups in `backups/uploads/uploads-*.zip`. For each backup type reports: folder exists, latest file name/time, age in hours, file count, total size MB, status (ok/warning/danger/missing) with Vietnamese labels. Warning threshold at 24h, danger at 48h. Overall health computed from both. Shows 7-day retention info. Links to `docs/BACKUP_AND_RECOVERY.md` if it exists. Gracefully handles missing folders. Section placed between finance alerts and stuck orders. Auto-refreshes with existing 30s polling. **No schema changes; no new dependencies; no backup execution; read-only filesystem checks; backward compatible.**
+
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
 ```powershell
 cd logistics-system
@@ -371,6 +373,7 @@ pm2 restart logistics-system
 | `/api/admin/customer-intelligence` | GET | VIP/danger customer signals — debt, delayed orders, issues, SLA, notif failures, inactive VIPs (ADMIN-only) |
 | `/api/admin/warehouse-productivity` | GET | Daily warehouse KPIs — packages/orders processed, China/Vietnam activity, stuck packages, bottleneck label (ADMIN-only) |
 | `/api/admin/finance-alerts` | GET | Finance danger alerts — debt, negative balances, stale top-ups, unconfirmed pricing, unreconciled orders, refunds (ADMIN-only) |
+| `/api/admin/backup-health` | GET | Backup health check — DB/uploads backup file status, age, size, overall health, recovery guide link (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 
 ## Important Prisma Models
