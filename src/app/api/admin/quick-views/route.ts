@@ -28,6 +28,7 @@ export const GET = withErrorHandler(async function GET() {
     allAtVietnamWh,
     newOrdersToday,
     highPriorityActive,
+    newSalesRequests,
   ] = await Promise.all([
     safeQuery(prisma.order.count({ where: { status: "PENDING" } }), 0),
     safeQuery(prisma.order.count({
@@ -65,6 +66,7 @@ export const GET = withErrorHandler(async function GET() {
         status: { notIn: ["COMPLETED", "CANCELLED"] },
       },
     }), 0),
+    safeQuery(prisma.salesRequest.count({ where: { status: "NEW" } }), 0),
   ]);
 
   return jsonResponse({
@@ -81,5 +83,6 @@ export const GET = withErrorHandler(async function GET() {
     allAtVietnamWh,
     newOrdersToday,
     highPriorityActive,
+    newSalesRequests,
   });
 });

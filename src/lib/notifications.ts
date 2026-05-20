@@ -53,4 +53,5 @@ export {
   onCustomerIssueStatusChanged,
   onCustomerVisibleOrderNote,
   onWalletEvent,
+  onSalesRequestStatusChanged,
 } from "./notifications/triggers";

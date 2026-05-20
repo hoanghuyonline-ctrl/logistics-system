@@ -23,6 +23,7 @@ interface QuickViewCounts {
   allAtVietnamWh: number;
   newOrdersToday: number;
   highPriorityActive: number;
+  newSalesRequests: number;
 }
 
 interface TopUpRequest {
@@ -472,6 +473,7 @@ export default function AdminOperationsPage() {
         (qv?.pendingDeposits || 0) +
         (qv?.unresolvedIssues || 0) +
         (qv?.notifFailures || 0) +
+        (qv?.newSalesRequests || 0) +
         stuckTotal;
 
       if (prevUrgentRef.current !== null && newUrgent > prevUrgentRef.current && alertEnabledRef.current) {
@@ -529,6 +531,7 @@ export default function AdminOperationsPage() {
     (quickViews?.pendingDeposits || 0) +
     (quickViews?.unresolvedIssues || 0) +
     (quickViews?.notifFailures || 0) +
+    (quickViews?.newSalesRequests || 0) +
     totalStuck;
 
   return (
@@ -654,13 +657,14 @@ export default function AdminOperationsPage() {
               { label: t("ops.urgent.unresolvedIssues"), value: quickViews.unresolvedIssues, icon: "⚠️", href: "/admin/customer-issues", critical: true },
               { label: t("ops.urgent.notifFailures"), value: quickViews.notifFailures, icon: "🔔", href: "/admin/notification-failures", critical: false },
               { label: t("ops.urgent.staleOrders"), value: quickViews.staleOrders, icon: "⏰", href: "/admin/stuck-shipments", critical: true },
+              { label: t("ops.urgent.newSalesRequests"), value: quickViews.newSalesRequests, icon: "🛍️", href: "/admin/sales", critical: true },
             ].map((card) => {
               const isUrgent = card.value > 0 && card.critical;
               return (
                 <Link
                   key={card.label}
                   href={card.href}
-                  className={`flex items-center gap-2 p-2.5 sm:p-3 rounded-xl border transition-all hover:shadow-md ${
+                  className={`relative flex items-center gap-2 p-2.5 sm:p-3 rounded-xl border transition-all hover:shadow-md ${
                     isUrgent
                       ? "border-red-300 bg-red-50 hover:bg-red-100/60 ring-1 ring-red-200"
                       : card.value > 0
@@ -668,6 +672,12 @@ export default function AdminOperationsPage() {
                         : "border-green-200 bg-green-50 hover:bg-green-100/50"
                   }`}
                 >
+                  {isUrgent && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-red-500" />
+                    </span>
+                  )}
                   <span className="text-lg">{card.icon}</span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[11px] text-slate-500 truncate">{card.label}</div>
@@ -748,6 +758,14 @@ export default function AdminOperationsPage() {
                   icon: "🔴",
                   href: "/admin/orders",
                   desc: t("ops.checklist.highPriorityDesc"),
+                  urgent: true,
+                },
+                {
+                  label: t("ops.checklist.newSalesRequests"),
+                  value: quickViews.newSalesRequests,
+                  icon: "🛍️",
+                  href: "/admin/sales",
+                  desc: t("ops.checklist.newSalesRequestsDesc"),
                   urgent: true,
                 },
               ].map((item) => {

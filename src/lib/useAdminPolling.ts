@@ -12,6 +12,7 @@ export interface QuickViewCounts {
   unansweredQuestions: number;
   unresolvedNotes: number;
   pendingDeposits: number;
+  newSalesRequests: number;
 }
 
 interface AlertChange {
@@ -28,6 +29,7 @@ const ALERT_FIELDS: Array<{ key: keyof QuickViewCounts; label: string }> = [
   { key: "unansweredQuestions", label: "Câu hỏi chatbot mới" },
   { key: "stuckChina", label: "Đơn kẹt kho Trung Quốc" },
   { key: "stuckVietnam", label: "Đơn kẹt kho Việt Nam" },
+  { key: "newSalesRequests", label: "Yêu cầu mua hàng mới" },
 ];
 
 export function useAdminPolling(

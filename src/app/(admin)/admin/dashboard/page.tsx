@@ -35,6 +35,7 @@ interface QuickViewData {
   unansweredQuestions: number;
   unresolvedNotes: number;
   pendingDeposits: number;
+  newSalesRequests: number;
 }
 
 export default function AdminDashboard() {
@@ -191,6 +192,7 @@ export default function AdminDashboard() {
               { label: "Lỗi thông báo", count: quickViews.notifFailures, href: "/admin/notification-failures", active: "bg-red-50 border-red-200 hover:bg-red-100", accent: "text-red-700", icon: "🔔", urgent: true },
               { label: "Chatbot chưa trả lời", count: quickViews.unansweredQuestions, href: "/admin/support-knowledge", active: "bg-purple-50 border-purple-200 hover:bg-purple-100", accent: "text-purple-700", icon: "💬", urgent: true },
               { label: "Ghi chú bàn giao", count: quickViews.unresolvedNotes, href: "/admin/staff-notes", active: "bg-blue-50 border-blue-200 hover:bg-blue-100", accent: "text-blue-700", icon: "🔖", urgent: false },
+              { label: "Yêu cầu mua hàng mới", count: quickViews.newSalesRequests, href: "/admin/sales", active: "bg-pink-50 border-pink-200 hover:bg-pink-100", accent: "text-pink-700", icon: "🛒", urgent: true },
             ].map((view) => {
               const hasItems = view.count > 0;
               const needsAttention = hasItems && view.urgent;

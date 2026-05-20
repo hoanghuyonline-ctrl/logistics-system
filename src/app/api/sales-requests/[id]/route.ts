@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
-import { createNotification } from "@/lib/notifications";
+import { onSalesRequestStatusChanged } from "@/lib/notifications";
 import type { NextRequest } from "next/server";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -64,30 +64,17 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     },
   });
 
-  // Notify customer on price confirmation (fire-and-forget)
-  if (data.confirmedPrice) {
-    const priceFormatted = parseFloat(String(data.confirmedPrice)).toLocaleString("vi-VN");
-    createNotification({
+  // Notify customer on status changes via SYSTEM + TELEGRAM (fire-and-forget)
+  if (data.status) {
+    onSalesRequestStatusChanged({
       userId: existing.customerId,
-      title: "Giá đã được xác nhận",
-      message: `Yêu cầu ${existing.requestCode} — "${existing.productName}" đã được xác nhận giá: ${priceFormatted} VND. Vui lòng thanh toán.`,
-    }).catch(() => {});
-  }
-
-  // Notify customer on status changes
-  if (data.status && data.status !== "PRICE_CONFIRMED") {
-    const STATUS_LABELS: Record<string, string> = {
-      CONTACTED: "Đã liên hệ",
-      PAID: "Đã thanh toán",
-      PROCESSING: "Đang xử lý",
-      COMPLETED: "Hoàn thành",
-      CANCELLED: "Đã hủy",
-    };
-    const label = STATUS_LABELS[data.status as string] || String(data.status);
-    createNotification({
-      userId: existing.customerId,
-      title: "Cập nhật yêu cầu mua hàng",
-      message: `Yêu cầu ${existing.requestCode} — "${existing.productName}" đã chuyển sang: ${label}.`,
+      userEmail: updated.customer?.email || undefined,
+      userName: updated.customer?.fullName || undefined,
+      requestCode: existing.requestCode,
+      productName: existing.productName,
+      newStatus: data.status as string,
+      confirmedPrice: data.confirmedPrice != null ? parseFloat(String(data.confirmedPrice)) : undefined,
+      channels: ["SYSTEM", "TELEGRAM"],
     }).catch(() => {});
   }
 
