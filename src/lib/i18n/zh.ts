@@ -1169,6 +1169,7 @@ const zh: Record<string, string> = {
   "publicShop.loginHint": "您需要登录才能下单",
   "publicShop.submitError": "无法提交请求，请重试",
   "publicShop.myAccount": "我的账户",
+  "sales.requestsActions": "操作",
 };
 
 export default zh;
