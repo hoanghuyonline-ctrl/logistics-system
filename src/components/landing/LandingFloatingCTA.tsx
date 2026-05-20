@@ -2,24 +2,16 @@
 
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import ZaloQRWidget from "@/components/ui/ZaloQRWidget";
 
-const ZALO_URL = "https://zalo.me/4158866809451089514";
 const FB_URL = "https://www.facebook.com/profile.php?id=61589268346969";
 
 export default function LandingFloatingCTA() {
   const { t } = useI18n();
 
   return (
-    <div className="fixed right-4 bottom-24 sm:bottom-6 z-40 flex flex-col gap-3">
-      <a
-        href={ZALO_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-4 py-2.5 bg-blue-500 text-white text-sm font-semibold rounded-full shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all"
-        title={t("landing.floatingChatZalo")}
-      >
-        💬 {t("landing.floatingChatZalo")}
-      </a>
+    <div className="fixed right-4 bottom-24 sm:bottom-6 z-40 flex flex-col gap-3 items-end">
+      <ZaloQRWidget className="relative" />
 
       <a
         href={FB_URL}
