@@ -56,6 +56,17 @@ enum TransactionType {
   ORDER_PAYMENT
   REFUND
   ADJUSTMENT
+  SALES_PAYMENT
+}
+
+enum SalesRequestStatus {
+  NEW
+  CONTACTED
+  PRICE_CONFIRMED
+  PAID
+  PROCESSING
+  COMPLETED
+  CANCELLED
 }
 
 enum NotificationType {
@@ -113,6 +124,9 @@ model User {
   convertedFromLeads Lead[]               @relation("LeadConvertedUser")
   leadActivities     LeadActivity[]       @relation("LeadActivityActor")
   campaigns          Campaign[]           @relation("CampaignCreator")
+  salesRequests      SalesRequest[]       @relation("SalesRequestCustomer")
+  salesConfirmations SalesRequest[]       @relation("SalesRequestConfirmer")
+  productsCreated    Product[]            @relation("ProductCreator")
 }
 
 model Wallet {
@@ -435,4 +449,48 @@ model Campaign {
   updatedAt       DateTime        @updatedAt
 
   createdBy User? @relation("CampaignCreator", fields: [createdById], references: [id])
+}
+
+model Product {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?  @db.Text
+  category       String?
+  estimatedPrice Decimal? @db.Decimal(15, 2)
+  imageUrl       String?
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdBy     User?          @relation("ProductCreator", fields: [createdById], references: [id])
+  salesRequests SalesRequest[]
+}
+
+model SalesRequest {
+  id              String             @id @default(uuid())
+  requestCode     String             @unique
+  customerId      String
+  productId       String?
+  productName     String
+  quantity        Int                @default(1)
+  estimatedTotal  Decimal?           @db.Decimal(15, 2)
+  confirmedPrice  Decimal?           @db.Decimal(15, 2)
+  status          SalesRequestStatus @default(NEW)
+  adminNote       String?            @db.Text
+  customerNote    String?            @db.Text
+  paidAt          DateTime?
+  paidFromWallet  Boolean            @default(false)
+  confirmedById   String?
+  confirmedAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  customer    User     @relation("SalesRequestCustomer", fields: [customerId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
+  confirmedBy User?    @relation("SalesRequestConfirmer", fields: [confirmedById], references: [id])
+
+  @@index([customerId, createdAt])
+  @@index([status])
 }

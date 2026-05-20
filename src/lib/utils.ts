@@ -74,6 +74,13 @@ export function formatVND(amount: number | string): string {
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 }
 
+export function generateSalesCode(): string {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `SAL-${date}-${rand}`;
+}
+
 export function formatCNY(amount: number | string): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" }).format(num);

@@ -16,6 +16,8 @@ interface NavItem {
 
 const customerNav: NavItem[] = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
+  { labelKey: "nav.shop", href: "/shop", icon: "🛒" },
+  { labelKey: "nav.shopRequests", href: "/shop/requests", icon: "🧾" },
   { labelKey: "nav.newOrder", href: "/orders/new", icon: "➕" },
   { labelKey: "nav.myOrders", href: "/orders", icon: "📦" },
   { labelKey: "nav.wallet", href: "/wallet", icon: "💰" },
@@ -48,6 +50,7 @@ const adminNav: NavItem[] = [
   { labelKey: "nav.crm", href: "/admin/crm", icon: "🎯" },
   { labelKey: "nav.campaigns", href: "/admin/campaigns", icon: "📣" },
   { labelKey: "nav.analyticsSummary", href: "/admin/analytics-summary", icon: "📈" },
+  { labelKey: "nav.adminSales", href: "/admin/sales", icon: "🛒" },
 ];
 
 const warehouseCNNav: NavItem[] = [
