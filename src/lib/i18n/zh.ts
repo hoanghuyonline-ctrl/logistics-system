@@ -49,6 +49,12 @@ const zh: Record<string, string> = {
   "auth.address": "地址",
   "auth.addressPlaceholder": "选填",
   "auth.registrationFailed": "注册失败",
+  "auth.googleSignIn": "使用Google登录",
+  "auth.googleSigningIn": "正在登录...",
+  "auth.googleAccountLinked": "此邮箱已关联其他账户，请使用密码登录。",
+  "auth.googleAccessDenied": "您的账户已被停用，请联系客服。",
+  "auth.googleError": "Google登录失败，请重试。",
+  "auth.orDivider": "或",
 
   // Sidebar nav
   "nav.operations": "运营中心",
