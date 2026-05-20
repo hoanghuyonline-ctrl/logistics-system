@@ -1161,6 +1161,13 @@ const vi: Record<string, string> = {
   "sales.productSaved": "Đã lưu sản phẩm",
   "sales.priceConfirmed": "Đã xác nhận giá",
   "sales.statusUpdated": "Đã cập nhật trạng thái",
+
+  // Public shop
+  "publicShop.navLabel": "Cửa hàng",
+  "publicShop.title": "Cửa hàng Bắc Trung Hải",
+  "publicShop.subtitle": "Khám phá sản phẩm và đặt mua ngay — thanh toán qua ví điện tử",
+  "publicShop.loginHint": "Bạn cần đăng nhập để đặt mua hàng",
+  "publicShop.submitError": "Không thể gửi yêu cầu, vui lòng thử lại",
 };
 
 export default vi;

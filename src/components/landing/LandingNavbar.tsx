@@ -27,6 +27,9 @@ export default function LandingNavbar() {
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-3">
+          <Link href="/shop" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            {t("publicShop.navLabel")}
+          </Link>
           <select
             value={locale}
             onChange={(e) => setLocale(e.target.value as Locale)}
@@ -72,6 +75,9 @@ export default function LandingNavbar() {
               <option key={l} value={l}>{LOCALE_LABELS[l]}</option>
             ))}
           </select>
+          <Link href="/shop" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-medium text-orange-600 hover:text-orange-700 border border-orange-200 rounded-xl transition-colors">
+            {t("publicShop.navLabel")}
+          </Link>
           <Link href="/login" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl transition-colors">
             {t("common.signIn")}
           </Link>

@@ -1161,6 +1161,13 @@ const en: Record<string, string> = {
   "sales.productSaved": "Product saved",
   "sales.priceConfirmed": "Price confirmed",
   "sales.statusUpdated": "Status updated",
+
+  // Public shop
+  "publicShop.navLabel": "Shop",
+  "publicShop.title": "Bac Trung Hai Store",
+  "publicShop.subtitle": "Browse products and order now — pay via e-wallet",
+  "publicShop.loginHint": "You need to sign in to place an order",
+  "publicShop.submitError": "Could not submit request, please try again",
 };
 
 export default en;
