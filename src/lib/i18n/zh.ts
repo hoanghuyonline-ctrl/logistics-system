@@ -1161,6 +1161,13 @@ const zh: Record<string, string> = {
   "sales.productSaved": "商品已保存",
   "sales.priceConfirmed": "价格已确认",
   "sales.statusUpdated": "状态已更新",
+
+  // Public shop
+  "publicShop.navLabel": "商店",
+  "publicShop.title": "北中海商店",
+  "publicShop.subtitle": "浏览商品，立即下单 — 通过电子钱包支付",
+  "publicShop.loginHint": "您需要登录才能下单",
+  "publicShop.submitError": "无法提交请求，请重试",
 };
 
 export default zh;
