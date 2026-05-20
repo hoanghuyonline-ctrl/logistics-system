@@ -925,6 +925,7 @@ const en: Record<string, string> = {
   "ops.urgent.unresolvedIssues": "Unresolved complaints",
   "ops.urgent.notifFailures": "Notification failures",
   "ops.urgent.staleOrders": "Stuck >5 days",
+  "ops.urgent.newSalesRequests": "New purchase requests",
 
   // Operations — Section 1.5: Daily checklist
   "ops.checklist.title": "Daily operations checklist",
@@ -940,6 +941,8 @@ const en: Record<string, string> = {
   "ops.checklist.arrivedVNDesc": "Goods at VN warehouse, arrange delivery to customer",
   "ops.checklist.highPriority": "High priority / Urgent orders",
   "ops.checklist.highPriorityDesc": "HIGH or URGENT orders being processed",
+  "ops.checklist.newSalesRequests": "New purchase requests",
+  "ops.checklist.newSalesRequestsDesc": "Customer submitted purchase requests, need price confirmation",
   "ops.checklist.newOrdersToday": "New orders today",
   "ops.checklist.viewAllOrders": "View all orders →",
 

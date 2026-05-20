@@ -925,6 +925,7 @@ const zh: Record<string, string> = {
   "ops.urgent.unresolvedIssues": "未解决投诉",
   "ops.urgent.notifFailures": "通知发送失败",
   "ops.urgent.staleOrders": "滞留 >5 天",
+  "ops.urgent.newSalesRequests": "新购买请求",
 
   // Operations — Section 1.5: Daily checklist
   "ops.checklist.title": "每日运营检查清单",
@@ -940,6 +941,8 @@ const zh: Record<string, string> = {
   "ops.checklist.arrivedVNDesc": "货物已到越南仓，安排配送给客户",
   "ops.checklist.highPriority": "高优先级 / 紧急订单",
   "ops.checklist.highPriorityDesc": "HIGH 或 URGENT 订单处理中",
+  "ops.checklist.newSalesRequests": "新购买请求",
+  "ops.checklist.newSalesRequestsDesc": "客户提交了购买请求，需要确认价格",
   "ops.checklist.newOrdersToday": "今日新订单",
   "ops.checklist.viewAllOrders": "查看所有订单 →",
 

@@ -925,6 +925,7 @@ const vi: Record<string, string> = {
   "ops.urgent.unresolvedIssues": "Khiếu nại chưa xử lý",
   "ops.urgent.notifFailures": "Gửi thông báo lỗi",
   "ops.urgent.staleOrders": "Đơn kẹt >5 ngày",
+  "ops.urgent.newSalesRequests": "Yêu cầu mua hàng mới",
 
   // Operations — Section 1.5: Daily checklist
   "ops.checklist.title": "Bảng kiểm vận hành hàng ngày",
@@ -940,6 +941,8 @@ const vi: Record<string, string> = {
   "ops.checklist.arrivedVNDesc": "Hàng đã đến kho VN, cần sắp xếp giao khách",
   "ops.checklist.highPriority": "Đơn ưu tiên cao / Khẩn",
   "ops.checklist.highPriorityDesc": "Đơn HIGH hoặc URGENT đang xử lý",
+  "ops.checklist.newSalesRequests": "Yêu cầu mua hàng mới",
+  "ops.checklist.newSalesRequestsDesc": "Khách hàng gửi yêu cầu mua hàng, cần xác nhận giá",
   "ops.checklist.newOrdersToday": "Đơn mới hôm nay",
   "ops.checklist.viewAllOrders": "Xem tất cả đơn hàng →",
 
