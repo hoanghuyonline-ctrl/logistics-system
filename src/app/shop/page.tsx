@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { LandingNavbar, LandingFooter, LandingMobileBar } from "@/components/landing";
 import { useI18n } from "@/lib/i18n";
+import { useToast } from "@/components/ui/Toast";
+
+const PENDING_KEY = "pending_sales_request";
 
 interface Product {
   id: string;
@@ -17,6 +21,9 @@ interface Product {
 export default function PublicShopPage() {
   const { t } = useI18n();
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const { toast } = useToast();
+  const pendingSubmitted = useRef(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -39,6 +46,34 @@ export default function PublicShopPage() {
   }, []);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || pendingSubmitted.current) return;
+    let raw: string | null = null;
+    try { raw = window.localStorage.getItem(PENDING_KEY); } catch { return; }
+    if (!raw) return;
+    pendingSubmitted.current = true;
+    let payload: { productId: string; productName: string; quantity: number; customerNote?: string };
+    try { payload = JSON.parse(raw); } catch { window.localStorage.removeItem(PENDING_KEY); return; }
+    (async () => {
+      try {
+        const res = await fetch("/api/sales-requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          toast(t("sales.purchaseSuccess"), "success");
+        } else {
+          toast(t("publicShop.submitError"), "error");
+        }
+      } catch {
+        toast(t("publicShop.submitError"), "error");
+      } finally {
+        try { window.localStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
+      }
+    })();
+  }, [status, t, toast]);
 
   const categories = Array.from(new Set(products.map((p) => p.category).filter(Boolean))) as string[];
 
@@ -75,7 +110,16 @@ export default function PublicShopPage() {
           setSubmitSuccess(false);
         }, 2000);
       } else if (res.status === 401) {
-        router.push("/login");
+        try {
+          window.localStorage.setItem(PENDING_KEY, JSON.stringify({
+            productId: buyingProduct.id,
+            productName: buyingProduct.name,
+            quantity,
+            customerNote: customerNote || undefined,
+          }));
+        } catch { /* localStorage unavailable */ }
+        setBuyingProduct(null);
+        router.push("/login?callbackUrl=/shop");
       } else {
         const err = await res.json();
         setSubmitError(err.error || t("publicShop.submitError"));
