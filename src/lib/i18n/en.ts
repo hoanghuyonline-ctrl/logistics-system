@@ -46,6 +46,9 @@ const en: Record<string, string> = {
   "auth.signInLink": "Sign in",
   "auth.registerBranding": "Start shipping\ntoday",
   "auth.registerBrandingDesc": "Order from Taobao, 1688, Tmall — we handle purchasing, warehousing, cross-border shipping, and last-mile delivery.",
+  "auth.address": "Address",
+  "auth.addressPlaceholder": "Optional",
+  "auth.registrationFailed": "Registration failed",
 
   // Sidebar nav
   "nav.operations": "Operations",
@@ -138,6 +141,8 @@ const en: Record<string, string> = {
   "landing.trackingStatus": "Status:",
   "landing.trackingWeight": "Weight:",
   "landing.trackingCost": "Total Cost:",
+  "landing.trackingCurrencySymbol": "VND",
+  "landing.step": "STEP",
 
   // Dashboard
   "dashboard.title": "Dashboard",

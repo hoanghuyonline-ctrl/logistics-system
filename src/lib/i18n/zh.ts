@@ -46,6 +46,9 @@ const zh: Record<string, string> = {
   "auth.signInLink": "登录",
   "auth.registerBranding": "立即开始\n国际运输",
   "auth.registerBrandingDesc": "从淘宝、1688、天猫下单——我们负责采购、仓储、跨境运输和最后一公里配送。",
+  "auth.address": "地址",
+  "auth.addressPlaceholder": "选填",
+  "auth.registrationFailed": "注册失败",
 
   // Sidebar nav
   "nav.operations": "运营中心",
@@ -138,6 +141,8 @@ const zh: Record<string, string> = {
   "landing.trackingStatus": "状态：",
   "landing.trackingWeight": "重量：",
   "landing.trackingCost": "总费用：",
+  "landing.trackingCurrencySymbol": "越南盾",
+  "landing.step": "步骤",
 
   // Dashboard
   "dashboard.title": "仪表板",

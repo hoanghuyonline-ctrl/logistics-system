@@ -46,6 +46,9 @@ const vi: Record<string, string> = {
   "auth.signInLink": "Đăng nhập",
   "auth.registerBranding": "Bắt đầu vận chuyển\nngay hôm nay",
   "auth.registerBrandingDesc": "Đặt hàng từ Taobao, 1688, Tmall — chúng tôi xử lý mua hàng, kho bãi, vận chuyển quốc tế và giao hàng tận nơi.",
+  "auth.address": "Địa chỉ",
+  "auth.addressPlaceholder": "Không bắt buộc",
+  "auth.registrationFailed": "Đăng ký thất bại",
 
   // Sidebar nav
   "nav.operations": "Điều hành",
@@ -138,6 +141,8 @@ const vi: Record<string, string> = {
   "landing.trackingStatus": "Trạng thái:",
   "landing.trackingWeight": "Khối lượng:",
   "landing.trackingCost": "Tổng tiền:",
+  "landing.trackingCurrencySymbol": "đ",
+  "landing.step": "BƯỚC",
 
   // Dashboard
   "dashboard.title": "Bảng điều khiển",
