@@ -1168,6 +1168,7 @@ const en: Record<string, string> = {
   "publicShop.subtitle": "Browse products and order now — pay via e-wallet",
   "publicShop.loginHint": "You need to sign in to place an order",
   "publicShop.submitError": "Could not submit request, please try again",
+  "publicShop.myAccount": "My Account",
 };
 
 export default en;

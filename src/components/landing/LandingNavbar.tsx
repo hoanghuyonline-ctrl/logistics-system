@@ -3,13 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
 export default function LandingNavbar() {
   const { t, locale, setLocale } = useI18n();
+  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const isLoggedIn = !!session?.user;
+  const userName = session?.user?.name || session?.user?.email || "";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -39,12 +43,21 @@ export default function LandingNavbar() {
               <option key={l} value={l}>{LOCALE_LABELS[l]}</option>
             ))}
           </select>
-          <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-            {t("common.signIn")}
-          </Link>
-          <Link href="/register" className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm hover:opacity-90 active:scale-[0.98] transition-all" style={{ backgroundColor: "var(--brand-navy)" }}>
-            {t("common.getStarted")}
-          </Link>
+          {isLoggedIn ? (
+            <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl shadow-sm hover:opacity-90 active:scale-[0.98] transition-all" style={{ backgroundColor: "var(--brand-navy)" }}>
+              <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">{userName.charAt(0).toUpperCase()}</span>
+              {t("publicShop.myAccount")}
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                {t("common.signIn")}
+              </Link>
+              <Link href="/register" className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm hover:opacity-90 active:scale-[0.98] transition-all" style={{ backgroundColor: "var(--brand-navy)" }}>
+                {t("common.getStarted")}
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -78,12 +91,20 @@ export default function LandingNavbar() {
           <Link href="/shop" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-medium text-orange-600 hover:text-orange-700 border border-orange-200 rounded-xl transition-colors">
             {t("publicShop.navLabel")}
           </Link>
-          <Link href="/login" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl transition-colors">
-            {t("common.signIn")}
-          </Link>
-          <Link href="/register" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 active:scale-[0.98] transition-all" style={{ backgroundColor: "var(--brand-navy)" }}>
-            {t("common.getStarted")}
-          </Link>
+          {isLoggedIn ? (
+            <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 active:scale-[0.98] transition-all" style={{ backgroundColor: "var(--brand-navy)" }}>
+              {t("publicShop.myAccount")}
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl transition-colors">
+                {t("common.signIn")}
+              </Link>
+              <Link href="/register" onClick={() => setMobileOpen(false)} className="block w-full text-center px-4 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 active:scale-[0.98] transition-all" style={{ backgroundColor: "var(--brand-navy)" }}>
+                {t("common.getStarted")}
+              </Link>
+            </>
+          )}
         </div>
       )}
     </nav>
