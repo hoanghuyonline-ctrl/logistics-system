@@ -1169,6 +1169,7 @@ const en: Record<string, string> = {
   "publicShop.loginHint": "You need to sign in to place an order",
   "publicShop.submitError": "Could not submit request, please try again",
   "publicShop.myAccount": "My Account",
+  "sales.requestsActions": "Actions",
 };
 
 export default en;
