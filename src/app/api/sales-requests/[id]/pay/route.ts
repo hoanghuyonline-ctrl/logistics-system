@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
-import { createNotification } from "@/lib/notifications";
+import { createNotification, onSalesRequestStatusChanged } from "@/lib/notifications";
 import type { NextRequest } from "next/server";
 
 export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: RouteContext<"/api/sales-requests/[id]/pay">) {
@@ -81,12 +81,18 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
     }
   }).catch(() => {});
 
-  // Notify customer (fire-and-forget)
-  const amtFormatted = payAmount.toLocaleString("vi-VN");
-  createNotification({
+  // Notify customer via SYSTEM + TELEGRAM (fire-and-forget)
+  onSalesRequestStatusChanged({
     userId: user.id,
-    title: "Thanh toán thành công",
-    message: `Bạn đã thanh toán ${amtFormatted} VND cho yêu cầu ${salesRequest.requestCode}. Số dư ví: ${newBalance.toLocaleString("vi-VN")} VND.${newDebt > currentDebt ? ` Công nợ: ${newDebt.toLocaleString("vi-VN")} VND.` : ""}`,
+    userEmail: user.email || undefined,
+    userName: user.name || undefined,
+    requestCode: salesRequest.requestCode,
+    productName: salesRequest.productName,
+    newStatus: "PAID",
+    amountPaid: payAmount,
+    walletBalance: newBalance,
+    walletDebt: newDebt,
+    channels: ["SYSTEM", "TELEGRAM"],
   }).catch(() => {});
 
   return jsonResponse({

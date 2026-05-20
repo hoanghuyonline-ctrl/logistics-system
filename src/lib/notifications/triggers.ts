@@ -144,6 +144,84 @@ export async function onCustomerVisibleOrderNote(params: {
   });
 }
 
+const SALES_STATUS_LABELS: Record<string, string> = {
+  NEW: "Mới",
+  CONTACTED: "Đã liên hệ",
+  PRICE_CONFIRMED: "Đã xác nhận giá",
+  PAID: "Đã thanh toán",
+  PROCESSING: "Đang xử lý",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
+};
+
+export async function onSalesRequestStatusChanged(params: {
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  requestCode: string;
+  productName: string;
+  newStatus: string;
+  confirmedPrice?: number;
+  amountPaid?: number;
+  walletBalance?: number;
+  walletDebt?: number;
+  channels?: NotificationChannel[];
+}): Promise<NotificationResult> {
+  const name = params.userName || "bạn";
+  const statusLabel = SALES_STATUS_LABELS[params.newStatus] || params.newStatus;
+  let title: string;
+  let message: string;
+
+  switch (params.newStatus) {
+    case "PRICE_CONFIRMED": {
+      const priceFormatted = params.confirmedPrice != null
+        ? params.confirmedPrice.toLocaleString("vi-VN") + " VND"
+        : "";
+      title = `Giá đã được xác nhận — ${params.requestCode}`;
+      message = `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đã được xác nhận giá: ${priceFormatted}. Vui lòng vào mục "Đơn mua hàng" để thanh toán từ ví.`;
+      break;
+    }
+    case "PAID": {
+      const amtFormatted = params.amountPaid != null
+        ? params.amountPaid.toLocaleString("vi-VN") + " VND"
+        : "";
+      title = `Thanh toán thành công — ${params.requestCode}`;
+      message = `Chào ${name}, bạn đã thanh toán ${amtFormatted} cho yêu cầu ${params.requestCode} — "${params.productName}".`;
+      if (params.walletBalance != null) {
+        message += ` Số dư ví: ${params.walletBalance.toLocaleString("vi-VN")} VND.`;
+      }
+      if (params.walletDebt != null && params.walletDebt > 0) {
+        message += ` Công nợ: ${params.walletDebt.toLocaleString("vi-VN")} VND.`;
+      }
+      break;
+    }
+    case "PROCESSING":
+      title = `Đang xử lý — ${params.requestCode}`;
+      message = `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đang được xử lý. Chúng tôi sẽ thông báo khi hoàn thành.`;
+      break;
+    case "COMPLETED":
+      title = `Hoàn thành — ${params.requestCode}`;
+      message = `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đã hoàn thành. Cảm ơn bạn đã sử dụng dịch vụ Bắc Trung Hải Logistics!`;
+      break;
+    case "CANCELLED":
+      title = `Đã hủy — ${params.requestCode}`;
+      message = `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đã bị hủy. Vui lòng liên hệ hỗ trợ nếu cần.`;
+      break;
+    default:
+      title = `Cập nhật yêu cầu mua hàng — ${params.requestCode}`;
+      message = `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đã chuyển sang: ${statusLabel}.`;
+  }
+
+  return sendNotification({
+    userId: params.userId,
+    userEmail: params.userEmail,
+    userName: params.userName,
+    title,
+    message,
+    channels: params.channels ?? DEFAULT_CHANNELS,
+  });
+}
+
 export async function onWalletEvent(params: {
   userId: string;
   userEmail?: string;
