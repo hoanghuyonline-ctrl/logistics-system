@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 
 const ZALO_URL = "https://zalo.me/4158866809451089514";
-const FB_URL = "https://m.me/bactrunghai";
+const FB_URL = "https://www.facebook.com/profile.php?id=61589268346969";
 
 export default function LandingFloatingCTA() {
   const { t } = useI18n();
