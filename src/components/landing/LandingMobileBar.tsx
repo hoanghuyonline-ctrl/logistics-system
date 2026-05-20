@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 
-const ZALO_URL = "https://zalo.me/0123456789";
+const ZALO_URL = "https://zalo.me/4158866809451089514";
 const FB_URL = "https://m.me/bactrunghai";
 
 export default function LandingMobileBar() {
