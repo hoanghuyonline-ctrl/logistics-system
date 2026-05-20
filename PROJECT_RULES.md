@@ -36,8 +36,8 @@
 - Any new external webhook must also be added to `publicPaths` in `src/proxy.ts`
 
 ## Current Priorities
-1. Vietnamese default locale
-2. Scan workflow
-3. Audit log
-4. Notification delivery
-5. CI pipeline
+1. Sales MVP refinements and production stability
+2. Vietnamese default locale across all new features
+3. Wallet/payment flow integrity
+4. Notification delivery (SYSTEM + TELEGRAM channels)
+5. CI pipeline (build + typecheck must pass)
