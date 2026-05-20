@@ -290,6 +290,8 @@
 
 - **Consolidate Zalo Support Buttons (PR #313)** — Removed duplicate "Chat Zalo" floating button from `LandingFloatingCTA`. Moved existing `ZaloQRWidget` ("Zalo hỗ trợ" with QR popup) into the right-side floating CTA group alongside Facebook and Create Order buttons. Removed standalone `ZaloQRWidget` from homepage. Result: single Zalo support entry point instead of two. Mobile bottom bar unchanged. **No schema changes; no new dependencies; no logic changes; UI cleanup only; production-safe.**
 
+- **Sales MVP — Shopee-like "Bán hàng" Module** — Full Shopee-style product browsing and purchase request system reusing existing wallet/debt logic. New Prisma models: `Product` (name, description, category, estimatedPrice, imageUrl, isActive, sortOrder) and `SalesRequest` (requestCode, customerId, productId, quantity, estimatedTotal, confirmedPrice, status, adminNote, customerNote, paidAt, paidFromWallet). New enum `SalesRequestStatus` (NEW → CONTACTED → PRICE_CONFIRMED → PAID → PROCESSING → COMPLETED → CANCELLED). New `SALES_PAYMENT` value added to `TransactionType`. Customer flow: `/shop` — Shopee-like product grid with category filters, image cards, "Mua ngay" modal with quantity picker and customer notes; `/shop/requests` — purchase request list with status badges, wallet balance display, "Thanh toán từ ví" button for price-confirmed requests, top-up guidance link. Admin flow: `/admin/sales` — tabbed interface with Products tab (CRUD, hide/show toggle, image URL, sort order) and Purchase Requests tab (search, status filter, confirm price, update status with validated transitions, internal notes). Payment: `POST /api/sales-requests/[id]/pay` deducts from wallet balance, allows debt if insufficient (same rules as existing order payment), creates Transaction with type SALES_PAYMENT, auto-transitions status to PAID. API routes: `GET/POST /api/products`, `PATCH /api/products/[id]`, `GET/POST /api/sales-requests`, `PATCH /api/sales-requests/[id]`, `POST /api/sales-requests/[id]/pay`. Fire-and-forget notifications to admins on new requests and payments, to customers on price confirmation and status changes. Sidebar nav: 🛒 "Bán hàng" and 🧾 "Đơn mua hàng" for customers, 🛒 "Bán hàng" for admin. Full i18n (VI/EN/ZH) with 60+ `sales.*` keys. Migration: `20260520070000_add_sales_module`. **No separate payment gateway; no cart; no inventory; reuses existing wallet/debt/transaction system; backward compatible; production-safe.**
+
 **Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
 
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
@@ -416,6 +418,11 @@ pm2 restart logistics-system
 | `/api/admin/backup/database` | POST | Manual database backup — runs pg_dump via Docker, creates timestamped .sql file (ADMIN-only) |
 | `/api/admin/backup/uploads` | POST | Manual uploads backup — compresses uploads/ into timestamped .zip file (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
+| `/api/products` | GET/POST | Product list (public active / admin all) and create (ADMIN) |
+| `/api/products/[id]` | PATCH | Edit product (ADMIN) |
+| `/api/sales-requests` | GET/POST | Sales request list (customer own / admin all) and create (CUSTOMER/ADMIN) |
+| `/api/sales-requests/[id]` | PATCH | Update status, confirm price, add note (ADMIN/ACCOUNTANT) |
+| `/api/sales-requests/[id]/pay` | POST | Pay from wallet — deducts balance, allows debt, creates SALES_PAYMENT transaction (CUSTOMER) |
 
 ## Important Prisma Models
 
@@ -438,8 +445,10 @@ pm2 restart logistics-system
 | **LeadActivity** | id, leadId, action, detail, actorId, createdAt |
 | **Campaign** | id, name, channel (CampaignChannel), status (CampaignStatus), targetStatus, messageTemplate, scheduledAt, notes, createdById |
 | **CustomerIssue** | id, customerId, orderCode, issueType, description, status, priority, assignedTo, resolution |
+| **Product** | id, name, description, category, estimatedPrice, imageUrl, isActive, sortOrder, createdById |
+| **SalesRequest** | id, requestCode, customerId, productId, productName, quantity, estimatedTotal, confirmedPrice, status (SalesRequestStatus), adminNote, customerNote, paidAt, paidFromWallet, confirmedById, confirmedAt |
 
-**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType, LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS)
+**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType (DEPOSIT/ORDER_PAYMENT/REFUND/ADJUSTMENT/SALES_PAYMENT), SalesRequestStatus (NEW/CONTACTED/PRICE_CONFIRMED/PAID/PROCESSING/COMPLETED/CANCELLED), LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS)
 
 **AuditActions:** ORDER_STATUS_CHANGE, PACKAGE_STATUS_CHANGE, WAREHOUSE_SCAN_LOOKUP, WAREHOUSE_SCAN_UPDATE, WAREHOUSE_RECEIVE_CN, WAREHOUSE_RECEIVE_VN, WAREHOUSE_DELIVERY, ORDER_PRICING_CONFIRMED
 
