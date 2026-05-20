@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 
-const ZALO_URL = "https://zalo.me/0123456789"; // TODO: replace with actual Zalo OA link
-const FB_URL = "https://m.me/bactrunghai"; // TODO: replace with actual FB page
+const ZALO_URL = "https://zalo.me/4158866809451089514";
+const FB_URL = "https://m.me/bactrunghai";
 
 export default function LandingFloatingCTA() {
   const { t } = useI18n();
