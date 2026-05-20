@@ -49,6 +49,12 @@ const vi: Record<string, string> = {
   "auth.address": "Địa chỉ",
   "auth.addressPlaceholder": "Không bắt buộc",
   "auth.registrationFailed": "Đăng ký thất bại",
+  "auth.googleSignIn": "Đăng nhập bằng Google",
+  "auth.googleSigningIn": "Đang đăng nhập...",
+  "auth.googleAccountLinked": "Email này đã được liên kết với tài khoản khác. Vui lòng đăng nhập bằng mật khẩu.",
+  "auth.googleAccessDenied": "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ.",
+  "auth.googleError": "Đăng nhập Google thất bại. Vui lòng thử lại.",
+  "auth.orDivider": "hoặc",
 
   // Sidebar nav
   "nav.operations": "Điều hành",

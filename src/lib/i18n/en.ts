@@ -49,6 +49,12 @@ const en: Record<string, string> = {
   "auth.address": "Address",
   "auth.addressPlaceholder": "Optional",
   "auth.registrationFailed": "Registration failed",
+  "auth.googleSignIn": "Sign in with Google",
+  "auth.googleSigningIn": "Signing in...",
+  "auth.googleAccountLinked": "This email is already linked to another account. Please sign in with your password.",
+  "auth.googleAccessDenied": "Your account has been deactivated. Please contact support.",
+  "auth.googleError": "Google sign-in failed. Please try again.",
+  "auth.orDivider": "or",
 
   // Sidebar nav
   "nav.operations": "Operations",
