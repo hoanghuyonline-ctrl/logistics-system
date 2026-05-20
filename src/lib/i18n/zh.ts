@@ -1168,6 +1168,7 @@ const zh: Record<string, string> = {
   "publicShop.subtitle": "浏览商品，立即下单 — 通过电子钱包支付",
   "publicShop.loginHint": "您需要登录才能下单",
   "publicShop.submitError": "无法提交请求，请重试",
+  "publicShop.myAccount": "我的账户",
 };
 
 export default zh;
