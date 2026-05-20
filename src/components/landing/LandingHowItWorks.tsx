@@ -75,7 +75,7 @@ export default function LandingHowItWorks() {
                   <div className="flex items-center gap-3 mb-4">
                     <span style={{ color: "var(--brand-blue)" }}><Icon /></span>
                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg" style={{ color: "var(--brand-navy)", backgroundColor: "#eef2ff" }}>
-                      STEP {s.step}
+                      {t("landing.step")} {s.step}
                     </span>
                   </div>
                   <h4 className="text-base font-semibold text-slate-900 mb-2">{s.title}</h4>

@@ -111,7 +111,7 @@ export default function LandingOrderTracking() {
                   <span className="text-lg">💰</span>
                   <span className="text-sm text-slate-500">{t("landing.trackingCost")}</span>
                   <span className="font-semibold text-slate-900">
-                    {result.totalCostVND.toLocaleString("vi-VN")}đ
+                    {result.totalCostVND.toLocaleString("vi-VN")} {t("landing.trackingCurrencySymbol")}
                   </span>
                 </div>
               )}
