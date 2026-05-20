@@ -65,9 +65,15 @@ export default function LoginPage() {
     }
   }
 
-  function handleGoogleSignIn() {
+  async function handleGoogleSignIn() {
     setGoogleLoading(true);
-    signIn("google", { callbackUrl: "/dashboard" });
+    setError("");
+    try {
+      await signIn("google", { callbackUrl: "/dashboard" });
+    } catch {
+      setError(t("auth.googleError"));
+      setGoogleLoading(false);
+    }
   }
 
   return (
