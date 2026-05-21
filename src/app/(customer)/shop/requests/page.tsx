@@ -237,18 +237,19 @@ export default function ShopRequestsPage() {
                               </button>
                               <button
                                 onClick={() => handlePay(req.id)}
-                                disabled={paying}
-                                className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition"
+                                disabled={paying || !!insufficient}
+                                className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                               >
                                 {paying ? t("common.loading") : t("sales.payConfirm")}
                               </button>
                             </div>
                           ) : (
                             <div>
-                              {insufficient && <p className="text-[10px] text-amber-600 mb-0.5">{t("sales.insufficientBalance")}</p>}
+                              {insufficient && <p className="text-[10px] text-red-600 mb-0.5">Số dư ví không đủ để thanh toán. Vui lòng nạp thêm tiền.</p>}
                               <button
                                 onClick={() => setPayingId(req.id)}
-                                className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition"
+                                disabled={!!insufficient}
+                                className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                               >
                                 {t("sales.payFromWallet")}
                               </button>
@@ -320,7 +321,7 @@ export default function ShopRequestsPage() {
                   {/* Pay button */}
                   {canPay && (
                     <div className="mt-3 pt-3 border-t border-slate-100">
-                      {insufficient && <p className="text-xs text-amber-600 mb-2">{t("sales.insufficientBalance")}</p>}
+                      {insufficient && <p className="text-xs text-red-600 mb-2">Số dư ví không đủ để thanh toán. Vui lòng nạp thêm tiền.</p>}
                       {payingId === req.id ? (
                         <div className="flex gap-2">
                           <button onClick={() => setPayingId(null)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
@@ -328,8 +329,8 @@ export default function ShopRequestsPage() {
                           </button>
                           <button
                             onClick={() => handlePay(req.id)}
-                            disabled={paying}
-                            className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition"
+                            disabled={paying || !!insufficient}
+                            className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                           >
                             {paying ? t("common.loading") : t("sales.payConfirm")}
                           </button>
@@ -337,7 +338,8 @@ export default function ShopRequestsPage() {
                       ) : (
                         <button
                           onClick={() => setPayingId(req.id)}
-                          className="w-full px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition"
+                          disabled={!!insufficient}
+                          className="w-full px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                         >
                           {t("sales.payFromWallet")} — {fmtCurrency(price)}
                         </button>
