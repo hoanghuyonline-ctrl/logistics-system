@@ -427,28 +427,22 @@ export default function ProductDetailPage({
             >
               {t("productDetail.features")}
             </button>
-            <button
-              onClick={() => setActiveTab("specs")}
-              className={`px-6 py-3 text-sm font-semibold transition border-b-2 ${
-                activeTab === "specs"
-                  ? "border-orange-500 text-orange-600"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              {t("productDetail.specs")}
-            </button>
+            {variants?.type === "electronics" && (
+              <button
+                onClick={() => setActiveTab("specs")}
+                className={`px-6 py-3 text-sm font-semibold transition border-b-2 ${
+                  activeTab === "specs"
+                    ? "border-orange-500 text-orange-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {t("productDetail.specs")}
+              </button>
+            )}
           </div>
 
           <div className="bg-white rounded-b-2xl rounded-tr-2xl border border-t-0 border-slate-200 p-6 sm:p-8">
-            {activeTab === "features" ? (
-              <div className="prose prose-sm max-w-none text-slate-700">
-                {product.description ? (
-                  <div className="whitespace-pre-line">{product.description}</div>
-                ) : (
-                  <p className="text-slate-400 italic">{t("productDetail.noDescription")}</p>
-                )}
-              </div>
-            ) : (
+            {activeTab === "specs" && variants?.type === "electronics" ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <tbody>
@@ -470,6 +464,14 @@ export default function ProductDetailPage({
                     ))}
                   </tbody>
                 </table>
+              </div>
+            ) : (
+              <div className="prose prose-sm max-w-none text-slate-700">
+                {product.description ? (
+                  <div className="whitespace-pre-line">{product.description}</div>
+                ) : (
+                  <p className="text-slate-400 italic">{t("productDetail.noDescription")}</p>
+                )}
               </div>
             )}
           </div>
