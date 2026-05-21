@@ -18,18 +18,56 @@ interface Product {
   imageUrl: string | null;
 }
 
-const VARIANT_OPTIONS: Record<string, string[]> = {
-  "256GB": ["256GB"],
-  "512GB": ["512GB"],
-  "1TB": ["1TB"],
-};
+interface ColorOption {
+  name: string;
+  hex: string;
+}
 
-const COLOR_OPTIONS = [
-  { name: "Titan Tự Nhiên", hex: "#A8A196" },
-  { name: "Titan Đen", hex: "#3B3B3D" },
-  { name: "Titan Trắng", hex: "#F2F1ED" },
-  { name: "Titan Sa Mạc", hex: "#BFA48E" },
-];
+interface ProductVariants {
+  type: "electronics" | "clothing" | "none";
+  primaryLabel: string;
+  primaryOptions: string[];
+  colorLabel: string;
+  colorOptions: ColorOption[];
+}
+
+function getProductVariants(category: string | null): ProductVariants {
+  const cat = (category || "").toLowerCase();
+
+  const isElectronics = ["điện thoại", "công nghệ", "electronics", "phone", "tablet", "laptop", "máy tính"].some((k) => cat.includes(k));
+  if (isElectronics) {
+    return {
+      type: "electronics",
+      primaryLabel: "Dung lượng",
+      primaryOptions: ["256GB", "512GB", "1TB"],
+      colorLabel: "Màu sắc",
+      colorOptions: [
+        { name: "Titan Tự Nhiên", hex: "#A8A196" },
+        { name: "Titan Đen", hex: "#3B3B3D" },
+        { name: "Titan Trắng", hex: "#F2F1ED" },
+        { name: "Titan Sa Mạc", hex: "#BFA48E" },
+      ],
+    };
+  }
+
+  const isClothing = ["quần áo", "thời trang", "clothing", "fashion", "áo", "váy", "đầm", "giày", "phụ kiện"].some((k) => cat.includes(k));
+  if (isClothing) {
+    return {
+      type: "clothing",
+      primaryLabel: "Kích cỡ",
+      primaryOptions: ["S", "M", "L", "XL"],
+      colorLabel: "Màu sắc",
+      colorOptions: [
+        { name: "Trắng", hex: "#FFFFFF" },
+        { name: "Đen", hex: "#222222" },
+        { name: "Hồng", hex: "#F9A8D4" },
+        { name: "Be", hex: "#D4C5A9" },
+      ],
+    };
+  }
+
+  return { type: "none", primaryLabel: "", primaryOptions: [], colorLabel: "", colorOptions: [] };
+}
 
 export default function ProductDetailPage({
   params,
@@ -46,8 +84,10 @@ export default function ProductDetailPage({
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  const [selectedCapacity, setSelectedCapacity] = useState("256GB");
+  const [selectedPrimary, setSelectedPrimary] = useState("");
   const [selectedColor, setSelectedColor] = useState(0);
+
+  const variants = product ? getProductVariants(product.category) : null;
   const [quantity, setQuantity] = useState(1);
   const [customerNote, setCustomerNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -72,6 +112,14 @@ export default function ProductDetailPage({
     fetchProduct();
   }, [fetchProduct]);
 
+  useEffect(() => {
+    if (product) {
+      const v = getProductVariants(product.category);
+      if (v.primaryOptions.length > 0) setSelectedPrimary(v.primaryOptions[0]);
+      setSelectedColor(0);
+    }
+  }, [product]);
+
   const formatPrice = (price: string | null) => {
     if (!price) return t("sales.contactForPrice");
     return parseFloat(price).toLocaleString("vi-VN") + " \u20AB";
@@ -81,8 +129,10 @@ export default function ProductDetailPage({
     if (!product) return;
     setSubmitting(true);
     const optionParts: string[] = [];
-    if (selectedCapacity) optionParts.push(`Dung lượng: ${selectedCapacity}`);
-    if (COLOR_OPTIONS[selectedColor]) optionParts.push(`Màu sắc: ${COLOR_OPTIONS[selectedColor].name}`);
+    if (variants && variants.type !== "none") {
+      if (selectedPrimary) optionParts.push(`${variants.primaryLabel}: ${selectedPrimary}`);
+      if (variants.colorOptions[selectedColor]) optionParts.push(`${variants.colorLabel}: ${variants.colorOptions[selectedColor].name}`);
+    }
     const selectedOptions = optionParts.length > 0 ? optionParts.join(" | ") : undefined;
 
     const payload = {
@@ -235,49 +285,52 @@ export default function ProductDetailPage({
               </span>
             </div>
 
-            {/* Variant Selector — Capacity */}
-            <div>
-              <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                {t("productDetail.capacity")}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {Object.keys(VARIANT_OPTIONS).map((cap) => (
-                  <button
-                    key={cap}
-                    onClick={() => setSelectedCapacity(cap)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
-                      selectedCapacity === cap
-                        ? "border-orange-500 bg-orange-50 text-orange-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
-                    }`}
-                  >
-                    {cap}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Variant Selectors — Dynamic by category */}
+            {variants && variants.type !== "none" && (
+              <>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                    {variants.primaryLabel}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {variants.primaryOptions.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setSelectedPrimary(opt)}
+                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                          selectedPrimary === opt
+                            ? "border-orange-500 bg-orange-50 text-orange-700"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Variant Selector — Color */}
-            <div>
-              <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                {t("productDetail.color")}: <span className="font-normal text-slate-500">{COLOR_OPTIONS[selectedColor].name}</span>
-              </label>
-              <div className="flex gap-3">
-                {COLOR_OPTIONS.map((color, idx) => (
-                  <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(idx)}
-                    title={color.name}
-                    className={`w-8 h-8 rounded-full border-2 transition ${
-                      selectedColor === idx
-                        ? "border-orange-500 ring-2 ring-orange-200"
-                        : "border-slate-300 hover:border-slate-400"
-                    }`}
-                    style={{ backgroundColor: color.hex }}
-                  />
-                ))}
-              </div>
-            </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                    {variants.colorLabel}: <span className="font-normal text-slate-500">{variants.colorOptions[selectedColor]?.name}</span>
+                  </label>
+                  <div className="flex gap-3">
+                    {variants.colorOptions.map((color, idx) => (
+                      <button
+                        key={color.name}
+                        onClick={() => setSelectedColor(idx)}
+                        title={color.name}
+                        className={`w-8 h-8 rounded-full border-2 transition ${
+                          selectedColor === idx
+                            ? "border-orange-500 ring-2 ring-orange-200"
+                            : "border-slate-300 hover:border-slate-400"
+                        }`}
+                        style={{ backgroundColor: color.hex }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Promotion box */}
             <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl p-4">
@@ -403,7 +456,7 @@ export default function ProductDetailPage({
                       [t("productDetail.specScreen"), '6.9" Super Retina XDR OLED'],
                       [t("productDetail.specChip"), "Apple A20 Pro"],
                       [t("productDetail.specRam"), "12 GB"],
-                      [t("productDetail.specStorage"), selectedCapacity],
+                      [t("productDetail.specStorage"), selectedPrimary || "—"],
                       [t("productDetail.specCamera"), "48MP + 48MP + 12MP"],
                       [t("productDetail.specBattery"), "4685 mAh"],
                       [t("productDetail.specOS"), "iOS 20"],
