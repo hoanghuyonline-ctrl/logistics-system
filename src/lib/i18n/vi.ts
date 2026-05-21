@@ -1106,6 +1106,7 @@ const vi: Record<string, string> = {
   "nav.shop": "Bán hàng",
   "nav.shopRequests": "Đơn mua hàng",
   "nav.adminSales": "Bán hàng",
+  "nav.adminSalesRequests": "Quản lý đơn mua",
   "sales.shopTitle": "Cửa hàng",
   "sales.shopSubtitle": "Chọn sản phẩm và đặt mua ngay",
   "sales.buyNow": "Mua ngay",
@@ -1170,6 +1171,34 @@ const vi: Record<string, string> = {
   "publicShop.submitError": "Không thể gửi yêu cầu, vui lòng thử lại",
   "publicShop.myAccount": "Tài khoản",
   "sales.requestsActions": "Thao tác",
+
+  // Admin Sales Requests page
+  "salesAdmin.title": "Quản lý đơn mua hàng",
+  "salesAdmin.subtitle": "Xem và xử lý tất cả đơn mua hàng của khách",
+  "salesAdmin.code": "Mã đơn",
+  "salesAdmin.customer": "Khách hàng",
+  "salesAdmin.product": "Sản phẩm",
+  "salesAdmin.qty": "SL",
+  "salesAdmin.estTotal": "Tổng ước tính",
+  "salesAdmin.status": "Trạng thái",
+  "salesAdmin.actions": "Thao tác",
+  "salesAdmin.confirmPriceBtn": "Xác nhận giá",
+  "salesAdmin.confirmPriceTitle": "Xác nhận giá cho đơn",
+  "salesAdmin.enterPrice": "Nhập giá xác nhận (VND)",
+  "salesAdmin.confirm": "Xác nhận",
+  "salesAdmin.cancel": "Hủy",
+  "salesAdmin.priceConfirmedOk": "Đã xác nhận giá thành công",
+  "salesAdmin.statusUpdatedOk": "Đã cập nhật trạng thái thành công",
+  "salesAdmin.errorOccurred": "Đã xảy ra lỗi",
+  "salesAdmin.noRequests": "Chưa có đơn mua hàng nào",
+  "salesAdmin.search": "Tìm kiếm mã đơn, sản phẩm...",
+  "salesAdmin.allStatuses": "Tất cả trạng thái",
+  "salesAdmin.nextOrdered": "→ Đã đặt hàng",
+  "salesAdmin.nextInTransit": "→ Đang vận chuyển",
+  "salesAdmin.nextCompleted": "→ Hoàn thành",
+  "salesAdmin.createdAt": "Ngày tạo",
+  "salesAdmin.confirmedPriceCol": "Giá xác nhận",
 };
+
 
 export default vi;
