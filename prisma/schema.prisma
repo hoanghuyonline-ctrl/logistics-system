@@ -483,6 +483,7 @@ model SalesRequest {
   customerNote    String?            @db.Text
   paidAt          DateTime?
   paidFromWallet  Boolean            @default(false)
+  paymentMethod   String             @default("WALLET")
   confirmedById   String?
   confirmedAt     DateTime?
   orderId         String?
