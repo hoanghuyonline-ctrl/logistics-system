@@ -39,6 +39,7 @@ export const GET = withErrorHandler(async function GET(request: Request) {
         customer: { select: { id: true, fullName: true, email: true, phone: true } },
         product: { select: { id: true, name: true, imageUrl: true } },
         confirmedBy: { select: { id: true, fullName: true } },
+        order: { select: { id: true, orderCode: true } },
       },
     }),
     prisma.salesRequest.count({ where }),

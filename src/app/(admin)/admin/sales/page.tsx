@@ -36,6 +36,7 @@ interface SalesRequest {
   customer: { id: string; fullName: string; email: string; phone: string | null };
   product: { id: string; name: string; imageUrl: string | null } | null;
   confirmedBy: { id: string; fullName: string } | null;
+  order: { id: string; orderCode: string } | null;
 }
 
 const STATUS_OPTIONS = ["NEW", "CONTACTED", "PRICE_CONFIRMED", "PAID", "PROCESSING", "COMPLETED", "CANCELLED"];
@@ -308,9 +309,18 @@ export default function AdminSalesPage() {
       title: t("salesAdmin.status"),
       dataIndex: "status",
       key: "status",
-      width: 140,
-      render: (status: string) => (
-        <Tag color={STATUS_TAG_COLORS[status] || "default"}>{statusLabel(status)}</Tag>
+      width: 160,
+      render: (status: string, record: SalesRequest) => (
+        <div className="flex flex-col gap-1">
+          <Tag color={STATUS_TAG_COLORS[status] || "default"}>{statusLabel(status)}</Tag>
+          {record.order && (
+            <a href={`/admin/orders/${record.order.id}`} className="inline-block">
+              <Tag color="blue" className="cursor-pointer text-[10px]">
+                {record.order.orderCode}
+              </Tag>
+            </a>
+          )}
+        </div>
       ),
     },
     {
