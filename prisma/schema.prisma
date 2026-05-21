@@ -175,12 +175,13 @@ model Order {
   createdAt                 DateTime    @default(now())
   updatedAt                 DateTime    @updatedAt
 
-  user         User             @relation(fields: [userId], references: [id])
-  package      Package?         @relation(fields: [packageId], references: [id])
-  statusLogs   OrderStatusLog[]
-  orderNotes   OrderNote[]
-  transactions Transaction[]
+  user          User             @relation(fields: [userId], references: [id])
+  package       Package?         @relation(fields: [packageId], references: [id])
+  statusLogs    OrderStatusLog[]
+  orderNotes    OrderNote[]
+  transactions  Transaction[]
   notifications Notification[]
+  salesRequests SalesRequest[]
 }
 
 model OrderStatusLog {
@@ -484,12 +485,14 @@ model SalesRequest {
   paidFromWallet  Boolean            @default(false)
   confirmedById   String?
   confirmedAt     DateTime?
+  orderId         String?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
   customer    User     @relation("SalesRequestCustomer", fields: [customerId], references: [id])
   product     Product? @relation(fields: [productId], references: [id])
   confirmedBy User?    @relation("SalesRequestConfirmer", fields: [confirmedById], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
 
   @@index([customerId, createdAt])
   @@index([status])
