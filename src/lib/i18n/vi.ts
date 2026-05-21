@@ -1198,6 +1198,30 @@ const vi: Record<string, string> = {
   "salesAdmin.nextCompleted": "→ Hoàn thành",
   "salesAdmin.createdAt": "Ngày tạo",
   "salesAdmin.confirmedPriceCol": "Giá xác nhận",
+
+  // Product detail page
+  "productDetail.notFound": "Không tìm thấy sản phẩm",
+  "productDetail.backToShop": "Quay lại cửa hàng",
+  "productDetail.noImage": "Chưa có hình ảnh",
+  "productDetail.capacity": "Dung lượng",
+  "productDetail.color": "Màu sắc",
+  "productDetail.promoTitle": "Ưu đãi đặc biệt",
+  "productDetail.promo1": "Miễn phí vận chuyển toàn quốc",
+  "productDetail.promo2": "Bảo hành chính hãng 12 tháng",
+  "productDetail.promo3": "Hỗ trợ trả góp 0% lãi suất",
+  "productDetail.notePlaceholder": "Ghi chú thêm cho đơn hàng (tùy chọn)",
+  "productDetail.features": "Đặc điểm nổi bật",
+  "productDetail.specs": "Thông số kỹ thuật",
+  "productDetail.noDescription": "Chưa có mô tả sản phẩm",
+  "productDetail.specScreen": "Màn hình",
+  "productDetail.specChip": "Chip xử lý",
+  "productDetail.specRam": "RAM",
+  "productDetail.specStorage": "Bộ nhớ trong",
+  "productDetail.specCamera": "Camera sau",
+  "productDetail.specBattery": "Pin",
+  "productDetail.specOS": "Hệ điều hành",
+  "productDetail.specSim": "SIM",
+  "productDetail.specWeight": "Trọng lượng",
 };
 
 

@@ -1198,6 +1198,30 @@ const en: Record<string, string> = {
   "salesAdmin.nextCompleted": "→ Completed",
   "salesAdmin.createdAt": "Created",
   "salesAdmin.confirmedPriceCol": "Confirmed Price",
+
+  // Product detail page
+  "productDetail.notFound": "Product not found",
+  "productDetail.backToShop": "Back to shop",
+  "productDetail.noImage": "No image available",
+  "productDetail.capacity": "Capacity",
+  "productDetail.color": "Color",
+  "productDetail.promoTitle": "Special offers",
+  "productDetail.promo1": "Free nationwide shipping",
+  "productDetail.promo2": "12-month official warranty",
+  "productDetail.promo3": "0% installment plan available",
+  "productDetail.notePlaceholder": "Additional notes for your order (optional)",
+  "productDetail.features": "Key Features",
+  "productDetail.specs": "Technical Specifications",
+  "productDetail.noDescription": "No product description available",
+  "productDetail.specScreen": "Display",
+  "productDetail.specChip": "Chipset",
+  "productDetail.specRam": "RAM",
+  "productDetail.specStorage": "Storage",
+  "productDetail.specCamera": "Rear Camera",
+  "productDetail.specBattery": "Battery",
+  "productDetail.specOS": "OS",
+  "productDetail.specSim": "SIM",
+  "productDetail.specWeight": "Weight",
 };
 
 export default en;

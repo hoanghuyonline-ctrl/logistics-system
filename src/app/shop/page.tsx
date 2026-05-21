@@ -177,7 +177,10 @@ export default function PublicShopPage() {
                 className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition group"
               >
                 {/* Image */}
-                <div className="aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
+                <div
+                  className="aspect-square bg-slate-50 flex items-center justify-center overflow-hidden cursor-pointer"
+                  onClick={() => router.push(`/shop/${product.id}`)}
+                >
                   {product.imageUrl ? (
                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
                   ) : (
@@ -186,7 +189,10 @@ export default function PublicShopPage() {
                 </div>
                 {/* Info */}
                 <div className="p-2.5">
-                  <h3 className="text-sm font-medium text-slate-800 line-clamp-2 leading-tight mb-1">{product.name}</h3>
+                  <h3
+                    className="text-sm font-medium text-slate-800 line-clamp-2 leading-tight mb-1 cursor-pointer hover:text-orange-600 transition"
+                    onClick={() => router.push(`/shop/${product.id}`)}
+                  >{product.name}</h3>
                   {product.description && (
                     <p className="text-xs text-slate-400 line-clamp-2 mb-1">{product.description}</p>
                   )}
