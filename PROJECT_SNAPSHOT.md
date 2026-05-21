@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-21
 **Branch:** `main`
-**Latest stable commit:** Post PR #323 (Admin Sales Requests Management UI with Ant Design table)
+**Latest stable commit:** Post PR #328 (Product Detail Page at /shop/[id])
 
 ---
 
@@ -304,6 +304,12 @@
 
 - **Admin Sales Requests Management UI (PR #323)** — Dedicated admin page at `/admin/sales-requests` built with Ant Design (`antd`) components (first antd usage in project). Ant Design `Table` with columns: Code (monospace), Customer (name + phone), Product (with thumbnail), Qty, Estimated Total (vi-VN ₫), Confirmed Price, Status (Ant Design `Tag` with semantic colors per `SalesRequestStatus`), Created Date, Actions. Search by request code, product name, or customer name. Status filter dropdown for all 7 statuses. **Action 1 — Price Confirmation:** For `NEW` requests, "Xác nhận giá" button opens Ant Design `Modal` with request summary and `InputNumber` (VND formatted with ₫ suffix); triggers `POST /api/admin/sales-requests/[id]/confirm` → status transitions to `PRICE_CONFIRMED`, fires SYSTEM + TELEGRAM notification to customer. **Action 2 — Logistics Progression:** For `PAID` requests, step-by-step buttons: `PAID` → `PROCESSING` ("→ Đã đặt hàng") → `COMPLETED` ("→ Hoàn thành") via `PATCH /api/admin/sales-requests/[id]/status`, each transition fires customer notification. Admin sidebar: added 🛍️ "Quản lý đơn mua" nav link (`nav.adminSalesRequests`). 3 new API endpoints: `GET /api/admin/sales-requests` (paginated, filterable, searchable), `POST /api/admin/sales-requests/[id]/confirm`, `PATCH /api/admin/sales-requests/[id]/status`. 27+ new `salesAdmin.*` i18n keys in VI/EN/ZH. **No schema changes; no migration; antd added as dependency; production-safe.**
 
+- **Consolidate Admin Sales UI (PR #325)** — Merged `/admin/sales-requests` into `/admin/sales` using Ant Design `<Tabs>` component. Tab 1 "Đơn mua hàng": full Antd Table with search, status filter, pagination, price confirmation modal, logistics progression buttons (migrated from old `/admin/sales-requests` page). Tab 2 "Sản phẩm": existing products CRUD. Deleted redundant `src/app/(admin)/admin/sales-requests/` directory. Removed duplicate sidebar nav entry for `/admin/sales-requests`. **No schema changes; no new dependencies; production-safe.**
+
+- **Fix Admin Sales API Endpoints (PRs #326, #327)** — Fixed `/admin/sales` showing "Đơn mua hàng (0)" despite 5 active SalesRequest records in database. Root cause: PR #325 deleted the `/api/admin/sales-requests/` routes during UI consolidation while the frontend still fetched from them. PR #326 initially restored those routes, but the underlying issue was endpoint redundancy. PR #327 final fix: switched all frontend fetch calls to use existing `/api/sales-requests` endpoints (which already handle admin access via role checks): `GET /api/sales-requests` for list, `PATCH /api/sales-requests/[id]` with `{ confirmedPrice, status }` for price confirmation and status updates. Deleted `/api/admin/sales-requests/` directory entirely. **No schema changes; no new dependencies; production-safe.**
+
+- **Product Detail Page (PR #328)** — Dynamic product detail page at `/shop/[id]` with professional e-commerce layout. New public API endpoint `GET /api/public/products/[id]` (no auth, active products only). Client component using Next.js 16 `use()` API for dynamic route params. **Desktop 2-column layout (stacks on mobile):** Left column: product image gallery with main preview and thumbnail strip. Right column: breadcrumb navigation, product title, price (VND `vi-VN` locale with ₫), capacity variant selector (256GB/512GB/1TB), color picker (4 Titan colors with hex swatches), promotion box (free shipping, 12-month warranty, 0% installment), quantity picker, estimated total, customer notes textarea, login hint for guests, gradient "MUA NGAY" CTA button (`from-orange-500 to-red-500`). **Bottom section:** tabbed interface with "Đặc điểm nổi bật" (product description/features from DB) and "Thông số kỹ thuật" (specs table: screen, chip, RAM, storage, camera, battery, OS, SIM, weight — storage dynamically reflects selected capacity). **Buy flow:** `POST /api/sales-requests` with product metadata; authenticated users redirected to `/shop/requests` on success; unauthenticated users redirected to `/login` with `localStorage` pending request auto-submit on return. Product cards on `/shop` listing now link to detail page (image + title clickable). 21 new `productDetail.*` i18n keys in VI/EN/ZH. 404 state with "Quay lại cửa hàng" button. **No schema changes; no new dependencies; production-safe.**
+
 **Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
 
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
@@ -435,9 +441,7 @@ pm2 restart logistics-system
 | `/api/sales-requests` | GET/POST | Sales request list (customer own / admin all) and create (CUSTOMER/ADMIN) |
 | `/api/sales-requests/[id]` | PATCH | Update status, confirm price, add note (ADMIN/ACCOUNTANT) |
 | `/api/sales-requests/[id]/pay` | POST | Pay from wallet — deducts balance, allows debt, creates SALES_PAYMENT transaction (CUSTOMER) |
-| `/api/admin/sales-requests` | GET | Admin-only paginated sales request list with search + status filter (ADMIN/ACCOUNTANT) |
-| `/api/admin/sales-requests/[id]/confirm` | POST | Confirm price for NEW request → PRICE_CONFIRMED, notifies customer (ADMIN/ACCOUNTANT) |
-| `/api/admin/sales-requests/[id]/status` | PATCH | Logistics status progression: PAID → PROCESSING → COMPLETED, notifies customer (ADMIN/ACCOUNTANT) |
+| `/api/public/products/[id]` | GET | Single active product detail (public, no auth) |
 
 ## Important Prisma Models
 
