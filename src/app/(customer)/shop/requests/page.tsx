@@ -105,8 +105,8 @@ export default function ShopRequestsPage() {
             r.id === id ? { ...r, status: "PAID", paidAt: new Date().toISOString(), paidFromWallet: true } : r
           )
         );
-        if (wallet && result.newBalance !== undefined) {
-          setWallet({ ...wallet, balance: String(result.newBalance), debt: String(result.newDebt ?? wallet.debt) });
+        if (wallet && result.walletBalance !== undefined) {
+          setWallet({ ...wallet, balance: String(result.walletBalance), debt: String(result.walletDebt ?? wallet.debt) });
         } else {
           const walletRes = await fetch("/api/wallet");
           if (walletRes.ok) setWallet(await walletRes.json());
@@ -138,12 +138,10 @@ export default function ShopRequestsPage() {
             <p className="text-xs text-green-600 font-medium mb-1">{t("sales.walletBalance")}</p>
             <p className="text-lg sm:text-xl font-bold text-green-700">{fmtCurrency(wallet.balance)}</p>
           </div>
-          {walletDebt > 0 && (
-            <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200 rounded-xl p-4">
-              <p className="text-xs text-red-600 font-medium mb-1">{t("sales.walletDebt")}</p>
-              <p className="text-lg sm:text-xl font-bold text-red-700">{fmtCurrency(wallet.debt)}</p>
-            </div>
-          )}
+          <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200 rounded-xl p-4">
+            <p className="text-xs text-red-600 font-medium mb-1">{t("sales.walletDebt")}</p>
+            <p className={`text-lg sm:text-xl font-bold ${walletDebt > 0 ? "text-red-700" : "text-slate-500"}`}>{fmtCurrency(wallet.debt)}</p>
+          </div>
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 flex items-center justify-center">
             <Link href="/wallet" className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
               {t("sales.topUpFirst")} &rarr;

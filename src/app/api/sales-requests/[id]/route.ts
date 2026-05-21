@@ -80,6 +80,8 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
       vietnamDeliveryFee: vnDeliveryDefault,
     });
 
+    const orderTotalCost = cost.totalCostVND;
+
     const order = await prisma.order.create({
       data: {
         orderCode: generateOrderCode(),
@@ -97,7 +99,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
         internationalShippingRate: intlRate,
         internationalShippingFee: cost.internationalShippingFee,
         vietnamDeliveryFee: cost.vietnamDeliveryFee,
-        totalCostVND: confirmedTotal > 0 ? confirmedTotal : cost.totalCostVND,
+        totalCostVND: orderTotalCost,
         notes: `Tự động tạo từ yêu cầu mua hàng ${existing.requestCode}`,
         statusLogs: {
           create: {
@@ -108,6 +110,16 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
         },
       },
     });
+
+    // Track debt: if order total exceeds what the customer already paid (confirmedPrice)
+    if (orderTotalCost > confirmedTotal && confirmedTotal > 0) {
+      const debtIncrease = orderTotalCost - confirmedTotal;
+      await prisma.wallet.upsert({
+        where: { userId: existing.customerId },
+        update: { debt: { increment: debtIncrease } },
+        create: { userId: existing.customerId, balance: 0, debt: debtIncrease },
+      });
+    }
 
     data.orderId = order.id;
   }
