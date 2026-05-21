@@ -1198,6 +1198,30 @@ const zh: Record<string, string> = {
   "salesAdmin.nextCompleted": "→ 已完成",
   "salesAdmin.createdAt": "创建时间",
   "salesAdmin.confirmedPriceCol": "确认价格",
+
+  // Product detail page
+  "productDetail.notFound": "未找到商品",
+  "productDetail.backToShop": "返回商店",
+  "productDetail.noImage": "暂无图片",
+  "productDetail.capacity": "容量",
+  "productDetail.color": "颜色",
+  "productDetail.promoTitle": "特别优惠",
+  "productDetail.promo1": "全国包邮",
+  "productDetail.promo2": "12个月官方保修",
+  "productDetail.promo3": "0%分期付款",
+  "productDetail.notePlaceholder": "订单备注（可选）",
+  "productDetail.features": "产品亮点",
+  "productDetail.specs": "技术规格",
+  "productDetail.noDescription": "暂无商品描述",
+  "productDetail.specScreen": "屏幕",
+  "productDetail.specChip": "处理器",
+  "productDetail.specRam": "内存",
+  "productDetail.specStorage": "存储",
+  "productDetail.specCamera": "后置摄像头",
+  "productDetail.specBattery": "电池",
+  "productDetail.specOS": "操作系统",
+  "productDetail.specSim": "SIM",
+  "productDetail.specWeight": "重量",
 };
 
 export default zh;
