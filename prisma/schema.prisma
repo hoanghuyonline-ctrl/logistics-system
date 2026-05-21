@@ -481,6 +481,7 @@ model SalesRequest {
   status          SalesRequestStatus @default(NEW)
   adminNote       String?            @db.Text
   customerNote    String?            @db.Text
+  selectedOptions String?
   paidAt          DateTime?
   paidFromWallet  Boolean            @default(false)
   paymentMethod   String             @default("WALLET")

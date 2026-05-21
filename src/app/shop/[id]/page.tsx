@@ -80,11 +80,17 @@ export default function ProductDetailPage({
   const handleBuy = async () => {
     if (!product) return;
     setSubmitting(true);
+    const optionParts: string[] = [];
+    if (selectedCapacity) optionParts.push(`Dung lượng: ${selectedCapacity}`);
+    if (COLOR_OPTIONS[selectedColor]) optionParts.push(`Màu sắc: ${COLOR_OPTIONS[selectedColor].name}`);
+    const selectedOptions = optionParts.length > 0 ? optionParts.join(" | ") : undefined;
+
     const payload = {
       productId: product.id,
       productName: product.name,
       quantity,
       customerNote: customerNote || undefined,
+      selectedOptions,
     };
 
     try {

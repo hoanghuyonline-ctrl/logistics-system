@@ -30,6 +30,7 @@ interface SalesRequest {
   status: string;
   adminNote: string | null;
   customerNote: string | null;
+  selectedOptions: string | null;
   paidAt: string | null;
   paidFromWallet: boolean;
   paymentMethod: string;
@@ -303,7 +304,16 @@ export default function AdminSalesPage() {
           {record.product?.imageUrl && (
             <img src={record.product.imageUrl} alt="" className="w-8 h-8 rounded object-cover" />
           )}
-          <span className="text-sm">{name}</span>
+          <div>
+            <span className="text-sm">{name}</span>
+            {record.selectedOptions && (
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {record.selectedOptions.split(" | ").map((opt) => (
+                  <Tag key={opt} color="default" className="text-[10px] leading-tight m-0">{opt}</Tag>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       ),
     },
