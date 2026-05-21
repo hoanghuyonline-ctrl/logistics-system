@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import LocalShopTrackingSteps from "@/components/tracking/LocalShopTrackingSteps";
 
 interface SalesRequest {
   id: string;
@@ -58,6 +59,7 @@ export default function ShopRequestsPage() {
   const [codConfirmId, setCodConfirmId] = useState<string | null>(null);
   const [codProcessing, setCodProcessing] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [codAddressConfirmed, setCodAddressConfirmed] = useState(false);
 
@@ -207,6 +209,7 @@ export default function ShopRequestsPage() {
                   <th className="pb-3 pr-3 text-right">{t("sales.estimatedTotal")}</th>
                   <th className="pb-3 pr-3 text-right">{t("sales.confirmedPrice")}</th>
                   <th className="pb-3 pr-3 text-center">{t("sales.updateStatus")}</th>
+                  <th className="pb-3 pr-3 text-center">Theo dõi</th>
                   <th className="pb-3 text-right">{t("sales.requestsActions")}</th>
                 </tr>
               </thead>
@@ -216,7 +219,8 @@ export default function ShopRequestsPage() {
                   const price = req.confirmedPrice ? parseFloat(req.confirmedPrice) : 0;
                   const insufficient = canPay && walletBalance < price;
                   return (
-                    <tr key={req.id} className="hover:bg-slate-50/50">
+                    <React.Fragment key={req.id}>
+                    <tr className="hover:bg-slate-50/50">
                       {/* Request code with copy */}
                       <td className="py-3 pr-3">
                         <button
@@ -262,6 +266,15 @@ export default function ShopRequestsPage() {
                         <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border ${STATUS_COLORS[req.status] || "bg-slate-100 text-slate-600 border-slate-200"}`}>
                           {statusLabel(req.status)}
                         </span>
+                      </td>
+                      {/* Tracking */}
+                      <td className="py-3 pr-3 text-center">
+                        <button
+                          onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
+                          className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline transition"
+                        >
+                          {expandedId === req.id ? "Thu gọn" : "Theo dõi"}
+                        </button>
                       </td>
                       {/* Actions */}
                       <td className="py-3 text-right">
@@ -346,6 +359,14 @@ export default function ShopRequestsPage() {
                         ) : null}
                       </td>
                     </tr>
+                    {expandedId === req.id && (
+                      <tr>
+                        <td colSpan={8} className="px-3 py-2 bg-slate-50/70">
+                          <LocalShopTrackingSteps status={req.status} createdAt={req.createdAt} paidAt={req.paidAt} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                   );
                 })}
               </tbody>
@@ -402,6 +423,19 @@ export default function ShopRequestsPage() {
                         <span className="text-xl">{"\uD83D\uDECD\uFE0F"}</span>
                       )}
                     </div>
+                  </div>
+
+                  {/* Tracking timeline (mobile) */}
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <button
+                      onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline transition mb-2"
+                    >
+                      {expandedId === req.id ? "Thu g\u1ecdn theo d\u00f5i" : "Xem ti\u1ebfn \u0111\u1ed9 \u0111\u01a1n h\u00e0ng"}
+                    </button>
+                    {expandedId === req.id && (
+                      <LocalShopTrackingSteps status={req.status} createdAt={req.createdAt} paidAt={req.paidAt} />
+                    )}
                   </div>
 
                   {/* Pay button */}
