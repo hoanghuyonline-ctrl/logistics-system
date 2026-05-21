@@ -32,6 +32,7 @@ interface SalesRequest {
   customerNote: string | null;
   paidAt: string | null;
   paidFromWallet: boolean;
+  paymentMethod: string;
   createdAt: string;
   customer: { id: string; fullName: string; email: string; phone: string | null };
   product: { id: string; name: string; imageUrl: string | null } | null;
@@ -269,8 +270,15 @@ export default function AdminSalesPage() {
       title: t("salesAdmin.code"),
       dataIndex: "requestCode",
       key: "requestCode",
-      width: 140,
-      render: (code: string) => <span className="font-mono text-xs font-semibold text-slate-700">{code}</span>,
+      width: 160,
+      render: (code: string, record: SalesRequest) => (
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-xs font-semibold text-slate-700">{code}</span>
+          {record.paymentMethod === "COD" && (
+            <Tag color="orange" className="text-[10px] leading-tight m-0">COD</Tag>
+          )}
+        </div>
+      ),
     },
     {
       title: t("salesAdmin.customer"),

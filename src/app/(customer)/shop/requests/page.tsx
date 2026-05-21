@@ -49,6 +49,8 @@ export default function ShopRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+  const [codConfirmId, setCodConfirmId] = useState<string | null>(null);
+  const [codProcessing, setCodProcessing] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -119,6 +121,29 @@ export default function ShopRequestsPage() {
       toast(t("publicShop.submitError"), "error");
     } finally {
       setPaying(false);
+    }
+  };
+
+  const handleCOD = async (id: string) => {
+    setCodProcessing(true);
+    try {
+      const res = await fetch(`/api/sales-requests/${id}/cod`, { method: "POST" });
+      if (res.ok) {
+        toast("Đã xác nhận thanh toán tiền mặt khi nhận hàng (COD)", "success");
+        setCodConfirmId(null);
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, status: "PAID", paidAt: new Date().toISOString(), paidFromWallet: false } : r
+          )
+        );
+      } else {
+        const err = await res.json();
+        toast(err.error || t("publicShop.submitError"), "error");
+      }
+    } catch {
+      toast(t("publicShop.submitError"), "error");
+    } finally {
+      setCodProcessing(false);
     }
   };
 
@@ -243,8 +268,24 @@ export default function ShopRequestsPage() {
                                 {paying ? t("common.loading") : t("sales.payConfirm")}
                               </button>
                             </div>
+                          ) : codConfirmId === req.id ? (
+                            <div className="space-y-1.5">
+                              <p className="text-[10px] text-slate-600">Bạn có chắc chắn muốn chọn hình thức thanh toán tiền mặt khi nhận hàng cho đơn này?</p>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button onClick={() => setCodConfirmId(null)} className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">
+                                  Không
+                                </button>
+                                <button
+                                  onClick={() => handleCOD(req.id)}
+                                  disabled={codProcessing}
+                                  className="px-3 py-1.5 text-xs font-bold text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 transition"
+                                >
+                                  {codProcessing ? t("common.loading") : "Xác nhận COD"}
+                                </button>
+                              </div>
+                            </div>
                           ) : (
-                            <div>
+                            <div className="space-y-1.5">
                               {insufficient && <p className="text-[10px] text-red-600 mb-0.5">Số dư ví không đủ để thanh toán. Vui lòng nạp thêm tiền.</p>}
                               <button
                                 onClick={() => setPayingId(req.id)}
@@ -252,6 +293,12 @@ export default function ShopRequestsPage() {
                                 className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                               >
                                 {t("sales.payFromWallet")}
+                              </button>
+                              <button
+                                onClick={() => setCodConfirmId(req.id)}
+                                className="px-3 py-1.5 text-xs font-bold text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition"
+                              >
+                                Thanh toán khi nhận hàng (COD)
                               </button>
                             </div>
                           )
@@ -320,8 +367,8 @@ export default function ShopRequestsPage() {
 
                   {/* Pay button */}
                   {canPay && (
-                    <div className="mt-3 pt-3 border-t border-slate-100">
-                      {insufficient && <p className="text-xs text-red-600 mb-2">Số dư ví không đủ để thanh toán. Vui lòng nạp thêm tiền.</p>}
+                    <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                      {insufficient && <p className="text-xs text-red-600">Số dư ví không đủ để thanh toán. Vui lòng nạp thêm tiền.</p>}
                       {payingId === req.id ? (
                         <div className="flex gap-2">
                           <button onClick={() => setPayingId(null)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
@@ -335,14 +382,38 @@ export default function ShopRequestsPage() {
                             {paying ? t("common.loading") : t("sales.payConfirm")}
                           </button>
                         </div>
+                      ) : codConfirmId === req.id ? (
+                        <div className="space-y-2">
+                          <p className="text-xs text-slate-600">Bạn có chắc chắn muốn chọn hình thức thanh toán tiền mặt khi nhận hàng cho đơn này?</p>
+                          <div className="flex gap-2">
+                            <button onClick={() => setCodConfirmId(null)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
+                              Không
+                            </button>
+                            <button
+                              onClick={() => handleCOD(req.id)}
+                              disabled={codProcessing}
+                              className="flex-1 px-3 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 disabled:opacity-50 transition"
+                            >
+                              {codProcessing ? t("common.loading") : "Xác nhận COD"}
+                            </button>
+                          </div>
+                        </div>
                       ) : (
-                        <button
-                          onClick={() => setPayingId(req.id)}
-                          disabled={!!insufficient}
-                          className="w-full px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                          {t("sales.payFromWallet")} — {fmtCurrency(price)}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => setPayingId(req.id)}
+                            disabled={!!insufficient}
+                            className="w-full px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            {t("sales.payFromWallet")} — {fmtCurrency(price)}
+                          </button>
+                          <button
+                            onClick={() => setCodConfirmId(req.id)}
+                            className="w-full px-3 py-2 text-orange-600 border border-orange-300 rounded-lg text-sm font-bold hover:bg-orange-50 transition"
+                          >
+                            Thanh toán khi nhận hàng (COD)
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
