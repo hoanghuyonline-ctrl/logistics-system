@@ -57,7 +57,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { productId, productName, quantity, customerNote } = body;
+  const { productId, productName, quantity, customerNote, selectedOptions } = body;
 
   if (!productName) return errorResponse("Tên sản phẩm là bắt buộc");
 
@@ -86,6 +86,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       quantity: parseInt(quantity) || 1,
       estimatedTotal,
       customerNote: customerNote || null,
+      selectedOptions: selectedOptions || null,
     },
     include: {
       customer: { select: { id: true, fullName: true, email: true } },
