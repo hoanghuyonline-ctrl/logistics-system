@@ -65,6 +65,13 @@ export default function UsersPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [now] = useState(() => Date.now());
 
+  const [walletUser, setWalletUser] = useState<User | null>(null);
+  const [walletAction, setWalletAction] = useState<"ADD" | "DEDUCT">("ADD");
+  const [walletAmount, setWalletAmount] = useState<number | null>(null);
+  const [walletReason, setWalletReason] = useState("");
+  const [walletSaving, setWalletSaving] = useState(false);
+  const [walletError, setWalletError] = useState("");
+
   const loadUsers = useCallback(() => {
     const params = new URLSearchParams({ page: String(page), limit: "15" });
     if (roleFilter) params.set("role", roleFilter);
@@ -147,6 +154,40 @@ export default function UsersPage() {
     }
     setEditUser(null);
     loadUsers();
+  }
+
+  function openWalletModal(u: User) {
+    setWalletUser(u);
+    setWalletAction("ADD");
+    setWalletAmount(null);
+    setWalletReason("");
+    setWalletError("");
+  }
+
+  async function submitWalletAdjust(e: React.FormEvent) {
+    e.preventDefault();
+    if (!walletUser || !walletAmount || walletAmount <= 0 || !walletReason.trim()) return;
+    setWalletSaving(true);
+    setWalletError("");
+    try {
+      const res = await fetch(`/api/users/${walletUser.id}/adjust-wallet`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: walletAction, amount: walletAmount, reason: walletReason.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setWalletError(data.error || "Lỗi không xác định");
+        setWalletSaving(false);
+        return;
+      }
+      setWalletUser(null);
+      loadUsers();
+    } catch {
+      setWalletError("Lỗi kết nối");
+    } finally {
+      setWalletSaving(false);
+    }
   }
 
   function openDeleteConfirm(u: User) {
@@ -325,6 +366,12 @@ export default function UsersPage() {
                           className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"}`}>
                           {u.isActive ? t("users.deactivate") : t("users.activate")}
                         </button>
+                        {u.wallet && (
+                          <button onClick={() => openWalletModal(u)}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors">
+                            Điều chỉnh ví
+                          </button>
+                        )}
                         {u.isActive && u.id !== currentUserId && (
                           <button onClick={() => openDeleteConfirm(u)}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
@@ -421,6 +468,65 @@ export default function UsersPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Wallet Adjustment Modal */}
+      {walletUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setWalletUser(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-900">Điều chỉnh số dư ví khách hàng</h2>
+              <p className="text-sm text-slate-500 mt-0.5">{walletUser.fullName} — Số dư hiện tại: {walletUser.wallet ? `${parseFloat(walletUser.wallet.balance).toLocaleString("vi-VN")} VND` : "—"}</p>
+            </div>
+            <form onSubmit={submitWalletAdjust} className="p-6 space-y-4">
+              {walletError && (
+                <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm border border-red-100">
+                  <span>⚠️</span><span>{walletError}</span>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Loại điều chỉnh</label>
+                <div className="flex gap-3">
+                  <label className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-colors ${
+                    walletAction === "ADD" ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-600 hover:border-slate-300"
+                  }`}>
+                    <input type="radio" name="walletAction" value="ADD" checked={walletAction === "ADD"} onChange={() => setWalletAction("ADD")} className="sr-only" />
+                    <span className="text-sm font-semibold">+ Cộng tiền</span>
+                  </label>
+                  <label className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-colors ${
+                    walletAction === "DEDUCT" ? "border-red-500 bg-red-50 text-red-700" : "border-slate-200 text-slate-600 hover:border-slate-300"
+                  }`}>
+                    <input type="radio" name="walletAction" value="DEDUCT" checked={walletAction === "DEDUCT"} onChange={() => setWalletAction("DEDUCT")} className="sr-only" />
+                    <span className="text-sm font-semibold">- Trừ tiền</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Số tiền (VND)</label>
+                <input type="number" min={1} step={1} value={walletAmount ?? ""} onChange={(e) => setWalletAmount(e.target.value ? parseFloat(e.target.value) : null)}
+                  placeholder="Nhập số tiền" required
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Lý do điều chỉnh <span className="text-red-500">*</span></label>
+                <textarea value={walletReason} onChange={(e) => setWalletReason(e.target.value)}
+                  placeholder="Nhập lý do (bắt buộc)" required rows={3}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setWalletUser(null)}
+                  className="px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+                  Hủy
+                </button>
+                <button type="submit" disabled={walletSaving || !walletAmount || walletAmount <= 0 || !walletReason.trim()}
+                  className={`px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-50 ${
+                    walletAction === "ADD" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"
+                  }`}>
+                  {walletSaving ? "Đang xử lý..." : "Xác nhận"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
