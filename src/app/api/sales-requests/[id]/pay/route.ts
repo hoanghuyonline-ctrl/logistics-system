@@ -28,19 +28,12 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
   const currentBalance = parseFloat(wallet.balance.toString());
   const currentDebt = parseFloat(wallet.debt.toString());
 
-  let newBalance: number;
-  let newDebt: number;
-
-  if (currentBalance >= payAmount) {
-    // Sufficient balance
-    newBalance = currentBalance - payAmount;
-    newDebt = currentDebt;
-  } else {
-    // Insufficient balance — allow debt (same as existing order payment logic)
-    const shortfall = payAmount - currentBalance;
-    newBalance = 0;
-    newDebt = currentDebt + shortfall;
+  if (currentBalance < payAmount) {
+    return errorResponse("Số dư tài khoản không đủ. Vui lòng nạp thêm tiền vào ví.", 400);
   }
+
+  const newBalance = currentBalance - payAmount;
+  const newDebt = currentDebt;
 
   // Update wallet, create transaction, update sales request — all in one transaction
   await prisma.$transaction([
