@@ -417,14 +417,26 @@ export default function AdminSalesPage() {
 
         if (status === "PAID") {
           return (
-            <Button
-              size="small"
-              loading={statusLoading === id}
-              onClick={() => handleStatusUpdate(id, "PROCESSING")}
-              style={{ background: "#2563eb", color: "#fff", borderColor: "#2563eb" }}
-            >
-              {t("salesAdmin.nextOrdered")}
-            </Button>
+            <Space>
+              <Button
+                size="small"
+                loading={statusLoading === id}
+                onClick={() => handleStatusUpdate(id, "PROCESSING")}
+                style={{ background: "#2563eb", color: "#fff", borderColor: "#2563eb" }}
+              >
+                {t("salesAdmin.nextOrdered")}
+              </Button>
+              <Popconfirm
+                title="Hủy đơn hàng này?"
+                description="Bạn có chắc chắn muốn hủy đơn hàng này? Hệ thống sẽ tự động hoàn lại số tiền đã thanh toán vào ví của khách hàng nếu thanh toán qua Ví."
+                onConfirm={() => handleStatusUpdate(id, "CANCELLED")}
+                okText="Hủy đơn"
+                cancelText="Không"
+                okButtonProps={{ danger: true }}
+              >
+                <Button size="small" danger loading={statusLoading === id}>Hủy</Button>
+              </Popconfirm>
+            </Space>
           );
         }
 
