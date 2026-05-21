@@ -57,6 +57,8 @@ enum TransactionType {
   REFUND
   ADJUSTMENT
   SALES_PAYMENT
+  MANUAL_ADD
+  MANUAL_DEDUCT
 }
 
 enum SalesRequestStatus {
