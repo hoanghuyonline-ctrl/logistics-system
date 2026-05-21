@@ -35,9 +35,20 @@
 - `/api/telegram/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
 - Any new external webhook must also be added to `publicPaths` in `src/proxy.ts`
 
+## Financial Safety Rules
+- Wallet payment MUST be blocked if balance < confirmedPrice (no auto-debt on customer payment)
+- Debt is ONLY created when Order totalCostVND exceeds confirmedPrice during PROCESSING transition
+- COD payment method does NOT deduct from wallet — cash collected at delivery
+- Only NEW and CANCELLED requests can be deleted from the database
+- Only NEW and PRICE_CONFIRMED requests can be cancelled
+
+## Payment Methods
+- `WALLET` — deducts from customer wallet balance (requires sufficient funds)
+- `COD` — cash on delivery, no wallet deduction, admin collects at fulfillment
+
 ## Current Priorities
 1. Sales MVP refinements and production stability
 2. Vietnamese default locale across all new features
-3. Wallet/payment flow integrity
+3. Wallet/payment flow integrity (no negative balance on customer payment)
 4. Notification delivery (SYSTEM + TELEGRAM channels)
 5. CI pipeline (build + typecheck must pass)
