@@ -313,6 +313,11 @@ export default function AdminSalesPage() {
                 ))}
               </div>
             )}
+            {record.customerNote && (
+              <div className="mt-1 px-2 py-1 bg-blue-50 border border-blue-100 rounded text-[10px] text-slate-600 italic leading-snug">
+                <span className="not-italic">📝</span> Ghi chú: &ldquo;{record.customerNote}&rdquo;
+              </div>
+            )}
           </div>
         </div>
       ),
