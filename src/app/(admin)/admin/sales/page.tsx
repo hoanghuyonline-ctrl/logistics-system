@@ -103,7 +103,7 @@ export default function AdminSalesPage() {
       const params = new URLSearchParams({ page: String(reqPage), limit: "20" });
       if (statusFilter) params.set("status", statusFilter);
       if (searchQuery) params.set("search", searchQuery);
-      const res = await fetch(`/api/admin/sales-requests?${params}`);
+      const res = await fetch(`/api/sales-requests?${params}`);
       if (res.ok) {
         const data = await res.json();
         setRequests(data.requests || []);
@@ -199,10 +199,10 @@ export default function AdminSalesPage() {
     if (!confirmingReq || !confirmPriceVal || confirmPriceVal <= 0) return;
     setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/admin/sales-requests/${confirmingReq.id}/confirm`, {
-        method: "POST",
+      const res = await fetch(`/api/sales-requests/${confirmingReq.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmedPrice: confirmPriceVal }),
+        body: JSON.stringify({ confirmedPrice: confirmPriceVal, status: "PRICE_CONFIRMED" }),
       });
       if (res.ok) {
         message.success(t("salesAdmin.priceConfirmedOk"));
@@ -224,7 +224,7 @@ export default function AdminSalesPage() {
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     setStatusLoading(id);
     try {
-      const res = await fetch(`/api/admin/sales-requests/${id}/status`, {
+      const res = await fetch(`/api/sales-requests/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
