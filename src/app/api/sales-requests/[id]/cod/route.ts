@@ -21,6 +21,12 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
     return errorResponse("Giá chưa được xác nhận");
   }
 
+  // Verify shipping address exists
+  const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: { address: true } });
+  if (!fullUser?.address || !fullUser.address.trim()) {
+    return errorResponse("Vui lòng cập nhật địa chỉ giao hàng tại Việt Nam trong trang hồ sơ trước khi chọn thanh toán COD.", 400);
+  }
+
   // Update sales request: mark as PAID with COD method, no wallet deduction
   await prisma.salesRequest.update({
     where: { id },

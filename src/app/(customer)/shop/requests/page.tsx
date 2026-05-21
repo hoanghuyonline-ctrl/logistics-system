@@ -28,6 +28,12 @@ interface WalletInfo {
   debt: string;
 }
 
+interface UserProfile {
+  fullName: string;
+  phone: string | null;
+  address: string | null;
+}
+
 const STATUS_COLORS: Record<string, string> = {
   NEW: "bg-blue-50 text-blue-700 border-blue-200",
   CONTACTED: "bg-amber-50 text-amber-700 border-amber-200",
@@ -52,18 +58,22 @@ export default function ShopRequestsPage() {
   const [codConfirmId, setCodConfirmId] = useState<string | null>(null);
   const [codProcessing, setCodProcessing] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [codAddressConfirmed, setCodAddressConfirmed] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
-      const [reqRes, walletRes] = await Promise.all([
+      const [reqRes, walletRes, meRes] = await Promise.all([
         fetch("/api/sales-requests"),
         fetch("/api/wallet"),
+        fetch("/api/auth/me"),
       ]);
       if (reqRes.ok) {
         const data = await reqRes.json();
         setRequests(data.requests || []);
       }
       if (walletRes.ok) setWallet(await walletRes.json());
+      if (meRes.ok) setUserProfile(await meRes.json());
     } catch {
       // silently fail
     } finally {
@@ -131,6 +141,7 @@ export default function ShopRequestsPage() {
       if (res.ok) {
         toast("Đã xác nhận thanh toán tiền mặt khi nhận hàng (COD)", "success");
         setCodConfirmId(null);
+        setCodAddressConfirmed(false);
         setRequests((prev) =>
           prev.map((r) =>
             r.id === id ? { ...r, status: "PAID", paidAt: new Date().toISOString(), paidFromWallet: false } : r
@@ -270,19 +281,47 @@ export default function ShopRequestsPage() {
                             </div>
                           ) : codConfirmId === req.id ? (
                             <div className="space-y-1.5">
-                              <p className="text-[10px] text-slate-600">Bạn có chắc chắn muốn chọn hình thức thanh toán tiền mặt khi nhận hàng cho đơn này?</p>
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button onClick={() => setCodConfirmId(null)} className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">
-                                  Không
-                                </button>
-                                <button
-                                  onClick={() => handleCOD(req.id)}
-                                  disabled={codProcessing}
-                                  className="px-3 py-1.5 text-xs font-bold text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 transition"
-                                >
-                                  {codProcessing ? t("common.loading") : "Xác nhận COD"}
-                                </button>
-                              </div>
+                              {!userProfile?.address ? (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+                                  <p className="text-[10px] text-red-700 font-medium mb-1">Bạn chưa cập nhật địa chỉ giao hàng tại Việt Nam.</p>
+                                  <Link href="/profile" className="text-[10px] text-red-700 font-bold border border-red-300 rounded px-2 py-0.5 hover:bg-red-100 transition inline-block">
+                                    Cập nhật hồ sơ &rarr;
+                                  </Link>
+                                  <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="ml-2 text-[10px] text-slate-500 hover:text-slate-700">
+                                    Đóng
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] text-slate-700">
+                                    <p className="font-semibold mb-0.5">Địa chỉ nhận hàng COD:</p>
+                                    <p>Họ tên: {userProfile.fullName}</p>
+                                    {userProfile.phone && <p>SĐT: {userProfile.phone}</p>}
+                                    <p>Địa chỉ: {userProfile.address}</p>
+                                  </div>
+                                  <label className="flex items-start gap-1.5 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={codAddressConfirmed}
+                                      onChange={(e) => setCodAddressConfirmed(e.target.checked)}
+                                      className="mt-0.5 accent-orange-500"
+                                    />
+                                    <span className="text-[10px] text-slate-600">Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam cho đơn hàng COD này.</span>
+                                  </label>
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">
+                                      Không
+                                    </button>
+                                    <button
+                                      onClick={() => handleCOD(req.id)}
+                                      disabled={codProcessing || !codAddressConfirmed}
+                                      className="px-3 py-1.5 text-xs font-bold text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                    >
+                                      {codProcessing ? t("common.loading") : "Xác nhận COD"}
+                                    </button>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           ) : (
                             <div className="space-y-1.5">
@@ -384,19 +423,47 @@ export default function ShopRequestsPage() {
                         </div>
                       ) : codConfirmId === req.id ? (
                         <div className="space-y-2">
-                          <p className="text-xs text-slate-600">Bạn có chắc chắn muốn chọn hình thức thanh toán tiền mặt khi nhận hàng cho đơn này?</p>
-                          <div className="flex gap-2">
-                            <button onClick={() => setCodConfirmId(null)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
-                              Không
-                            </button>
-                            <button
-                              onClick={() => handleCOD(req.id)}
-                              disabled={codProcessing}
-                              className="flex-1 px-3 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 disabled:opacity-50 transition"
-                            >
-                              {codProcessing ? t("common.loading") : "Xác nhận COD"}
-                            </button>
-                          </div>
+                          {!userProfile?.address ? (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                              <p className="text-xs text-red-700 font-medium mb-1.5">Bạn chưa cập nhật địa chỉ giao hàng tại Việt Nam.</p>
+                              <Link href="/profile" className="text-xs text-red-700 font-bold border border-red-300 rounded px-3 py-1 hover:bg-red-100 transition inline-block">
+                                Cập nhật hồ sơ &rarr;
+                              </Link>
+                              <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="ml-2 text-xs text-slate-500 hover:text-slate-700">
+                                Đóng
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700">
+                                <p className="font-semibold mb-1">Địa chỉ nhận hàng COD:</p>
+                                <p>Họ tên: {userProfile.fullName}</p>
+                                {userProfile.phone && <p>SĐT: {userProfile.phone}</p>}
+                                <p>Địa chỉ: {userProfile.address}</p>
+                              </div>
+                              <label className="flex items-start gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={codAddressConfirmed}
+                                  onChange={(e) => setCodAddressConfirmed(e.target.checked)}
+                                  className="mt-0.5 accent-orange-500"
+                                />
+                                <span className="text-xs text-slate-600">Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam cho đơn hàng COD này.</span>
+                              </label>
+                              <div className="flex gap-2">
+                                <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
+                                  Không
+                                </button>
+                                <button
+                                  onClick={() => handleCOD(req.id)}
+                                  disabled={codProcessing || !codAddressConfirmed}
+                                  className="flex-1 px-3 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                  {codProcessing ? t("common.loading") : "Xác nhận COD"}
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       ) : (
                         <>
