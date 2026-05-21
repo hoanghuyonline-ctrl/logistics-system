@@ -73,13 +73,13 @@ export default function ShopRequestsPage() {
 
   const statusLabel = (status: string) => {
     const map: Record<string, string> = {
-      NEW: t("sales.statusNew"),
-      CONTACTED: t("sales.statusContacted"),
-      PRICE_CONFIRMED: t("sales.statusPriceConfirmed"),
-      PAID: t("sales.statusPaid"),
-      PROCESSING: t("sales.statusProcessing"),
-      COMPLETED: t("sales.statusCompleted"),
-      CANCELLED: t("sales.statusCancelled"),
+      NEW: "Mới",
+      CONTACTED: "Đã liên hệ",
+      PRICE_CONFIRMED: "Chờ thanh toán",
+      PAID: "Đã thanh toán",
+      PROCESSING: "Đang xử lý",
+      COMPLETED: "Hoàn thành",
+      CANCELLED: "Đã hủy",
     };
     return map[status] || status;
   };
