@@ -124,6 +124,59 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     data.orderId = order.id;
   }
 
+  // PAID → CANCELLED: refund wallet if originally paid from wallet
+  if (data.status === "CANCELLED" && existing.status === "PAID" && existing.paidFromWallet && existing.confirmedPrice) {
+    const refundAmount = parseFloat(existing.confirmedPrice.toString());
+    const wallet = await prisma.wallet.findUnique({ where: { userId: existing.customerId } });
+    const currentBalance = wallet ? parseFloat(wallet.balance.toString()) : 0;
+    const newBalance = currentBalance + refundAmount;
+
+    await prisma.$transaction([
+      prisma.wallet.upsert({
+        where: { userId: existing.customerId },
+        update: { balance: newBalance },
+        create: { userId: existing.customerId, balance: newBalance, debt: 0 },
+      }),
+      prisma.transaction.create({
+        data: {
+          userId: existing.customerId,
+          type: "REFUND",
+          amount: refundAmount,
+          balanceBefore: currentBalance,
+          balanceAfter: newBalance,
+          description: `Hoàn tiền hủy đơn mua hàng ${existing.requestCode} — "${existing.productName}"`,
+          createdBy: user.id,
+        },
+      }),
+      prisma.salesRequest.update({
+        where: { id },
+        data,
+      }),
+    ]);
+
+    const updated = await prisma.salesRequest.findUnique({
+      where: { id },
+      include: {
+        customer: { select: { id: true, fullName: true, email: true } },
+        product: { select: { id: true, name: true } },
+        confirmedBy: { select: { id: true, fullName: true } },
+        order: { select: { id: true, orderCode: true } },
+      },
+    });
+
+    onSalesRequestStatusChanged({
+      userId: existing.customerId,
+      userEmail: updated?.customer?.email || undefined,
+      userName: updated?.customer?.fullName || undefined,
+      requestCode: existing.requestCode,
+      productName: existing.productName,
+      newStatus: "CANCELLED",
+      channels: ["SYSTEM", "TELEGRAM"],
+    }).catch(() => {});
+
+    return jsonResponse(updated);
+  }
+
   const updated = await prisma.salesRequest.update({
     where: { id },
     data,
