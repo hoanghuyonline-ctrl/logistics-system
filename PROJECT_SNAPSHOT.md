@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-20
+**Date:** 2026-05-21
 **Branch:** `main`
-**Latest stable commit:** Post PR #320 (enhanced customer purchase portal with wallet overview cards + table layout)
+**Latest stable commit:** Post PR #323 (Admin Sales Requests Management UI with Ant Design table)
 
 ---
 
@@ -302,6 +302,8 @@
 
 - **Enhanced Customer Purchase Portal (PR #320)** — Rebuilt `/shop/requests` page with gradient wallet overview cards (balance in green, debt in red when > 0, quick top-up link in blue), desktop table layout with 7 columns (request code with click-to-copy, product with thumbnail, quantity, estimated total, confirmed price, status badge with semantic colors/borders, actions), mobile card layout with same data. Emerald-styled "Thanh toán từ ví" button (`bg-emerald-600`) for `PRICE_CONFIRMED` items with two-step confirmation dialog. Optimistic payment state update: instantly moves row to PAID and updates wallet balance cards without full page reload. Insufficient balance warning shown inline. Added `sales.requestsActions` i18n key in VI/EN/ZH. **No schema changes; no new dependencies; production-safe.**
 
+- **Admin Sales Requests Management UI (PR #323)** — Dedicated admin page at `/admin/sales-requests` built with Ant Design (`antd`) components (first antd usage in project). Ant Design `Table` with columns: Code (monospace), Customer (name + phone), Product (with thumbnail), Qty, Estimated Total (vi-VN ₫), Confirmed Price, Status (Ant Design `Tag` with semantic colors per `SalesRequestStatus`), Created Date, Actions. Search by request code, product name, or customer name. Status filter dropdown for all 7 statuses. **Action 1 — Price Confirmation:** For `NEW` requests, "Xác nhận giá" button opens Ant Design `Modal` with request summary and `InputNumber` (VND formatted with ₫ suffix); triggers `POST /api/admin/sales-requests/[id]/confirm` → status transitions to `PRICE_CONFIRMED`, fires SYSTEM + TELEGRAM notification to customer. **Action 2 — Logistics Progression:** For `PAID` requests, step-by-step buttons: `PAID` → `PROCESSING` ("→ Đã đặt hàng") → `COMPLETED` ("→ Hoàn thành") via `PATCH /api/admin/sales-requests/[id]/status`, each transition fires customer notification. Admin sidebar: added 🛍️ "Quản lý đơn mua" nav link (`nav.adminSalesRequests`). 3 new API endpoints: `GET /api/admin/sales-requests` (paginated, filterable, searchable), `POST /api/admin/sales-requests/[id]/confirm`, `PATCH /api/admin/sales-requests/[id]/status`. 27+ new `salesAdmin.*` i18n keys in VI/EN/ZH. **No schema changes; no migration; antd added as dependency; production-safe.**
+
 **Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
 
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
@@ -433,6 +435,9 @@ pm2 restart logistics-system
 | `/api/sales-requests` | GET/POST | Sales request list (customer own / admin all) and create (CUSTOMER/ADMIN) |
 | `/api/sales-requests/[id]` | PATCH | Update status, confirm price, add note (ADMIN/ACCOUNTANT) |
 | `/api/sales-requests/[id]/pay` | POST | Pay from wallet — deducts balance, allows debt, creates SALES_PAYMENT transaction (CUSTOMER) |
+| `/api/admin/sales-requests` | GET | Admin-only paginated sales request list with search + status filter (ADMIN/ACCOUNTANT) |
+| `/api/admin/sales-requests/[id]/confirm` | POST | Confirm price for NEW request → PRICE_CONFIRMED, notifies customer (ADMIN/ACCOUNTANT) |
+| `/api/admin/sales-requests/[id]/status` | PATCH | Logistics status progression: PAID → PROCESSING → COMPLETED, notifies customer (ADMIN/ACCOUNTANT) |
 
 ## Important Prisma Models
 
