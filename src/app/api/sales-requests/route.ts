@@ -26,6 +26,8 @@ export const GET = withErrorHandler(async function GET(request: Request) {
     where.OR = [
       { requestCode: { contains: search, mode: "insensitive" } },
       { productName: { contains: search, mode: "insensitive" } },
+      { customer: { fullName: { contains: search, mode: "insensitive" } } },
+      { customer: { phone: { contains: search, mode: "insensitive" } } },
     ];
   }
 

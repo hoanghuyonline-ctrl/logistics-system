@@ -41,6 +41,16 @@ interface SalesRequest {
 
 const STATUS_OPTIONS = ["NEW", "CONTACTED", "PRICE_CONFIRMED", "PAID", "PROCESSING", "COMPLETED", "CANCELLED"];
 
+const STATUS_LABELS: Record<string, string> = {
+  NEW: "Mới",
+  CONTACTED: "Đã liên hệ",
+  PRICE_CONFIRMED: "Chờ thanh toán",
+  PAID: "Đã thanh toán",
+  PROCESSING: "Đang xử lý",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
+};
+
 const STATUS_TAG_COLORS: Record<string, string> = {
   NEW: "blue",
   CONTACTED: "orange",
@@ -119,16 +129,7 @@ export default function AdminSalesPage() {
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
   const statusLabel = useCallback((status: string) => {
-    const map: Record<string, string> = {
-      NEW: "Mới",
-      CONTACTED: "Đã liên hệ",
-      PRICE_CONFIRMED: "Chờ thanh toán",
-      PAID: "Đã thanh toán",
-      PROCESSING: "Đang xử lý",
-      COMPLETED: "Hoàn thành",
-      CANCELLED: "Đã hủy",
-    };
-    return map[status] || status;
+    return STATUS_LABELS[status] || status;
   }, []);
 
   // ── Product CRUD ──
@@ -479,7 +480,7 @@ export default function AdminSalesPage() {
                     allowClear
                     placeholder={t("salesAdmin.allStatuses")}
                     style={{ width: 180 }}
-                    options={STATUS_OPTIONS.map((s) => ({ value: s, label: statusLabel(s) }))}
+                    options={STATUS_OPTIONS.map((s) => ({ value: s, label: STATUS_LABELS[s] || s }))}
                   />
                 </div>
 
