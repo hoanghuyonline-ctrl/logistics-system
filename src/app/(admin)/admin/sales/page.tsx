@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
-import { Tabs, Table, Tag, Button, Modal, InputNumber, Select, Input, Space, message } from "antd";
+import { Tabs, Table, Tag, Button, Modal, InputNumber, Select, Input, Space, Popconfirm, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
@@ -120,16 +120,16 @@ export default function AdminSalesPage() {
 
   const statusLabel = useCallback((status: string) => {
     const map: Record<string, string> = {
-      NEW: t("sales.statusNew"),
-      CONTACTED: t("sales.statusContacted"),
-      PRICE_CONFIRMED: t("sales.statusPriceConfirmed"),
-      PAID: t("sales.statusPaid"),
-      PROCESSING: t("sales.statusProcessing"),
-      COMPLETED: t("sales.statusCompleted"),
-      CANCELLED: t("sales.statusCancelled"),
+      NEW: "Mới",
+      CONTACTED: "Đã liên hệ",
+      PRICE_CONFIRMED: "Chờ thanh toán",
+      PAID: "Đã thanh toán",
+      PROCESSING: "Đang xử lý",
+      COMPLETED: "Hoàn thành",
+      CANCELLED: "Đã hủy",
     };
     return map[status] || status;
-  }, [t]);
+  }, []);
 
   // ── Product CRUD ──
   const resetProdForm = () => setProdForm({ name: "", description: "", category: "", estimatedPrice: "", imageUrl: "", sortOrder: "0" });
@@ -244,6 +244,24 @@ export default function AdminSalesPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    setStatusLoading(id);
+    try {
+      const res = await fetch(`/api/sales-requests/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        message.success("Đã xóa yêu cầu");
+        fetchRequests();
+      } else {
+        const err = await res.json();
+        message.error(err.error || t("salesAdmin.errorOccurred"));
+      }
+    } catch {
+      message.error(t("salesAdmin.errorOccurred"));
+    } finally {
+      setStatusLoading(null);
+    }
+  };
+
   // ── Antd Table columns ──
   const columns: ColumnsType<SalesRequest> = [
     {
@@ -337,15 +355,54 @@ export default function AdminSalesPage() {
     {
       title: t("salesAdmin.actions"),
       key: "actions",
-      width: 200,
+      width: 240,
       render: (_: unknown, record: SalesRequest) => {
         const { status, id } = record;
 
         if (status === "NEW") {
           return (
-            <Button type="primary" size="small" onClick={() => openConfirmModal(record)}>
-              {t("salesAdmin.confirmPriceBtn")}
-            </Button>
+            <Space>
+              <Button type="primary" size="small" onClick={() => openConfirmModal(record)}>
+                {t("salesAdmin.confirmPriceBtn")}
+              </Button>
+              <Popconfirm
+                title="Hủy yêu cầu này?"
+                description="Yêu cầu sẽ chuyển sang trạng thái Đã hủy."
+                onConfirm={() => handleStatusUpdate(id, "CANCELLED")}
+                okText="Hủy đơn"
+                cancelText="Không"
+                okButtonProps={{ danger: true }}
+              >
+                <Button size="small" danger loading={statusLoading === id}>Hủy</Button>
+              </Popconfirm>
+              <Popconfirm
+                title="Xóa yêu cầu này?"
+                description="Yêu cầu sẽ bị xóa vĩnh viễn khỏi hệ thống."
+                onConfirm={() => handleDelete(id)}
+                okText="Xóa"
+                cancelText="Không"
+                okButtonProps={{ danger: true }}
+              >
+                <Button size="small" danger type="text" loading={statusLoading === id}>Xóa</Button>
+              </Popconfirm>
+            </Space>
+          );
+        }
+
+        if (status === "PRICE_CONFIRMED") {
+          return (
+            <Space>
+              <Popconfirm
+                title="Hủy yêu cầu này?"
+                description="Yêu cầu sẽ chuyển sang trạng thái Đã hủy."
+                onConfirm={() => handleStatusUpdate(id, "CANCELLED")}
+                okText="Hủy đơn"
+                cancelText="Không"
+                okButtonProps={{ danger: true }}
+              >
+                <Button size="small" danger loading={statusLoading === id}>Hủy đơn</Button>
+              </Popconfirm>
+            </Space>
           );
         }
 
@@ -364,16 +421,29 @@ export default function AdminSalesPage() {
 
         if (status === "PROCESSING") {
           return (
-            <Space>
-              <Button
-                size="small"
-                loading={statusLoading === id}
-                onClick={() => handleStatusUpdate(id, "COMPLETED")}
-                style={{ background: "#059669", color: "#fff", borderColor: "#059669" }}
-              >
-                {t("salesAdmin.nextCompleted")}
-              </Button>
-            </Space>
+            <Button
+              size="small"
+              loading={statusLoading === id}
+              onClick={() => handleStatusUpdate(id, "COMPLETED")}
+              style={{ background: "#059669", color: "#fff", borderColor: "#059669" }}
+            >
+              {t("salesAdmin.nextCompleted")}
+            </Button>
+          );
+        }
+
+        if (status === "CANCELLED") {
+          return (
+            <Popconfirm
+              title="Xóa yêu cầu này?"
+              description="Yêu cầu sẽ bị xóa vĩnh viễn khỏi hệ thống."
+              onConfirm={() => handleDelete(id)}
+              okText="Xóa"
+              cancelText="Không"
+              okButtonProps={{ danger: true }}
+            >
+              <Button size="small" danger type="text" loading={statusLoading === id}>Xóa</Button>
+            </Popconfirm>
           );
         }
 

@@ -139,3 +139,25 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
 
   return jsonResponse(updated);
 });
+
+const DELETABLE_STATUSES = ["NEW", "CANCELLED"];
+
+export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, ctx: RouteContext<"/api/sales-requests/[id]">) {
+  const user = await getCurrentUser();
+  if (!user || !hasRole(user.role, ["ADMIN"])) {
+    return errorResponse("Forbidden", 403);
+  }
+
+  const { id } = await ctx.params;
+
+  const existing = await prisma.salesRequest.findUnique({ where: { id } });
+  if (!existing) return errorResponse("Yêu cầu không tồn tại", 404);
+
+  if (!DELETABLE_STATUSES.includes(existing.status)) {
+    return errorResponse("Chỉ có thể xóa yêu cầu ở trạng thái Mới hoặc Đã hủy");
+  }
+
+  await prisma.salesRequest.delete({ where: { id } });
+
+  return jsonResponse({ success: true });
+});
