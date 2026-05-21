@@ -63,16 +63,16 @@ export default function TransactionsPage() {
                   <td className="px-6 py-4 text-sm text-slate-500">{new Date(tx.createdAt).toLocaleString()}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                      tx.type === "DEPOSIT" ? "bg-emerald-50 text-emerald-700" :
+                      tx.type === "DEPOSIT" || tx.type === "MANUAL_ADD" ? "bg-emerald-50 text-emerald-700" :
                       tx.type === "REFUND" ? "bg-blue-50 text-blue-700" :
-                      tx.type === "ORDER_PAYMENT" ? "bg-red-50 text-red-700" :
+                      tx.type === "ORDER_PAYMENT" || tx.type === "MANUAL_DEDUCT" || tx.type === "SALES_PAYMENT" ? "bg-red-50 text-red-700" :
                       "bg-slate-100 text-slate-700"
                     }`}>{t(`transactions.tx.${tx.type}`, tx.type.replace(/_/g, " "))}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-700 font-medium">{tx.order?.orderCode || "—"}</td>
                   <td className="px-6 py-4 text-sm text-slate-600">{tx.description}</td>
-                  <td className={`px-6 py-4 text-right text-sm font-semibold ${parseFloat(tx.amount) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                    {parseFloat(tx.amount) >= 0 ? "+" : ""}{parseFloat(tx.amount).toLocaleString()}
+                  <td className={`px-6 py-4 text-right text-sm font-semibold ${["ORDER_PAYMENT", "MANUAL_DEDUCT", "SALES_PAYMENT"].includes(tx.type) ? "text-red-600" : "text-emerald-600"}`}>
+                    {["ORDER_PAYMENT", "MANUAL_DEDUCT", "SALES_PAYMENT"].includes(tx.type) ? "-" : "+"}{parseFloat(tx.amount).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-right text-sm text-slate-700">{parseFloat(tx.balanceAfter).toLocaleString()}</td>
                 </tr>
