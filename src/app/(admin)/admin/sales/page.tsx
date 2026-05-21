@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
+import { Tabs, Table, Tag, Button, Modal, InputNumber, Select, Input, Space, message } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import PageHeader from "@/components/ui/PageHeader";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
-import Pagination from "@/components/ui/Pagination";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface Product {
   id: string;
@@ -38,31 +39,29 @@ interface SalesRequest {
 }
 
 const STATUS_OPTIONS = ["NEW", "CONTACTED", "PRICE_CONFIRMED", "PAID", "PROCESSING", "COMPLETED", "CANCELLED"];
-const STATUS_COLORS: Record<string, string> = {
-  NEW: "bg-blue-50 text-blue-700",
-  CONTACTED: "bg-amber-50 text-amber-700",
-  PRICE_CONFIRMED: "bg-purple-50 text-purple-700",
-  PAID: "bg-green-50 text-green-700",
-  PROCESSING: "bg-indigo-50 text-indigo-700",
-  COMPLETED: "bg-emerald-50 text-emerald-700",
-  CANCELLED: "bg-red-50 text-red-700",
+
+const STATUS_TAG_COLORS: Record<string, string> = {
+  NEW: "blue",
+  CONTACTED: "orange",
+  PRICE_CONFIRMED: "purple",
+  PAID: "green",
+  PROCESSING: "geekblue",
+  COMPLETED: "cyan",
+  CANCELLED: "red",
 };
 
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  NEW: ["CONTACTED", "PRICE_CONFIRMED", "CANCELLED"],
-  CONTACTED: ["PRICE_CONFIRMED", "CANCELLED"],
-  PRICE_CONFIRMED: ["PAID", "CANCELLED"],
-  PAID: ["PROCESSING", "CANCELLED"],
-  PROCESSING: ["COMPLETED", "CANCELLED"],
-};
+function fmtVND(val: string | number | null | undefined): string {
+  if (val == null) return "—";
+  const num = typeof val === "string" ? parseFloat(val) : val;
+  if (isNaN(num)) return "—";
+  return num.toLocaleString("vi-VN") + " ₫";
+}
 
 export default function AdminSalesPage() {
   const { t } = useI18n();
   const { toast: showToast } = useToast();
 
-  const [tab, setTab] = useState<"products" | "requests">("requests");
-
-  // Products state
+  // ── Products state ──
   const [products, setProducts] = useState<Product[]>([]);
   const [prodLoading, setProdLoading] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -70,19 +69,24 @@ export default function AdminSalesPage() {
   const [prodForm, setProdForm] = useState({ name: "", description: "", category: "", estimatedPrice: "", imageUrl: "", sortOrder: "0" });
   const [prodSaving, setProdSaving] = useState(false);
 
-  // Requests state
+  // ── Requests state (Antd Table) ──
   const [requests, setRequests] = useState<SalesRequest[]>([]);
   const [reqLoading, setReqLoading] = useState(false);
   const [reqPage, setReqPage] = useState(1);
   const [reqTotal, setReqTotal] = useState(0);
-  const [reqTotalPages, setReqTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [confirmPrice, setConfirmPrice] = useState("");
-  const [adminNoteId, setAdminNoteId] = useState<string | null>(null);
-  const [adminNoteText, setAdminNoteText] = useState("");
 
+  // Price confirmation modal
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [confirmingReq, setConfirmingReq] = useState<SalesRequest | null>(null);
+  const [confirmPriceVal, setConfirmPriceVal] = useState<number | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  // Status update loading
+  const [statusLoading, setStatusLoading] = useState<string | null>(null);
+
+  // ── Fetch ──
   const fetchProducts = useCallback(async () => {
     setProdLoading(true);
     try {
@@ -99,12 +103,11 @@ export default function AdminSalesPage() {
       const params = new URLSearchParams({ page: String(reqPage), limit: "20" });
       if (statusFilter) params.set("status", statusFilter);
       if (searchQuery) params.set("search", searchQuery);
-      const res = await fetch(`/api/sales-requests?${params}`);
+      const res = await fetch(`/api/admin/sales-requests?${params}`);
       if (res.ok) {
         const data = await res.json();
         setRequests(data.requests || []);
         setReqTotal(data.total || 0);
-        setReqTotalPages(data.totalPages || 1);
       }
     } catch { /* */ } finally {
       setReqLoading(false);
@@ -114,7 +117,7 @@ export default function AdminSalesPage() {
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
-  const statusLabel = (status: string) => {
+  const statusLabel = useCallback((status: string) => {
     const map: Record<string, string> = {
       NEW: t("sales.statusNew"),
       CONTACTED: t("sales.statusContacted"),
@@ -125,9 +128,9 @@ export default function AdminSalesPage() {
       CANCELLED: t("sales.statusCancelled"),
     };
     return map[status] || status;
-  };
+  }, [t]);
 
-  // Product CRUD
+  // ── Product CRUD ──
   const resetProdForm = () => setProdForm({ name: "", description: "", category: "", estimatedPrice: "", imageUrl: "", sortOrder: "0" });
 
   const handleSaveProduct = async () => {
@@ -185,293 +188,360 @@ export default function AdminSalesPage() {
     setShowAddProduct(true);
   };
 
-  // Request actions
-  const handleConfirmPrice = async (id: string) => {
-    if (!confirmPrice || parseFloat(confirmPrice) <= 0) return;
+  // ── Request actions (Antd-based) ──
+  const openConfirmModal = (req: SalesRequest) => {
+    setConfirmingReq(req);
+    setConfirmPriceVal(null);
+    setConfirmModalOpen(true);
+  };
+
+  const handleConfirmPrice = async () => {
+    if (!confirmingReq || !confirmPriceVal || confirmPriceVal <= 0) return;
+    setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/sales-requests/${id}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/admin/sales-requests/${confirmingReq.id}/confirm`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmedPrice: confirmPrice, status: "PRICE_CONFIRMED" }),
+        body: JSON.stringify({ confirmedPrice: confirmPriceVal }),
       });
       if (res.ok) {
-        showToast(t("sales.priceConfirmed"), "success");
-        setConfirmingId(null);
-        setConfirmPrice("");
+        message.success(t("salesAdmin.priceConfirmedOk"));
+        setConfirmModalOpen(false);
+        setConfirmingReq(null);
+        setConfirmPriceVal(null);
         fetchRequests();
       } else {
         const err = await res.json();
-        showToast(err.error || "Error", "error");
+        message.error(err.error || t("salesAdmin.errorOccurred"));
       }
     } catch {
-      showToast("Error", "error");
+      message.error(t("salesAdmin.errorOccurred"));
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
+  const handleStatusUpdate = async (id: string, newStatus: string) => {
+    setStatusLoading(id);
     try {
-      const res = await fetch(`/api/sales-requests/${id}`, {
+      const res = await fetch(`/api/admin/sales-requests/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        showToast(t("sales.statusUpdated"), "success");
+        message.success(t("salesAdmin.statusUpdatedOk"));
         fetchRequests();
       } else {
         const err = await res.json();
-        showToast(err.error || "Error", "error");
+        message.error(err.error || t("salesAdmin.errorOccurred"));
       }
     } catch {
-      showToast("Error", "error");
+      message.error(t("salesAdmin.errorOccurred"));
+    } finally {
+      setStatusLoading(null);
     }
   };
 
-  const handleSaveNote = async (id: string) => {
-    try {
-      const res = await fetch(`/api/sales-requests/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminNote: adminNoteText }),
-      });
-      if (res.ok) {
-        setAdminNoteId(null);
-        setAdminNoteText("");
-        fetchRequests();
-      }
-    } catch { /* */ }
-  };
+  // ── Antd Table columns ──
+  const columns: ColumnsType<SalesRequest> = [
+    {
+      title: t("salesAdmin.code"),
+      dataIndex: "requestCode",
+      key: "requestCode",
+      width: 140,
+      render: (code: string) => <span className="font-mono text-xs font-semibold text-slate-700">{code}</span>,
+    },
+    {
+      title: t("salesAdmin.customer"),
+      key: "customer",
+      width: 160,
+      render: (_: unknown, record: SalesRequest) => (
+        <div>
+          <div className="font-medium text-sm text-slate-800">{record.customer.fullName}</div>
+          {record.customer.phone && (
+            <div className="text-xs text-slate-400">{record.customer.phone}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: t("salesAdmin.product"),
+      dataIndex: "productName",
+      key: "productName",
+      width: 180,
+      render: (name: string, record: SalesRequest) => (
+        <div className="flex items-center gap-2">
+          {record.product?.imageUrl && (
+            <img src={record.product.imageUrl} alt="" className="w-8 h-8 rounded object-cover" />
+          )}
+          <span className="text-sm">{name}</span>
+        </div>
+      ),
+    },
+    {
+      title: t("salesAdmin.qty"),
+      dataIndex: "quantity",
+      key: "quantity",
+      width: 60,
+      align: "center" as const,
+    },
+    {
+      title: t("salesAdmin.estTotal"),
+      key: "estimatedTotal",
+      width: 130,
+      render: (_: unknown, record: SalesRequest) => (
+        <span className="text-sm">{fmtVND(record.estimatedTotal)}</span>
+      ),
+    },
+    {
+      title: t("salesAdmin.confirmedPriceCol"),
+      key: "confirmedPrice",
+      width: 130,
+      render: (_: unknown, record: SalesRequest) => (
+        record.confirmedPrice
+          ? <span className="text-sm font-semibold text-green-700">{fmtVND(record.confirmedPrice)}</span>
+          : <span className="text-xs text-slate-400">—</span>
+      ),
+    },
+    {
+      title: t("salesAdmin.status"),
+      dataIndex: "status",
+      key: "status",
+      width: 140,
+      render: (status: string) => (
+        <Tag color={STATUS_TAG_COLORS[status] || "default"}>{statusLabel(status)}</Tag>
+      ),
+    },
+    {
+      title: t("salesAdmin.createdAt"),
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 120,
+      render: (val: string) => (
+        <span className="text-xs text-slate-500">
+          {new Date(val).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}
+        </span>
+      ),
+    },
+    {
+      title: t("salesAdmin.actions"),
+      key: "actions",
+      width: 200,
+      render: (_: unknown, record: SalesRequest) => {
+        const { status, id } = record;
 
+        if (status === "NEW") {
+          return (
+            <Button type="primary" size="small" onClick={() => openConfirmModal(record)}>
+              {t("salesAdmin.confirmPriceBtn")}
+            </Button>
+          );
+        }
+
+        if (status === "PAID") {
+          return (
+            <Button
+              size="small"
+              loading={statusLoading === id}
+              onClick={() => handleStatusUpdate(id, "PROCESSING")}
+              style={{ background: "#2563eb", color: "#fff", borderColor: "#2563eb" }}
+            >
+              {t("salesAdmin.nextOrdered")}
+            </Button>
+          );
+        }
+
+        if (status === "PROCESSING") {
+          return (
+            <Space>
+              <Button
+                size="small"
+                loading={statusLoading === id}
+                onClick={() => handleStatusUpdate(id, "COMPLETED")}
+                style={{ background: "#059669", color: "#fff", borderColor: "#059669" }}
+              >
+                {t("salesAdmin.nextCompleted")}
+              </Button>
+            </Space>
+          );
+        }
+
+        return <span className="text-xs text-slate-400">—</span>;
+      },
+    },
+  ];
+
+  // ── Render ──
   return (
     <div>
       <PageHeader title={t("sales.adminTitle")} subtitle={t("sales.adminSubtitle")} />
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-slate-100 rounded-lg p-1 w-fit">
-        <button
-          onClick={() => setTab("requests")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition ${tab === "requests" ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
-        >
-          {t("sales.requestsTab")} ({reqTotal})
-        </button>
-        <button
-          onClick={() => setTab("products")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition ${tab === "products" ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
-        >
-          {t("sales.productsTab")} ({products.length})
-        </button>
-      </div>
+      <Tabs
+        defaultActiveKey="requests"
+        items={[
+          {
+            key: "requests",
+            label: `${t("sales.requestsTab")} (${reqTotal})`,
+            children: (
+              <div>
+                {/* Filters */}
+                <div className="flex flex-wrap gap-3 mb-5">
+                  <Input.Search
+                    placeholder={t("salesAdmin.search")}
+                    allowClear
+                    onSearch={(val) => { setSearchQuery(val); setReqPage(1); }}
+                    style={{ width: 260 }}
+                  />
+                  <Select
+                    value={statusFilter}
+                    onChange={(val) => { setStatusFilter(val); setReqPage(1); }}
+                    allowClear
+                    placeholder={t("salesAdmin.allStatuses")}
+                    style={{ width: 180 }}
+                    options={STATUS_OPTIONS.map((s) => ({ value: s, label: statusLabel(s) }))}
+                  />
+                </div>
 
-      {/* ===== Products Tab ===== */}
-      {tab === "products" && (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-slate-800">{t("sales.productsTab")}</h3>
-            <button
-              onClick={() => { resetProdForm(); setEditingProduct(null); setShowAddProduct(true); }}
-              className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600"
-            >
-              + {t("sales.addProduct")}
-            </button>
-          </div>
-
-          {/* Add/Edit form */}
-          {showAddProduct && (
-            <Card className="mb-4">
-              <h4 className="font-semibold mb-3">{editingProduct ? t("sales.editProduct") : t("sales.addProduct")}</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm text-slate-600 block mb-1">{t("sales.productName")} *</label>
-                  <input value={prodForm.name} onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="text-sm text-slate-600 block mb-1">{t("sales.productCategory")}</label>
-                  <input value={prodForm.category} onChange={(e) => setProdForm({ ...prodForm, category: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="text-sm text-slate-600 block mb-1">{t("sales.productPrice")}</label>
-                  <input type="number" value={prodForm.estimatedPrice} onChange={(e) => setProdForm({ ...prodForm, estimatedPrice: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="text-sm text-slate-600 block mb-1">{t("sales.productImage")}</label>
-                  <input value={prodForm.imageUrl} onChange={(e) => setProdForm({ ...prodForm, imageUrl: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" placeholder="https://..." />
-                </div>
-                <div>
-                  <label className="text-sm text-slate-600 block mb-1">{t("sales.productSort")}</label>
-                  <input type="number" value={prodForm.sortOrder} onChange={(e) => setProdForm({ ...prodForm, sortOrder: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-sm text-slate-600 block mb-1">{t("sales.productDesc")}</label>
-                  <textarea value={prodForm.description} onChange={(e) => setProdForm({ ...prodForm, description: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm resize-none h-16" />
-                </div>
+                {/* Table */}
+                <Table<SalesRequest>
+                  columns={columns}
+                  dataSource={requests}
+                  rowKey="id"
+                  loading={reqLoading}
+                  pagination={{
+                    current: reqPage,
+                    total: reqTotal,
+                    pageSize: 20,
+                    onChange: (p) => setReqPage(p),
+                    showSizeChanger: false,
+                    showTotal: (tot) => `${tot}`,
+                  }}
+                  scroll={{ x: 1100 }}
+                  locale={{ emptyText: t("salesAdmin.noRequests") }}
+                  size="middle"
+                />
               </div>
-              <div className="flex gap-2 mt-3">
-                <button onClick={() => { setShowAddProduct(false); setEditingProduct(null); }} className="px-3 py-1.5 border border-slate-300 rounded text-sm text-slate-600">{t("common.cancel")}</button>
-                <button onClick={handleSaveProduct} disabled={!prodForm.name || prodSaving} className="px-3 py-1.5 bg-orange-500 text-white rounded text-sm font-medium disabled:opacity-50">{prodSaving ? t("common.loading") : t("common.save")}</button>
-              </div>
-            </Card>
-          )}
+            ),
+          },
+          {
+            key: "products",
+            label: `${t("sales.productsTab")} (${products.length})`,
+            children: (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold text-slate-800">{t("sales.productsTab")}</h3>
+                  <button
+                    onClick={() => { resetProdForm(); setEditingProduct(null); setShowAddProduct(true); }}
+                    className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600"
+                  >
+                    + {t("sales.addProduct")}
+                  </button>
+                </div>
 
-          {prodLoading ? <LoadingSpinner /> : (
-            <div className="space-y-2">
-              {products.map((p) => (
-                <div key={p.id} className={`flex items-center gap-3 bg-white rounded-lg border p-3 ${!p.isActive ? "opacity-50" : ""}`}>
-                  <div className="w-12 h-12 bg-slate-50 rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
-                    {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" /> : <span className="text-lg">🛍️</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm text-slate-900">{p.name}</h4>
-                    <div className="text-xs text-slate-400">
-                      {p.category && <span className="mr-2">{p.category}</span>}
-                      {p.estimatedPrice && <span className="text-orange-600 font-medium">{parseFloat(p.estimatedPrice).toLocaleString("vi-VN")} ₫</span>}
+                {/* Add/Edit form */}
+                {showAddProduct && (
+                  <Card className="mb-4">
+                    <h4 className="font-semibold mb-3">{editingProduct ? t("sales.editProduct") : t("sales.addProduct")}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productName")} *</label>
+                        <input value={prodForm.name} onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productCategory")}</label>
+                        <input value={prodForm.category} onChange={(e) => setProdForm({ ...prodForm, category: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productPrice")}</label>
+                        <input type="number" value={prodForm.estimatedPrice} onChange={(e) => setProdForm({ ...prodForm, estimatedPrice: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productImage")}</label>
+                        <input value={prodForm.imageUrl} onChange={(e) => setProdForm({ ...prodForm, imageUrl: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" placeholder="https://..." />
+                      </div>
+                      <div>
+                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productSort")}</label>
+                        <input type="number" value={prodForm.sortOrder} onChange={(e) => setProdForm({ ...prodForm, sortOrder: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productDesc")}</label>
+                        <textarea value={prodForm.description} onChange={(e) => setProdForm({ ...prodForm, description: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm resize-none h-16" />
+                      </div>
                     </div>
+                    <div className="flex gap-2 mt-3">
+                      <button onClick={() => { setShowAddProduct(false); setEditingProduct(null); }} className="px-3 py-1.5 border border-slate-300 rounded text-sm text-slate-600">{t("common.cancel")}</button>
+                      <button onClick={handleSaveProduct} disabled={!prodForm.name || prodSaving} className="px-3 py-1.5 bg-orange-500 text-white rounded text-sm font-medium disabled:opacity-50">{prodSaving ? t("common.loading") : t("common.save")}</button>
+                    </div>
+                  </Card>
+                )}
+
+                {prodLoading ? <LoadingSpinner /> : (
+                  <div className="space-y-2">
+                    {products.map((p) => (
+                      <div key={p.id} className={`flex items-center gap-3 bg-white rounded-lg border p-3 ${!p.isActive ? "opacity-50" : ""}`}>
+                        <div className="w-12 h-12 bg-slate-50 rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
+                          {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" /> : <span className="text-lg">🛍️</span>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm text-slate-900">{p.name}</h4>
+                          <div className="text-xs text-slate-400">
+                            {p.category && <span className="mr-2">{p.category}</span>}
+                            {p.estimatedPrice && <span className="text-orange-600 font-medium">{parseFloat(p.estimatedPrice).toLocaleString("vi-VN")} ₫</span>}
+                          </div>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${p.isActive ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                          {p.isActive ? t("sales.productActive") : t("sales.productHidden")}
+                        </span>
+                        <button onClick={() => handleToggleProduct(p)} className="text-xs text-slate-400 hover:text-slate-600">{p.isActive ? "Ẩn" : "Hiện"}</button>
+                        <button onClick={() => startEdit(p)} className="text-xs text-blue-600 hover:underline">{t("common.edit")}</button>
+                      </div>
+                    ))}
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${p.isActive ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"}`}>
-                    {p.isActive ? t("sales.productActive") : t("sales.productHidden")}
-                  </span>
-                  <button onClick={() => handleToggleProduct(p)} className="text-xs text-slate-400 hover:text-slate-600">{p.isActive ? "Ẩn" : "Hiện"}</button>
-                  <button onClick={() => startEdit(p)} className="text-xs text-blue-600 hover:underline">{t("common.edit")}</button>
-                </div>
-              ))}
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
+
+      {/* Price Confirmation Modal */}
+      <Modal
+        open={confirmModalOpen}
+        title={`${t("salesAdmin.confirmPriceTitle")} ${confirmingReq?.requestCode || ""}`}
+        onCancel={() => { setConfirmModalOpen(false); setConfirmingReq(null); }}
+        onOk={handleConfirmPrice}
+        okText={t("salesAdmin.confirm")}
+        cancelText={t("salesAdmin.cancel")}
+        confirmLoading={confirmLoading}
+        okButtonProps={{ disabled: !confirmPriceVal || confirmPriceVal <= 0 }}
+      >
+        <div className="py-4">
+          {confirmingReq && (
+            <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+              <div className="text-sm"><strong>{t("salesAdmin.product")}:</strong> {confirmingReq.productName}</div>
+              <div className="text-sm"><strong>{t("salesAdmin.customer")}:</strong> {confirmingReq.customer.fullName}</div>
+              <div className="text-sm"><strong>{t("salesAdmin.qty")}:</strong> {confirmingReq.quantity}</div>
+              <div className="text-sm"><strong>{t("salesAdmin.estTotal")}:</strong> {fmtVND(confirmingReq.estimatedTotal)}</div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* ===== Requests Tab ===== */}
-      {tab === "requests" && (
-        <div>
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <input
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setReqPage(1); }}
-              placeholder={t("common.search")}
-              className="border border-slate-300 rounded px-3 py-1.5 text-sm w-48"
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              {t("salesAdmin.enterPrice")}
+            </label>
+            <InputNumber
+              value={confirmPriceVal}
+              onChange={(val) => setConfirmPriceVal(val)}
+              min={1}
+              style={{ width: "100%" }}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+              parser={(value) => Number(value?.replace(/,/g, "") || 0)}
+              addonAfter="₫"
+              size="large"
             />
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setReqPage(1); }}
-              className="border border-slate-300 rounded px-3 py-1.5 text-sm"
-            >
-              <option value="">{t("common.status")}</option>
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{statusLabel(s)}</option>
-              ))}
-            </select>
           </div>
-
-          {reqLoading ? <LoadingSpinner /> : (
-            <>
-              <div className="space-y-3">
-                {requests.map((req) => {
-                  const transitions = VALID_TRANSITIONS[req.status] || [];
-                  return (
-                    <Card key={req.id} className="!p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="text-xs font-mono text-slate-400">{req.requestCode}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[req.status] || ""}`}>
-                              {statusLabel(req.status)}
-                            </span>
-                            {req.paidFromWallet && <span className="text-xs text-green-600">💰 Wallet</span>}
-                          </div>
-                          <h4 className="font-medium text-slate-900">{req.productName} × {req.quantity}</h4>
-                          <div className="text-sm text-slate-500 mt-0.5">
-                            👤 {req.customer.fullName} {req.customer.phone && `• ${req.customer.phone}`}
-                          </div>
-                          <div className="text-sm text-slate-500 mt-0.5">
-                            {req.estimatedTotal && <span className="mr-3">{t("sales.estimatedTotal")}: {parseFloat(req.estimatedTotal).toLocaleString("vi-VN")} ₫</span>}
-                            {req.confirmedPrice && <span className="font-semibold text-orange-600">{t("sales.confirmedPrice")}: {parseFloat(req.confirmedPrice).toLocaleString("vi-VN")} ₫</span>}
-                          </div>
-                          {req.customerNote && <p className="text-xs text-slate-400 mt-1">KH: {req.customerNote}</p>}
-                          {req.adminNote && <p className="text-xs text-blue-600 mt-1">📝 {req.adminNote}</p>}
-                          <p className="text-xs text-slate-300 mt-1">{new Date(req.createdAt).toLocaleString("vi-VN")}</p>
-                        </div>
-                      </div>
-
-                      {/* Admin actions */}
-                      <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-2">
-                        {/* Confirm price button */}
-                        {(req.status === "NEW" || req.status === "CONTACTED") && (
-                          confirmingId === req.id ? (
-                            <div className="flex gap-1 items-center">
-                              <input
-                                type="number"
-                                value={confirmPrice}
-                                onChange={(e) => setConfirmPrice(e.target.value)}
-                                placeholder={t("sales.enterPrice")}
-                                className="border border-slate-300 rounded px-2 py-1 text-sm w-32"
-                              />
-                              <button onClick={() => handleConfirmPrice(req.id)} className="px-2 py-1 bg-purple-600 text-white rounded text-xs font-medium">OK</button>
-                              <button onClick={() => setConfirmingId(null)} className="px-2 py-1 text-xs text-slate-400">✕</button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => { setConfirmingId(req.id); setConfirmPrice(req.estimatedTotal || ""); }}
-                              className="px-2.5 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium hover:bg-purple-100"
-                            >
-                              {t("sales.confirmPrice")}
-                            </button>
-                          )
-                        )}
-
-                        {/* Status transition buttons */}
-                        {transitions.filter((s) => s !== "CANCELLED").map((nextStatus) => (
-                          <button
-                            key={nextStatus}
-                            onClick={() => handleUpdateStatus(req.id, nextStatus)}
-                            className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium hover:bg-slate-200"
-                          >
-                            → {statusLabel(nextStatus)}
-                          </button>
-                        ))}
-
-                        {/* Cancel */}
-                        {transitions.includes("CANCELLED") && (
-                          <button
-                            onClick={() => handleUpdateStatus(req.id, "CANCELLED")}
-                            className="px-2.5 py-1 bg-red-50 text-red-600 rounded text-xs font-medium hover:bg-red-100"
-                          >
-                            {t("sales.statusCancelled")}
-                          </button>
-                        )}
-
-                        {/* Admin note */}
-                        {adminNoteId === req.id ? (
-                          <div className="flex gap-1 items-center w-full mt-1">
-                            <input
-                              value={adminNoteText}
-                              onChange={(e) => setAdminNoteText(e.target.value)}
-                              placeholder={t("sales.adminNote")}
-                              className="flex-1 border border-slate-300 rounded px-2 py-1 text-sm"
-                            />
-                            <button onClick={() => handleSaveNote(req.id)} className="px-2 py-1 bg-blue-600 text-white rounded text-xs">💾</button>
-                            <button onClick={() => setAdminNoteId(null)} className="px-2 py-1 text-xs text-slate-400">✕</button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => { setAdminNoteId(req.id); setAdminNoteText(req.adminNote || ""); }}
-                            className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium hover:bg-blue-100"
-                          >
-                            📝 {t("sales.adminNote")}
-                          </button>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-              {reqTotalPages > 1 && (
-                <div className="mt-4">
-                  <Pagination page={reqPage} totalPages={reqTotalPages} onPageChange={setReqPage} />
-                </div>
-              )}
-            </>
-          )}
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
