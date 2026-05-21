@@ -36,6 +36,8 @@ const CHANNEL_LABELS: { key: keyof ChannelHealth; label: string; icon: string }[
 interface SmtpStatus {
   key: string;
   configured: boolean;
+  value: string;
+  source: "db" | "env" | "none";
 }
 
 const SMTP_LABELS: Record<string, string> = {
@@ -44,6 +46,16 @@ const SMTP_LABELS: Record<string, string> = {
   SMTP_USER: "Tài khoản SMTP",
   SMTP_PASS: "Mật khẩu SMTP",
   SMTP_FROM: "Địa chỉ gửi",
+  SMTP_SECURE: "Kết nối bảo mật (SSL/TLS)",
+};
+
+const SMTP_PLACEHOLDERS: Record<string, string> = {
+  SMTP_HOST: "smtp.gmail.com",
+  SMTP_PORT: "587",
+  SMTP_USER: "user@example.com",
+  SMTP_PASS: "Nhập mật khẩu SMTP...",
+  SMTP_FROM: "noreply@company.com",
+  SMTP_SECURE: "true hoặc false",
 };
 
 const NOTIF_FIELD_META: Record<string, { label: string; desc: string; secret: boolean; placeholder: string }> = {
@@ -186,6 +198,8 @@ export default function SettingsPage() {
 
   const [smtpStatus, setSmtpStatus] = useState<SmtpStatus[]>([]);
   const [smtpLoading, setSmtpLoading] = useState(true);
+  const [smtpEdits, setSmtpEdits] = useState<Record<string, string>>({});
+  const [smtpSaving, setSmtpSaving] = useState(false);
   const [notifEdits, setNotifEdits] = useState<Record<string, string>>({});
   const [channelHealth, setChannelHealth] = useState<ChannelHealth | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
@@ -233,7 +247,12 @@ export default function SettingsPage() {
       .finally(() => setHealthLoading(false));
     fetch("/api/admin/smtp-diagnostics")
       .then((r) => (r.ok ? r.json() : []))
-      .then((d) => setSmtpStatus(d))
+      .then((d: SmtpStatus[]) => {
+        setSmtpStatus(d);
+        const edits: Record<string, string> = {};
+        d.forEach((item) => { edits[item.key] = item.value || ""; });
+        setSmtpEdits(edits);
+      })
       .catch(() => {})
       .finally(() => setSmtpLoading(false));
   }, [loadNotifConfigs]);
@@ -293,6 +312,46 @@ export default function SettingsPage() {
       toast("Mất kết nối — không gọi được tới server", "error");
     } finally {
       setNotifSaving(false);
+    }
+  }
+
+  async function saveSmtpConfig() {
+    setSmtpSaving(true);
+    try {
+      const payload: Record<string, string> = {};
+      for (const [key, value] of Object.entries(smtpEdits)) {
+        if (value !== undefined && value !== "") {
+          payload[key] = value;
+        }
+      }
+      if (Object.keys(payload).length === 0) {
+        toast("Vui lòng nhập ít nhất một giá trị SMTP", "error");
+        setSmtpSaving(false);
+        return;
+      }
+      const res = await fetch("/api/admin/smtp-diagnostics", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        toast("Đã lưu cấu hình SMTP thành công", "success");
+        const refreshRes = await fetch("/api/admin/smtp-diagnostics");
+        if (refreshRes.ok) {
+          const d: SmtpStatus[] = await refreshRes.json();
+          setSmtpStatus(d);
+          const edits: Record<string, string> = {};
+          d.forEach((item) => { edits[item.key] = item.value || ""; });
+          setSmtpEdits(edits);
+        }
+      } else {
+        const data = await res.json();
+        toast(data.error || "Không thể lưu cấu hình SMTP", "error");
+      }
+    } catch {
+      toast("Mất kết nối — không gọi được tới server", "error");
+    } finally {
+      setSmtpSaving(false);
     }
   }
 
@@ -547,21 +606,50 @@ export default function SettingsPage() {
         ) : (
           <>
             <p className="text-sm text-slate-500 mb-3">
-              Tình trạng cấu hình SMTP để gửi email thông báo.
+              Nhập thông tin SMTP để gửi email thông báo. Giá trị lưu vào database sẽ được ưu tiên sử dụng.
             </p>
-            {smtpStatus.map((item) => (
-              <div key={item.key} className="py-2 border-b border-slate-100 last:border-0 flex items-center gap-2">
-                <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${item.configured ? "bg-green-500" : "bg-red-400"}`} />
-                <code className="text-xs text-slate-600 w-28">{item.key}</code>
-                <span className={`text-sm ${item.configured ? "text-green-700" : "text-red-600"}`}>
-                  {item.configured ? "Đã cấu hình" : "Chưa cấu hình"}
-                </span>
-                <span className="text-xs text-slate-400 ml-auto">{SMTP_LABELS[item.key] || item.key}</span>
-              </div>
-            ))}
-            <p className="text-xs text-slate-400 mt-3">
-              Cấu hình SMTP qua biến môi trường (.env) trên máy chủ.
-            </p>
+            <div className="space-y-3">
+              {smtpStatus.map((item) => (
+                <div key={item.key}>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    {SMTP_LABELS[item.key] || item.key}
+                    {item.source === "db" && (
+                      <span className="ml-2 text-xs text-blue-500 font-normal">(DB)</span>
+                    )}
+                    {item.source === "env" && (
+                      <span className="ml-2 text-xs text-slate-400 font-normal">(env)</span>
+                    )}
+                  </label>
+                  {item.key === "SMTP_PASS" ? (
+                    <input
+                      type="password"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder={SMTP_PLACEHOLDERS[item.key] || ""}
+                      value={smtpEdits[item.key] || ""}
+                      onChange={(e) => setSmtpEdits((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder={SMTP_PLACEHOLDERS[item.key] || ""}
+                      value={smtpEdits[item.key] || ""}
+                      onChange={(e) => setSmtpEdits((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={saveSmtpConfig}
+                disabled={smtpSaving}
+                className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {smtpSaving ? "Đang lưu…" : "Lưu cấu hình SMTP"}
+              </button>
+            </div>
 
             <div className="mt-4 pt-4 border-t border-slate-200">
               <p className="text-sm text-slate-500 mb-3">
