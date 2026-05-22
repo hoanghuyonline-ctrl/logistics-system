@@ -100,7 +100,7 @@ export class GCSStorageProvider implements StorageProvider {
 
 interface DriveConfig {
   credentials: Record<string, unknown>;
-  folderId?: string;
+  folderId: string;
 }
 
 async function getDriveConfig(): Promise<DriveConfig | null> {
@@ -113,7 +113,7 @@ async function getDriveConfig(): Promise<DriveConfig | null> {
 
   try {
     const credentials = JSON.parse(credsRaw) as Record<string, unknown>;
-    const folderId = map.get("GDRIVE_FOLDER_ID") || process.env.GDRIVE_FOLDER_ID || undefined;
+    const folderId = map.get("GDRIVE_FOLDER_ID") || process.env.GDRIVE_FOLDER_ID || "";
     return { credentials, folderId };
   } catch {
     console.error("[storage/gdrive] Failed to parse credentials JSON");
@@ -130,9 +130,9 @@ const MIME_MAP: Record<string, string> = {
 
 export class GoogleDriveStorageProvider implements StorageProvider {
   private drive: ReturnType<typeof createDrive>;
-  private folderId: string | undefined;
+  private folderId: string;
 
-  constructor(credentials: Record<string, unknown>, folderId?: string) {
+  constructor(credentials: Record<string, unknown>, folderId: string) {
     const authClient = new driveAuth.GoogleAuth({
       credentials,
       scopes: ["https://www.googleapis.com/auth/drive.file"],
@@ -141,7 +141,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
     this.folderId = folderId;
   }
 
-  private async ensureFolder(): Promise<string> {
+  private async resolveFolderId(): Promise<string> {
     if (this.folderId) return this.folderId;
 
     const dbFolder = await prisma.systemConfig
@@ -152,71 +152,54 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       return this.folderId;
     }
 
-    const folder = await this.drive.files.create({
-      requestBody: {
-        name: "Bắc Trung Hải Logistics Uploads",
-        mimeType: "application/vnd.google-apps.folder",
-      },
-      fields: "id",
-    });
-
-    const newFolderId = folder.data.id!;
-
-    await this.drive.permissions.create({
-      fileId: newFolderId,
-      requestBody: { role: "reader", type: "anyone" },
-    });
-
-    const admin = await prisma.user.findFirst({ where: { role: "ADMIN" }, select: { id: true } });
-    if (admin) {
-      await prisma.systemConfig
-        .upsert({
-          where: { key: "GDRIVE_FOLDER_ID" },
-          update: { value: newFolderId, updatedBy: admin.id },
-          create: { key: "GDRIVE_FOLDER_ID", value: newFolderId, updatedBy: admin.id },
-        })
-        .catch(() => {});
-    }
-
-    console.log(`[storage/gdrive] Created root folder id=${newFolderId}`);
-    this.folderId = newFolderId;
-    return newFolderId;
+    throw new Error(
+      "[storage/gdrive] GDRIVE_FOLDER_ID is not configured. " +
+        "Set it in Admin Settings or SystemConfig DB before uploading.",
+    );
   }
 
   async upload(buffer: Buffer, key: string): Promise<string> {
-    const folderId = await this.ensureFolder();
+    try {
+      const parentId = await this.resolveFolderId();
 
-    const ext = key.split(".").pop()?.toLowerCase() || "";
-    const mimeType = MIME_MAP[ext] || "application/octet-stream";
+      const ext = key.split(".").pop()?.toLowerCase() || "";
+      const mimeType = MIME_MAP[ext] || "application/octet-stream";
 
-    const readable = new Readable();
-    readable.push(buffer);
-    readable.push(null);
+      const readable = new Readable();
+      readable.push(buffer);
+      readable.push(null);
 
-    const res = await this.drive.files.create({
-      requestBody: {
-        name: key.split("/").pop() || key,
-        parents: [folderId],
-      },
-      media: { mimeType, body: readable },
-      fields: "id",
-    });
+      console.log(`[storage/gdrive] Uploading file="${key}" to folder=${parentId}`);
 
-    const fileId = res.data.id!;
+      const res = await this.drive.files.create({
+        requestBody: {
+          name: key.split("/").pop() || key,
+          parents: [parentId],
+        },
+        media: { mimeType, body: readable },
+        fields: "id",
+      });
 
-    await this.drive.permissions.create({
-      fileId,
-      requestBody: { role: "reader", type: "anyone" },
-    });
+      const fileId = res.data.id!;
 
-    return this.getUrl(fileId);
+      await this.drive.permissions.create({
+        fileId,
+        requestBody: { role: "reader", type: "anyone" },
+      });
+
+      console.log(`[storage/gdrive] Upload OK fileId=${fileId}`);
+      return this.getUrl(fileId);
+    } catch (err) {
+      console.error("[storage/gdrive] ❌ UPLOAD FAILED", err);
+      throw err;
+    }
   }
 
   async delete(key: string): Promise<void> {
     try {
       await this.drive.files.delete({ fileId: key });
-    } catch {
-      // file may already be deleted
+    } catch (err) {
+      console.error(`[storage/gdrive] Delete failed for fileId=${key}`, err);
     }
   }
 
