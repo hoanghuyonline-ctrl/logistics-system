@@ -10,14 +10,14 @@ export const GET = withErrorHandler(async function GET() {
     return errorResponse("Forbidden", 403);
   }
 
-  const [telegramToken, telegramChatId, zaloEnabled, zaloToken, messengerToken, smtpHost, zaloTokenExpired] =
+  const [telegramToken, telegramChatId, zaloEnabled, zaloToken, messengerToken, smtpDbConfigs, zaloTokenExpired] =
     await Promise.all([
       getNotificationConfig("telegram_bot_token"),
       getNotificationConfig("telegram_chat_id"),
       getNotificationConfig("zalo_send_enabled"),
       getNotificationConfig("zalo_oa_access_token"),
       Promise.resolve(process.env.MESSENGER_PAGE_ACCESS_TOKEN || ""),
-      Promise.resolve(process.env.SMTP_HOST || ""),
+      prisma.systemConfig.findMany({ where: { key: { in: ["SMTP_HOST", "SMTP_PORT", "SMTP_USER"] } } }),
       prisma.notificationFailure.findFirst({
         where: { channel: "ZALO", failureCategory: "TOKEN_EXPIRED", resolved: false },
         orderBy: { createdAt: "desc" },
@@ -25,6 +25,8 @@ export const GET = withErrorHandler(async function GET() {
       }).then((f) => !!f).catch(() => false),
     ]);
 
+  const smtpDb = new Map(smtpDbConfigs.map((c: { key: string; value: string }) => [c.key, c.value]));
+  const smtpHost = smtpDb.get("SMTP_HOST") || process.env.SMTP_HOST || "";
   const zaloConfigured = zaloEnabled === "true" && zaloToken;
 
   return jsonResponse({
