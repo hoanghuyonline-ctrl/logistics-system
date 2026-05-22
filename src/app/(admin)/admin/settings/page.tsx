@@ -210,6 +210,11 @@ export default function SettingsPage() {
   const [healthLoading, setHealthLoading] = useState(true);
   const [notifSaving, setNotifSaving] = useState(false);
 
+  const [storageConfig, setStorageConfig] = useState<SmtpStatus[]>([]);
+  const [storageLoading, setStorageLoading] = useState(true);
+  const [storageEdits, setStorageEdits] = useState<Record<string, string>>({});
+  const [storageSaving, setStorageSaving] = useState(false);
+
   const loadNotifConfigs = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/notification-config");
@@ -260,6 +265,16 @@ export default function SettingsPage() {
       })
       .catch(() => {})
       .finally(() => setSmtpLoading(false));
+    fetch("/api/admin/storage-config")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: SmtpStatus[]) => {
+        setStorageConfig(d);
+        const edits: Record<string, string> = {};
+        d.forEach((item) => { edits[item.key] = item.value || ""; });
+        setStorageEdits(edits);
+      })
+      .catch(() => {})
+      .finally(() => setStorageLoading(false));
   }, [loadNotifConfigs]);
 
   async function save(e: React.FormEvent) {
@@ -357,6 +372,46 @@ export default function SettingsPage() {
       toast("Mất kết nối — không gọi được tới server", "error");
     } finally {
       setSmtpSaving(false);
+    }
+  }
+
+  async function saveStorageConfig() {
+    setStorageSaving(true);
+    try {
+      const payload: Record<string, string> = {};
+      for (const [key, value] of Object.entries(storageEdits)) {
+        if (value !== undefined && value !== "") {
+          payload[key] = value;
+        }
+      }
+      if (Object.keys(payload).length === 0) {
+        toast("Vui lòng nhập ít nhất một giá trị", "error");
+        setStorageSaving(false);
+        return;
+      }
+      const res = await fetch("/api/admin/storage-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        toast("Đã lưu cấu hình lưu trữ thành công", "success");
+        const refreshRes = await fetch("/api/admin/storage-config");
+        if (refreshRes.ok) {
+          const d: SmtpStatus[] = await refreshRes.json();
+          setStorageConfig(d);
+          const edits: Record<string, string> = {};
+          d.forEach((item) => { edits[item.key] = item.value || ""; });
+          setStorageEdits(edits);
+        }
+      } else {
+        const data = await res.json();
+        toast(data.error || "Không thể lưu cấu hình lưu trữ", "error");
+      }
+    } catch {
+      toast("Mất kết nối — không gọi được tới server", "error");
+    } finally {
+      setStorageSaving(false);
     }
   }
 
@@ -742,6 +797,76 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+        )}
+      </Card>
+
+      <Card title="Cấu hình Lưu trữ Ảnh (Google Cloud Storage)">
+        {storageLoading ? (
+          <p className="text-sm text-slate-400">Đang tải...</p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-500 mb-3">
+              Chuyển lưu trữ ảnh sang Google Cloud Storage. Đặt STORAGE_PROVIDER = &quot;gcs&quot; để kích hoạt.
+            </p>
+            <div className="space-y-3">
+              {storageConfig.map((item) => {
+                const labels: Record<string, string> = {
+                  STORAGE_PROVIDER: "Nhà cung cấp lưu trữ",
+                  GCS_BUCKET: "Tên bucket GCS",
+                  GCS_CREDENTIALS: "Service Account JSON",
+                };
+                const placeholders: Record<string, string> = {
+                  STORAGE_PROVIDER: "local hoặc gcs",
+                  GCS_BUCKET: "my-logistics-bucket",
+                  GCS_CREDENTIALS: "Dán nội dung JSON Service Account...",
+                };
+                const isSecret = item.key === "GCS_CREDENTIALS";
+                return (
+                  <div key={item.key}>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      {labels[item.key] || item.key}
+                      {item.source === "db" && (
+                        <span className="ml-2 text-xs text-blue-500 font-normal">(DB)</span>
+                      )}
+                      {item.source === "env" && (
+                        <span className="ml-2 text-xs text-slate-400 font-normal">(env)</span>
+                      )}
+                    </label>
+                    {isSecret ? (
+                      <textarea
+                        rows={3}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        placeholder={placeholders[item.key] || ""}
+                        value={storageEdits[item.key] || ""}
+                        onChange={(e) => setStorageEdits((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        placeholder={placeholders[item.key] || ""}
+                        value={storageEdits[item.key] || ""}
+                        onChange={(e) => setStorageEdits((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={saveStorageConfig}
+                disabled={storageSaving}
+                className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {storageSaving ? "Đang lưu…" : "Lưu cấu hình lưu trữ"}
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mt-3">
+              Khi STORAGE_PROVIDER = &quot;gcs&quot;, ảnh sẽ upload lên Google Cloud Storage thay vì lưu cục bộ.
+            </p>
+          </>
         )}
       </Card>
     </div>
