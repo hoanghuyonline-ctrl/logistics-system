@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
-import { storage } from "@/lib/storage";
+import { getStorage } from "@/lib/storage";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -56,7 +56,8 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
 
   const safeName = sanitizeFilename(file.name);
   const key = `packages/${id}-${Date.now()}-${safeName}`;
-  const imageUrl = await storage.upload(buffer, key);
+  const store = await getStorage();
+  const imageUrl = await store.upload(buffer, key);
 
   const image = await prisma.packageImage.create({
     data: { packageId: id, imageUrl },
@@ -83,8 +84,12 @@ export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, c
 
   if (!image) return errorResponse("Image not found", 404);
 
-  const key = image.imageUrl.replace(/^\/uploads\//, "");
-  await storage.delete(key);
+  const store = await getStorage();
+  const isGcsUrl = image.imageUrl.startsWith("https://storage.googleapis.com/");
+  const key = isGcsUrl
+    ? image.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^/]+\//, "")
+    : image.imageUrl.replace(/^\/uploads\//, "");
+  await store.delete(key);
 
   await prisma.packageImage.delete({ where: { id: imageId } });
 
