@@ -281,7 +281,7 @@ export function resetStorageCache(): void {
 function createLocalProvider(): LocalStorageProvider {
   return new LocalStorageProvider(
     path.join(process.cwd(), "public", "uploads"),
-    "/uploads",
+    "/api/uploads",
   );
 }
 
