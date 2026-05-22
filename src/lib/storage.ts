@@ -211,6 +211,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
         },
         media: { mimeType, body: readable },
         fields: "id",
+        supportsAllDrives: true,
       });
 
       const fileId = res.data.id!;
@@ -218,6 +219,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       await drive.permissions.create({
         fileId,
         requestBody: { role: "reader", type: "anyone" },
+        supportsAllDrives: true,
       });
 
       console.log(`[storage/gdrive] Upload OK fileId=${fileId}`);
@@ -231,7 +233,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
   async delete(key: string): Promise<void> {
     try {
       const { drive } = await this.resolveConfig();
-      await drive.files.delete({ fileId: key });
+      await drive.files.delete({ fileId: key, supportsAllDrives: true });
     } catch (err) {
       console.error(`[storage/gdrive] Delete failed for fileId=${key}`, err);
     }
