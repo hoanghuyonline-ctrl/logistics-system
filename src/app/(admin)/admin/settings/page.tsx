@@ -800,29 +800,36 @@ export default function SettingsPage() {
         )}
       </Card>
 
-      <Card title="Cấu hình Lưu trữ Ảnh (Google Drive / Cloud Storage)">
+      <Card title="Cấu hình Lưu trữ Ảnh">
         {storageLoading ? (
           <p className="text-sm text-slate-400">Đang tải...</p>
         ) : (
           <>
             <p className="text-sm text-slate-500 mb-3">
-              Chuyển lưu trữ ảnh sang Google Drive hoặc Cloud Storage. Đặt STORAGE_PROVIDER = &quot;gdrive&quot; (khuyến nghị, miễn phí 15 GB) hoặc &quot;gcs&quot;.
+              Chọn phương thức lưu trữ ảnh: <strong>local</strong> (ổ cứng server) hoặc <strong>gdrive</strong> (Google Drive cá nhân, miễn phí 15 GB).
             </p>
             <div className="space-y-3">
               {storageConfig.map((item) => {
                 const labels: Record<string, string> = {
                   STORAGE_PROVIDER: "Nhà cung cấp lưu trữ",
                   GCS_BUCKET: "Tên bucket GCS (chỉ dùng cho gcs)",
-                  GCS_CREDENTIALS: "Service Account JSON",
-                  GDRIVE_FOLDER_ID: "Google Drive Folder ID (tự tạo nếu trống)",
+                  GCS_CREDENTIALS: "Service Account JSON (chỉ dùng cho gcs)",
+                  GDRIVE_FOLDER_ID: "Google Drive Folder ID",
+                  GDRIVE_CLIENT_ID: "Google OAuth2 Client ID",
+                  GDRIVE_CLIENT_SECRET: "Google OAuth2 Client Secret",
+                  GDRIVE_REFRESH_TOKEN: "Google OAuth2 Refresh Token",
                 };
                 const placeholders: Record<string, string> = {
-                  STORAGE_PROVIDER: "local, gdrive, hoặc gcs",
+                  STORAGE_PROVIDER: "local hoặc gdrive",
                   GCS_BUCKET: "my-logistics-bucket",
                   GCS_CREDENTIALS: "Dán nội dung JSON Service Account...",
-                  GDRIVE_FOLDER_ID: "Tự động tạo nếu để trống",
+                  GDRIVE_FOLDER_ID: "1jtPybzjZfvhkfe4YAFSrOQv0yQfqB95q",
+                  GDRIVE_CLIENT_ID: "xxxx.apps.googleusercontent.com",
+                  GDRIVE_CLIENT_SECRET: "GOCSPX-xxx",
+                  GDRIVE_REFRESH_TOKEN: "1//0xxx...",
                 };
-                const isSecret = item.key === "GCS_CREDENTIALS";
+                const isSecret = ["GCS_CREDENTIALS", "GDRIVE_CLIENT_SECRET", "GDRIVE_REFRESH_TOKEN"].includes(item.key);
+                const isDropdown = item.key === "STORAGE_PROVIDER";
                 return (
                   <div key={item.key}>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -834,7 +841,17 @@ export default function SettingsPage() {
                         <span className="ml-2 text-xs text-slate-400 font-normal">(env)</span>
                       )}
                     </label>
-                    {isSecret ? (
+                    {isDropdown ? (
+                      <select
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                        value={storageEdits[item.key] || "local"}
+                        onChange={(e) => setStorageEdits((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                      >
+                        <option value="local">Local (Ổ cứng server)</option>
+                        <option value="gdrive">Google Drive (OAuth2)</option>
+                        <option value="gcs">Google Cloud Storage</option>
+                      </select>
+                    ) : isSecret ? (
                       <textarea
                         rows={3}
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -866,7 +883,7 @@ export default function SettingsPage() {
               </button>
             </div>
             <p className="text-xs text-slate-400 mt-3">
-              Khi STORAGE_PROVIDER = &quot;gdrive&quot;, ảnh upload lên Google Drive (miễn phí 15 GB). Dùng &quot;gcs&quot; cho Google Cloud Storage (cần billing).
+              <strong>local</strong>: Ảnh lưu trực tiếp trên ổ cứng server (nhanh, không cần internet). <strong>gdrive</strong>: Ảnh upload lên Google Drive cá nhân (miễn phí 15 GB, cần OAuth2 keys).
             </p>
           </>
         )}
