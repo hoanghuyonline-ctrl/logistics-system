@@ -164,15 +164,17 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
       },
     });
 
-    onSalesRequestStatusChanged({
-      userId: existing.customerId,
-      userEmail: updated?.customer?.email || undefined,
-      userName: updated?.customer?.fullName || "bạn",
-      requestCode: existing.requestCode,
-      productName: existing.productName || "Sản phẩm",
-      newStatus: "CANCELLED",
-      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
-    }).catch(() => {});
+    await Promise.allSettled([
+      onSalesRequestStatusChanged({
+        userId: existing.customerId,
+        userEmail: updated?.customer?.email || undefined,
+        userName: updated?.customer?.fullName || "bạn",
+        requestCode: existing.requestCode,
+        productName: existing.productName || "Sản phẩm",
+        newStatus: "CANCELLED",
+        channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+      }),
+    ]).catch(() => {});
 
     return jsonResponse(updated);
   }
@@ -188,18 +190,20 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     },
   });
 
-  // Notify customer on status changes via all channels including EMAIL (fire-and-forget)
+  // Await notifications so PM2/Windows doesn't kill the process before email finishes
   if (data.status) {
-    onSalesRequestStatusChanged({
-      userId: existing.customerId,
-      userEmail: updated.customer?.email || undefined,
-      userName: updated.customer?.fullName || "bạn",
-      requestCode: existing.requestCode,
-      productName: existing.productName || "Sản phẩm",
-      newStatus: data.status as string,
-      confirmedPrice: data.confirmedPrice != null ? (parseFloat(String(data.confirmedPrice)) || 0) : undefined,
-      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
-    }).catch(() => {});
+    await Promise.allSettled([
+      onSalesRequestStatusChanged({
+        userId: existing.customerId,
+        userEmail: updated.customer?.email || undefined,
+        userName: updated.customer?.fullName || "bạn",
+        requestCode: existing.requestCode,
+        productName: existing.productName || "Sản phẩm",
+        newStatus: data.status as string,
+        confirmedPrice: data.confirmedPrice != null ? (parseFloat(String(data.confirmedPrice)) || 0) : undefined,
+        channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+      }),
+    ]).catch(() => {});
   }
 
   return jsonResponse(updated);

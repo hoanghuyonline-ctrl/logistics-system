@@ -62,31 +62,33 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
     }),
   ]);
 
-  // Notify admins (fire-and-forget)
-  prisma.user.findMany({ where: { role: "ADMIN" } }).then((admins) => {
-    const amountFormatted = payAmount.toLocaleString("vi-VN");
-    for (const admin of admins) {
-      createNotification({
-        userId: admin.id,
-        title: "Khách hàng đã thanh toán",
-        message: `${salesRequest.requestCode} — "${salesRequest.productName}" đã được thanh toán ${amountFormatted} VND từ ví.`,
-      }).catch(() => {});
-    }
-  }).catch(() => {});
-
-  // Notify customer via all channels including EMAIL (fire-and-forget)
-  onSalesRequestStatusChanged({
-    userId: user.id,
-    userEmail: user.email || undefined,
-    userName: user.name || "bạn",
-    requestCode: salesRequest.requestCode,
-    productName: salesRequest.productName || "Sản phẩm",
-    newStatus: "PAID",
-    amountPaid: payAmount || 0,
-    walletBalance: newBalance,
-    walletDebt: newDebt,
-    channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
-  }).catch(() => {});
+  // Await all notifications so PM2/Windows doesn't kill the process before email finishes
+  await Promise.allSettled([
+    // Notify admins
+    prisma.user.findMany({ where: { role: "ADMIN" } }).then(async (admins) => {
+      const amountFormatted = payAmount.toLocaleString("vi-VN");
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          title: "Khách hàng đã thanh toán",
+          message: `${salesRequest.requestCode} — "${salesRequest.productName}" đã được thanh toán ${amountFormatted} VND từ ví.`,
+        }).catch(() => {});
+      }
+    }),
+    // Notify customer via all channels including EMAIL
+    onSalesRequestStatusChanged({
+      userId: user.id,
+      userEmail: user.email || undefined,
+      userName: user.name || "bạn",
+      requestCode: salesRequest.requestCode,
+      productName: salesRequest.productName || "Sản phẩm",
+      newStatus: "PAID",
+      amountPaid: payAmount || 0,
+      walletBalance: newBalance,
+      walletDebt: newDebt,
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+    }),
+  ]).catch(() => {});
 
   return jsonResponse({
     success: true,

@@ -123,27 +123,29 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     details: { fromStatus: order.status, toStatus: status },
   });
 
-  prisma.user
-    .findUnique({ where: { id: order.userId }, select: { email: true, fullName: true } })
-    .then((orderUser) =>
-      onShipmentStatusChanged({
-        userId: order.userId,
-        userEmail: orderUser?.email,
-        userName: orderUser?.fullName,
-        orderId: order.id,
-        orderCode: order.orderCode,
-        fromStatus: order.status,
-        toStatus: status,
-        productName: order.productName || "Sản phẩm",
-        totalCostVND: order.confirmedTotalCost != null
-          ? parseFloat(String(order.confirmedTotalCost)) || 0
-          : parseFloat(String(order.totalCostVND)) || 0,
-        channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
-      }),
-    )
-    .catch((err) => {
-      console.error("[notifications] onShipmentStatusChanged failed:", err);
-    });
+  // Await notifications so PM2/Windows doesn't kill the process before email finishes
+  const orderUser = await prisma.user.findUnique({
+    where: { id: order.userId },
+    select: { email: true, fullName: true },
+  });
+  await Promise.allSettled([
+    onShipmentStatusChanged({
+      userId: order.userId,
+      userEmail: orderUser?.email,
+      userName: orderUser?.fullName,
+      orderId: order.id,
+      orderCode: order.orderCode,
+      fromStatus: order.status,
+      toStatus: status,
+      productName: order.productName || "Sản phẩm",
+      totalCostVND: order.confirmedTotalCost != null
+        ? parseFloat(String(order.confirmedTotalCost)) || 0
+        : parseFloat(String(order.totalCostVND)) || 0,
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+    }),
+  ]).catch((err) => {
+    console.error("[notifications] onShipmentStatusChanged failed:", err);
+  });
 
   return jsonResponse(updated);
 });

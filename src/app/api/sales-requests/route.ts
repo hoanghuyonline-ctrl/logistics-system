@@ -93,29 +93,31 @@ export const POST = withErrorHandler(async function POST(request: Request) {
     },
   });
 
-  // Notify admins (fire-and-forget)
-  prisma.user.findMany({ where: { role: "ADMIN" } }).then((admins) => {
-    for (const admin of admins) {
-      createNotification({
-        userId: admin.id,
-        title: "Yêu cầu mua hàng mới",
-        message: `${salesRequest.customer.fullName} yêu cầu mua "${resolvedProductName}" (${salesRequest.requestCode}).`,
-      }).catch(() => {});
-    }
-  }).catch(() => {});
-
-  // Notify customer via all channels including EMAIL (fire-and-forget)
-  onSalesRequestCreated({
-    userId: salesRequest.customerId,
-    userEmail: salesRequest.customer.email || undefined,
-    userName: salesRequest.customer.fullName || "bạn",
-    requestCode: salesRequest.requestCode,
-    productName: resolvedProductName || "Sản phẩm",
-    quantity: salesRequest.quantity || 1,
-    estimatedTotal: estimatedTotal != null ? estimatedTotal : undefined,
-    channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
-  }).catch((err) => {
-    console.error("[notifications] onSalesRequestCreated failed:", err);
+  // Await all notifications so PM2/Windows doesn't kill the process before email finishes
+  await Promise.allSettled([
+    // Notify admins
+    prisma.user.findMany({ where: { role: "ADMIN" } }).then(async (admins) => {
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          title: "Yêu cầu mua hàng mới",
+          message: `${salesRequest.customer.fullName} yêu cầu mua "${resolvedProductName}" (${salesRequest.requestCode}).`,
+        }).catch(() => {});
+      }
+    }),
+    // Notify customer via all channels including EMAIL
+    onSalesRequestCreated({
+      userId: salesRequest.customerId,
+      userEmail: salesRequest.customer.email || undefined,
+      userName: salesRequest.customer.fullName || "bạn",
+      requestCode: salesRequest.requestCode,
+      productName: resolvedProductName || "Sản phẩm",
+      quantity: salesRequest.quantity || 1,
+      estimatedTotal: estimatedTotal != null ? estimatedTotal : undefined,
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+    }),
+  ]).catch((err) => {
+    console.error("[notifications] sales-request creation notifications failed:", err);
   });
 
   return jsonResponse(salesRequest, 201);
