@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, generateSalesCode, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
-import { createNotification } from "@/lib/notifications";
+import { createNotification, onSalesRequestCreated } from "@/lib/notifications";
 
 export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -103,6 +103,20 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       }).catch(() => {});
     }
   }).catch(() => {});
+
+  // Notify customer via all channels including EMAIL (fire-and-forget)
+  onSalesRequestCreated({
+    userId: salesRequest.customerId,
+    userEmail: salesRequest.customer.email || undefined,
+    userName: salesRequest.customer.fullName,
+    requestCode: salesRequest.requestCode,
+    productName: resolvedProductName,
+    quantity: salesRequest.quantity,
+    estimatedTotal: estimatedTotal || undefined,
+    channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+  }).catch((err) => {
+    console.error("[notifications] onSalesRequestCreated failed:", err);
+  });
 
   return jsonResponse(salesRequest, 201);
 });

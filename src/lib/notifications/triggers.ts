@@ -1,5 +1,11 @@
 import { sendNotification } from "./service";
 import { orderCreatedTemplate, shipmentStatusChangedTemplate } from "./templates";
+import {
+  orderCreatedEmail,
+  orderStatusChangedEmail,
+  salesRequestCreatedEmail,
+  salesRequestStatusChangedEmail,
+} from "./email-templates";
 import type { NotificationChannel, NotificationResult } from "./types";
 
 const DEFAULT_CHANNELS: NotificationChannel[] = ["SYSTEM"];
@@ -11,11 +17,26 @@ export async function onOrderCreated(params: {
   userName?: string;
   orderId: string;
   orderCode: string;
+  productName?: string;
+  quantity?: number;
+  unitPriceCNY?: number;
+  exchangeRate?: number;
+  totalCostVND?: number;
   channels?: NotificationChannel[];
 }): Promise<NotificationResult> {
   const template = orderCreatedTemplate({
     orderCode: params.orderCode,
     userName: params.userName,
+  });
+
+  const html = orderCreatedEmail({
+    userName: params.userName || "bạn",
+    orderCode: params.orderCode,
+    productName: params.productName || "Sản phẩm",
+    quantity: params.quantity || 1,
+    unitPriceCNY: params.unitPriceCNY || 0,
+    exchangeRate: params.exchangeRate || 3500,
+    totalCostVND: params.totalCostVND || 0,
   });
 
   return sendNotification({
@@ -24,6 +45,7 @@ export async function onOrderCreated(params: {
     userName: params.userName,
     title: template.subject,
     message: template.body,
+    html,
     orderId: params.orderId,
     orderCode: params.orderCode,
     channels: params.channels ?? DEFAULT_CHANNELS,
@@ -38,6 +60,8 @@ export async function onShipmentStatusChanged(params: {
   orderCode: string;
   fromStatus: string;
   toStatus: string;
+  productName?: string;
+  totalCostVND?: number;
   channels?: NotificationChannel[];
 }): Promise<NotificationResult> {
   const template = shipmentStatusChangedTemplate({
@@ -47,12 +71,22 @@ export async function onShipmentStatusChanged(params: {
     userName: params.userName,
   });
 
+  const html = orderStatusChangedEmail({
+    userName: params.userName || "bạn",
+    orderCode: params.orderCode,
+    productName: params.productName || "Sản phẩm",
+    fromStatus: params.fromStatus,
+    toStatus: params.toStatus,
+    totalCostVND: params.totalCostVND,
+  });
+
   return sendNotification({
     userId: params.userId,
     userEmail: params.userEmail,
     userName: params.userName,
     title: template.subject,
     message: template.body,
+    html,
     orderId: params.orderId,
     orderCode: params.orderCode,
     channels: params.channels ?? DEFAULT_CHANNELS,
@@ -154,6 +188,36 @@ const SALES_STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Đã hủy",
 };
 
+export async function onSalesRequestCreated(params: {
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  requestCode: string;
+  productName: string;
+  quantity: number;
+  estimatedTotal?: number;
+  channels?: NotificationChannel[];
+}): Promise<NotificationResult> {
+  const name = params.userName || "bạn";
+  const html = salesRequestCreatedEmail({
+    userName: name,
+    requestCode: params.requestCode,
+    productName: params.productName,
+    quantity: params.quantity,
+    estimatedTotal: params.estimatedTotal,
+  });
+
+  return sendNotification({
+    userId: params.userId,
+    userEmail: params.userEmail,
+    userName: params.userName,
+    title: `Yêu cầu mua hàng ${params.requestCode} đã được tiếp nhận`,
+    message: `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đã được tiếp nhận. Chúng tôi sẽ liên hệ xác nhận giá sớm nhất.`,
+    html,
+    channels: params.channels ?? ALL_CHANNELS,
+  });
+}
+
 export async function onSalesRequestStatusChanged(params: {
   userId: string;
   userEmail?: string;
@@ -212,13 +276,23 @@ export async function onSalesRequestStatusChanged(params: {
       message = `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đã chuyển sang: ${statusLabel}.`;
   }
 
+  const html = salesRequestStatusChangedEmail({
+    userName: name,
+    requestCode: params.requestCode,
+    productName: params.productName,
+    newStatus: params.newStatus,
+    confirmedPrice: params.confirmedPrice,
+    amountPaid: params.amountPaid,
+  });
+
   return sendNotification({
     userId: params.userId,
     userEmail: params.userEmail,
     userName: params.userName,
     title,
     message,
-    channels: params.channels ?? DEFAULT_CHANNELS,
+    html,
+    channels: params.channels ?? ALL_CHANNELS,
   });
 }
 

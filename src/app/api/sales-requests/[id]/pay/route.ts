@@ -74,7 +74,7 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
     }
   }).catch(() => {});
 
-  // Notify customer via SYSTEM + TELEGRAM (fire-and-forget)
+  // Notify customer via all channels including EMAIL (fire-and-forget)
   onSalesRequestStatusChanged({
     userId: user.id,
     userEmail: user.email || undefined,
@@ -85,7 +85,7 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
     amountPaid: payAmount,
     walletBalance: newBalance,
     walletDebt: newDebt,
-    channels: ["SYSTEM", "TELEGRAM"],
+    channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
   }).catch(() => {});
 
   return jsonResponse({
