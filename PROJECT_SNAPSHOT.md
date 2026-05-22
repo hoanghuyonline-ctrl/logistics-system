@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-21
+**Date:** 2026-05-22
 **Branch:** `main`
-**Latest stable commit:** Post PR #323 (Admin Sales Requests Management UI with Ant Design table)
+**Latest stable commit:** Post PR #344 (Local Shop Tracking Steps) + Direct SMTP UI Config
 
 ---
 
@@ -306,6 +306,8 @@
 
 - **Merge Admin Sales UI (PR #325)** — Consolidated `/admin/sales-requests` into `/admin/sales` as a single unified page using Ant Design Tabs. Products tab and Purchase Requests tab now live under one route (`/admin/sales`). Removed the duplicate `/admin/sales-requests` page entirely. Admin sidebar navigation simplified to single "Bán hàng" entry. All existing functionality preserved (price confirmation, status transitions, product CRUD, search, filters). **No schema changes; no migration; UI consolidation only; production-safe.**
 
+- **Dynamic Admin SMTP UI Configuration** — Converted static SMTP status display on Admin Settings page (`/admin/settings`) into editable input fields for `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_SECURE`. Values saved directly to database via `SystemConfig` model using new `PUT /api/admin/smtp-diagnostics` endpoint (upsert per key, input validation, masked password handling). GET endpoint now returns value source indicator (`db`/`env`/`none`) so UI shows "(DB)" or "(env)" labels. Email channel (`src/lib/notifications/channels/email.ts`) refactored: replaced module-level static transporter with dynamic `getSmtpConfig()` that queries DB first, falls back to `process.env`, and creates transporter per-send. Test email endpoint also checks DB before env. Resolves Next.js production `.env` caching issue where server restart was required to pick up SMTP config changes. Vietnamese-first UI with save button ("Lưu cấu hình SMTP"), loading state, toast feedback. **No schema changes (reuses existing SystemConfig key/value model); no migration; no new dependencies; backward compatible; production-safe.**
+
 **Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
 
 **Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
@@ -475,7 +477,7 @@ pm2 restart logistics-system
 - Customer-facing documentation for English and Chinese locales
 - Dashboard redesign (not started — landing page complete)
 - ~~Production Telegram bot/chat configuration~~ ✓ webhook registered, bot `@bactrunghai_bot` verified on `thue.eu.cc`
-- Production SMTP configuration
+- ~~Production SMTP configuration~~ ✓ dynamic Admin UI form saves to DB, bypassing `.env` caching
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
 - Cloud storage provider (S3/R2/MinIO) — abstraction layer ready, needs provider implementation
 - API route smoke tests (orders, warehouse scan, status transitions)
@@ -494,7 +496,7 @@ pm2 restart logistics-system
 5. **Notification delivery is fire-and-forget** — failed sends are logged but do not block APIs.
 6. **Zalo OA production integration complete** — webhook, auto-reply, order lookup, sender ID binding, and automatic status notifications all verified working.
 7. **Telegram delivery requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in production** — failures are logged and do not block APIs.
-8. **SMTP_* environment variables required in production** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+8. **SMTP_* now configurable via Admin UI or environment variables** — DB values (via Admin Settings page) take priority over `process.env`; `.env` values serve as fallback. Keys: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 9. **Camera scan requires HTTPS in production** — `getUserMedia` API is restricted to secure contexts by browsers.
 10. **html5-qrcode is in maintenance mode** — library works as-is (1M weekly downloads) but author is seeking new owners; no new bug fixes expected.
 11. **Camera scanning requires real-device testing** — cannot be tested without a physical camera; 3-second duplicate-scan cooldown may need tuning.
