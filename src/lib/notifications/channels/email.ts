@@ -1,6 +1,6 @@
 /**
  * SMTP email channel — tunnel-safe transport with critical error logging.
- * @version 2.0.0 — Pro edition with PM2/Windows-safe awaited execution
+ * @version 3.0.0 — Dynamic DB runtime binding; port-465 implicit-SSL enforcement
  */
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
@@ -13,6 +13,11 @@ export interface EmailOptions {
   html?: string;
 }
 
+/**
+ * Fetch SMTP settings fresh from the database on every call.
+ * DB values take priority; process.env is the fallback.
+ * Port 465 automatically forces secure = true (implicit SSL).
+ */
 async function getSmtpConfig() {
   const keys = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM", "SMTP_SECURE"];
   const dbConfigs = await prisma.systemConfig.findMany({
@@ -20,14 +25,18 @@ async function getSmtpConfig() {
   });
   const dbMap = new Map(dbConfigs.map((c) => [c.key, c.value]));
 
-  return {
-    host: dbMap.get("SMTP_HOST") || process.env.SMTP_HOST || "localhost",
-    port: Number(dbMap.get("SMTP_PORT") || process.env.SMTP_PORT) || 587,
-    secure: (dbMap.get("SMTP_SECURE") || process.env.SMTP_SECURE) === "true",
-    user: dbMap.get("SMTP_USER") || process.env.SMTP_USER || "",
-    pass: dbMap.get("SMTP_PASS") || process.env.SMTP_PASS || "",
-    from: dbMap.get("SMTP_FROM") || process.env.SMTP_FROM || "noreply@vnlogistics.com",
-  };
+  const host = dbMap.get("SMTP_HOST") || process.env.SMTP_HOST || "localhost";
+  const port = Number(dbMap.get("SMTP_PORT") || process.env.SMTP_PORT) || 587;
+  const secureSetting = (dbMap.get("SMTP_SECURE") || process.env.SMTP_SECURE) === "true";
+  const secure = port === 465 ? true : secureSetting;
+  const user = dbMap.get("SMTP_USER") || process.env.SMTP_USER || "";
+  const pass = dbMap.get("SMTP_PASS") || process.env.SMTP_PASS || "";
+  const from = dbMap.get("SMTP_FROM") || process.env.SMTP_FROM || "noreply@vnlogistics.com";
+
+  const source = dbMap.size > 0 ? "DB" : "ENV";
+  console.log(`[EMAIL/config] source=${source} dbKeys=${[...dbMap.keys()].join(",")||"none"} host=${host} port=${port} secure=${secure} from=${from}`);
+
+  return { host, port, secure, user, pass, from };
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
