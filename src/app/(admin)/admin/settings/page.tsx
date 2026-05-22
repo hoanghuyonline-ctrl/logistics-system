@@ -114,6 +114,7 @@ export default function SettingsPage() {
   const [zaloSending, setZaloSending] = useState(false);
   const [lastTestTime, setLastTestTime] = useState<string | null>(null);
 
+  const [testEmail, setTestEmail] = useState("");
   const [emailSending, setEmailSending] = useState(false);
   const [emailResult, setEmailResult] = useState<{
     success: boolean;
@@ -126,7 +127,11 @@ export default function SettingsPage() {
     setEmailSending(true);
     setEmailResult(null);
     try {
-      const res = await fetch("/api/admin/test-email", { method: "POST" });
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: testEmail || undefined }),
+      });
       const data = await res.json();
       if (res.status === 403) {
         toast("Chỉ admin mới có quyền gửi thử", "error");
@@ -142,7 +147,7 @@ export default function SettingsPage() {
     } finally {
       setEmailSending(false);
     }
-  }, [toast]);
+  }, [toast, testEmail]);
   const [zaloResult, setZaloResult] = useState<{
     success: boolean;
     message?: string;
@@ -653,14 +658,24 @@ export default function SettingsPage() {
 
             <div className="mt-4 pt-4 border-t border-slate-200">
               <p className="text-sm text-slate-500 mb-3">
-                Gửi email thử nghiệm đến địa chỉ email của bạn để kiểm tra kết nối SMTP.
+                Gửi email thử nghiệm để kiểm tra kết nối SMTP. Để trống sẽ gửi đến email tài khoản admin.
               </p>
               <div className="flex items-center gap-3 mb-2">
+                <div className="flex-1 min-w-0">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Email nhận thử nghiệm</label>
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="vd: your@gmail.com (để trống = email admin)"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={sendTestEmail}
                   disabled={emailSending}
-                  className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed self-end"
                 >
                   {emailSending ? "Đang gửi…" : "Gửi thử Email"}
                 </button>
