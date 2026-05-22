@@ -109,15 +109,20 @@ const GDRIVE_FALLBACK_FOLDER_ID = "1jtPybzjZfvhkfe4YAFSrOQv0yQfqB95q";
 
 export class GoogleDriveStorageProvider implements StorageProvider {
   /**
-   * Resolve credentials + folderId dynamically at the moment of each
-   * operation.  DB → process.env → hardcoded fallback for folderId.
+   * Resolve OAuth2 credentials + folderId dynamically at the moment of
+   * each operation.  Reads GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET,
+   * GDRIVE_REFRESH_TOKEN, and GDRIVE_FOLDER_ID from DB → process.env.
    */
   private async resolveConfig(): Promise<{
     drive: ReturnType<typeof createDrive>;
     folderId: string;
   }> {
-    /* ---- 1. Read raw values from DB, then env ---- */
-    const keys = ["GCS_CREDENTIALS", "GDRIVE_FOLDER_ID"];
+    const keys = [
+      "GDRIVE_CLIENT_ID",
+      "GDRIVE_CLIENT_SECRET",
+      "GDRIVE_REFRESH_TOKEN",
+      "GDRIVE_FOLDER_ID",
+    ];
     const rows = await prisma.systemConfig
       .findMany({ where: { key: { in: keys } } })
       .catch((dbErr) => {
@@ -126,67 +131,35 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       });
     const map = new Map(rows.map((r) => [r.key, r.value]));
 
-    const credsRaw =
-      map.get("GCS_CREDENTIALS") || process.env.GCS_CREDENTIALS || "";
-    if (!credsRaw) {
+    const clientId =
+      map.get("GDRIVE_CLIENT_ID") || process.env.GDRIVE_CLIENT_ID || "";
+    const clientSecret =
+      map.get("GDRIVE_CLIENT_SECRET") || process.env.GDRIVE_CLIENT_SECRET || "";
+    const refreshToken =
+      map.get("GDRIVE_REFRESH_TOKEN") || process.env.GDRIVE_REFRESH_TOKEN || "";
+
+    if (!clientId || !clientSecret || !refreshToken) {
+      const missing = [
+        !clientId && "GDRIVE_CLIENT_ID",
+        !clientSecret && "GDRIVE_CLIENT_SECRET",
+        !refreshToken && "GDRIVE_REFRESH_TOKEN",
+      ].filter(Boolean);
       throw new Error(
-        "[storage/gdrive] No credentials found in DB (GCS_CREDENTIALS) or process.env.GCS_CREDENTIALS",
+        `[storage/gdrive] Missing OAuth2 config: ${missing.join(", ")}. Set them in Admin Settings or environment.`,
       );
     }
 
-    /* ---- 2. Parse JSON safely ---- */
-    let credentials: Record<string, unknown>;
-    try {
-      credentials = JSON.parse(credsRaw) as Record<string, unknown>;
-    } catch (parseErr) {
-      console.error(
-        "[storage/gdrive] ❌ JSON.parse failed on credentials — length=" +
-          credsRaw.length +
-          ", first 80 chars: " +
-          credsRaw.slice(0, 80),
-        parseErr,
-      );
-      throw new Error("[storage/gdrive] GCS_CREDENTIALS is not valid JSON");
-    }
-
-    /* ---- 3. Fix private_key newlines (DB text columns often double-escape) ---- */
-    if (typeof credentials.private_key === "string") {
-      credentials.private_key = (credentials.private_key as string).replace(
-        /\\n/g,
-        "\n",
-      );
-    }
-
-    const clientEmail = credentials.client_email || "(missing)";
-    const hasPrivateKey =
-      typeof credentials.private_key === "string" &&
-      (credentials.private_key as string).length > 0;
-
-    console.log(
-      `[storage/gdrive] Credentials parsed — client_email=${clientEmail}, hasPrivateKey=${hasPrivateKey}, keyLength=${hasPrivateKey ? (credentials.private_key as string).length : 0}`,
-    );
-
-    if (!hasPrivateKey) {
-      throw new Error(
-        "[storage/gdrive] private_key is missing or empty in credentials JSON",
-      );
-    }
-
-    /* ---- 4. Resolve folder ID ---- */
     const folderId =
       map.get("GDRIVE_FOLDER_ID") ||
       process.env.GDRIVE_FOLDER_ID ||
       GDRIVE_FALLBACK_FOLDER_ID;
 
-    /* ---- 5. Build Drive client ---- */
-    const authClient = new driveAuth.GoogleAuth({
-      credentials,
-      scopes: ["https://www.googleapis.com/auth/drive.file"],
-    });
-    const drive = createDrive({ version: "v3", auth: authClient });
+    const oauth2Client = new driveAuth.OAuth2(clientId, clientSecret);
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const drive = createDrive({ version: "v3", auth: oauth2Client });
 
     console.log(
-      `[storage/gdrive] Config resolved — folderId=${folderId}, credsSource=${map.has("GCS_CREDENTIALS") ? "DB" : "ENV"}`,
+      `[storage/gdrive] OAuth2 config resolved — folderId=${folderId}, clientId=${clientId.slice(0, 12)}...`,
     );
     return { drive, folderId };
   }

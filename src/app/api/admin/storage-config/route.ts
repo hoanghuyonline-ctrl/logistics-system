@@ -5,7 +5,17 @@ import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler 
 import { resetStorageCache } from "@/lib/storage";
 import type { NextRequest } from "next/server";
 
-const STORAGE_KEYS = ["STORAGE_PROVIDER", "GCS_BUCKET", "GCS_CREDENTIALS", "GDRIVE_FOLDER_ID"] as const;
+const STORAGE_KEYS = [
+  "STORAGE_PROVIDER",
+  "GCS_BUCKET",
+  "GCS_CREDENTIALS",
+  "GDRIVE_FOLDER_ID",
+  "GDRIVE_CLIENT_ID",
+  "GDRIVE_CLIENT_SECRET",
+  "GDRIVE_REFRESH_TOKEN",
+] as const;
+
+const SENSITIVE_KEYS = new Set(["GCS_CREDENTIALS", "GDRIVE_CLIENT_SECRET", "GDRIVE_REFRESH_TOKEN"]);
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
@@ -21,7 +31,7 @@ export const GET = withErrorHandler(async function GET() {
   const result = STORAGE_KEYS.map((key) => ({
     key,
     configured: !!(dbMap.get(key) || process.env[key]),
-    value: key === "GCS_CREDENTIALS"
+    value: SENSITIVE_KEYS.has(key)
       ? (dbMap.get(key) || process.env[key] ? "••••••••" : "")
       : (dbMap.get(key) || process.env[key] || ""),
     source: dbMap.has(key) ? "db" as const : (process.env[key] ? "env" as const : "none" as const),
@@ -52,7 +62,7 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest) {
     if (typeof value !== "string") {
       return errorResponse(`Giá trị của ${key} phải là chuỗi`, 400);
     }
-    if (key === "GCS_CREDENTIALS" && value === "••••••••") {
+    if (SENSITIVE_KEYS.has(key) && value === "••••••••") {
       continue;
     }
     updates.push({ key, value });
