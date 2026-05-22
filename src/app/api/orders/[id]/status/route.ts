@@ -134,6 +134,10 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
         orderCode: order.orderCode,
         fromStatus: order.status,
         toStatus: status,
+        productName: order.productName,
+        totalCostVND: order.confirmedTotalCost
+          ? parseFloat(String(order.confirmedTotalCost))
+          : parseFloat(String(order.totalCostVND)),
         channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
       }),
     )

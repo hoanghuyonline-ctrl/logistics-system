@@ -171,7 +171,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
       requestCode: existing.requestCode,
       productName: existing.productName,
       newStatus: "CANCELLED",
-      channels: ["SYSTEM", "TELEGRAM"],
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
     }).catch(() => {});
 
     return jsonResponse(updated);
@@ -188,7 +188,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     },
   });
 
-  // Notify customer on status changes via SYSTEM + TELEGRAM (fire-and-forget)
+  // Notify customer on status changes via all channels including EMAIL (fire-and-forget)
   if (data.status) {
     onSalesRequestStatusChanged({
       userId: existing.customerId,
@@ -198,7 +198,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
       productName: existing.productName,
       newStatus: data.status as string,
       confirmedPrice: data.confirmedPrice != null ? parseFloat(String(data.confirmedPrice)) : undefined,
-      channels: ["SYSTEM", "TELEGRAM"],
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
     }).catch(() => {});
   }
 

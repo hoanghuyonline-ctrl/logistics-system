@@ -5,6 +5,7 @@ export {
   onCustomerIssueCreated,
   onCustomerIssueStatusChanged,
   onCustomerVisibleOrderNote,
+  onSalesRequestCreated,
   onWalletEvent,
 } from "./triggers";
 export { sendEmail } from "./channels/email";

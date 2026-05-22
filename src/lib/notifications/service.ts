@@ -97,6 +97,7 @@ async function sendToChannel(
           to: payload.userEmail,
           subject: payload.title,
           text: payload.message,
+          html: payload.html,
         });
         logChannelResult(channel, payload, true, payload.userEmail);
         return { channel, success: true };

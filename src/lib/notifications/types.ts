@@ -6,6 +6,7 @@ export interface NotificationPayload {
   userName?: string;
   title: string;
   message: string;
+  html?: string;
   orderId?: string;
   orderCode?: string;
   channels: NotificationChannel[];

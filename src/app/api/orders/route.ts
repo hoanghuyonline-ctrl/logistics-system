@@ -199,6 +199,11 @@ export const POST = withErrorHandler(async function POST(request: Request) {
     userName: order.user.fullName,
     orderId: order.id,
     orderCode: order.orderCode,
+    productName: order.productName,
+    quantity: order.quantity,
+    unitPriceCNY: parseFloat(String(order.unitPriceCNY)),
+    exchangeRate: parseFloat(String(order.exchangeRate)),
+    totalCostVND: parseFloat(String(order.totalCostVND)),
     channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
   }).catch((err) => {
     console.error("[notifications] onOrderCreated failed:", err);
