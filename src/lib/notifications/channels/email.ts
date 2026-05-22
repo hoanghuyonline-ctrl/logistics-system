@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { prisma } from "@/lib/prisma";
 
 export interface EmailOptions {
@@ -29,14 +30,21 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   try {
     const config = await getSmtpConfig();
 
-    console.log(`[EMAIL] Attempting send to=${options.to} subject="${options.subject}" hasHtml=${!!options.html}`);
+    console.log(`[EMAIL] Attempting send to=${options.to} subject="${options.subject}" hasHtml=${!!options.html} smtp=${config.host}:${config.port} secure=${config.secure} pool=false`);
 
-    const transporter = nodemailer.createTransport({
+    const transportOptions: SMTPTransport.Options = {
       host: config.host,
       port: config.port,
       secure: config.secure,
       auth: config.user ? { user: config.user, pass: config.pass } : undefined,
-    });
+      connectionTimeout: 30_000,
+      greetingTimeout: 15_000,
+      socketTimeout: 60_000,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    };
+    const transporter = nodemailer.createTransport(transportOptions);
 
     await transporter.sendMail({
       from: config.from,

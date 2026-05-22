@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["@prisma/adapter-pg"],
+  async headers() {
+    return [];
+  },
+  allowedDevOrigins: ["*"],
 };
 
 export default nextConfig;
