@@ -29,15 +29,20 @@ export async function onOrderCreated(params: {
     userName: params.userName,
   });
 
-  const html = orderCreatedEmail({
-    userName: params.userName || "bạn",
-    orderCode: params.orderCode,
-    productName: params.productName || "Sản phẩm",
-    quantity: params.quantity || 1,
-    unitPriceCNY: params.unitPriceCNY || 0,
-    exchangeRate: params.exchangeRate || 3500,
-    totalCostVND: params.totalCostVND || 0,
-  });
+  let html: string | undefined;
+  try {
+    html = orderCreatedEmail({
+      userName: params.userName || "bạn",
+      orderCode: params.orderCode || "N/A",
+      productName: params.productName || "Sản phẩm",
+      quantity: params.quantity ?? 1,
+      unitPriceCNY: params.unitPriceCNY ?? 0,
+      exchangeRate: params.exchangeRate ?? 3500,
+      totalCostVND: params.totalCostVND ?? 0,
+    });
+  } catch (err) {
+    console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onOrderCreated]:", err);
+  }
 
   return sendNotification({
     userId: params.userId,
@@ -71,14 +76,19 @@ export async function onShipmentStatusChanged(params: {
     userName: params.userName,
   });
 
-  const html = orderStatusChangedEmail({
-    userName: params.userName || "bạn",
-    orderCode: params.orderCode,
-    productName: params.productName || "Sản phẩm",
-    fromStatus: params.fromStatus,
-    toStatus: params.toStatus,
-    totalCostVND: params.totalCostVND,
-  });
+  let html: string | undefined;
+  try {
+    html = orderStatusChangedEmail({
+      userName: params.userName || "bạn",
+      orderCode: params.orderCode || "N/A",
+      productName: params.productName || "Sản phẩm",
+      fromStatus: params.fromStatus || "PENDING",
+      toStatus: params.toStatus || "PENDING",
+      totalCostVND: params.totalCostVND ?? undefined,
+    });
+  } catch (err) {
+    console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onShipmentStatusChanged]:", err);
+  }
 
   return sendNotification({
     userId: params.userId,
@@ -199,13 +209,18 @@ export async function onSalesRequestCreated(params: {
   channels?: NotificationChannel[];
 }): Promise<NotificationResult> {
   const name = params.userName || "bạn";
-  const html = salesRequestCreatedEmail({
-    userName: name,
-    requestCode: params.requestCode,
-    productName: params.productName,
-    quantity: params.quantity,
-    estimatedTotal: params.estimatedTotal,
-  });
+  let html: string | undefined;
+  try {
+    html = salesRequestCreatedEmail({
+      userName: name,
+      requestCode: params.requestCode || "N/A",
+      productName: params.productName || "Sản phẩm",
+      quantity: params.quantity ?? 1,
+      estimatedTotal: params.estimatedTotal ?? undefined,
+    });
+  } catch (err) {
+    console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onSalesRequestCreated]:", err);
+  }
 
   return sendNotification({
     userId: params.userId,
@@ -276,14 +291,19 @@ export async function onSalesRequestStatusChanged(params: {
       message = `Chào ${name}, yêu cầu ${params.requestCode} — "${params.productName}" đã chuyển sang: ${statusLabel}.`;
   }
 
-  const html = salesRequestStatusChangedEmail({
-    userName: name,
-    requestCode: params.requestCode,
-    productName: params.productName,
-    newStatus: params.newStatus,
-    confirmedPrice: params.confirmedPrice,
-    amountPaid: params.amountPaid,
-  });
+  let html: string | undefined;
+  try {
+    html = salesRequestStatusChangedEmail({
+      userName: name,
+      requestCode: params.requestCode || "N/A",
+      productName: params.productName || "Sản phẩm",
+      newStatus: params.newStatus || "NEW",
+      confirmedPrice: params.confirmedPrice ?? undefined,
+      amountPaid: params.amountPaid ?? undefined,
+    });
+  } catch (err) {
+    console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onSalesRequestStatusChanged]:", err);
+  }
 
   return sendNotification({
     userId: params.userId,

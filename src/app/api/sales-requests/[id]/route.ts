@@ -167,9 +167,9 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     onSalesRequestStatusChanged({
       userId: existing.customerId,
       userEmail: updated?.customer?.email || undefined,
-      userName: updated?.customer?.fullName || undefined,
+      userName: updated?.customer?.fullName || "bạn",
       requestCode: existing.requestCode,
-      productName: existing.productName,
+      productName: existing.productName || "Sản phẩm",
       newStatus: "CANCELLED",
       channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
     }).catch(() => {});
@@ -193,11 +193,11 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     onSalesRequestStatusChanged({
       userId: existing.customerId,
       userEmail: updated.customer?.email || undefined,
-      userName: updated.customer?.fullName || undefined,
+      userName: updated.customer?.fullName || "bạn",
       requestCode: existing.requestCode,
-      productName: existing.productName,
+      productName: existing.productName || "Sản phẩm",
       newStatus: data.status as string,
-      confirmedPrice: data.confirmedPrice != null ? parseFloat(String(data.confirmedPrice)) : undefined,
+      confirmedPrice: data.confirmedPrice != null ? (parseFloat(String(data.confirmedPrice)) || 0) : undefined,
       channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
     }).catch(() => {});
   }

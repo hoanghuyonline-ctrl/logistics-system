@@ -76,11 +76,11 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
   onSalesRequestStatusChanged({
     userId: user.id,
     userEmail: user.email || undefined,
-    userName: user.name || undefined,
+    userName: user.name || "bạn",
     requestCode: salesRequest.requestCode,
-    productName: salesRequest.productName,
+    productName: salesRequest.productName || "Sản phẩm",
     newStatus: "PAID",
-    amountPaid: payAmount,
+    amountPaid: payAmount || 0,
     channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
   }).catch(() => {});
 

@@ -108,11 +108,11 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   onSalesRequestCreated({
     userId: salesRequest.customerId,
     userEmail: salesRequest.customer.email || undefined,
-    userName: salesRequest.customer.fullName,
+    userName: salesRequest.customer.fullName || "bạn",
     requestCode: salesRequest.requestCode,
-    productName: resolvedProductName,
-    quantity: salesRequest.quantity,
-    estimatedTotal: estimatedTotal || undefined,
+    productName: resolvedProductName || "Sản phẩm",
+    quantity: salesRequest.quantity || 1,
+    estimatedTotal: estimatedTotal != null ? estimatedTotal : undefined,
     channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
   }).catch((err) => {
     console.error("[notifications] onSalesRequestCreated failed:", err);

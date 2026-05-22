@@ -195,15 +195,15 @@ export const POST = withErrorHandler(async function POST(request: Request) {
 
   onOrderCreated({
     userId: order.userId,
-    userEmail: order.user.email,
-    userName: order.user.fullName,
+    userEmail: order.user.email || undefined,
+    userName: order.user.fullName || "bạn",
     orderId: order.id,
     orderCode: order.orderCode,
-    productName: order.productName,
-    quantity: order.quantity,
-    unitPriceCNY: parseFloat(String(order.unitPriceCNY)),
-    exchangeRate: parseFloat(String(order.exchangeRate)),
-    totalCostVND: parseFloat(String(order.totalCostVND)),
+    productName: order.productName || "Sản phẩm",
+    quantity: order.quantity || 1,
+    unitPriceCNY: parseFloat(String(order.unitPriceCNY)) || 0,
+    exchangeRate: parseFloat(String(order.exchangeRate)) || 3500,
+    totalCostVND: parseFloat(String(order.totalCostVND)) || 0,
     channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
   }).catch((err) => {
     console.error("[notifications] onOrderCreated failed:", err);
