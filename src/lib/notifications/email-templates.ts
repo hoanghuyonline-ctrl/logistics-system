@@ -2,6 +2,7 @@
  * Professional HTML email templates for order lifecycle notifications.
  * Follows international e-commerce standards (DHL/Amazon/FedEx style).
  * All text in Vietnamese (default locale).
+ * @version 2.0.0 — Pro edition with bulletproof parameter fallbacks
  */
 
 const BRAND_COLOR = "#1a56db";

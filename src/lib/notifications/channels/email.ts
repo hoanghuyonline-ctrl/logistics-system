@@ -1,3 +1,7 @@
+/**
+ * SMTP email channel — tunnel-safe transport with critical error logging.
+ * @version 2.0.0 — Pro edition with PM2/Windows-safe awaited execution
+ */
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { prisma } from "@/lib/prisma";
