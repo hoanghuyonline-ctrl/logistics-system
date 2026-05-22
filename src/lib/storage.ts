@@ -98,29 +98,6 @@ export class GCSStorageProvider implements StorageProvider {
 
 // --------------- Google Drive ---------------
 
-interface DriveConfig {
-  credentials: Record<string, unknown>;
-  folderId: string;
-}
-
-async function getDriveConfig(): Promise<DriveConfig | null> {
-  const keys = ["GCS_CREDENTIALS", "GDRIVE_FOLDER_ID"];
-  const rows = await prisma.systemConfig.findMany({ where: { key: { in: keys } } });
-  const map = new Map(rows.map((r) => [r.key, r.value]));
-
-  const credsRaw = map.get("GCS_CREDENTIALS") || process.env.GCS_CREDENTIALS || "";
-  if (!credsRaw) return null;
-
-  try {
-    const credentials = JSON.parse(credsRaw) as Record<string, unknown>;
-    const folderId = map.get("GDRIVE_FOLDER_ID") || process.env.GDRIVE_FOLDER_ID || "";
-    return { credentials, folderId };
-  } catch {
-    console.error("[storage/gdrive] Failed to parse credentials JSON");
-    return null;
-  }
-}
-
 const MIME_MAP: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -128,39 +105,52 @@ const MIME_MAP: Record<string, string> = {
   webp: "image/webp",
 };
 
-export class GoogleDriveStorageProvider implements StorageProvider {
-  private drive: ReturnType<typeof createDrive>;
-  private folderId: string;
+const GDRIVE_FALLBACK_FOLDER_ID = "1jtPybzjZfvhkfe4YAFSrOQv0yQfqB95q";
 
-  constructor(credentials: Record<string, unknown>, folderId: string) {
+export class GoogleDriveStorageProvider implements StorageProvider {
+  /**
+   * Resolve credentials + folderId dynamically at the moment of each
+   * operation.  DB → process.env → hardcoded fallback for folderId.
+   */
+  private async resolveConfig(): Promise<{
+    drive: ReturnType<typeof createDrive>;
+    folderId: string;
+  }> {
+    const keys = ["GCS_CREDENTIALS", "GDRIVE_FOLDER_ID"];
+    const rows = await prisma.systemConfig
+      .findMany({ where: { key: { in: keys } } })
+      .catch(() => [] as { key: string; value: string }[]);
+    const map = new Map(rows.map((r) => [r.key, r.value]));
+
+    const credsRaw =
+      map.get("GCS_CREDENTIALS") || process.env.GCS_CREDENTIALS || "";
+    if (!credsRaw) {
+      throw new Error(
+        "[storage/gdrive] No credentials found in DB or process.env.GCS_CREDENTIALS",
+      );
+    }
+
+    const credentials = JSON.parse(credsRaw) as Record<string, unknown>;
+    const folderId =
+      map.get("GDRIVE_FOLDER_ID") ||
+      process.env.GDRIVE_FOLDER_ID ||
+      GDRIVE_FALLBACK_FOLDER_ID;
+
     const authClient = new driveAuth.GoogleAuth({
       credentials,
       scopes: ["https://www.googleapis.com/auth/drive.file"],
     });
-    this.drive = createDrive({ version: "v3", auth: authClient });
-    this.folderId = folderId;
-  }
+    const drive = createDrive({ version: "v3", auth: authClient });
 
-  private async resolveFolderId(): Promise<string> {
-    if (this.folderId) return this.folderId;
-
-    const dbFolder = await prisma.systemConfig
-      .findUnique({ where: { key: "GDRIVE_FOLDER_ID" } })
-      .catch(() => null);
-    if (dbFolder?.value) {
-      this.folderId = dbFolder.value;
-      return this.folderId;
-    }
-
-    throw new Error(
-      "[storage/gdrive] GDRIVE_FOLDER_ID is not configured. " +
-        "Set it in Admin Settings or SystemConfig DB before uploading.",
+    console.log(
+      `[storage/gdrive] Config resolved — folderId=${folderId}, credsSource=${map.has("GCS_CREDENTIALS") ? "DB" : "ENV"}`,
     );
+    return { drive, folderId };
   }
 
   async upload(buffer: Buffer, key: string): Promise<string> {
     try {
-      const parentId = await this.resolveFolderId();
+      const { drive, folderId } = await this.resolveConfig();
 
       const ext = key.split(".").pop()?.toLowerCase() || "";
       const mimeType = MIME_MAP[ext] || "application/octet-stream";
@@ -169,12 +159,12 @@ export class GoogleDriveStorageProvider implements StorageProvider {
       readable.push(buffer);
       readable.push(null);
 
-      console.log(`[storage/gdrive] Uploading file="${key}" to folder=${parentId}`);
+      console.log(`[storage/gdrive] Uploading file="${key}" to folder=${folderId}`);
 
-      const res = await this.drive.files.create({
+      const res = await drive.files.create({
         requestBody: {
           name: key.split("/").pop() || key,
-          parents: [parentId],
+          parents: [folderId],
         },
         media: { mimeType, body: readable },
         fields: "id",
@@ -182,7 +172,7 @@ export class GoogleDriveStorageProvider implements StorageProvider {
 
       const fileId = res.data.id!;
 
-      await this.drive.permissions.create({
+      await drive.permissions.create({
         fileId,
         requestBody: { role: "reader", type: "anyone" },
       });
@@ -197,7 +187,8 @@ export class GoogleDriveStorageProvider implements StorageProvider {
 
   async delete(key: string): Promise<void> {
     try {
-      await this.drive.files.delete({ fileId: key });
+      const { drive } = await this.resolveConfig();
+      await drive.files.delete({ fileId: key });
     } catch (err) {
       console.error(`[storage/gdrive] Delete failed for fileId=${key}`, err);
     }
@@ -250,15 +241,8 @@ export async function getStorage(): Promise<StorageProvider> {
       return cachedProvider;
     }
     case "gdrive": {
-      const config = await getDriveConfig();
-      if (!config) {
-        console.warn("[storage] Google Drive configured but credentials missing — falling back to local");
-        cachedProvider = createLocalProvider();
-        cachedProviderType = "local";
-        return cachedProvider;
-      }
-      console.log("[storage] Using Google Drive API");
-      cachedProvider = new GoogleDriveStorageProvider(config.credentials, config.folderId);
+      console.log("[storage] Using Google Drive API (config resolved dynamically per operation)");
+      cachedProvider = new GoogleDriveStorageProvider();
       cachedProviderType = providerType;
       return cachedProvider;
     }
