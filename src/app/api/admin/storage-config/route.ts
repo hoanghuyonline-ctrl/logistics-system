@@ -5,7 +5,7 @@ import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler 
 import { resetStorageCache } from "@/lib/storage";
 import type { NextRequest } from "next/server";
 
-const STORAGE_KEYS = ["STORAGE_PROVIDER", "GCS_BUCKET", "GCS_CREDENTIALS"] as const;
+const STORAGE_KEYS = ["STORAGE_PROVIDER", "GCS_BUCKET", "GCS_CREDENTIALS", "GDRIVE_FOLDER_ID"] as const;
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();

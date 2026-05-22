@@ -800,25 +800,27 @@ export default function SettingsPage() {
         )}
       </Card>
 
-      <Card title="Cấu hình Lưu trữ Ảnh (Google Cloud Storage)">
+      <Card title="Cấu hình Lưu trữ Ảnh (Google Drive / Cloud Storage)">
         {storageLoading ? (
           <p className="text-sm text-slate-400">Đang tải...</p>
         ) : (
           <>
             <p className="text-sm text-slate-500 mb-3">
-              Chuyển lưu trữ ảnh sang Google Cloud Storage. Đặt STORAGE_PROVIDER = &quot;gcs&quot; để kích hoạt.
+              Chuyển lưu trữ ảnh sang Google Drive hoặc Cloud Storage. Đặt STORAGE_PROVIDER = &quot;gdrive&quot; (khuyến nghị, miễn phí 15 GB) hoặc &quot;gcs&quot;.
             </p>
             <div className="space-y-3">
               {storageConfig.map((item) => {
                 const labels: Record<string, string> = {
                   STORAGE_PROVIDER: "Nhà cung cấp lưu trữ",
-                  GCS_BUCKET: "Tên bucket GCS",
+                  GCS_BUCKET: "Tên bucket GCS (chỉ dùng cho gcs)",
                   GCS_CREDENTIALS: "Service Account JSON",
+                  GDRIVE_FOLDER_ID: "Google Drive Folder ID (tự tạo nếu trống)",
                 };
                 const placeholders: Record<string, string> = {
-                  STORAGE_PROVIDER: "local hoặc gcs",
+                  STORAGE_PROVIDER: "local, gdrive, hoặc gcs",
                   GCS_BUCKET: "my-logistics-bucket",
                   GCS_CREDENTIALS: "Dán nội dung JSON Service Account...",
+                  GDRIVE_FOLDER_ID: "Tự động tạo nếu để trống",
                 };
                 const isSecret = item.key === "GCS_CREDENTIALS";
                 return (
@@ -864,7 +866,7 @@ export default function SettingsPage() {
               </button>
             </div>
             <p className="text-xs text-slate-400 mt-3">
-              Khi STORAGE_PROVIDER = &quot;gcs&quot;, ảnh sẽ upload lên Google Cloud Storage thay vì lưu cục bộ.
+              Khi STORAGE_PROVIDER = &quot;gdrive&quot;, ảnh upload lên Google Drive (miễn phí 15 GB). Dùng &quot;gcs&quot; cho Google Cloud Storage (cần billing).
             </p>
           </>
         )}
