@@ -21,10 +21,28 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
     return errorResponse("Giá chưa được xác nhận");
   }
 
-  // Verify shipping address exists
-  const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: { address: true } });
-  if (!fullUser?.address || !fullUser.address.trim()) {
-    return errorResponse("Vui lòng cập nhật địa chỉ giao hàng tại Việt Nam trong trang hồ sơ trước khi chọn thanh toán COD.", 400);
+  // Accept optional shipping address override from request body
+  let shippingName: string | undefined;
+  let shippingPhone: string | undefined;
+  let shippingAddress: string | undefined;
+  try {
+    const body = await req.json();
+    if (body && typeof body === "object") {
+      if (typeof body.shippingName === "string" && body.shippingName.trim()) shippingName = body.shippingName.trim();
+      if (typeof body.shippingPhone === "string" && body.shippingPhone.trim()) shippingPhone = body.shippingPhone.trim();
+      if (typeof body.shippingAddress === "string" && body.shippingAddress.trim()) shippingAddress = body.shippingAddress.trim();
+    }
+  } catch {
+    // No body or invalid JSON — use profile address
+  }
+
+  // Verify shipping address: use override if provided, otherwise check user profile
+  const effectiveAddress = shippingAddress;
+  if (!effectiveAddress) {
+    const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: { address: true } });
+    if (!fullUser?.address || !fullUser.address.trim()) {
+      return errorResponse("Vui lòng cập nhật địa chỉ giao hàng tại Việt Nam trong trang hồ sơ trước khi chọn thanh toán COD.", 400);
+    }
   }
 
   // Update sales request: mark as PAID with COD method, no wallet deduction
@@ -35,6 +53,9 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
       paidAt: new Date(),
       paidFromWallet: false,
       paymentMethod: "COD",
+      ...(shippingName && { shippingName }),
+      ...(shippingPhone && { shippingPhone }),
+      ...(shippingAddress && { shippingAddress }),
     },
   });
 

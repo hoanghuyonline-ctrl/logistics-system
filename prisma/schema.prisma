@@ -490,6 +490,9 @@ model SalesRequest {
   confirmedById   String?
   confirmedAt     DateTime?
   orderId         String?
+  shippingName    String?
+  shippingPhone   String?
+  shippingAddress String?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 

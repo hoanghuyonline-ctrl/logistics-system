@@ -62,6 +62,9 @@ export default function ShopRequestsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [codAddressConfirmed, setCodAddressConfirmed] = useState(false);
+  const [codAddress, setCodAddress] = useState<{ fullName: string; phone: string; address: string } | null>(null);
+  const [editAddressOpen, setEditAddressOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ fullName: "", phone: "", address: "" });
 
   const fetchData = useCallback(async () => {
     try {
@@ -136,14 +139,39 @@ export default function ShopRequestsPage() {
     }
   };
 
+  const openEditAddress = () => {
+    const src = codAddress || (userProfile ? { fullName: userProfile.fullName, phone: userProfile.phone || "", address: userProfile.address || "" } : { fullName: "", phone: "", address: "" });
+    setEditForm({ fullName: src.fullName, phone: src.phone, address: src.address });
+    setEditAddressOpen(true);
+  };
+
+  const saveEditAddress = () => {
+    if (!editForm.fullName.trim() || !editForm.address.trim()) {
+      toast("Vui lòng nhập đầy đủ họ tên và địa chỉ.", "error");
+      return;
+    }
+    setCodAddress({ fullName: editForm.fullName.trim(), phone: editForm.phone.trim(), address: editForm.address.trim() });
+    setEditAddressOpen(false);
+  };
+
   const handleCOD = async (id: string) => {
     setCodProcessing(true);
+    const addr = codAddress || (userProfile ? { fullName: userProfile.fullName, phone: userProfile.phone || "", address: userProfile.address || "" } : null);
     try {
-      const res = await fetch(`/api/sales-requests/${id}/cod`, { method: "POST" });
+      const res = await fetch(`/api/sales-requests/${id}/cod`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(addr?.fullName && { shippingName: addr.fullName }),
+          ...(addr?.phone && { shippingPhone: addr.phone }),
+          ...(addr?.address && { shippingAddress: addr.address }),
+        }),
+      });
       if (res.ok) {
         toast("Đã xác nhận thanh toán tiền mặt khi nhận hàng (COD)", "success");
         setCodConfirmId(null);
         setCodAddressConfirmed(false);
+        setCodAddress(null);
         setRequests((prev) =>
           prev.map((r) =>
             r.id === id ? { ...r, status: "PAID", paidAt: new Date().toISOString(), paidFromWallet: false } : r
@@ -294,23 +322,34 @@ export default function ShopRequestsPage() {
                             </div>
                           ) : codConfirmId === req.id ? (
                             <div className="space-y-1.5">
-                              {!userProfile?.address ? (
+                              {!userProfile?.address && !codAddress ? (
                                 <div className="bg-red-50 border border-red-200 rounded-lg p-2">
                                   <p className="text-[10px] text-red-700 font-medium mb-1">Bạn chưa cập nhật địa chỉ giao hàng tại Việt Nam.</p>
-                                  <Link href="/profile" className="text-[10px] text-red-700 font-bold border border-red-300 rounded px-2 py-0.5 hover:bg-red-100 transition inline-block">
-                                    Cập nhật hồ sơ &rarr;
-                                  </Link>
-                                  <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="ml-2 text-[10px] text-slate-500 hover:text-slate-700">
-                                    Đóng
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <Link href="/profile" className="text-[10px] text-red-700 font-bold border border-red-300 rounded px-2 py-0.5 hover:bg-red-100 transition inline-block">
+                                      Cập nhật hồ sơ &rarr;
+                                    </Link>
+                                    <button onClick={openEditAddress} className="text-[10px] text-blue-600 font-bold border border-blue-300 rounded px-2 py-0.5 hover:bg-blue-50 transition inline-block">
+                                      Nhập địa chỉ mới
+                                    </button>
+                                    <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); setCodAddress(null); }} className="text-[10px] text-slate-500 hover:text-slate-700">
+                                      Đóng
+                                    </button>
+                                  </div>
                                 </div>
                               ) : (
                                 <>
                                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] text-slate-700">
-                                    <p className="font-semibold mb-0.5">Địa chỉ nhận hàng COD:</p>
-                                    <p>Họ tên: {userProfile.fullName}</p>
-                                    {userProfile.phone && <p>SĐT: {userProfile.phone}</p>}
-                                    <p>Địa chỉ: {userProfile.address}</p>
+                                    <div className="flex items-center justify-between mb-0.5">
+                                      <p className="font-semibold">Địa chỉ nhận hàng COD:</p>
+                                      <button onClick={openEditAddress} className="text-[10px] text-blue-600 font-medium hover:text-blue-800 hover:underline transition">
+                                        Sửa địa chỉ
+                                      </button>
+                                    </div>
+                                    <p>Họ tên: {codAddress?.fullName || userProfile?.fullName}</p>
+                                    {(codAddress?.phone || userProfile?.phone) && <p>SĐT: {codAddress?.phone || userProfile?.phone}</p>}
+                                    <p>Địa chỉ: {codAddress?.address || userProfile?.address}</p>
+                                    {codAddress && <p className="text-[9px] text-blue-500 mt-0.5">Đã sửa địa chỉ cho đơn này</p>}
                                   </div>
                                   <label className="flex items-start gap-1.5 cursor-pointer">
                                     <input
@@ -322,7 +361,7 @@ export default function ShopRequestsPage() {
                                     <span className="text-[10px] text-slate-600">Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam cho đơn hàng COD này.</span>
                                   </label>
                                   <div className="flex items-center justify-end gap-1.5">
-                                    <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">
+                                    <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); setCodAddress(null); }} className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">
                                       Không
                                     </button>
                                     <button
@@ -457,23 +496,34 @@ export default function ShopRequestsPage() {
                         </div>
                       ) : codConfirmId === req.id ? (
                         <div className="space-y-2">
-                          {!userProfile?.address ? (
+                          {!userProfile?.address && !codAddress ? (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                               <p className="text-xs text-red-700 font-medium mb-1.5">Bạn chưa cập nhật địa chỉ giao hàng tại Việt Nam.</p>
-                              <Link href="/profile" className="text-xs text-red-700 font-bold border border-red-300 rounded px-3 py-1 hover:bg-red-100 transition inline-block">
-                                Cập nhật hồ sơ &rarr;
-                              </Link>
-                              <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="ml-2 text-xs text-slate-500 hover:text-slate-700">
-                                Đóng
-                              </button>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Link href="/profile" className="text-xs text-red-700 font-bold border border-red-300 rounded px-3 py-1 hover:bg-red-100 transition inline-block">
+                                  Cập nhật hồ sơ &rarr;
+                                </Link>
+                                <button onClick={openEditAddress} className="text-xs text-blue-600 font-bold border border-blue-300 rounded px-3 py-1 hover:bg-blue-50 transition inline-block">
+                                  Nhập địa chỉ mới
+                                </button>
+                                <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); setCodAddress(null); }} className="text-xs text-slate-500 hover:text-slate-700">
+                                  Đóng
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <>
                               <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700">
-                                <p className="font-semibold mb-1">Địa chỉ nhận hàng COD:</p>
-                                <p>Họ tên: {userProfile.fullName}</p>
-                                {userProfile.phone && <p>SĐT: {userProfile.phone}</p>}
-                                <p>Địa chỉ: {userProfile.address}</p>
+                                <div className="flex items-center justify-between mb-1">
+                                  <p className="font-semibold">Địa chỉ nhận hàng COD:</p>
+                                  <button onClick={openEditAddress} className="text-xs text-blue-600 font-medium hover:text-blue-800 hover:underline transition">
+                                    Sửa địa chỉ
+                                  </button>
+                                </div>
+                                <p>Họ tên: {codAddress?.fullName || userProfile?.fullName}</p>
+                                {(codAddress?.phone || userProfile?.phone) && <p>SĐT: {codAddress?.phone || userProfile?.phone}</p>}
+                                <p>Địa chỉ: {codAddress?.address || userProfile?.address}</p>
+                                {codAddress && <p className="text-[10px] text-blue-500 mt-1">Đã sửa địa chỉ cho đơn này</p>}
                               </div>
                               <label className="flex items-start gap-2 cursor-pointer">
                                 <input
@@ -485,7 +535,7 @@ export default function ShopRequestsPage() {
                                 <span className="text-xs text-slate-600">Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam cho đơn hàng COD này.</span>
                               </label>
                               <div className="flex gap-2">
-                                <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); }} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
+                                <button onClick={() => { setCodConfirmId(null); setCodAddressConfirmed(false); setCodAddress(null); }} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
                                   Không
                                 </button>
                                 <button
@@ -523,6 +573,61 @@ export default function ShopRequestsPage() {
             })}
           </div>
         </>
+      )}
+
+      {/* Edit Address Modal */}
+      {editAddressOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Sửa địa chỉ nhận hàng</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Họ tên nhận hàng <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={editForm.fullName}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                  placeholder="Nguyễn Văn A"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại</label>
+                <input
+                  type="text"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  placeholder="0912 345 678"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Địa chỉ nhận hàng <span className="text-red-500">*</span></label>
+                <textarea
+                  value={editForm.address}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, address: e.target.value }))}
+                  placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setEditAddressOpen(false)}
+                className="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-600 hover:bg-slate-50 transition"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={saveEditAddress}
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition"
+              >
+                Lưu địa chỉ
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
