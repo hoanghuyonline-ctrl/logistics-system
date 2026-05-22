@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { sendEmail } from "@/lib/notifications/channels/email";
 
@@ -8,7 +9,6 @@ export async function POST() {
   }
 
   const timestamp = new Date().toISOString();
-  const smtpHost = process.env.SMTP_HOST;
 
   if (!user.email) {
     return jsonResponse({
@@ -18,10 +18,13 @@ export async function POST() {
     });
   }
 
+  const dbHost = await prisma.systemConfig.findUnique({ where: { key: "SMTP_HOST" } });
+  const smtpHost = dbHost?.value || process.env.SMTP_HOST;
+
   if (!smtpHost) {
     return jsonResponse({
       success: false,
-      error: "Chưa cấu hình SMTP_HOST — vui lòng thêm vào biến môi trường (.env)",
+      error: "Chưa cấu hình SMTP_HOST — vui lòng cập nhật trong trang Cài đặt hoặc biến môi trường (.env)",
       timestamp,
     });
   }
