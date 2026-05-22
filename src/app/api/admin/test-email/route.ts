@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse } from "@/lib/utils";
 import { sendEmail } from "@/lib/notifications/channels/email";
 
-export async function POST() {
+export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !hasRole(user.role, ["ADMIN"])) {
     return errorResponse("Forbidden", 403);
@@ -10,10 +10,20 @@ export async function POST() {
 
   const timestamp = new Date().toISOString();
 
-  if (!user.email) {
+  let bodyTo: string | undefined;
+  try {
+    const body = await request.json();
+    if (body.to && typeof body.to === "string") bodyTo = body.to.trim();
+  } catch {
+    /* no body or invalid JSON — fall back to user.email */
+  }
+
+  const recipient = bodyTo || user.email;
+
+  if (!recipient) {
     return jsonResponse({
       success: false,
-      error: "Tài khoản admin chưa có email — không thể gửi thử",
+      error: "Chưa nhập email nhận thử nghiệm và tài khoản admin chưa có email",
       timestamp,
     });
   }
@@ -31,7 +41,7 @@ export async function POST() {
 
   try {
     await sendEmail({
-      to: user.email,
+      to: recipient,
       subject: "Bắc Trung Hải Logistics — Email thử nghiệm",
       text: `Đây là email thử nghiệm từ hệ thống Bắc Trung Hải Logistics.\nGửi lúc: ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}\nSMTP: ${smtpHost}`,
       html:
@@ -44,12 +54,12 @@ export async function POST() {
 
     return jsonResponse({
       success: true,
-      message: `Đã gửi email thử nghiệm đến ${user.email}`,
+      message: `Đã gửi email thử nghiệm đến ${recipient}`,
       timestamp,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[test-email] Admin ${user.email} gửi thử thất bại:`, message);
+    console.error(`[test-email] Admin ${user.email} gửi thử đến ${recipient} thất bại:`, message);
     return jsonResponse({
       success: false,
       error: `Gửi email thất bại: ${message}`,
