@@ -116,26 +116,69 @@ export class GoogleDriveStorageProvider implements StorageProvider {
     drive: ReturnType<typeof createDrive>;
     folderId: string;
   }> {
+    /* ---- 1. Read raw values from DB, then env ---- */
     const keys = ["GCS_CREDENTIALS", "GDRIVE_FOLDER_ID"];
     const rows = await prisma.systemConfig
       .findMany({ where: { key: { in: keys } } })
-      .catch(() => [] as { key: string; value: string }[]);
+      .catch((dbErr) => {
+        console.error("[storage/gdrive] DB read failed:", dbErr);
+        return [] as { key: string; value: string }[];
+      });
     const map = new Map(rows.map((r) => [r.key, r.value]));
 
     const credsRaw =
       map.get("GCS_CREDENTIALS") || process.env.GCS_CREDENTIALS || "";
     if (!credsRaw) {
       throw new Error(
-        "[storage/gdrive] No credentials found in DB or process.env.GCS_CREDENTIALS",
+        "[storage/gdrive] No credentials found in DB (GCS_CREDENTIALS) or process.env.GCS_CREDENTIALS",
       );
     }
 
-    const credentials = JSON.parse(credsRaw) as Record<string, unknown>;
+    /* ---- 2. Parse JSON safely ---- */
+    let credentials: Record<string, unknown>;
+    try {
+      credentials = JSON.parse(credsRaw) as Record<string, unknown>;
+    } catch (parseErr) {
+      console.error(
+        "[storage/gdrive] ❌ JSON.parse failed on credentials — length=" +
+          credsRaw.length +
+          ", first 80 chars: " +
+          credsRaw.slice(0, 80),
+        parseErr,
+      );
+      throw new Error("[storage/gdrive] GCS_CREDENTIALS is not valid JSON");
+    }
+
+    /* ---- 3. Fix private_key newlines (DB text columns often double-escape) ---- */
+    if (typeof credentials.private_key === "string") {
+      credentials.private_key = (credentials.private_key as string).replace(
+        /\\n/g,
+        "\n",
+      );
+    }
+
+    const clientEmail = credentials.client_email || "(missing)";
+    const hasPrivateKey =
+      typeof credentials.private_key === "string" &&
+      (credentials.private_key as string).length > 0;
+
+    console.log(
+      `[storage/gdrive] Credentials parsed — client_email=${clientEmail}, hasPrivateKey=${hasPrivateKey}, keyLength=${hasPrivateKey ? (credentials.private_key as string).length : 0}`,
+    );
+
+    if (!hasPrivateKey) {
+      throw new Error(
+        "[storage/gdrive] private_key is missing or empty in credentials JSON",
+      );
+    }
+
+    /* ---- 4. Resolve folder ID ---- */
     const folderId =
       map.get("GDRIVE_FOLDER_ID") ||
       process.env.GDRIVE_FOLDER_ID ||
       GDRIVE_FALLBACK_FOLDER_ID;
 
+    /* ---- 5. Build Drive client ---- */
     const authClient = new driveAuth.GoogleAuth({
       credentials,
       scopes: ["https://www.googleapis.com/auth/drive.file"],
