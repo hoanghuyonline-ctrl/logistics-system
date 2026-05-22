@@ -32,8 +32,14 @@ function getStatusInfo(status: string) {
   return STATUS_COLORS[status] || { bg: "#f1f5f9", text: "#475569", label: status };
 }
 
-function fmtVND(amount: number): string {
-  return amount.toLocaleString("vi-VN") + " ₫";
+function safeNum(val: unknown): number {
+  if (val == null) return 0;
+  const n = typeof val === "number" ? val : Number(val);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function fmtVND(amount: unknown): string {
+  return safeNum(amount).toLocaleString("vi-VN") + " ₫";
 }
 
 function baseLayout(content: string): string {
@@ -158,27 +164,35 @@ ${rowsHtml}
 // ─── Public template builders ───────────────────────────────────────
 
 export function orderCreatedEmail(params: {
-  userName: string;
-  orderCode: string;
-  productName: string;
-  quantity: number;
-  unitPriceCNY: number;
-  exchangeRate: number;
-  totalCostVND: number;
+  userName?: string;
+  orderCode?: string;
+  productName?: string;
+  quantity?: number;
+  unitPriceCNY?: number;
+  exchangeRate?: number;
+  totalCostVND?: number;
 }): string {
+  const name = params.userName || "bạn";
+  const code = params.orderCode || "N/A";
+  const product = params.productName || "Sản phẩm";
+  const qty = safeNum(params.quantity) || 1;
+  const unitCNY = safeNum(params.unitPriceCNY);
+  const rate = safeNum(params.exchangeRate) || 3500;
+  const total = safeNum(params.totalCostVND);
+
   const rows = [
-    { label: "Mã đơn hàng", value: `<strong>${params.orderCode}</strong>` },
-    { label: "Sản phẩm", value: params.productName },
-    { label: "Số lượng", value: String(params.quantity) },
-    { label: "Đơn giá (CNY)", value: `¥${params.unitPriceCNY.toLocaleString("vi-VN")}` },
-    { label: "Tỷ giá", value: `1 CNY = ${fmtVND(params.exchangeRate)}` },
-    { label: "Tổng chi phí (ước tính)", value: fmtVND(params.totalCostVND), highlight: true },
+    { label: "Mã đơn hàng", value: `<strong>${code}</strong>` },
+    { label: "Sản phẩm", value: product },
+    { label: "Số lượng", value: String(qty) },
+    { label: "Đơn giá (CNY)", value: `¥${unitCNY.toLocaleString("vi-VN")}` },
+    { label: "Tỷ giá", value: `1 CNY = ${fmtVND(rate)}` },
+    { label: "Tổng chi phí (ước tính)", value: fmtVND(total), highlight: true },
   ];
 
   const content = `
-${greeting(params.userName)}
+${greeting(name)}
 <p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
-Đơn hàng <strong>${params.orderCode}</strong> đã được tiếp nhận và đang xử lý. Chúng tôi sẽ cập nhật tiến trình ngay khi có thông tin mới.
+Đơn hàng <strong>${code}</strong> đã được tiếp nhận và đang xử lý. Chúng tôi sẽ cập nhật tiến trình ngay khi có thông tin mới.
 </p>
 ${statusBadge("PENDING")}
 ${orderTable(rows)}
@@ -191,25 +205,31 @@ Chi phí trên là ước tính ban đầu. Chi phí cuối cùng sẽ được 
 }
 
 export function orderStatusChangedEmail(params: {
-  userName: string;
-  orderCode: string;
-  productName: string;
-  fromStatus: string;
-  toStatus: string;
+  userName?: string;
+  orderCode?: string;
+  productName?: string;
+  fromStatus?: string;
+  toStatus?: string;
   totalCostVND?: number;
 }): string {
-  const fromInfo = getStatusInfo(params.fromStatus);
+  const name = params.userName || "bạn";
+  const code = params.orderCode || "N/A";
+  const product = params.productName || "Sản phẩm";
+  const from = params.fromStatus || "PENDING";
+  const to = params.toStatus || "PENDING";
+  const fromInfo = getStatusInfo(from);
   const rows: Array<{ label: string; value: string; highlight?: boolean }> = [
-    { label: "Mã đơn hàng", value: `<strong>${params.orderCode}</strong>` },
-    { label: "Sản phẩm", value: params.productName },
+    { label: "Mã đơn hàng", value: `<strong>${code}</strong>` },
+    { label: "Sản phẩm", value: product },
     { label: "Trạng thái trước", value: fromInfo.label },
   ];
-  if (params.totalCostVND) {
-    rows.push({ label: "Tổng chi phí", value: fmtVND(params.totalCostVND), highlight: true });
+  const totalCost = safeNum(params.totalCostVND);
+  if (totalCost > 0) {
+    rows.push({ label: "Tổng chi phí", value: fmtVND(totalCost), highlight: true });
   }
 
   let contextMessage = "";
-  switch (params.toStatus) {
+  switch (to) {
     case "PURCHASED":
       contextMessage = "Đơn hàng của bạn đã được đặt mua thành công từ người bán. Chúng tôi đang chờ hàng về kho.";
       break;
@@ -242,11 +262,11 @@ export function orderStatusChangedEmail(params: {
   }
 
   const content = `
-${greeting(params.userName)}
+${greeting(name)}
 <p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
-Đơn hàng <strong>${params.orderCode}</strong> vừa được cập nhật trạng thái:
+Đơn hàng <strong>${code}</strong> vừa được cập nhật trạng thái:
 </p>
-${statusBadge(params.toStatus)}
+${statusBadge(to)}
 <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;background-color:#f8fafc;padding:14px 18px;border-radius:8px;border-left:4px solid ${BRAND_COLOR};">
 ${contextMessage}
 </p>
@@ -257,25 +277,31 @@ ${ctaButton("Xem tiến độ đơn hàng", `${SITE_URL}/orders`)}`;
 }
 
 export function salesRequestCreatedEmail(params: {
-  userName: string;
-  requestCode: string;
-  productName: string;
-  quantity: number;
+  userName?: string;
+  requestCode?: string;
+  productName?: string;
+  quantity?: number;
   estimatedTotal?: number;
 }): string {
+  const name = params.userName || "bạn";
+  const code = params.requestCode || "N/A";
+  const product = params.productName || "Sản phẩm";
+  const qty = safeNum(params.quantity) || 1;
+  const estimated = safeNum(params.estimatedTotal);
+
   const rows: Array<{ label: string; value: string; highlight?: boolean }> = [
-    { label: "Mã yêu cầu", value: `<strong>${params.requestCode}</strong>` },
-    { label: "Sản phẩm", value: params.productName },
-    { label: "Số lượng", value: String(params.quantity) },
+    { label: "Mã yêu cầu", value: `<strong>${code}</strong>` },
+    { label: "Sản phẩm", value: product },
+    { label: "Số lượng", value: String(qty) },
   ];
-  if (params.estimatedTotal) {
-    rows.push({ label: "Tổng ước tính", value: fmtVND(params.estimatedTotal), highlight: true });
+  if (estimated > 0) {
+    rows.push({ label: "Tổng ước tính", value: fmtVND(estimated), highlight: true });
   }
 
   const content = `
-${greeting(params.userName)}
+${greeting(name)}
 <p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
-Yêu cầu mua hàng <strong>${params.requestCode}</strong> đã được tiếp nhận. Nhân viên của chúng tôi sẽ liên hệ và xác nhận giá trong thời gian sớm nhất.
+Yêu cầu mua hàng <strong>${code}</strong> đã được tiếp nhận. Nhân viên của chúng tôi sẽ liên hệ và xác nhận giá trong thời gian sớm nhất.
 </p>
 ${statusBadge("NEW")}
 ${orderTable(rows)}
@@ -288,31 +314,38 @@ Giá cuối cùng sẽ được xác nhận bởi nhân viên. Bạn sẽ nhận
 }
 
 export function salesRequestStatusChangedEmail(params: {
-  userName: string;
-  requestCode: string;
-  productName: string;
-  newStatus: string;
+  userName?: string;
+  requestCode?: string;
+  productName?: string;
+  newStatus?: string;
   confirmedPrice?: number;
   amountPaid?: number;
 }): string {
+  const name = params.userName || "bạn";
+  const code = params.requestCode || "N/A";
+  const product = params.productName || "Sản phẩm";
+  const status = params.newStatus || "NEW";
+  const price = safeNum(params.confirmedPrice);
+  const paid = safeNum(params.amountPaid);
+
   const rows: Array<{ label: string; value: string; highlight?: boolean }> = [
-    { label: "Mã yêu cầu", value: `<strong>${params.requestCode}</strong>` },
-    { label: "Sản phẩm", value: params.productName },
+    { label: "Mã yêu cầu", value: `<strong>${code}</strong>` },
+    { label: "Sản phẩm", value: product },
   ];
-  if (params.confirmedPrice) {
-    rows.push({ label: "Giá xác nhận", value: fmtVND(params.confirmedPrice), highlight: true });
+  if (price > 0) {
+    rows.push({ label: "Giá xác nhận", value: fmtVND(price), highlight: true });
   }
-  if (params.amountPaid) {
-    rows.push({ label: "Đã thanh toán", value: fmtVND(params.amountPaid), highlight: true });
+  if (paid > 0) {
+    rows.push({ label: "Đã thanh toán", value: fmtVND(paid), highlight: true });
   }
 
   let contextMessage = "";
-  switch (params.newStatus) {
+  switch (status) {
     case "CONTACTED":
       contextMessage = "Nhân viên đã liên hệ về yêu cầu của bạn. Vui lòng kiểm tra tin nhắn hoặc email để biết thêm chi tiết.";
       break;
     case "PRICE_CONFIRMED":
-      contextMessage = `Giá đã được xác nhận: <strong>${params.confirmedPrice ? fmtVND(params.confirmedPrice) : ""}</strong>. Vui lòng vào hệ thống để thanh toán từ ví hoặc chọn COD.`;
+      contextMessage = `Giá đã được xác nhận: <strong>${price > 0 ? fmtVND(price) : "(đang cập nhật)"}</strong>. Vui lòng vào hệ thống để thanh toán từ ví hoặc chọn COD.`;
       break;
     case "PAID":
       contextMessage = "Thanh toán thành công! Chúng tôi sẽ bắt đầu xử lý đơn hàng của bạn ngay.";
@@ -331,11 +364,11 @@ export function salesRequestStatusChangedEmail(params: {
   }
 
   const content = `
-${greeting(params.userName)}
+${greeting(name)}
 <p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
-Yêu cầu mua hàng <strong>${params.requestCode}</strong> — "${params.productName}" vừa được cập nhật:
+Yêu cầu mua hàng <strong>${code}</strong> — "${product}" vừa được cập nhật:
 </p>
-${statusBadge(params.newStatus)}
+${statusBadge(status)}
 <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;background-color:#f8fafc;padding:14px 18px;border-radius:8px;border-left:4px solid ${BRAND_ACCENT};">
 ${contextMessage}
 </p>
@@ -346,28 +379,35 @@ ${ctaButton("Xem đơn mua hàng", `${SITE_URL}/shop/requests`)}`;
 }
 
 export function adminNewOrderAlertEmail(params: {
-  adminName: string;
-  customerName: string;
-  orderCode: string;
-  productName: string;
-  quantity: number;
+  adminName?: string;
+  customerName?: string;
+  orderCode?: string;
+  productName?: string;
+  quantity?: number;
   totalCostVND?: number;
-  orderType: "buying" | "shop";
+  orderType?: "buying" | "shop";
 }): string {
+  const adminName = params.adminName || "Admin";
   const typeLabel = params.orderType === "buying" ? "Mua hộ Trung Quốc" : "Sẵn hàng VN";
+  const code = params.orderCode || "N/A";
+  const customer = params.customerName || "Khách hàng";
+  const product = params.productName || "Sản phẩm";
+  const qty = safeNum(params.quantity) || 1;
+  const totalCost = safeNum(params.totalCostVND);
+
   const rows: Array<{ label: string; value: string; highlight?: boolean }> = [
     { label: "Loại đơn", value: typeLabel },
-    { label: "Mã đơn", value: `<strong>${params.orderCode}</strong>` },
-    { label: "Khách hàng", value: params.customerName },
-    { label: "Sản phẩm", value: params.productName },
-    { label: "Số lượng", value: String(params.quantity) },
+    { label: "Mã đơn", value: `<strong>${code}</strong>` },
+    { label: "Khách hàng", value: customer },
+    { label: "Sản phẩm", value: product },
+    { label: "Số lượng", value: String(qty) },
   ];
-  if (params.totalCostVND) {
-    rows.push({ label: "Tổng chi phí", value: fmtVND(params.totalCostVND), highlight: true });
+  if (totalCost > 0) {
+    rows.push({ label: "Tổng chi phí", value: fmtVND(totalCost), highlight: true });
   }
 
   const content = `
-${greeting(params.adminName)}
+${greeting(adminName)}
 <p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
 Có đơn hàng mới cần xử lý:
 </p>

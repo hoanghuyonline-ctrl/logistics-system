@@ -26,20 +26,29 @@ async function getSmtpConfig() {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  const config = await getSmtpConfig();
+  try {
+    const config = await getSmtpConfig();
 
-  const transporter = nodemailer.createTransport({
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
-    auth: config.user ? { user: config.user, pass: config.pass } : undefined,
-  });
+    console.log(`[EMAIL] Attempting send to=${options.to} subject="${options.subject}" hasHtml=${!!options.html}`);
 
-  await transporter.sendMail({
-    from: config.from,
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html,
-  });
+    const transporter = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: config.user ? { user: config.user, pass: config.pass } : undefined,
+    });
+
+    await transporter.sendMail({
+      from: config.from,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+
+    console.log(`[EMAIL] Successfully sent to=${options.to}`);
+  } catch (error) {
+    console.error("❌ LIVE EMAIL NOTIFICATION FAILURE CRITICAL LOG:", error);
+    throw error;
+  }
 }
