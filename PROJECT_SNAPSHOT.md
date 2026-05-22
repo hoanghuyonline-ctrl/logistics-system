@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-22
 **Branch:** `main`
-**Latest stable commit:** Post PR #346 (COD Edit Address) + Auto Order Email Triggers
+**Latest stable commit:** Post PR #364 (Local Upload API Route) — Storage refactor complete (Local default + GDrive OAuth2 + GCS)
 
 ---
 
@@ -326,6 +326,22 @@
 
 - **Emergency Pivot: Google Drive API Storage Provider** (PR #356) — GCS requires billing/credit card for bucket creation, so pivoted to Google Drive API for free 15 GB storage. Added `GoogleDriveStorageProvider` class using `@googleapis/drive` (lightweight single-API package — `googleapis` caused OOM). Reuses same `GCS_CREDENTIALS` Service Account JSON from DB. Set `STORAGE_PROVIDER=gdrive` to activate. On first upload, auto-creates "Bắc Trung Hải Logistics Uploads" folder in Service Account's Drive, sets public reader permission, and caches folder ID in `GDRIVE_FOLDER_ID` SystemConfig. Each uploaded file gets `anyone/reader` permission and returns `https://drive.google.com/uc?export=view&id={fileId}` URL. Delete extracts file ID from Drive URL. Factory supports all three providers: `local`, `gcs`, `gdrive`. Admin Settings UI updated with `gdrive` option and `GDRIVE_FOLDER_ID` field. Storage config API accepts `GDRIVE_FOLDER_ID`. **No schema changes; no migration; backward compatible; production-safe.**
 
+- **Fix: Google Drive Upload — Skip Folder Creation, Use GDRIVE_FOLDER_ID Directly** (PR #357) — Refactored `GoogleDriveStorageProvider` to bypass folder checking/listing/creation (`drive.files.list`/`drive.files.create`) which threw "Internal server error" on personal drives. Now reads `GDRIVE_FOLDER_ID` directly from DB and uses it as `parents: [folderId]`. After file creation, calls `drive.permissions.create` for public read access. Robust try-catch with `console.error` for full stack traces. **No schema changes; no migration; backward compatible.**
+
+- **Fix: Dynamic Config Resolution Per Operation** (PR #358) — `GoogleDriveStorageProvider` constructor no longer eagerly initializes auth. New `resolveConfig()` method reads credentials dynamically from DB at each upload/delete call, with fallbacks to `process.env` and hardcoded folder ID `1jtPybzjZfvhkfe4YAFSrOQv0yQfqB95q`. Prevents stale/empty credentials from being cached. **No schema changes; no migration; backward compatible.**
+
+- **Fix: Safe JSON Parse + Private Key Newline Repair** (PR #359) — Wrapped `JSON.parse()` in try-catch with diagnostic logging (raw string length, first 80 chars, parse error). Added `private_key` newline repair: `replace(/\\n/g, "\n")` to fix double-escaped newlines from DB text columns. Validates private_key non-empty before auth init. Logs `client_email`, `hasPrivateKey`, `keyLength` for diagnostics. **No schema changes; no migration; backward compatible.**
+
+- **Fix: Add supportsAllDrives to Google Drive API Calls** (PR #360) — Added `supportsAllDrives: true` to all 3 Drive API calls (`drive.files.create`, `drive.permissions.create`, `drive.files.delete`) to use folder owner's storage quota instead of Service Account's empty quota. Fixes 403 "Service Accounts do not have storage quota" error. **No schema changes; no migration; backward compatible.**
+
+- **Feat: Switch Google Drive Auth from Service Account to OAuth2 Refresh Token** (PR #361) — Complete auth strategy pivot from Service Account JWT to Personal Gmail OAuth2. `GoogleDriveStorageProvider` now reads `GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET`, `GDRIVE_REFRESH_TOKEN` from DB. Uses `driveAuth.OAuth2` client (type-compatible with `@googleapis/drive`). Personal Gmail account owns the storage quota, permanently fixing 403 errors. Admin storage-config API updated to accept new OAuth2 keys with sensitive value masking. **No schema changes; no migration; backward compatible.**
+
+- **Fix: Add Google Drive Image Domains to Next.js remotePatterns** (PR #362) — Added `drive.google.com`, `drive.usercontent.google.com`, `lh3.googleusercontent.com` to `images.remotePatterns` in `next.config.ts`. **Later reverted in PR #363 — not needed since local storage is default and Google Drive uses `<img>` tags.**
+
+- **Feat: Admin Settings Dropdown for Storage Provider + Revert next.config.ts** (PR #363) — Replaced free-text input for `STORAGE_PROVIDER` with `<select>` dropdown: "Local (Ổ cứng server)" / "Google Drive (OAuth2)" / "Google Cloud Storage". Updated labels and placeholders for all OAuth2 keys. Reverted `next.config.ts` to remove `images.remotePatterns` (unnecessary for local storage and `<img>` tags). **No schema changes; no migration; backward compatible.**
+
+- **Fix: Serve Local Uploads via API Route — Fixes 404 on Runtime-Added Files** (PR #364) — Next.js standalone mode doesn't serve files added to `public/` at runtime. New API route `src/app/api/uploads/[...path]/route.ts` reads files from `public/uploads/` using Node.js `fs.readFile()` with correct `Content-Type` headers, directory traversal prevention, and 1-year cache. `LocalStorageProvider` URL prefix changed from `/uploads` to `/api/uploads`. `/api/uploads` added to `publicPaths` in `proxy.ts`. **No schema changes; no migration; no new dependencies; backward compatible.**
+
 - **Automated Order Lifecycle Email Notifications** — Professional international-standard HTML email notifications connected to all core order lifecycle events for both Shop Requests (Sẵn hàng VN) and Buying Requests (Mua hộ Trung Quốc). New `email-templates.ts` module provides responsive HTML templates following DHL/Amazon/FedEx-style layouts: branded header ("Bắc Trung Hải Logistics"), color-coded status badges, order summary tables with pricing breakdowns, CTA buttons ("Xem tiến độ đơn hàng" → thue.eu.cc), and professional footer with company contact info. **Shop Requests:** New `onSalesRequestCreated` trigger fires on `POST /api/sales-requests`; `onSalesRequestStatusChanged` upgraded from `[SYSTEM, TELEGRAM]` to `[SYSTEM, EMAIL, TELEGRAM, ZALO]` across all status change endpoints (`/api/sales-requests/[id]`, `/[id]/pay`, `/[id]/cod`). **Buying Requests:** `onOrderCreated` and `onShipmentStatusChanged` enhanced with product details (name, quantity, prices) for rich HTML rendering. All email calls wrapped in fire-and-forget try-catch; `html` field threaded through `NotificationPayload → sendNotification → sendEmail`. **No schema changes; no migration; no new dependencies; backward compatible; production-safe.**
 
 **Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
@@ -462,6 +478,8 @@ pm2 restart logistics-system
 | `/api/admin/sales-requests` | GET | Admin-only paginated sales request list with search + status filter (ADMIN/ACCOUNTANT) |
 | `/api/admin/sales-requests/[id]/confirm` | POST | Confirm price for NEW request → PRICE_CONFIRMED, notifies customer (ADMIN/ACCOUNTANT) |
 | `/api/admin/sales-requests/[id]/status` | PATCH | Logistics status progression: PAID → PROCESSING → COMPLETED, notifies customer (ADMIN/ACCOUNTANT) |
+| `/api/uploads/[...path]` | GET | Serve uploaded files from disk at runtime (public, no auth) — bypasses Next.js static file limitation in standalone mode |
+| `/api/admin/storage-config` | GET/PUT | Admin CRUD for storage provider settings (STORAGE_PROVIDER, GCS_*, GDRIVE_*) |
 
 ## Important Prisma Models
 
@@ -522,7 +540,7 @@ pm2 restart logistics-system
 11. **Camera scanning requires real-device testing** — cannot be tested without a physical camera; 3-second duplicate-scan cooldown may need tuning.
 12. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
 13. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
-14. **Package images default to local storage** — stored under `public/uploads/packages/` via `LocalStorageProvider` by default. Set `STORAGE_PROVIDER=gdrive` + provide `GCS_CREDENTIALS` (Service Account JSON) for free Google Drive storage (15 GB). Or `STORAGE_PROVIDER=gcs` + `GCS_BUCKET` + `GCS_CREDENTIALS` for Google Cloud Storage (requires billing). Can also swap to S3/R2/MinIO by implementing `StorageProvider` interface.
+14. **Package images default to local storage** — stored under `public/uploads/packages/` via `LocalStorageProvider` by default. Upload URLs are served through `/api/uploads/[...path]` API route (NOT static `/uploads/...` which would 404 in standalone mode). Set `STORAGE_PROVIDER=gdrive` + provide `GDRIVE_CLIENT_ID`/`GDRIVE_CLIENT_SECRET`/`GDRIVE_REFRESH_TOKEN` (OAuth2) for Google Drive storage (15 GB). Or `STORAGE_PROVIDER=gcs` + `GCS_BUCKET` + `GCS_CREDENTIALS` for Google Cloud Storage (requires billing). Admin Settings UI has dropdown to switch providers. Can also swap to S3/R2/MinIO by implementing `StorageProvider` interface.
 15. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
 16. **Zalo OA access token is short-lived** — current token works but needs OAuth refresh automation for long-term production use.
 17. **Zalo OA tier/package required** — API sending requires an active OA package (ZBS) with sufficient quota; free tier has limitations.
