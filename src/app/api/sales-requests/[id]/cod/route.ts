@@ -59,30 +59,32 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
     },
   });
 
-  // Notify admins (fire-and-forget)
+  // Await all notifications so PM2/Windows doesn't kill the process before email finishes
   const payAmount = parseFloat(salesRequest.confirmedPrice.toString());
-  prisma.user.findMany({ where: { role: "ADMIN" } }).then((admins) => {
-    const amountFormatted = payAmount.toLocaleString("vi-VN");
-    for (const admin of admins) {
-      createNotification({
-        userId: admin.id,
-        title: "Khách hàng chọn thanh toán COD",
-        message: `${salesRequest.requestCode} — "${salesRequest.productName}" sẽ thanh toán ${amountFormatted} VND tiền mặt khi nhận hàng.`,
-      }).catch(() => {});
-    }
-  }).catch(() => {});
-
-  // Notify customer via all channels including EMAIL (fire-and-forget)
-  onSalesRequestStatusChanged({
-    userId: user.id,
-    userEmail: user.email || undefined,
-    userName: user.name || "bạn",
-    requestCode: salesRequest.requestCode,
-    productName: salesRequest.productName || "Sản phẩm",
-    newStatus: "PAID",
-    amountPaid: payAmount || 0,
-    channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
-  }).catch(() => {});
+  await Promise.allSettled([
+    // Notify admins
+    prisma.user.findMany({ where: { role: "ADMIN" } }).then(async (admins) => {
+      const amountFormatted = payAmount.toLocaleString("vi-VN");
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          title: "Khách hàng chọn thanh toán COD",
+          message: `${salesRequest.requestCode} — "${salesRequest.productName}" sẽ thanh toán ${amountFormatted} VND tiền mặt khi nhận hàng.`,
+        }).catch(() => {});
+      }
+    }),
+    // Notify customer via all channels including EMAIL
+    onSalesRequestStatusChanged({
+      userId: user.id,
+      userEmail: user.email || undefined,
+      userName: user.name || "bạn",
+      requestCode: salesRequest.requestCode,
+      productName: salesRequest.productName || "Sản phẩm",
+      newStatus: "PAID",
+      amountPaid: payAmount || 0,
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+    }),
+  ]).catch(() => {});
 
   return jsonResponse({
     success: true,

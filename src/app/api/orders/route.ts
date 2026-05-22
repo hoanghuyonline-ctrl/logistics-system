@@ -183,30 +183,36 @@ export const POST = withErrorHandler(async function POST(request: Request) {
     include: { user: { select: { id: true, fullName: true, email: true } } },
   });
 
-  const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
-  for (const admin of admins) {
-    await createNotification({
-      userId: admin.id,
-      title: "Đơn hàng mới",
-      message: `Đơn hàng ${order.orderCode} được tạo bởi ${order.user.fullName}.`,
+  // Await all notifications so PM2/Windows doesn't kill the process before email finishes
+  await Promise.allSettled([
+    // Notify admins
+    (async () => {
+      const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          title: "Đơn hàng mới",
+          message: `Đơn hàng ${order.orderCode} được tạo bởi ${order.user.fullName}.`,
+          orderId: order.id,
+        });
+      }
+    })(),
+    // Notify customer via all channels including EMAIL
+    onOrderCreated({
+      userId: order.userId,
+      userEmail: order.user.email || undefined,
+      userName: order.user.fullName || "bạn",
       orderId: order.id,
-    });
-  }
-
-  onOrderCreated({
-    userId: order.userId,
-    userEmail: order.user.email || undefined,
-    userName: order.user.fullName || "bạn",
-    orderId: order.id,
-    orderCode: order.orderCode,
-    productName: order.productName || "Sản phẩm",
-    quantity: order.quantity || 1,
-    unitPriceCNY: parseFloat(String(order.unitPriceCNY)) || 0,
-    exchangeRate: parseFloat(String(order.exchangeRate)) || 3500,
-    totalCostVND: parseFloat(String(order.totalCostVND)) || 0,
-    channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
-  }).catch((err) => {
-    console.error("[notifications] onOrderCreated failed:", err);
+      orderCode: order.orderCode,
+      productName: order.productName || "Sản phẩm",
+      quantity: order.quantity || 1,
+      unitPriceCNY: parseFloat(String(order.unitPriceCNY)) || 0,
+      exchangeRate: parseFloat(String(order.exchangeRate)) || 3500,
+      totalCostVND: parseFloat(String(order.totalCostVND)) || 0,
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+    }),
+  ]).catch((err) => {
+    console.error("[notifications] order creation notifications failed:", err);
   });
 
   return jsonResponse(order, 201);
