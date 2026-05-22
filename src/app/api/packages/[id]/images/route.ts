@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
-import { getStorage } from "@/lib/storage";
+import { getStorage, extractDriveFileId } from "@/lib/storage";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -85,10 +85,13 @@ export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, c
   if (!image) return errorResponse("Image not found", 404);
 
   const store = await getStorage();
+  const driveFileId = extractDriveFileId(image.imageUrl);
   const isGcsUrl = image.imageUrl.startsWith("https://storage.googleapis.com/");
-  const key = isGcsUrl
-    ? image.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^/]+\//, "")
-    : image.imageUrl.replace(/^\/uploads\//, "");
+  const key = driveFileId
+    ? driveFileId
+    : isGcsUrl
+      ? image.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^/]+\//, "")
+      : image.imageUrl.replace(/^\/uploads\//, "");
   await store.delete(key);
 
   await prisma.packageImage.delete({ where: { id: imageId } });
