@@ -16,7 +16,7 @@ export const GET = withErrorHandler(async function GET() {
     telegramChatId,
     zaloEnabled,
     zaloToken,
-    smtpHost,
+    smtpDbConfigs,
     messengerToken,
   ] = await Promise.all([
     prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
@@ -24,9 +24,12 @@ export const GET = withErrorHandler(async function GET() {
     getNotificationConfig("telegram_chat_id"),
     getNotificationConfig("zalo_send_enabled"),
     getNotificationConfig("zalo_oa_access_token"),
-    Promise.resolve(process.env.SMTP_HOST || ""),
+    prisma.systemConfig.findMany({ where: { key: { in: ["SMTP_HOST", "SMTP_PORT", "SMTP_USER"] } } }),
     Promise.resolve(process.env.MESSENGER_PAGE_ACCESS_TOKEN || ""),
   ]);
+
+  const smtpDb = new Map(smtpDbConfigs.map((c: { key: string; value: string }) => [c.key, c.value]));
+  const smtpHost = smtpDb.get("SMTP_HOST") || process.env.SMTP_HOST || "";
 
   return jsonResponse({
     db: dbOk ? "ok" : "error",
