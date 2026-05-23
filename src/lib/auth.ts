@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "./prisma";
+import { uploadFileToStorage } from "./storage";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -54,14 +55,21 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (existing) {
-          return existing.isActive;
+          if (!existing.isActive) return false;
+          // Update avatar if missing and Google provides one
+          if (!existing.avatarUrl && user.image) {
+            saveGoogleAvatar(user.image, existing.id).catch((err) =>
+              console.warn("[auth/google] Avatar save failed (existing user):", err),
+            );
+          }
+          return true;
         }
 
         const randomPassword = await bcrypt.hash(
           crypto.randomBytes(32).toString("hex"),
           10,
         );
-        await prisma.user.create({
+        const newUser = await prisma.user.create({
           data: {
             email,
             fullName: user.name || email.split("@")[0],
@@ -69,6 +77,13 @@ export const authOptions: NextAuthOptions = {
             role: "CUSTOMER",
           },
         });
+
+        // Save Google avatar for new user
+        if (user.image) {
+          saveGoogleAvatar(user.image, newUser.id).catch((err) =>
+            console.warn("[auth/google] Avatar save failed (new user):", err),
+          );
+        }
         return true;
       }
       return true;
@@ -105,3 +120,20 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
+
+async function saveGoogleAvatar(imageUrl: string, userId: string): Promise<void> {
+  const res = await fetch(imageUrl);
+  if (!res.ok) throw new Error(`Failed to fetch avatar: ${res.status}`);
+
+  const buffer = Buffer.from(await res.arrayBuffer());
+  const ext = res.headers.get("content-type")?.includes("png") ? "png" : "jpg";
+  const fileName = `${userId}.${ext}`;
+
+  const savedUrl = await uploadFileToStorage(buffer, fileName, "avatars");
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { avatarUrl: savedUrl },
+  });
+  console.log(`[auth/google] Avatar saved for user=${userId} url=${savedUrl}`);
+}

@@ -806,7 +806,7 @@ export default function SettingsPage() {
         ) : (
           <>
             <p className="text-sm text-slate-500 mb-3">
-              Chọn phương thức lưu trữ ảnh: <strong>local</strong> (ổ cứng server) hoặc <strong>gdrive</strong> (Google Drive cá nhân, miễn phí 15 GB).
+              Chọn phương thức lưu trữ ảnh: <strong>local</strong> (ổ cứng server), <strong>r2</strong> (Cloudflare R2 CDN), hoặc <strong>gdrive</strong> (Google Drive cá nhân, miễn phí 15 GB).
             </p>
             <div className="space-y-3">
               {storageConfig.map((item) => {
@@ -818,17 +818,27 @@ export default function SettingsPage() {
                   GDRIVE_CLIENT_ID: "Google OAuth2 Client ID",
                   GDRIVE_CLIENT_SECRET: "Google OAuth2 Client Secret",
                   GDRIVE_REFRESH_TOKEN: "Google OAuth2 Refresh Token",
+                  R2_ENDPOINT: "Cloudflare R2 Endpoint URL",
+                  R2_ACCESS_KEY_ID: "R2 Access Key ID",
+                  R2_SECRET_ACCESS_KEY: "R2 Secret Access Key",
+                  R2_BUCKET_NAME: "R2 Bucket Name",
+                  R2_PUBLIC_CUSTOM_DOMAIN: "R2 Public Custom Domain",
                 };
                 const placeholders: Record<string, string> = {
-                  STORAGE_PROVIDER: "local hoặc gdrive",
+                  STORAGE_PROVIDER: "local, r2, gdrive, hoặc gcs",
                   GCS_BUCKET: "my-logistics-bucket",
                   GCS_CREDENTIALS: "Dán nội dung JSON Service Account...",
                   GDRIVE_FOLDER_ID: "1jtPybzjZfvhkfe4YAFSrOQv0yQfqB95q",
                   GDRIVE_CLIENT_ID: "xxxx.apps.googleusercontent.com",
                   GDRIVE_CLIENT_SECRET: "GOCSPX-xxx",
                   GDRIVE_REFRESH_TOKEN: "1//0xxx...",
+                  R2_ENDPOINT: "https://<ACCOUNT_ID>.r2.cloudflarestorage.com",
+                  R2_ACCESS_KEY_ID: "R2 Access Key ID",
+                  R2_SECRET_ACCESS_KEY: "R2 Secret Access Key",
+                  R2_BUCKET_NAME: "logistics-uploads",
+                  R2_PUBLIC_CUSTOM_DOMAIN: "https://cdn.thue.eu.cc",
                 };
-                const isSecret = ["GCS_CREDENTIALS", "GDRIVE_CLIENT_SECRET", "GDRIVE_REFRESH_TOKEN"].includes(item.key);
+                const isSecret = ["GCS_CREDENTIALS", "GDRIVE_CLIENT_SECRET", "GDRIVE_REFRESH_TOKEN", "R2_SECRET_ACCESS_KEY"].includes(item.key);
                 const isDropdown = item.key === "STORAGE_PROVIDER";
                 return (
                   <div key={item.key}>
@@ -848,6 +858,7 @@ export default function SettingsPage() {
                         onChange={(e) => setStorageEdits((prev) => ({ ...prev, [item.key]: e.target.value }))}
                       >
                         <option value="local">Local (Ổ cứng server)</option>
+                        <option value="r2">Cloudflare R2 (CDN)</option>
                         <option value="gdrive">Google Drive (OAuth2)</option>
                         <option value="gcs">Google Cloud Storage</option>
                       </select>
@@ -883,7 +894,7 @@ export default function SettingsPage() {
               </button>
             </div>
             <p className="text-xs text-slate-400 mt-3">
-              <strong>local</strong>: Ảnh lưu trực tiếp trên ổ cứng server (nhanh, không cần internet). <strong>gdrive</strong>: Ảnh upload lên Google Drive cá nhân (miễn phí 15 GB, cần OAuth2 keys).
+              <strong>local</strong>: Ảnh lưu trực tiếp trên ổ cứng server (nhanh, không cần internet). <strong>r2</strong>: Ảnh upload lên Cloudflare R2 CDN (nhanh, global edge). <strong>gdrive</strong>: Ảnh upload lên Google Drive cá nhân (miễn phí 15 GB, cần OAuth2 keys).
             </p>
           </>
         )}
