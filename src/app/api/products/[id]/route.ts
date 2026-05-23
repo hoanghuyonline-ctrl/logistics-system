@@ -30,3 +30,19 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
   const updated = await prisma.product.update({ where: { id }, data });
   return jsonResponse({ ...updated, imageUrl: await buildAssetUrl(updated.imageUrl) });
 });
+
+export const DELETE = withErrorHandler(async function DELETE(_req: NextRequest, ctx: RouteContext<"/api/products/[id]">) {
+  const user = await getCurrentUser();
+  if (!user || !hasRole(user.role, ["ADMIN"])) {
+    return errorResponse("Forbidden", 403);
+  }
+
+  const { id } = await ctx.params;
+
+  const existing = await prisma.product.findUnique({ where: { id } });
+  if (!existing) return errorResponse("Sản phẩm không tồn tại", 404);
+
+  await prisma.product.delete({ where: { id } });
+
+  return jsonResponse({ success: true });
+});

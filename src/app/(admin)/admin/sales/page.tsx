@@ -188,6 +188,22 @@ export default function AdminSalesPage() {
     } catch { /* */ }
   };
 
+  const handleDeleteProduct = async (product: Product) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này không? Hành động này không thể hoàn tác.")) return;
+    try {
+      const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Đã xóa sản phẩm thành công", "success");
+        fetchProducts();
+      } else {
+        const err = await res.json();
+        showToast(err.error || "Lỗi khi xóa sản phẩm", "error");
+      }
+    } catch {
+      showToast("Lỗi khi xóa sản phẩm", "error");
+    }
+  };
+
   const startEdit = (p: Product) => {
     setEditingProduct(p);
     const v = p.variants as Product["variants"];
@@ -612,6 +628,7 @@ export default function AdminSalesPage() {
                             <div className="flex items-center gap-2 flex-shrink-0">
                               <button onClick={() => handleToggleProduct(p)} className="text-xs px-2 py-1 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">{p.isActive ? "Ẩn" : "Hiện"}</button>
                               <button onClick={() => startEdit(p)} className="text-xs px-2 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50">{t("common.edit")}</button>
+                              <button onClick={() => handleDeleteProduct(p)} className="text-xs px-2 py-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">Xóa</button>
                             </div>
                           </div>
                           {imgArr.length > 1 && (
