@@ -258,23 +258,25 @@ function AdminOrdersContent() {
                       onClick={() => router.push(`/admin/orders/${order.id}`)}
                       highlight={isCancelled ? "border-l-4 border-l-red-400" : ""}
                       header={
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[order.status] || "bg-slate-400"}`} />
-                            <span className="text-sm font-semibold text-blue-600">{order.orderCode}</span>
-                            {priorityConfig[order.priority] && (
-                              <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded border ${priorityConfig[order.priority].className}`}>
-                                {priorityConfig[order.priority].label}
-                              </span>
-                            )}
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[order.status] || "bg-slate-400"}`} />
+                              <span className="text-sm font-semibold text-blue-600">{order.orderCode}</span>
+                              {priorityConfig[order.priority] && (
+                                <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded border ${priorityConfig[order.priority].className}`}>
+                                  {priorityConfig[order.priority].label}
+                                </span>
+                              )}
+                            </div>
+                            <StatusBadge status={order.status} />
                           </div>
-                          <StatusBadge status={order.status} />
+                          <p className="text-sm text-slate-600 mt-0.5">{order.user.fullName}</p>
+                          <p className="text-sm font-bold text-slate-900 mt-1 break-all">{order.productName}</p>
                         </div>
                       }
                       fields={[
-                        { label: "Khách", value: <span className="text-sm font-medium">{order.user.fullName}</span> },
                         { label: "Tổng", value: <span className="font-semibold">{parseFloat(order.totalCostVND).toLocaleString()} VND</span> },
-                        { label: "Sản phẩm", value: <span className="text-sm truncate">{order.productName}</span>, fullWidth: true },
                         { label: "Ngày", value: new Date(order.createdAt).toLocaleDateString() },
                       ]}
                       actions={nextStatuses.length > 0 ? (
