@@ -12,7 +12,11 @@ const MIME_TYPES: Record<string, string> = {
   gif: "image/gif",
   svg: "image/svg+xml",
   pdf: "application/pdf",
+  md: "text/markdown",
+  txt: "text/plain",
 };
+
+const DOWNLOAD_EXTENSIONS = new Set(["md", "txt", "pdf", "zip", "xlsx", "csv"]);
 
 const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
 
@@ -38,11 +42,15 @@ export async function GET(
   const ext = filePath.split(".").pop()?.toLowerCase() || "";
   const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
-  return new NextResponse(buffer, {
-    status: 200,
-    headers: {
-      "Content-Type": contentType,
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-  });
+  const fileName = segments[segments.length - 1];
+  const headers: Record<string, string> = {
+    "Content-Type": contentType,
+    "Cache-Control": "public, max-age=31536000, immutable",
+  };
+
+  if (DOWNLOAD_EXTENSIONS.has(ext)) {
+    headers["Content-Disposition"] = `attachment; filename="${fileName}"`;
+  }
+
+  return new NextResponse(buffer, { status: 200, headers });
 }
