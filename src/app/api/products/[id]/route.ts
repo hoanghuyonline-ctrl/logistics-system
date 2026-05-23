@@ -21,6 +21,9 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
   if (body.category !== undefined) data.category = body.category || null;
   if (body.estimatedPrice !== undefined) data.estimatedPrice = body.estimatedPrice != null ? parseFloat(body.estimatedPrice) : null;
   if (body.imageUrl !== undefined) data.imageUrl = body.imageUrl || null;
+  if (body.images !== undefined) data.images = body.images;
+  if (body.variants !== undefined) data.variants = body.variants;
+  if (body.specs !== undefined) data.specs = body.specs;
   if (body.isActive !== undefined) data.isActive = body.isActive;
   if (body.sortOrder !== undefined) data.sortOrder = parseInt(body.sortOrder);
 

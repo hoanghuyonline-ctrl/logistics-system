@@ -8,6 +8,8 @@ import type { ColumnsType } from "antd/es/table";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ProductForm, { emptyFormData } from "@/components/products/ProductForm";
+import type { ProductFormData } from "@/components/products/ProductForm";
 
 interface Product {
   id: string;
@@ -16,6 +18,9 @@ interface Product {
   category: string | null;
   estimatedPrice: string | null;
   imageUrl: string | null;
+  images: { path: string; url: string }[] | null;
+  variants: { groups: { name: string; values: string[] }[]; rows: { combination: Record<string, string>; price: string; sku: string; stock: string; imageIndex: number | null }[] } | null;
+  specs: { weight: string; length: string; width: string; height: string } | null;
   isActive: boolean;
   sortOrder: number;
 }
@@ -79,7 +84,7 @@ export default function AdminSalesPage() {
   const [prodLoading, setProdLoading] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [prodForm, setProdForm] = useState({ name: "", description: "", category: "", estimatedPrice: "", imageUrl: "", sortOrder: "0" });
+  const [prodForm, setProdForm] = useState<ProductFormData>(emptyFormData());
   const [prodSaving, setProdSaving] = useState(false);
 
   // ── Requests state (Antd Table) ──
@@ -135,17 +140,21 @@ export default function AdminSalesPage() {
   }, []);
 
   // ── Product CRUD ──
-  const resetProdForm = () => setProdForm({ name: "", description: "", category: "", estimatedPrice: "", imageUrl: "", sortOrder: "0" });
+  const resetProdForm = () => setProdForm(emptyFormData());
 
   const handleSaveProduct = async () => {
     setProdSaving(true);
     try {
+      const coverUrl = prodForm.images.length > 0 ? prodForm.images[0].url : (prodForm.imageUrl || null);
       const payload = {
         name: prodForm.name,
         description: prodForm.description || null,
         category: prodForm.category || null,
         estimatedPrice: prodForm.estimatedPrice || null,
-        imageUrl: prodForm.imageUrl || null,
+        imageUrl: coverUrl,
+        images: prodForm.images.length > 0 ? prodForm.images : null,
+        variants: prodForm.variantGroups.length > 0 ? { groups: prodForm.variantGroups, rows: prodForm.variantRows } : null,
+        specs: (prodForm.specs.weight || prodForm.specs.length || prodForm.specs.width || prodForm.specs.height) ? prodForm.specs : null,
         sortOrder: prodForm.sortOrder || "0",
       };
       const url = editingProduct ? `/api/products/${editingProduct.id}` : "/api/products";
@@ -181,13 +190,18 @@ export default function AdminSalesPage() {
 
   const startEdit = (p: Product) => {
     setEditingProduct(p);
+    const v = p.variants as Product["variants"];
     setProdForm({
       name: p.name,
       description: p.description || "",
       category: p.category || "",
       estimatedPrice: p.estimatedPrice || "",
       imageUrl: p.imageUrl || "",
+      images: Array.isArray(p.images) ? p.images : [],
       sortOrder: String(p.sortOrder),
+      variantGroups: v?.groups || [],
+      variantRows: v?.rows || [],
+      specs: p.specs ? { weight: (p.specs as ProductFormData["specs"]).weight || "", length: (p.specs as ProductFormData["specs"]).length || "", width: (p.specs as ProductFormData["specs"]).width || "", height: (p.specs as ProductFormData["specs"]).height || "" } : { weight: "", length: "", width: "", height: "" },
     });
     setShowAddProduct(true);
   };
@@ -557,62 +571,60 @@ export default function AdminSalesPage() {
 
                 {/* Add/Edit form */}
                 {showAddProduct && (
-                  <Card className="mb-4">
-                    <h4 className="font-semibold mb-3">{editingProduct ? t("sales.editProduct") : t("sales.addProduct")}</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productName")} *</label>
-                        <input value={prodForm.name} onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productCategory")}</label>
-                        <input value={prodForm.category} onChange={(e) => setProdForm({ ...prodForm, category: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productPrice")}</label>
-                        <input type="number" value={prodForm.estimatedPrice} onChange={(e) => setProdForm({ ...prodForm, estimatedPrice: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productImage")}</label>
-                        <input value={prodForm.imageUrl} onChange={(e) => setProdForm({ ...prodForm, imageUrl: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" placeholder="https://..." />
-                      </div>
-                      <div>
-                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productSort")}</label>
-                        <input type="number" value={prodForm.sortOrder} onChange={(e) => setProdForm({ ...prodForm, sortOrder: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm" />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="text-sm text-slate-600 block mb-1">{t("sales.productDesc")}</label>
-                        <textarea value={prodForm.description} onChange={(e) => setProdForm({ ...prodForm, description: e.target.value })} className="w-full border border-slate-300 rounded px-3 py-2 text-sm resize-none h-16" />
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <button onClick={() => { setShowAddProduct(false); setEditingProduct(null); }} className="px-3 py-1.5 border border-slate-300 rounded text-sm text-slate-600">{t("common.cancel")}</button>
-                      <button onClick={handleSaveProduct} disabled={!prodForm.name || prodSaving} className="px-3 py-1.5 bg-orange-500 text-white rounded text-sm font-medium disabled:opacity-50">{prodSaving ? t("common.loading") : t("common.save")}</button>
-                    </div>
-                  </Card>
+                  <ProductForm
+                    data={prodForm}
+                    onChange={setProdForm}
+                    onSave={handleSaveProduct}
+                    onCancel={() => { setShowAddProduct(false); setEditingProduct(null); }}
+                    saving={prodSaving}
+                    isEdit={!!editingProduct}
+                  />
                 )}
 
                 {prodLoading ? <LoadingSpinner /> : (
                   <div className="space-y-2">
-                    {products.map((p) => (
-                      <div key={p.id} className={`flex items-center gap-3 bg-white rounded-lg border p-3 ${!p.isActive ? "opacity-50" : ""}`}>
-                        <div className="w-12 h-12 bg-slate-50 rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
-                          {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" /> : <span className="text-lg">🛍️</span>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm text-slate-900">{p.name}</h4>
-                          <div className="text-xs text-slate-400">
-                            {p.category && <span className="mr-2">{p.category}</span>}
-                            {p.estimatedPrice && <span className="text-orange-600 font-medium">{parseFloat(p.estimatedPrice).toLocaleString("vi-VN")} ₫</span>}
+                    {products.map((p) => {
+                      const imgArr = Array.isArray(p.images) ? p.images : [];
+                      const variantData = p.variants as Product["variants"];
+                      const variantCount = variantData?.rows?.length || 0;
+                      const specData = p.specs as Product["specs"];
+                      return (
+                        <div key={p.id} className={`bg-white rounded-xl border p-4 ${!p.isActive ? "opacity-50" : ""}`}>
+                          <div className="flex items-start gap-4">
+                            <div className="w-16 h-16 bg-slate-50 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden">
+                              {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" /> : <span className="text-2xl">🛍️</span>}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold text-sm text-slate-900">{p.name}</h4>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${p.isActive ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                                  {p.isActive ? t("sales.productActive") : t("sales.productHidden")}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                                {p.category && <span>{p.category}</span>}
+                                {p.estimatedPrice && <span className="text-orange-600 font-semibold">{parseFloat(p.estimatedPrice).toLocaleString("vi-VN")} ₫</span>}
+                                {imgArr.length > 0 && <span>🖼 {imgArr.length} ảnh</span>}
+                                {variantCount > 0 && <span>🎨 {variantCount} biến thể</span>}
+                                {specData?.weight && <span>⚖️ {specData.weight} kg</span>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button onClick={() => handleToggleProduct(p)} className="text-xs px-2 py-1 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">{p.isActive ? "Ẩn" : "Hiện"}</button>
+                              <button onClick={() => startEdit(p)} className="text-xs px-2 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50">{t("common.edit")}</button>
+                            </div>
                           </div>
+                          {imgArr.length > 1 && (
+                            <div className="flex gap-1.5 mt-3 overflow-x-auto">
+                              {imgArr.slice(0, 6).map((img, i) => (
+                                <img key={i} src={img.url} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-200 flex-shrink-0" />
+                              ))}
+                              {imgArr.length > 6 && <span className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xs text-slate-500 flex-shrink-0">+{imgArr.length - 6}</span>}
+                            </div>
+                          )}
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${p.isActive ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"}`}>
-                          {p.isActive ? t("sales.productActive") : t("sales.productHidden")}
-                        </span>
-                        <button onClick={() => handleToggleProduct(p)} className="text-xs text-slate-400 hover:text-slate-600">{p.isActive ? "Ẩn" : "Hiện"}</button>
-                        <button onClick={() => startEdit(p)} className="text-xs text-blue-600 hover:underline">{t("common.edit")}</button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
