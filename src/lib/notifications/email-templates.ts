@@ -65,8 +65,8 @@ function baseLayout(content: string): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr>
 <td style="text-align:center;">
-<span style="font-size:24px;margin-right:8px;">📦</span>
-<span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">Bắc Trung Hải Logistics</span>
+<img src="${getSiteUrl()}/logo.jpg" alt="Bắc Trung Hải Logistics" style="max-height:40px;width:auto;display:inline-block;vertical-align:middle;margin-right:10px;" />
+<span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.5px;vertical-align:middle;">Bắc Trung Hải Logistics</span>
 </td>
 </tr>
 <tr>
