@@ -215,6 +215,11 @@ export default function SettingsPage() {
   const [storageEdits, setStorageEdits] = useState<Record<string, string>>({});
   const [storageSaving, setStorageSaving] = useState(false);
 
+  const [appDomain, setAppDomain] = useState("");
+  const [appDomainLoaded, setAppDomainLoaded] = useState(false);
+  const [appDomainSaving, setAppDomainSaving] = useState(false);
+  const [appDomainError, setAppDomainError] = useState("");
+
   const loadNotifConfigs = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/notification-config");
@@ -268,9 +273,16 @@ export default function SettingsPage() {
     fetch("/api/admin/storage-config")
       .then((r) => (r.ok ? r.json() : []))
       .then((d: SmtpStatus[]) => {
-        setStorageConfig(d);
+        setStorageConfig(d.filter((item) => item.key !== "APP_DOMAIN"));
         const edits: Record<string, string> = {};
-        d.forEach((item) => { edits[item.key] = item.value || ""; });
+        d.forEach((item) => {
+          if (item.key === "APP_DOMAIN") {
+            setAppDomain(item.value || "");
+            setAppDomainLoaded(true);
+          } else {
+            edits[item.key] = item.value || "";
+          }
+        });
         setStorageEdits(edits);
       })
       .catch(() => {})
@@ -504,6 +516,70 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl">
       <PageHeader title="Cài đặt hệ thống" subtitle="Cấu hình phí, tỷ giá, cước vận chuyển và kênh thông báo" />
+
+      <Card title="Domain hệ thống (System Domain)">
+        {!appDomainLoaded ? (
+          <p className="text-sm text-slate-400">Đang tải...</p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-500 mb-3">
+              Đây là domain chính của hệ thống, dùng để tạo link ảnh, email, và các URL công khai. Ví dụ: <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">https://thue.eu.cc</code>
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://thue.eu.cc"
+                value={appDomain}
+                onChange={(e) => { setAppDomain(e.target.value); setAppDomainError(""); }}
+              />
+              <button
+                type="button"
+                disabled={appDomainSaving}
+                onClick={async () => {
+                  const val = appDomain.trim().replace(/\/+$/, "");
+                  if (val && !/^https?:\/\/.+/.test(val)) {
+                    setAppDomainError("Domain phải bắt đầu bằng http:// hoặc https://");
+                    return;
+                  }
+                  setAppDomainSaving(true);
+                  setAppDomainError("");
+                  try {
+                    const res = await fetch("/api/admin/storage-config", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ APP_DOMAIN: val }),
+                    });
+                    if (res.ok) {
+                      setAppDomain(val);
+                      toast("Đã lưu domain hệ thống", "success");
+                    } else {
+                      const data = await res.json();
+                      toast(data.error || "Không thể lưu domain", "error");
+                    }
+                  } catch {
+                    toast("Mất kết nối — không gọi được tới server", "error");
+                  } finally {
+                    setAppDomainSaving(false);
+                  }
+                }}
+                className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {appDomainSaving ? "Đang lưu…" : "Lưu domain"}
+              </button>
+            </div>
+            {appDomainError && (
+              <p className="text-xs text-red-600 mt-2">{appDomainError}</p>
+            )}
+            {appDomain && (
+              <p className="text-xs text-green-600 mt-2">Giá trị hiện tại: <strong>{appDomain}</strong></p>
+            )}
+            <p className="text-xs text-slate-400 mt-2">
+              Nếu để trống, hệ thống sẽ sử dụng giá trị <code>NEXTAUTH_URL</code> từ biến môi trường làm mặc định.
+            </p>
+          </>
+        )}
+      </Card>
 
       <Card title="Trạng thái kênh thông báo">
         {healthLoading ? (
@@ -811,7 +887,6 @@ export default function SettingsPage() {
             <div className="space-y-3">
               {storageConfig.map((item) => {
                 const labels: Record<string, string> = {
-                  APP_DOMAIN: "Domain hệ thống (System Domain)",
                   STORAGE_PROVIDER: "Nhà cung cấp lưu trữ",
                   GCS_BUCKET: "Tên bucket GCS (chỉ dùng cho gcs)",
                   GCS_CREDENTIALS: "Service Account JSON (chỉ dùng cho gcs)",
@@ -826,7 +901,6 @@ export default function SettingsPage() {
                   R2_PUBLIC_CUSTOM_DOMAIN: "R2 Public Custom Domain",
                 };
                 const placeholders: Record<string, string> = {
-                  APP_DOMAIN: "https://thue.eu.cc",
                   STORAGE_PROVIDER: "local, r2, gdrive, hoặc gcs",
                   GCS_BUCKET: "my-logistics-bucket",
                   GCS_CREDENTIALS: "Dán nội dung JSON Service Account...",
