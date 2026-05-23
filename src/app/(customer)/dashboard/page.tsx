@@ -10,6 +10,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Card from "@/components/ui/Card";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 
 interface Order {
   id: string;
@@ -185,7 +186,30 @@ export default function CustomerDashboard() {
               actionHref="/orders/new"
             />
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Mobile card view */}
+            <div className="md:hidden flex flex-col gap-2 p-2">
+              {orders.map((order) => (
+                <Link key={order.id} href={`/orders/${order.id}`}>
+                  <MobileDataCard
+                    header={
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-blue-600">{order.orderCode}</span>
+                        <StatusBadge status={order.status} />
+                      </div>
+                    }
+                    fields={[
+                      { label: t("orderDetail.product"), value: order.productName, fullWidth: true },
+                      { label: t("common.total"), value: <span className="font-medium">{(parseFloat(order.totalCostVND) || 0).toLocaleString()} VND</span> },
+                      { label: t("common.date"), value: order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "—" },
+                    ]}
+                  />
+                </Link>
+              ))}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100">
@@ -215,6 +239,7 @@ export default function CustomerDashboard() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </Card>
       )}

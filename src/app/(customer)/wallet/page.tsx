@@ -5,6 +5,7 @@ import KPICard from "@/components/ui/KPICard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 
 interface BankConfig {
@@ -332,7 +333,46 @@ export default function WalletPage() {
       </Card>
 
       <Card title={t("wallet.recentTransactions")} noPadding>
-        <div className="overflow-x-auto">
+        {/* Mobile card view */}
+        <div className="md:hidden flex flex-col gap-2 p-2">
+          {transactions.map((tx) => {
+            const isDebit = ["ORDER_PAYMENT", "MANUAL_DEDUCT", "SALES_PAYMENT"].includes(tx.type);
+            return (
+              <MobileDataCard
+                key={tx.id}
+                fields={[
+                  { label: t("transactions.type"), value: (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${
+                      tx.type === "DEPOSIT" || tx.type === "MANUAL_ADD" ? "bg-emerald-50 text-emerald-700" :
+                      tx.type === "REFUND" ? "bg-blue-50 text-blue-700" :
+                      isDebit ? "bg-red-50 text-red-700" :
+                      "bg-slate-100 text-slate-700"
+                    }`}>
+                      {t(`transactions.tx.${tx.type}`, tx.type.replace(/_/g, " "))}
+                    </span>
+                  )},
+                  { label: t("common.amount"), value: (
+                    <span className={`font-semibold ${isDebit ? "text-red-600" : "text-emerald-600"}`}>
+                      {isDebit ? "-" : "+"}{parseFloat(tx.amount).toLocaleString()} VND
+                    </span>
+                  )},
+                  { label: t("common.date"), value: new Date(tx.createdAt).toLocaleDateString() },
+                  { label: t("transactions.balanceAfter"), value: `${parseFloat(tx.balanceAfter).toLocaleString()} VND` },
+                  { label: t("transactions.description"), value: tx.description, fullWidth: true },
+                ]}
+              />
+            );
+          })}
+          {transactions.length === 0 && (
+            <div className="flex flex-col items-center gap-2 py-12">
+              <span className="text-3xl">\ud83d\udcb3</span>
+              <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table view */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">

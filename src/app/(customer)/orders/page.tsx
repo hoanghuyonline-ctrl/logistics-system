@@ -8,6 +8,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Card from "@/components/ui/Card";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 
 interface Order {
@@ -145,15 +146,49 @@ export default function OrdersPage() {
             <EmptyState icon="📦" title={t("orders.empty")} description={t("orders.emptyAdjust")} />
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Mobile card view */}
+              <div className="md:hidden flex flex-col gap-2 p-2">
+                {orders.map((order) => {
+                  const step = STATUS_STEP[order.status] ?? 0;
+                  const highlightClass = HIGHLIGHT_STATUSES[order.status] ?? "";
+                  const price = order.confirmedTotalCost
+                    ? parseFloat(order.confirmedTotalCost).toLocaleString() + " ₫"
+                    : "~" + parseFloat(order.totalCostVND).toLocaleString() + " ₫";
+                  return (
+                    <Link key={order.id} href={`/orders/${order.id}`}>
+                      <MobileDataCard
+                        highlight={highlightClass}
+                        header={
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[order.status] || "bg-slate-300"}`} />
+                              <span className="text-sm font-semibold text-blue-600">{order.orderCode}</span>
+                            </div>
+                            <StatusBadge status={order.status} />
+                          </div>
+                        }
+                        fields={[
+                          { label: t("orderDetail.product"), value: <span className="truncate block max-w-[200px]">{order.productName}</span>, fullWidth: true },
+                          { label: t("orders.totalCost"), value: <span className="font-semibold">{price}</span> },
+                          { label: t("orders.progress"), value: order.status !== "CANCELLED" ? `${step}/8` : t("orders.orderCancelled") },
+                          { label: t("common.date"), value: new Date(order.createdAt).toLocaleDateString() },
+                        ]}
+                      />
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-slate-100">
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.orderCode")}</th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("orderDetail.product")}</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
                       <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.totalCost")}</th>
-                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("orders.progress")}</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.progress")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -166,7 +201,6 @@ export default function OrdersPage() {
 
                       return (
                         <tr key={order.id} className={`hover:bg-slate-50/50 transition-colors ${highlightClass}`}>
-                          {/* Order code + product (mobile combined) */}
                           <td className="px-3 sm:px-6 py-3">
                             <div className="flex items-center gap-1.5">
                               <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[order.status] || "bg-slate-300"}`} />
@@ -174,14 +208,12 @@ export default function OrdersPage() {
                                 {order.orderCode}
                               </Link>
                             </div>
-                            <div className="sm:hidden text-xs text-slate-500 mt-0.5 truncate max-w-[180px]">{order.productName}</div>
                             {order.packageId && (
                               <span className="inline-flex items-center text-[10px] text-purple-600 mt-0.5">📦 {t("orders.hasPackage")}</span>
                             )}
                           </td>
 
-                          {/* Product (desktop) */}
-                          <td className="px-3 sm:px-6 py-3 text-sm text-slate-700 max-w-xs truncate hidden sm:table-cell">
+                          <td className="px-3 sm:px-6 py-3 text-sm text-slate-700 max-w-xs truncate">
                             <div className="truncate">{order.productName}</div>
                             <div className="text-xs text-slate-400 mt-0.5">×{order.quantity}</div>
                           </td>
@@ -210,8 +242,7 @@ export default function OrdersPage() {
                             <div className="text-[11px] text-slate-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</div>
                           </td>
 
-                          {/* Progress (desktop) */}
-                          <td className="px-3 sm:px-6 py-3 hidden sm:table-cell">
+                          <td className="px-3 sm:px-6 py-3">
                             {order.status !== "CANCELLED" ? (
                               <div>
                                 <div className="flex items-center gap-1 mb-1">

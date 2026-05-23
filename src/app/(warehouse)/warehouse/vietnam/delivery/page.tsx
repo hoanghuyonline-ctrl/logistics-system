@@ -5,6 +5,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
 import { OrderStatus } from "@prisma/client";
@@ -61,7 +62,35 @@ export default function VietnamDeliveryPage() {
 
       <div className="space-y-6">
         <Card title={`${t("warehouse.readyForDispatch")} (${orders.length})`} noPadding>
-          <div className="overflow-x-auto">
+          {/* Mobile card view */}
+          <div className="md:hidden flex flex-col gap-2 p-2">
+            {orders.map((o) => (
+              <MobileDataCard
+                key={o.id}
+                fields={[
+                  { label: t("warehouse.colOrder"), value: <span className="font-semibold">{o.orderCode}</span> },
+                  { label: t("warehouse.colTotal"), value: <span className="font-medium">{parseFloat(o.totalCostVND).toLocaleString()} VND</span> },
+                  { label: t("warehouse.colProduct"), value: o.productName, fullWidth: true },
+                  { label: t("warehouse.colCustomer"), value: o.user.fullName },
+                ]}
+                actions={
+                  <button onClick={() => updateDelivery(o.id, "OUT_FOR_DELIVERY")}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+                    {t("warehouse.dispatchBtn")}
+                  </button>
+                }
+              />
+            ))}
+            {orders.length === 0 && (
+              <div className="flex flex-col items-center gap-2 py-12">
+                <span className="text-2xl">📦</span>
+                <p className="text-sm text-slate-500">{t("warehouse.noDispatch")}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
@@ -101,7 +130,39 @@ export default function VietnamDeliveryPage() {
         </Card>
 
         <Card title={`${t("warehouse.outForDelivery")} (${outForDelivery.length})`} noPadding>
-          <div className="overflow-x-auto">
+          {/* Mobile card view */}
+          <div className="md:hidden flex flex-col gap-2 p-2">
+            {outForDelivery.map((o) => (
+              <MobileDataCard
+                key={o.id}
+                header={
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900">{o.orderCode}</span>
+                    <StatusBadge status={o.status} />
+                  </div>
+                }
+                fields={[
+                  { label: t("warehouse.colProduct"), value: o.productName, fullWidth: true },
+                  { label: t("warehouse.colCustomer"), value: o.user.fullName },
+                ]}
+                actions={
+                  <button onClick={() => updateDelivery(o.id, "COMPLETED")}
+                    className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+                    {t("warehouse.completeBtn")}
+                  </button>
+                }
+              />
+            ))}
+            {outForDelivery.length === 0 && (
+              <div className="flex flex-col items-center gap-2 py-12">
+                <span className="text-2xl">🚚</span>
+                <p className="text-sm text-slate-500">{t("warehouse.noDelivery")}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">

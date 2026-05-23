@@ -9,6 +9,7 @@ import KPICard from "@/components/ui/KPICard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 
 interface TransactionItem {
   id: string;
@@ -230,14 +231,44 @@ export default function AccountantDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title={t("accountant.recentTransactions")} noPadding>
-          <div className="overflow-x-auto">
+          {/* Mobile card view */}
+          <div className="md:hidden flex flex-col gap-2 p-2">
+            {data.recentTransactions.map((tx) => (
+              <MobileDataCard
+                key={tx.id}
+                fields={[
+                  { label: t("accountant.type"), value: (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${TX_TYPE_COLORS[tx.type] || "bg-slate-100 text-slate-700"}`}>
+                      {t(`accountant.tx.${tx.type}`)}
+                    </span>
+                  )},
+                  { label: t("common.amount"), value: (
+                    <span className={`font-semibold ${tx.type === "REFUND" ? "text-red-600" : "text-slate-900"}`}>
+                      {tx.type === "REFUND" ? "-" : ""}{tx.amount.toLocaleString()} \u20ab
+                    </span>
+                  )},
+                  { label: t("accountant.user"), value: tx.userName },
+                  { label: t("common.date"), value: new Date(tx.createdAt).toLocaleDateString() },
+                ]}
+              />
+            ))}
+            {data.recentTransactions.length === 0 && (
+              <div className="flex flex-col items-center gap-2 py-8">
+                <span className="text-3xl">\ud83d\udccb</span>
+                <p className="text-sm text-slate-500">{t("accountant.noTransactions")}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("accountant.type")}</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("accountant.user")}</th>
                   <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.amount")}</th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("common.date")}</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">

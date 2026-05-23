@@ -5,6 +5,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/ui/Pagination";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
 
@@ -521,8 +522,84 @@ export default function CrmPage() {
           </select>
         </div>
 
-        {/* Lead table */}
-        <div className="overflow-x-auto">
+        {/* Mobile card view */}
+        <div className="md:hidden flex flex-col gap-2">
+          {leads.length === 0 ? (
+            <div className="py-8 text-center text-slate-400">
+              {t("crm.noLeads", "Ch\u01b0a c\u00f3 leads n\u00e0o")}
+            </div>
+          ) : (
+            leads.map((lead) => (
+              <MobileDataCard
+                key={lead.id}
+                header={
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-sm text-slate-800">{lead.fullName}</span>
+                      {lead.isAutoCreated && (
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700">
+                          {t("crm.autoCreated", "T\u1ef1 \u0111\u1ed9ng")}
+                        </span>
+                      )}
+                    </div>
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[lead.status] || ""}`}>
+                      {t(`crm.status.${lead.status}`, lead.status)}
+                    </span>
+                  </div>
+                }
+                fields={[
+                  { label: t("crm.contact", "Li\u00ean h\u1ec7"), value: lead.phone || lead.email || "\u2014" },
+                  { label: t("crm.sourceLabel", "Ngu\u1ed3n"), value: (
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${SOURCE_COLORS[lead.source] || ""}`}>
+                      {t(`crm.source.${lead.source}`, lead.source)}
+                    </span>
+                  )},
+                  { label: t("crm.assignee", "Ph\u1ee5 tr\u00e1ch"), value: lead.assignedTo?.fullName || "\u2014" },
+                ]}
+                actions={
+                  <div className="flex gap-1 flex-wrap">
+                    <button
+                      onClick={() => {
+                        setEditingLead(lead);
+                        setEditNotes(lead.notes || "");
+                        setEditFollowUpNote(lead.followUpNote || "");
+                        setLoadingActivities(true);
+                        setActivities([]);
+                        fetch(`/api/admin/leads/${lead.id}/activity`)
+                          .then((r) => r.ok ? r.json() : [])
+                          .then((data) => setActivities(Array.isArray(data) ? data : []))
+                          .catch(() => {})
+                          .finally(() => setLoadingActivities(false));
+                      }}
+                      className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
+                    >
+                      \ud83d\udcdd
+                    </button>
+                    {lead.status !== "CONVERTED" && lead.status !== "LOST" && (
+                      <button
+                        onClick={() => handleMarkContacted(lead.id)}
+                        className="text-xs px-2 py-1 border border-blue-200 text-blue-700 rounded hover:bg-blue-50"
+                      >
+                        \ud83d\udcde
+                      </button>
+                    )}
+                    {lead.status !== "CONVERTED" && (
+                      <button
+                        onClick={() => { setConvertLead(lead); setConvertMode("new"); setConvertEmail(lead.email || ""); }}
+                        className="text-xs px-2 py-1 border border-green-200 text-green-700 rounded hover:bg-green-50"
+                      >
+                        \ud83d\udd04
+                      </button>
+                    )}
+                  </div>
+                }
+              />
+            ))
+          )}
+        </div>
+
+        {/* Desktop Lead table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs text-slate-500 uppercase">

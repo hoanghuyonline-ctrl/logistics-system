@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useToast } from "@/components/ui/Toast";
 
 interface Order {
@@ -67,7 +68,31 @@ export default function ChinaPackagesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card title={`Orders at China WH (${orders.length})`} noPadding>
-            <div className="overflow-x-auto">
+            {/* Mobile card view */}
+            <div className="md:hidden flex flex-col gap-2 p-2">
+              {orders.map((o) => (
+                <MobileDataCard
+                  key={o.id}
+                  onClick={() => toggleSelect(o.id)}
+                  className={selectedIds.includes(o.id) ? "bg-blue-50 border-blue-300" : ""}
+                  header={
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" checked={selectedIds.includes(o.id)} onChange={() => toggleSelect(o.id)}
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" />
+                      <span className="text-sm font-semibold text-slate-900">{o.orderCode}</span>
+                    </div>
+                  }
+                  fields={[
+                    { label: "Product", value: o.productName, fullWidth: true },
+                    { label: "Customer", value: o.user.fullName },
+                    { label: "Weight", value: o.weightKg ? `${o.weightKg} kg` : "\u2014" },
+                  ]}
+                />
+              ))}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100">

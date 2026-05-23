@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 
 interface AuditLogEntry {
@@ -59,7 +60,31 @@ export default function AdminAuditLogPage() {
         {logs.length === 0 ? (
           <EmptyState title={t("audit.empty")} />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile card view */}
+          <div className="md:hidden flex flex-col gap-2 p-2">
+            {logs.map((log) => (
+              <MobileDataCard
+                key={log.id}
+                header={
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900">{log.order.orderCode}</span>
+                    <span className="text-xs text-slate-500">{formatDate(log.createdAt)}</span>
+                  </div>
+                }
+                fields={[
+                  { label: t("audit.actor"), value: log.changer.fullName },
+                  { label: t("audit.role"), value: <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{t(`role.${log.changer.role}`, log.changer.role)}</span> },
+                  { label: t("audit.from"), value: log.fromStatus ? <StatusBadge status={log.fromStatus} /> : <span className="text-slate-300">—</span> },
+                  { label: t("audit.to"), value: <StatusBadge status={log.toStatus} /> },
+                  { label: t("audit.note"), value: log.note || "—", fullWidth: true },
+                ]}
+              />
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
@@ -99,6 +124,7 @@ export default function AdminAuditLogPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </Card>
 
