@@ -50,6 +50,14 @@ export default function LoginPage() {
       return;
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const callback = params.get("callbackUrl");
+
+    if (callback) {
+      router.push(callback);
+      return;
+    }
+
     const res = await fetch("/api/auth/me");
     const user = await res.json();
     const role = user?.role;
@@ -69,7 +77,9 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setError("");
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      const params = new URLSearchParams(window.location.search);
+      const callback = params.get("callbackUrl") || "/dashboard";
+      await signIn("google", { callbackUrl: callback });
     } catch {
       setError(t("auth.googleError"));
       setGoogleLoading(false);

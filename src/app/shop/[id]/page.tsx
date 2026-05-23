@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { LandingNavbar, LandingFooter, LandingMobileBar } from "@/components/landing";
@@ -120,6 +120,36 @@ export default function ProductDetailPage({
     }
   }, [product]);
 
+  const pendingSubmitted = useRef(false);
+  useEffect(() => {
+    if (authStatus !== "authenticated" || pendingSubmitted.current) return;
+    let raw: string | null = null;
+    try { raw = window.localStorage.getItem(PENDING_KEY); } catch { /* */ }
+    if (!raw) return;
+    pendingSubmitted.current = true;
+    try { window.localStorage.removeItem(PENDING_KEY); } catch { /* */ }
+    let payload: Record<string, unknown>;
+    try { payload = JSON.parse(raw) as Record<string, unknown>; } catch { return; }
+
+    (async () => {
+      try {
+        const res = await fetch("/api/sales-requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          toast(t("sales.purchaseSuccess"), "success");
+          router.push("/shop/requests");
+        } else {
+          toast(t("publicShop.submitError"), "error");
+        }
+      } catch {
+        toast(t("publicShop.submitError"), "error");
+      }
+    })();
+  }, [authStatus, router, t, toast]);
+
   const formatPrice = (price: string | null) => {
     if (!price) return t("sales.contactForPrice");
     return parseFloat(price).toLocaleString("vi-VN") + " \u20AB";
@@ -158,7 +188,7 @@ export default function ProductDetailPage({
         } catch {
           /* localStorage unavailable */
         }
-        router.push("/login?callbackUrl=/shop");
+        router.push(`/login?callbackUrl=/shop/${id}`);
       } else {
         const err = await res.json();
         toast(err.error || t("publicShop.submitError"), "error");
