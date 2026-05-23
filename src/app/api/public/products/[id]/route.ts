@@ -20,6 +20,9 @@ export const GET = withErrorHandler(async function GET(
       category: true,
       estimatedPrice: true,
       imageUrl: true,
+      images: true,
+      variants: true,
+      specs: true,
     },
   });
 

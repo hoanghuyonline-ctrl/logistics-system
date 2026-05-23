@@ -33,7 +33,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name, description, category, estimatedPrice, imageUrl, sortOrder } = body;
+  const { name, description, category, estimatedPrice, imageUrl, images, variants, specs, sortOrder } = body;
 
   if (!name) return errorResponse("Tên sản phẩm là bắt buộc");
 
@@ -44,6 +44,9 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       category: category || null,
       estimatedPrice: estimatedPrice != null ? parseFloat(estimatedPrice) : null,
       imageUrl: imageUrl || null,
+      images: images ?? null,
+      variants: variants ?? null,
+      specs: specs ?? null,
       sortOrder: sortOrder != null ? parseInt(sortOrder) : 0,
       createdById: user.id,
     },
