@@ -49,7 +49,7 @@ export default function PublicShopPage() {
     <div className="min-h-screen bg-white flex flex-col pb-14 sm:pb-0">
       <LandingNavbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{t("publicShop.title")}</h1>
@@ -84,7 +84,7 @@ export default function PublicShopPage() {
           <div className="text-center py-20 text-slate-400">{t("sales.noProducts")}</div>
         ) : (
           /* Product grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
             {filtered.map((product) => (
               <div
                 key={product.id}

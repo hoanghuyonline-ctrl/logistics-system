@@ -5,6 +5,7 @@ import KPICard from "@/components/ui/KPICard";
 import Card from "@/components/ui/Card";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
 import { useAutoRefresh } from "@/lib/useAutoRefresh";
@@ -270,14 +271,64 @@ export default function FinancePage() {
             {topUpRequests.filter((r) => r.status === "PENDING").length} {t("topup.pendingCount")}
           </span>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile card view for top-up requests */}
+        <div className="md:hidden flex flex-col gap-2 p-2">
+          {topUpRequests
+            .filter((r) => topUpFilter === "ALL" || r.status === "PENDING")
+            .map((r) => (
+              <MobileDataCard
+                key={r.id}
+                className={r.status === "PENDING" ? "bg-amber-50/30" : ""}
+                header={
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-900">{r.customer.fullName}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${
+                      r.status === "PENDING" ? "bg-amber-100 text-amber-800" :
+                      r.status === "CONFIRMED" ? "bg-emerald-100 text-emerald-800" :
+                      "bg-red-100 text-red-800"
+                    }`}>
+                      {r.status === "PENDING" ? t("topup.statusPending") :
+                       r.status === "CONFIRMED" ? t("topup.statusConfirmed") :
+                       t("topup.statusCancelled")}
+                    </span>
+                  </div>
+                }
+                fields={[
+                  { label: t("common.amount"), value: <span className="font-semibold text-emerald-700">{parseFloat(r.amount).toLocaleString("vi-VN")} VND</span> },
+                  { label: t("topup.transferRef"), value: <span className="font-mono text-xs bg-amber-100 px-1.5 py-0.5 rounded">{r.transferReference}</span> },
+                  { label: t("topup.time"), value: new Date(r.createdAt).toLocaleString("vi-VN") },
+                ]}
+                actions={r.status === "PENDING" ? (
+                  <>
+                    <button onClick={() => handleTopUpAction(r.id, "confirm")} disabled={confirmingId === r.id}
+                      className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50">
+                      {t("topup.confirmBtn")}
+                    </button>
+                    <button onClick={() => handleTopUpAction(r.id, "cancel")} disabled={confirmingId === r.id}
+                      className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-200 disabled:opacity-50">
+                      {t("topup.cancelBtn")}
+                    </button>
+                  </>
+                ) : undefined}
+              />
+            ))}
+          {topUpRequests.filter((r) => topUpFilter === "ALL" || r.status === "PENDING").length === 0 && (
+            <div className="flex flex-col items-center gap-2 py-8">
+              <span className="text-2xl">{topUpFilter === "PENDING" ? "\u2705" : "\ud83d\udcb3"}</span>
+              <p className="text-sm text-slate-500">{t("topup.empty")}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table view for top-up requests */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("topup.customer")}</th>
                 <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">{t("common.amount")}</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("topup.transferRef")}</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("topup.time")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("topup.time")}</th>
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">{t("topup.status")}</th>
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">{t("topup.actions")}</th>
               </tr>
@@ -402,17 +453,46 @@ export default function FinancePage() {
 
       {/* Bank Webhook Logs */}
       <Card title={t("finance.webhookLogsTitle")} noPadding className="mb-8">
-        <div className="overflow-x-auto">
+        {/* Mobile card view for webhook logs */}
+        <div className="md:hidden flex flex-col gap-2 p-2">
+          {webhookLogs.map((log) => (
+            <MobileDataCard
+              key={log.id}
+              fields={[
+                { label: t("finance.webhookProvider"), value: log.provider },
+                { label: t("topup.status"), value: (
+                  <span className={`inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                    log.status === "CONFIRMED" ? "bg-emerald-100 text-emerald-700" :
+                    log.status === "FAILED" ? "bg-red-100 text-red-700" :
+                    log.status === "DUPLICATE" ? "bg-purple-100 text-purple-700" :
+                    "bg-slate-100 text-slate-600"
+                  }`}>{log.status}</span>
+                )},
+                { label: t("common.amount"), value: log.amount ? parseFloat(log.amount).toLocaleString() : "\u2014" },
+                { label: t("topup.time"), value: new Date(log.createdAt).toLocaleString("vi-VN") },
+              ]}
+            />
+          ))}
+          {webhookLogs.length === 0 && (
+            <div className="flex flex-col items-center gap-2 py-8">
+              <span className="text-2xl">{"\uD83D\uDD14"}</span>
+              <p className="text-sm text-slate-500">{t("finance.webhookNoLogs")}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table view for webhook logs */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("finance.webhookProvider")}</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("finance.webhookTxId")}</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("finance.webhookRef")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("finance.webhookRef")}</th>
                 <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">{t("common.amount")}</th>
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-500 uppercase">{t("topup.status")}</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("finance.webhookError")}</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase hidden sm:table-cell">{t("topup.time")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("finance.webhookError")}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">{t("topup.time")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -452,15 +532,44 @@ export default function FinancePage() {
       </Card>
 
       <Card title={t("finance.profitByOrder")} noPadding>
-        <div className="overflow-x-auto">
+        {/* Mobile card view for profit */}
+        <div className="md:hidden flex flex-col gap-2 p-2">
+          {profit?.orders.map((o) => (
+            <MobileDataCard
+              key={o.orderCode}
+              header={
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-900">{o.orderCode}</span>
+                  <span className={`text-sm font-semibold ${o.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                    {o.profit.toLocaleString()} VND
+                  </span>
+                </div>
+              }
+              fields={[
+                { label: t("finance.charged"), value: o.totalCharged.toLocaleString() },
+                { label: t("finance.productCost"), value: o.productCost.toLocaleString() },
+                { label: t("finance.shipping"), value: o.shippingCosts.toLocaleString() },
+              ]}
+            />
+          ))}
+          {(!profit?.orders || profit.orders.length === 0) && (
+            <div className="flex flex-col items-center gap-2 py-12">
+              <span className="text-3xl">\ud83d\udcca</span>
+              <p className="text-sm text-slate-500">{t("finance.noCompletedOrders")}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table view for profit */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.order")}</th>
                 <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.charged")}</th>
-                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("finance.productCost")}</th>
-                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("accountant.serviceFees")}</th>
-                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{t("finance.shipping")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.productCost")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("accountant.serviceFees")}</th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.shipping")}</th>
                 <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("finance.profit")}</th>
               </tr>
             </thead>

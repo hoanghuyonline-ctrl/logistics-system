@@ -549,24 +549,109 @@ export default function AdminSalesPage() {
                   />
                 </div>
 
-                {/* Table */}
-                <Table<SalesRequest>
-                  columns={columns}
-                  dataSource={requests}
-                  rowKey="id"
-                  loading={reqLoading}
-                  pagination={{
-                    current: reqPage,
-                    total: reqTotal,
-                    pageSize: 20,
-                    onChange: (p) => setReqPage(p),
-                    showSizeChanger: false,
-                    showTotal: (tot) => `${tot}`,
-                  }}
-                  scroll={{ x: 1100 }}
-                  locale={{ emptyText: t("salesAdmin.noRequests") }}
-                  size="middle"
-                />
+                {/* Mobile card view for sales requests */}
+                <div className="md:hidden flex flex-col gap-2">
+                  {reqLoading ? (
+                    <LoadingSpinner />
+                  ) : requests.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-sm">{t("salesAdmin.noRequests")}</div>
+                  ) : (
+                    <>
+                      {requests.map((req) => (
+                        <div key={req.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-xs font-semibold text-slate-700">{req.requestCode}</span>
+                              {req.paymentMethod === "COD" && (
+                                <Tag color="orange" className="text-[10px] leading-tight m-0">COD</Tag>
+                              )}
+                            </div>
+                            <Tag color={STATUS_TAG_COLORS[req.status] || "default"}>{statusLabel(req.status)}</Tag>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                            <div>
+                              <div className="text-[11px] font-medium text-slate-400 uppercase">Khách</div>
+                              <div className="text-sm text-slate-800">{req.customer.fullName}</div>
+                            </div>
+                            <div>
+                              <div className="text-[11px] font-medium text-slate-400 uppercase">SL</div>
+                              <div className="text-sm text-slate-800">{req.quantity}</div>
+                            </div>
+                            <div className="col-span-2">
+                              <div className="text-[11px] font-medium text-slate-400 uppercase">Sản phẩm</div>
+                              <div className="text-sm text-slate-800 truncate">{req.productName}</div>
+                            </div>
+                            <div>
+                              <div className="text-[11px] font-medium text-slate-400 uppercase">Dự toán</div>
+                              <div className="text-sm">{fmtVND(req.estimatedTotal)}</div>
+                            </div>
+                            <div>
+                              <div className="text-[11px] font-medium text-slate-400 uppercase">Xác nhận</div>
+                              <div className="text-sm font-semibold text-green-700">{req.confirmedPrice ? fmtVND(req.confirmedPrice) : "\u2014"}</div>
+                            </div>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap gap-1.5">
+                            {req.status === "NEW" && (
+                              <>
+                                <Button type="primary" size="small" onClick={() => openConfirmModal(req)}>
+                                  {t("salesAdmin.confirmPriceBtn")}
+                                </Button>
+                                <Button size="small" danger onClick={() => handleStatusUpdate(req.id, "CANCELLED")}>Hủy</Button>
+                              </>
+                            )}
+                            {req.status === "PAID" && (
+                              <Button size="small" onClick={() => handleStatusUpdate(req.id, "PROCESSING")}
+                                style={{ background: "#2563eb", color: "#fff", borderColor: "#2563eb" }}>
+                                {t("salesAdmin.nextOrdered")}
+                              </Button>
+                            )}
+                            {req.status === "PROCESSING" && (
+                              <Button size="small" onClick={() => handleStatusUpdate(req.id, "COMPLETED")}
+                                style={{ background: "#059669", color: "#fff", borderColor: "#059669" }}>
+                                {t("salesAdmin.nextCompleted")}
+                              </Button>
+                            )}
+                            {req.order && (
+                              <a href={`/admin/orders/${req.order.id}`}>
+                                <Tag color="blue" className="cursor-pointer text-[10px]">{req.order.orderCode}</Tag>
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between px-1 py-2 text-xs text-slate-500">
+                        <span>{reqTotal} yêu cầu</span>
+                        <div className="flex gap-1.5">
+                          <button disabled={reqPage <= 1} onClick={() => setReqPage(reqPage - 1)}
+                            className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg disabled:opacity-40">←</button>
+                          <button disabled={reqPage * 20 >= reqTotal} onClick={() => setReqPage(reqPage + 1)}
+                            className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg disabled:opacity-40">→</button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Desktop table view */}
+                <div className="hidden md:block">
+                  <Table<SalesRequest>
+                    columns={columns}
+                    dataSource={requests}
+                    rowKey="id"
+                    loading={reqLoading}
+                    pagination={{
+                      current: reqPage,
+                      total: reqTotal,
+                      pageSize: 20,
+                      onChange: (p) => setReqPage(p),
+                      showSizeChanger: false,
+                      showTotal: (tot) => `${tot}`,
+                    }}
+                    scroll={{ x: 1100 }}
+                    locale={{ emptyText: t("salesAdmin.noRequests") }}
+                    size="middle"
+                  />
+                </div>
               </div>
             ),
           },

@@ -5,6 +5,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Pagination from "@/components/ui/Pagination";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
 
@@ -265,7 +266,47 @@ export default function CampaignsPage() {
 
       {/* Campaign list */}
       <Card>
-        <div className="overflow-x-auto">
+        {/* Mobile card view */}
+        <div className="md:hidden flex flex-col gap-2">
+          {campaigns.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">{t("campaigns.empty", "Ch\u01b0a c\u00f3 chi\u1ebfn d\u1ecbch n\u00e0o")}</div>
+          ) : (
+            campaigns.map((c) => (
+              <MobileDataCard
+                key={c.id}
+                header={
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm text-slate-800">{c.name}</span>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[c.status] || "bg-slate-100"}`}>
+                      {STATUS_LABELS[c.status] || c.status}
+                    </span>
+                  </div>
+                }
+                fields={[
+                  { label: t("campaigns.channel", "K\u00eanh"), value: (
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${CHANNEL_COLORS[c.channel] || "bg-slate-100"}`}>
+                      {CHANNEL_LABELS[c.channel] || c.channel}
+                    </span>
+                  )},
+                  { label: t("campaigns.target", "\u0110\u1ed1i t\u01b0\u1ee3ng"), value: c.targetStatus ? `Lead: ${c.targetStatus}` : t("campaigns.allLeads", "T\u1ea5t c\u1ea3") },
+                  { label: t("campaigns.scheduled", "L\u1ecbch g\u1eedi"), value: c.scheduledAt ? new Date(c.scheduledAt).toLocaleString("vi-VN") : "\u2014" },
+                  { label: t("campaigns.createdBy", "Ng\u01b0\u1eddi t\u1ea1o"), value: c.createdBy?.fullName || "\u2014" },
+                ]}
+                actions={
+                  <button
+                    onClick={() => { setEditingCampaign(c); setEditNotes(c.notes || ""); }}
+                    className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
+                  >
+                    \ud83d\udcdd
+                  </button>
+                }
+              />
+            ))
+          )}
+        </div>
+
+        {/* Desktop table view */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200">

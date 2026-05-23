@@ -5,6 +5,7 @@ import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 
 interface Package {
@@ -149,7 +150,43 @@ export default function PackagesPage() {
 
       {loading ? <LoadingSpinner text={t("packages.loading")} /> : (
         <Card noPadding>
-          <div className="overflow-x-auto">
+          {/* Mobile card view */}
+          <div className="md:hidden flex flex-col gap-2 p-2">
+            {packages.map((p) => (
+              <MobileDataCard
+                key={p.id}
+                header={
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900">{p.packageCode}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${statusColors[p.status] || "bg-slate-100 text-slate-700"}`}>
+                      {t(`packageStatus.${p.status}`, p.status.replace(/_/g, " "))}
+                    </span>
+                  </div>
+                }
+                fields={[
+                  { label: t("scan.barcode"), value: <span className="font-mono text-xs">{p.barcode}</span> },
+                  { label: t("scan.weight"), value: `${p.totalWeightKg || "\u2014"} kg` },
+                  { label: t("scan.orders"), value: p.orders.map((o) => o.orderCode).join(", "), fullWidth: true },
+                  { label: t("packages.created"), value: new Date(p.createdAt).toLocaleDateString() },
+                ]}
+                actions={
+                  <>
+                    <button onClick={() => printLabel(p.id, p.packageCode, p.barcode)}
+                      className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100">
+                      {t("packages.printLabel")}
+                    </button>
+                    <a href={`/admin/packages/${p.id}`}
+                      className="px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100">
+                      {t("common.view")}
+                    </a>
+                  </>
+                }
+              />
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">

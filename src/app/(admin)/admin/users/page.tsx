@@ -6,6 +6,7 @@ import Pagination from "@/components/ui/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 
 interface User {
@@ -299,7 +300,54 @@ export default function UsersPage() {
 
       {loading ? <LoadingSpinner text={t("users.loading")} /> : (
         <Card noPadding>
-          <div className="overflow-x-auto">
+          {/* Mobile card view */}
+          <div className="md:hidden flex flex-col gap-2 p-2">
+            {users.map((u) => (
+              <MobileDataCard
+                key={u.id}
+                header={
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900">{u.fullName}</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold ${u.isActive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-emerald-500" : "bg-red-500"}`} />
+                      {u.isActive ? t("users.active") : t("users.inactive")}
+                    </span>
+                  </div>
+                }
+                fields={[
+                  { label: t("orderDetail.email"), value: <span className="text-xs">{u.email}</span>, fullWidth: true },
+                  { label: t("audit.role"), value: (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${roleColors[u.role] || "bg-slate-100 text-slate-700"}`}>
+                      {t(`role.${u.role}`, u.role.replace(/_/g, " "))}
+                    </span>
+                  )},
+                  { label: t("wallet.balance"), value: u.wallet ? `${parseFloat(u.wallet.balance).toLocaleString()} VND` : "\u2014" },
+                  { label: "\u0110\u01a1n", value: `${u._count.orders}` },
+                ]}
+                actions={
+                  <>
+                    <button onClick={() => openEditModal(u)}
+                      className="text-xs font-medium px-2.5 py-1 rounded-lg text-blue-600 hover:bg-blue-50">
+                      {t("users.edit")}
+                    </button>
+                    <button onClick={() => toggleActive(u.id, u.isActive)}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-lg ${u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"}`}>
+                      {u.isActive ? t("users.deactivate") : t("users.activate")}
+                    </button>
+                    {u.wallet && (
+                      <button onClick={() => openWalletModal(u)}
+                        className="text-xs font-medium px-2.5 py-1 rounded-lg text-amber-600 hover:bg-amber-50">
+                        \u0110i\u1ec1u ch\u1ec9nh v\u00ed
+                      </button>
+                    )}
+                  </>
+                }
+              />
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
