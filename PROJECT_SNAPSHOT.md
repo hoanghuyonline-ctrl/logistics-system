@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-22
+**Date:** 2026-05-23
 **Branch:** `main`
-**Latest stable commit:** Post PR #364 (Local Upload API Route) — Storage refactor complete (Local default + GDrive OAuth2 + GCS)
+**Latest stable commit:** Post PR #379 (Delete Product) — Enterprise product management, R2 storage, dynamic domain, admin sidebar restructure
 
 ---
 
@@ -217,6 +217,26 @@
 - **Admin Operations Center** (PR #252) — Unified daily operations page at `/admin/operations`; 5 quick-overview cards (unpaid orders, pending deposits, unresolved issues, notification failures, stuck orders) with red highlight when action needed; pending top-up confirmations section with customer name, amount, reference, time; stuck shipments section with 8 categories (pending >3d, purchased >5d, china WH >5d, shipping >10d, VN WH >3d, delivery >2d, no weight, no tracking) color-coded by severity; notification failures section showing channel, recipient, error reason, retry count; customer issues section filtered by NEW status with issue type labels and priority badges; quick links grid (scanner, finance, orders, issues, notifications, stuck shipments); 30s auto-refresh on quick-views via `useAutoRefresh` hook; Vietnamese-first UI; mobile-friendly responsive grid; reuses all 5 existing APIs (`quick-views`, `topup-requests`, `stuck-shipments`, `notifications/failures`, `customer-issues`); no schema changes, no new dependencies, no new APIs
 - **Admin Operations Center v2 — Daily Work App** (PR #253) — Enhanced `/admin/operations` as admin daily home screen; 6 priority sections: Việc cần làm ngay (urgent summary with total count + animated pulse), Đơn hàng cần xử lý (stuck shipments with severity badges), Nạp tiền chờ duyệt (pending top-ups with VND amounts), Cảnh báo vận hành (warehouse warnings with yellow/green indicators), Khiếu nại khách hàng (NEW issues with type/priority), Lỗi thông báo (channel badges + retry counts); red/yellow/green visual badges throughout; full 30s auto-refresh of ALL data (not just quick-views); "Cập nhật lúc HH:mm" timestamp in header; 5 quick action buttons (Xem đơn hàng, Duyệt nạp tiền, Quét kho, Xem khiếu nại, Xem lỗi thông báo) with color-coded icons; clickable overview cards linking to detail pages; admin sidebar navigation: "Điều hành" item added as first entry (🏠 icon); i18n keys added for vi/en/zh; no schema changes, no new dependencies, no new APIs
 - **Admin Operations Alert Feedback** (PR #254) — Sound + vibration alerts on `/admin/operations` when urgent count increases between 30s polling cycles; Web Audio API double-beep (880Hz + 1100Hz square wave, 0.15 volume); Vibration API pattern (200ms-100ms-200ms) on supported mobile browsers; "Âm báo: Bật/Tắt" toggle button (🔔/🔕) in page header with localStorage persistence (`admin_ops_alert_enabled`); alerts only fire when urgent count increases (not on initial load); ref-based alert state to avoid useCallback dependency churn; no schema changes, no new dependencies
+
+- **Cloudflare R2 Storage Provider** (PR #373) — New `R2StorageProvider` class in `src/lib/storage.ts` using `@aws-sdk/client-s3`; feature toggle via `STORAGE_PROVIDER=R2` (default remains `LOCAL`); env/DB config: `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_CUSTOM_DOMAIN`; R2 option added to Admin Settings storage dropdown; Google OAuth avatar auto-save now uses storage abstraction (`uploadFileToStorage`); `next.config.ts` updated with R2 custom domain in `remotePatterns`; `@aws-sdk/client-s3` dependency added; **no schema changes; backward compatible; production-safe**
+
+- **Dynamic Domain Configuration System (APP_DOMAIN)** (PR #374) — Centralized URL builder in `src/lib/url.ts`: `getAppDomain()`, `buildAssetUrl()`, `toRelativePath()`, `extractStorageKey()`, `resetDomainCache()`; `APP_DOMAIN` stored in `SystemConfig` DB (fallback chain: DB → env → `NEXTAUTH_URL`); new uploads store relative paths only (e.g. `packages/file.jpg`); API responses dynamically build full URLs via `buildAssetUrl()`; backward compatible — existing absolute URLs in DB returned as-is; Admin Settings API extended with `APP_DOMAIN` key + URL validation; `.env.example` and `.env.production.example` updated; **no migration; backward compatible; production-safe**
+
+- **APP_DOMAIN UI Visibility Fix** (PR #375) — Moved `APP_DOMAIN` from buried storage config card into its own dedicated "Domain hệ thống (System Domain)" card at the **top** of Admin Settings page; clear label, placeholder `https://thue.eu.cc`, inline save button with URL validation, current value display; filtered from storage config card to prevent duplication
+
+- **Global Back to Top Button** (PR #376) — `BackToTop` floating button component in all 4 layouts (admin, customer, warehouse, accountant); hidden by default, fades in after scrolling 400px; smooth scroll to top on click; blue circle with upward arrow at bottom-right; no overlap with Zalo widget (bottom-left); **no schema changes; no new dependencies**
+
+- **Admin Sidebar Restructure** (PR #377) — Admin navigation sidebar reorganized into 5 collapsible groups with chevron arrows: **TỔNG QUAN** (Operations, Dashboard, Users), **QUẢN LÝ ĐƠN HÀNG** (Orders, Packages, Stuck, Sales), **TÀI CHÍNH & PHÂN TÍCH** (Finance, Analytics), **HỖ TRỢ KHÁCH HÀNG** (Knowledge, Issues, Alerts, Leads, CRM, Campaigns, Notes), **CÀI ĐẶT HỆ THỐNG** (Settings, Health, Audit, Notification errors); auto-expands group containing active route; all 21 routes preserved; non-admin sidebars unchanged
+
+- **Enterprise Product Form** (PR #378) — Complete product form refactor from basic 5-field form to enterprise-level product management:
+  - **Multi-Image Gallery Upload**: `ImageGalleryUploader` component with drag-and-drop (up to 8 images), thumbnail previews, delete on hover, drag-to-reorder, first image auto-marked as cover; `POST /api/products/upload` endpoint (JPG/PNG/WebP, max 5MB); stored as JSONB array of `{ path, url }` in `images` column
+  - **Product Variants**: `VariantGenerator` component with dynamic variant group creation (e.g. Color, Size) and auto-generated cartesian product combination matrix; per-variant fields: price (VND), SKU, stock, image assignment; stored as JSONB `{ groups, rows }` in `variants` column
+  - **Rich Text Editor**: `RichTextEditor` component using TipTap (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/pm`); toolbar: Bold, Italic, H3, Bullet List, Ordered List, Blockquote; replaces basic textarea
+  - **Logistics Specs Card**: Weight (kg) + Dimensions (L×W×H cm) in `ProductForm` component; stored as JSONB in `specs` column
+  - **Schema**: 3 new JSONB columns on Product model (`images`, `variants`, `specs`); migration `20260523070000_add_product_images_variants_specs`
+  - **Backward compatible**: existing products with null fields render fine; `imageUrl` field preserved
+
+- **Delete Product** (PR #379) — `DELETE /api/products/[id]` endpoint (admin-only); red "Xóa" button in product list next to "Sửa"; browser `confirm()` dialog before deletion; success/error toast + auto-refresh product list; foreign key protection surfaces error via toast if product has linked SalesRequests
 - **HOTFIX: Standalone Deploy CSS/Static Fix** (PR #255) — Root cause: Next.js `output: "standalone"` does NOT copy `.next/static/` or `public/` into standalone output; when running `pm2 start .next\standalone\server.js`, all CSS/JS/fonts/images return 404; landing page appears as unstyled raw HTML. Fix: deploy helper scripts (`scripts/deploy-standalone.sh` for Linux, `scripts/deploy-standalone.ps1` for Windows) that automate build → copy static → copy public → copy Prisma; updated `DEPLOYMENT_PM2.md` with standalone deploy section explaining the copy requirement and why CSS breaks without it; no code changes, no schema changes, no new dependencies
 - **HOTFIX: Infinite Dashboard Loading** (PR #256) — All 5 dashboard pages (customer, admin, warehouse CN, warehouse VN, accountant) had zero error handling on API fetches; if any fetch failed (DB timeout, auth error, non-200 response), `setLoading(false)` never executed → infinite "Đang tải..." spinner. Fix: added `try/catch` + response status checking to all dashboard fetch calls; on failure shows Vietnamese error UI ("Không thể tải dữ liệu") with reload button; `setLoading(false)` always executes via `finally`; no schema changes
 - **HOTFIX: Dashboard API Auth + Prisma Standalone** (PR #264) — `/api/health` was blocked by auth middleware (proxy.ts `publicPaths`), returning 401 for Docker/nginx healthchecks and preventing the app container from reaching "healthy" state; added `/api/health` to `publicPaths`. Also added `@prisma/adapter-pg` to `serverExternalPackages` in `next.config.ts` so the Prisma adapter is properly externalized alongside `@prisma/client` in standalone builds, preventing module-state mismatch in Docker/standalone deployments.
@@ -346,62 +366,28 @@
 
 **Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
 
-**Deploy notes (PR #255 — URGENT):** After merging, run on Windows production server:
-```powershell
-cd logistics-system
-git pull origin main
-powershell -File scripts\deploy-standalone.ps1
-pm2 restart logistics-system
-```
-Or manually: `npm run build && xcopy /E /Y /I .next\static .next\standalone\.next\static && xcopy /E /Y /I public .next\standalone\public && pm2 restart logistics-system`
+## Current Production Deploy Workflow (Windows + PM2)
 
-**Deploy notes (PRs #264–#266 — Production Server Stabilization):**
-Windows standalone deployment is now stable. Runtime uses `next start -p 3000 -H 0.0.0.0` via PM2 (`ecosystem.config.js`). After any rebuild:
+**Server path:** `D:\BacTrungHai\logistics-system`
+**Runtime:** `next start -p 3000 -H 0.0.0.0` via PM2 (`ecosystem.config.js`)
+
+**Standard deploy after any merge:**
 ```powershell
 cd /d D:\BacTrungHai\logistics-system
 git pull origin main
 npm install
+npx prisma migrate deploy
 npm run build
 xcopy /E /I /Y .next\static .next\standalone\.next\static
 xcopy /E /I /Y public .next\standalone\public
-pm2 delete all
-pm2 start ecosystem.config.js
-pm2 save
+pm2 restart logistics-system
 ```
+
 **Critical rules:**
 - PM2 `watch` must remain `false` (prevents crash loops from file changes)
 - `.next/static` and `public` must be copied into `.next/standalone/` after every build (CSS/images break without this)
-- `/api/health` is now a public route (no auth) for Docker/nginx healthchecks
-
-**Deploy notes (PRs #272–#278 — Dashboard Resilience + Customer UI Attempt):**
-No migration needed. No new dependencies. After merging:
-```powershell
-cd /d D:\BacTrungHai\logistics-system
-git pull origin main
-npm install
-npm run build
-xcopy /E /I /Y .next\static .next\standalone\.next\static
-xcopy /E /I /Y public .next\standalone\public
-pm2 restart logistics-system
-```
-**Critical:** PM2 `watch` must remain `false`. Production deploy style unchanged: Windows + PM2 + `next start -p 3000 -H 0.0.0.0`.
-
-**Deploy notes (Post PR #278 fix — Customer Dashboard Error Boundary):**
-No migration needed. No new dependencies. After merging:
-```powershell
-cd /d D:\BacTrungHai\logistics-system
-git pull origin main
-npm install
-npm run build
-xcopy /E /I /Y .next\static .next\standalone\.next\static
-xcopy /E /I /Y public .next\standalone\public
-pm2 restart logistics-system
-```
-**Critical:** PM2 `watch` must remain `false`. Verify customer `/dashboard` loads partial data or shows amber fallback cards instead of full-page error.
-
-**Deploy notes (PR #251):** No migration needed. Rebuild and restart. After deploy, test PWA install: open `/scanner` on Android Chrome → Menu ⋮ → "Add to Home Screen" → app should open standalone without browser chrome. On iOS Safari → Share → "Add to Home Screen". Icons appear as emerald "QK" on dark background.
-
-**Production Deploy (post-PR #123):** Migration applied, Prisma generate completed, `npm run build` passed, PM2 restarted successfully.
+- `/api/health` is now a public route (no auth) for healthchecks
+- Always run `npx prisma migrate deploy` if new migrations exist
 
 ## Stack
 
@@ -415,7 +401,9 @@ pm2 restart logistics-system
 | Auth | NextAuth.js |
 | Barcode | bwip-js |
 | Testing | Vitest |
-| Infra | Docker Compose, PM2 |
+| Rich Text | TipTap (react, starter-kit, pm) |
+| Cloud Storage | @aws-sdk/client-s3 (R2), @googleapis/drive (GDrive) |
+| Infra | Windows + PM2 (production), Docker Compose (optional) |
 
 ## Important API Routes
 
@@ -470,8 +458,11 @@ pm2 restart logistics-system
 | `/api/admin/backup/database` | POST | Manual database backup — runs pg_dump via Docker, creates timestamped .sql file (ADMIN-only) |
 | `/api/admin/backup/uploads` | POST | Manual uploads backup — compresses uploads/ into timestamped .zip file (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
-| `/api/products` | GET/POST | Product list (public active / admin all) and create (ADMIN) |
-| `/api/products/[id]` | PATCH | Edit product (ADMIN) |
+| `/api/products` | GET/POST | Product list (public active / admin all) and create with images/variants/specs (ADMIN) |
+| `/api/products/[id]` | PATCH/DELETE | Edit or delete product (ADMIN) |
+| `/api/products/upload` | POST | Product image upload — JPG/PNG/WebP, max 5MB, stores via R2/Local (ADMIN) |
+| `/api/public/products` | GET | Public active product list with images/variants/specs |
+| `/api/public/products/[id]` | GET | Public single product detail |
 | `/api/sales-requests` | GET/POST | Sales request list (customer own / admin all) and create (CUSTOMER/ADMIN) |
 | `/api/sales-requests/[id]` | PATCH | Update status, confirm price, add note (ADMIN/ACCOUNTANT) |
 | `/api/sales-requests/[id]/pay` | POST | Pay from wallet — deducts balance, allows debt, creates SALES_PAYMENT transaction (CUSTOMER) |
@@ -502,7 +493,7 @@ pm2 restart logistics-system
 | **LeadActivity** | id, leadId, action, detail, actorId, createdAt |
 | **Campaign** | id, name, channel (CampaignChannel), status (CampaignStatus), targetStatus, messageTemplate, scheduledAt, notes, createdById |
 | **CustomerIssue** | id, customerId, orderCode, issueType, description, status, priority, assignedTo, resolution |
-| **Product** | id, name, description, category, estimatedPrice, imageUrl, isActive, sortOrder, createdById |
+| **Product** | id, name, description (Text), category, estimatedPrice, imageUrl, images (JSONB), variants (JSONB), specs (JSONB), isActive, sortOrder, createdById |
 | **SalesRequest** | id, requestCode, customerId, productId, productName, quantity, estimatedTotal, confirmedPrice, status (SalesRequestStatus), adminNote, customerNote, paidAt, paidFromWallet, confirmedById, confirmedAt, shippingName?, shippingPhone?, shippingAddress? |
 
 **Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType (DEPOSIT/ORDER_PAYMENT/REFUND/ADJUSTMENT/SALES_PAYMENT), SalesRequestStatus (NEW/CONTACTED/PRICE_CONFIRMED/PAID/PROCESSING/COMPLETED/CANCELLED), LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS)
@@ -517,7 +508,7 @@ pm2 restart logistics-system
 - ~~Production Telegram bot/chat configuration~~ ✓ webhook registered, bot `@bactrunghai_bot` verified on `thue.eu.cc`
 - ~~Production SMTP configuration~~ ✓ dynamic Admin UI form saves to DB, bypassing `.env` caching
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
-- Cloud storage provider (S3/R2/MinIO) — abstraction layer ready, needs provider implementation
+- ~~Cloud storage provider (S3/R2/MinIO)~~ ✓ Cloudflare R2 implemented (PR #373), Google Drive OAuth2 (PR #361), GCS (PR #355), Local (default)
 - API route smoke tests (orders, warehouse scan, status transitions)
 - Comprehensive E2E test suite (Playwright)
 
@@ -540,7 +531,7 @@ pm2 restart logistics-system
 11. **Camera scanning requires real-device testing** — cannot be tested without a physical camera; 3-second duplicate-scan cooldown may need tuning.
 12. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
 13. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
-14. **Package images default to local storage** — stored under `public/uploads/packages/` via `LocalStorageProvider` by default. Upload URLs are served through `/api/uploads/[...path]` API route (NOT static `/uploads/...` which would 404 in standalone mode). Set `STORAGE_PROVIDER=gdrive` + provide `GDRIVE_CLIENT_ID`/`GDRIVE_CLIENT_SECRET`/`GDRIVE_REFRESH_TOKEN` (OAuth2) for Google Drive storage (15 GB). Or `STORAGE_PROVIDER=gcs` + `GCS_BUCKET` + `GCS_CREDENTIALS` for Google Cloud Storage (requires billing). Admin Settings UI has dropdown to switch providers. Can also swap to S3/R2/MinIO by implementing `StorageProvider` interface.
+14. **Image storage defaults to local** — stored under `public/uploads/` via `LocalStorageProvider` by default. Upload URLs served through `/api/uploads/[...path]` API route (NOT static `/uploads/...` which would 404 in standalone mode). Available providers: `LOCAL` (default), `R2` (Cloudflare R2 via `@aws-sdk/client-s3`), `gdrive` (Google Drive OAuth2), `gcs` (Google Cloud Storage). Set `STORAGE_PROVIDER` in Admin Settings or `.env`. R2 config: `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_CUSTOM_DOMAIN`.
 15. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
 16. **Zalo OA access token is short-lived** — current token works but needs OAuth refresh automation for long-term production use.
 17. **Zalo OA tier/package required** — API sending requires an active OA package (ZBS) with sufficient quota; free tier has limitations.
@@ -553,3 +544,6 @@ pm2 restart logistics-system
 21. **Production requires .env.production** — docker-compose will not start without this file.
 22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
 23. **Zalo TOKEN_EXPIRED now auto-recovered** (resolved PR #179) — System automatically refreshes access token on -216 error and retries. Requires ZALO_OA_REFRESH_TOKEN, ZALO_APP_ID, and ZALO_APP_SECRET_KEY to be configured. Manual intervention only needed if refresh token itself expires (~3 months).
+24. **APP_DOMAIN must be configured** — Set `APP_DOMAIN` in Admin Settings → "Domain hệ thống" for correct asset URL resolution. Fallback chain: DB APP_DOMAIN → env APP_DOMAIN → NEXTAUTH_URL → relative paths. New uploads store relative paths only; existing absolute URLs work as-is.
+25. **Product variants/specs stored as JSONB** — `images`, `variants`, `specs` fields on Product model are flexible JSON; no strict schema validation at DB level. Application-level validation in ProductForm component.
+26. **Admin sidebar uses collapsible groups** — 5 nav groups with chevron toggle; auto-expands on active route. Non-admin sidebars unchanged.
