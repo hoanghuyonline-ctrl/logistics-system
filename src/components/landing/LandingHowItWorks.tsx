@@ -71,7 +71,7 @@ export default function LandingHowItWorks() {
                 {i < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-8 left-[60%] w-[80%] h-px bg-slate-200" />
                 )}
-                <div className="relative bg-slate-50 rounded-2xl p-6 border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all">
+                <div className="relative bg-slate-50 rounded-2xl p-6 border border-slate-100 hover:border-slate-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className="flex items-center gap-3 mb-4">
                     <span style={{ color: "var(--brand-blue)" }}><Icon /></span>
                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg" style={{ color: "var(--brand-navy)", backgroundColor: "#eef2ff" }}>

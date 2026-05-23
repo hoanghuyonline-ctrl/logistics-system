@@ -40,10 +40,10 @@ export default function LandingHero() {
 
           {/* CTAs */}
           <div className="animate-fade-up animation-delay-300 mt-8 flex flex-col sm:flex-row gap-3">
-            <Link href="/register" className="inline-flex items-center justify-center px-7 py-3.5 text-white font-semibold rounded-xl shadow-lg hover:opacity-90 hover:shadow-xl active:scale-[0.98] transition-all text-sm" style={{ backgroundColor: "var(--brand-navy)" }}>
+            <Link href="/register" className="inline-flex items-center justify-center px-7 py-3.5 text-white font-semibold rounded-xl shadow-lg hover:opacity-90 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-sm" style={{ backgroundColor: "var(--brand-navy)" }}>
               {t("landing.startShipping")}
             </Link>
-            <Link href="/login" className="inline-flex items-center justify-center px-6 py-3.5 bg-white text-slate-700 font-semibold rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm active:scale-[0.98] transition-all text-sm">
+            <Link href="/login" className="inline-flex items-center justify-center px-6 py-3.5 bg-white text-slate-700 font-semibold rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-sm">
               {t("landing.signInDashboard")}
             </Link>
           </div>
