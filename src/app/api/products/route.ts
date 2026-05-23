@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { buildAssetUrl } from "@/lib/url";
 
 export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -18,7 +19,11 @@ export const GET = withErrorHandler(async function GET(request: Request) {
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
 
-  return jsonResponse(products);
+  const resolved = await Promise.all(
+    products.map(async (p) => ({ ...p, imageUrl: await buildAssetUrl(p.imageUrl) })),
+  );
+
+  return jsonResponse(resolved);
 });
 
 export const POST = withErrorHandler(async function POST(request: Request) {
@@ -44,5 +49,5 @@ export const POST = withErrorHandler(async function POST(request: Request) {
     },
   });
 
-  return jsonResponse(product, 201);
+  return jsonResponse({ ...product, imageUrl: await buildAssetUrl(product.imageUrl) }, 201);
 });

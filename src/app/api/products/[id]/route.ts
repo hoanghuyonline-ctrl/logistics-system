@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { buildAssetUrl } from "@/lib/url";
 import type { NextRequest } from "next/server";
 
 export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx: RouteContext<"/api/products/[id]">) {
@@ -24,5 +25,5 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
   if (body.sortOrder !== undefined) data.sortOrder = parseInt(body.sortOrder);
 
   const updated = await prisma.product.update({ where: { id }, data });
-  return jsonResponse(updated);
+  return jsonResponse({ ...updated, imageUrl: await buildAssetUrl(updated.imageUrl) });
 });

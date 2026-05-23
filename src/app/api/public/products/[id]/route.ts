@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { buildAssetUrl } from "@/lib/url";
 import type { NextRequest } from "next/server";
 
 export const GET = withErrorHandler(async function GET(
@@ -24,5 +25,5 @@ export const GET = withErrorHandler(async function GET(
 
   if (!product) return errorResponse("Sản phẩm không tồn tại", 404);
 
-  return jsonResponse(product);
+  return jsonResponse({ ...product, imageUrl: await buildAssetUrl(product.imageUrl) });
 });

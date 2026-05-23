@@ -396,7 +396,14 @@ export const storage = createLocalProvider();
 /**
  * Upload a file buffer to the active storage provider.
  * Automatically reads STORAGE_PROVIDER from DB/env.
- * Returns the public URL of the uploaded file.
+ *
+ * Returns a DB-safe path:
+ *  - LOCAL  → "api/uploads/avatars/user.jpg"  (relative to APP_DOMAIN)
+ *  - R2     → full CDN URL (https://cdn.example.com/avatars/user.jpg)
+ *  - GDrive → full Google Drive URL
+ *  - GCS    → full GCS URL
+ *
+ * Use buildAssetUrl() from @/lib/url when serving to construct the public URL.
  */
 export async function uploadFileToStorage(
   fileBuffer: Buffer,
@@ -405,5 +412,11 @@ export async function uploadFileToStorage(
 ): Promise<string> {
   const provider = await getStorage();
   const key = folder ? `${folder}/${fileName}` : fileName;
-  return provider.upload(fileBuffer, key);
+  const fullUrl = await provider.upload(fileBuffer, key);
+
+  if (provider instanceof LocalStorageProvider) {
+    return `api/uploads/${key}`;
+  }
+
+  return fullUrl;
 }
