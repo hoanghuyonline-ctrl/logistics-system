@@ -3,6 +3,7 @@ import path from "path";
 import { Readable } from "stream";
 import { Storage as GCSClient } from "@google-cloud/storage";
 import { drive as createDrive, auth as driveAuth } from "@googleapis/drive";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "@/lib/prisma";
 
 export interface StorageProvider {
@@ -223,6 +224,95 @@ export function extractDriveFileId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+// --------------- Cloudflare R2 ---------------
+
+interface R2Config {
+  endpoint: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  bucketName: string;
+  publicCustomDomain: string;
+}
+
+async function getR2Config(): Promise<R2Config | null> {
+  const keys = [
+    "R2_ENDPOINT",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET_NAME",
+    "R2_PUBLIC_CUSTOM_DOMAIN",
+  ];
+  const rows = await prisma.systemConfig
+    .findMany({ where: { key: { in: keys } } })
+    .catch(() => [] as { key: string; value: string }[]);
+  const map = new Map(rows.map((r) => [r.key, r.value]));
+
+  const endpoint = map.get("R2_ENDPOINT") || process.env.R2_ENDPOINT || "";
+  const accessKeyId = map.get("R2_ACCESS_KEY_ID") || process.env.R2_ACCESS_KEY_ID || "";
+  const secretAccessKey = map.get("R2_SECRET_ACCESS_KEY") || process.env.R2_SECRET_ACCESS_KEY || "";
+  const bucketName = map.get("R2_BUCKET_NAME") || process.env.R2_BUCKET_NAME || "";
+  const publicCustomDomain = map.get("R2_PUBLIC_CUSTOM_DOMAIN") || process.env.R2_PUBLIC_CUSTOM_DOMAIN || "";
+
+  if (!endpoint || !accessKeyId || !secretAccessKey || !bucketName || !publicCustomDomain) {
+    return null;
+  }
+
+  return { endpoint, accessKeyId, secretAccessKey, bucketName, publicCustomDomain };
+}
+
+export class R2StorageProvider implements StorageProvider {
+  private client: S3Client;
+  private bucketName: string;
+  private publicCustomDomain: string;
+
+  constructor(config: R2Config) {
+    this.client = new S3Client({
+      region: "auto",
+      endpoint: config.endpoint,
+      credentials: {
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
+      },
+    });
+    this.bucketName = config.bucketName;
+    this.publicCustomDomain = config.publicCustomDomain.replace(/\/$/, "");
+  }
+
+  async upload(buffer: Buffer, key: string): Promise<string> {
+    const ext = key.split(".").pop()?.toLowerCase() || "";
+    const contentType = MIME_MAP[ext] || "application/octet-stream";
+
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      }),
+    );
+
+    console.log(`[storage/r2] Upload OK key=${key}`);
+    return this.getUrl(key);
+  }
+
+  async delete(key: string): Promise<void> {
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+    } catch (err) {
+      console.error(`[storage/r2] Delete failed for key=${key}`, err);
+    }
+  }
+
+  getUrl(key: string): string {
+    return `${this.publicCustomDomain}/${key}`;
+  }
+}
+
 // --------------- Factory ---------------
 
 let cachedProvider: StorageProvider | null = null;
@@ -231,20 +321,33 @@ let cachedProviderType: string | null = null;
 /**
  * Returns the active storage provider.
  * Reads STORAGE_PROVIDER from DB (SystemConfig) first, falls back to process.env.
- * Supports: "local" (default), "gcs" (Google Cloud Storage), "gdrive" (Google Drive).
+ * Supports: "local" (default), "r2" (Cloudflare R2), "gcs" (Google Cloud Storage), "gdrive" (Google Drive).
  * Call resetStorageCache() if admin changes config at runtime.
  */
 export async function getStorage(): Promise<StorageProvider> {
   const dbProvider = await prisma.systemConfig
     .findUnique({ where: { key: "STORAGE_PROVIDER" } })
     .catch(() => null);
-  const providerType = dbProvider?.value || process.env.STORAGE_PROVIDER || "local";
+  const providerType = (dbProvider?.value || process.env.STORAGE_PROVIDER || "local").toLowerCase();
 
   if (cachedProvider && cachedProviderType === providerType) {
     return cachedProvider;
   }
 
   switch (providerType) {
+    case "r2": {
+      const config = await getR2Config();
+      if (!config) {
+        console.warn("[storage] R2 configured but credentials missing — falling back to local");
+        cachedProvider = createLocalProvider();
+        cachedProviderType = "local";
+        return cachedProvider;
+      }
+      console.log(`[storage] Using Cloudflare R2 bucket=${config.bucketName} domain=${config.publicCustomDomain}`);
+      cachedProvider = new R2StorageProvider(config);
+      cachedProviderType = providerType;
+      return cachedProvider;
+    }
     case "gcs": {
       const config = await getGCSConfig();
       if (!config) {
@@ -287,3 +390,20 @@ function createLocalProvider(): LocalStorageProvider {
 
 /** @deprecated Use getStorage() instead for dynamic DB config support */
 export const storage = createLocalProvider();
+
+// --------------- Convenience helper ---------------
+
+/**
+ * Upload a file buffer to the active storage provider.
+ * Automatically reads STORAGE_PROVIDER from DB/env.
+ * Returns the public URL of the uploaded file.
+ */
+export async function uploadFileToStorage(
+  fileBuffer: Buffer,
+  fileName: string,
+  folder: string,
+): Promise<string> {
+  const provider = await getStorage();
+  const key = folder ? `${folder}/${fileName}` : fileName;
+  return provider.upload(fileBuffer, key);
+}
