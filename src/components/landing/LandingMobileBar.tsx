@@ -11,7 +11,14 @@ export default function LandingMobileBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
-      <div className="grid grid-cols-4 gap-0">
+      <div className="grid grid-cols-5 gap-0">
+        <Link
+          href="/shop"
+          className="flex flex-col items-center py-2.5 text-orange-600 hover:bg-orange-50 transition-colors"
+        >
+          <span className="text-lg">🛒</span>
+          <span className="text-[10px] font-medium mt-0.5">Shop</span>
+        </Link>
         <a
           href={ZALO_URL}
           target="_blank"
