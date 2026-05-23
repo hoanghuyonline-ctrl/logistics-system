@@ -16,10 +16,10 @@ export default function LandingCTA() {
           {t("landing.readyToStartDesc")}
         </p>
         <div className="animate-fade-up animation-delay-200 mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-white font-semibold rounded-xl hover:bg-blue-50 hover:shadow-xl active:scale-[0.98] transition-all shadow-lg text-sm" style={{ color: "var(--brand-navy)" }}>
+          <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-white font-semibold rounded-xl hover:bg-blue-50 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 shadow-lg text-sm" style={{ color: "var(--brand-navy)" }}>
             {t("landing.createFreeAccount")}
           </Link>
-          <Link href="/login" className="inline-flex items-center justify-center px-8 py-3.5 bg-white/10 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 active:scale-[0.98] transition-all text-sm">
+          <Link href="/login" className="inline-flex items-center justify-center px-8 py-3.5 bg-white/10 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-sm">
             {t("common.signIn")} →
           </Link>
         </div>
