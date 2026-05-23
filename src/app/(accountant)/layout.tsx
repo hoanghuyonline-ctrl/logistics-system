@@ -1,5 +1,6 @@
 import Sidebar from "@/components/layouts/Sidebar";
 import ZaloQRWidget from "@/components/ui/ZaloQRWidget";
+import BackToTop from "@/components/ui/BackToTop";
 
 export default function AccountantLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function AccountantLayout({ children }: { children: React.ReactNo
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">{children}</div>
       </main>
       <ZaloQRWidget className="fixed bottom-4 left-4 md:left-[276px] z-30 md:z-50" />
+      <BackToTop />
     </div>
   );
 }
