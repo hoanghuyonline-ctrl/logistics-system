@@ -19,6 +19,7 @@
 - Keep PostgreSQL
 - Keep Tailwind CSS structure
 - Keep TipTap for rich text editing
+- Keep Ant Design (antd) for admin sales management tables/modals
 - Do not migrate frameworks
 
 ## Database Rules
@@ -53,11 +54,18 @@
   ```
 
 ## Webhook / Public Routes
-- `/api/telegram/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
-- `/api/zalo/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
-- `/api/messenger/webhook` is a public route (no auth) — registered in `src/proxy.ts` `publicPaths`
-- `/api/uploads` is a public route (no auth) — serves uploaded images from disk at runtime
-- `/api/health` is a public route (no auth) — healthcheck endpoint
+All public routes are registered in `src/proxy.ts` `publicPaths`:
+- `/` `/login` `/register` `/shop` `/tracking` — public pages
+- `/api/auth` — NextAuth authentication
+- `/api/health` — healthcheck endpoint (no auth)
+- `/api/public/products` — public product catalog
+- `/api/telegram/webhook` — Telegram chatbot (no auth)
+- `/api/messenger/webhook` — Facebook Messenger chatbot (no auth)
+- `/api/zalo/webhook` — Zalo OA chatbot (no auth)
+- `/api/tracking` — public order tracking lookup (no auth)
+- `/api/webhooks/bank-transfer` — bank transfer webhook (no auth)
+- `/api/leads/capture` — landing page lead capture (no auth)
+- `/api/uploads` — serves uploaded images from disk at runtime (no auth)
 - Any new external webhook must also be added to `publicPaths` in `src/proxy.ts`
 
 ## Image Storage Rules
@@ -99,22 +107,40 @@
 
 ## Product Management Rules
 - Product images stored as JSONB array of `{ path, url }` objects in `images` column
-- Product variants stored as JSONB `{ groups, rows }` in `variants` column
-- Product logistics specs stored as JSONB `{ weight, length, width, height }` in `specs` column
+- Product variants stored as JSONB `{ groups, rows }` in `variants` column; dynamic based on category
+- Product logistics specs stored as JSONB `{ weight, length, width, height }` in `specs` column; shown only for electronics categories
 - `imageUrl` field preserved for backward compatibility (auto-set from first gallery image)
 - Product upload endpoint: `POST /api/products/upload` (ADMIN-only, JPG/PNG/WebP, max 5MB)
 - Product deletion protected by foreign key — cannot delete products with linked SalesRequests
 
+## Sales & Payment Rules
+- **Payment methods:** WALLET (deduct from balance, allow debt) and COD (cash on delivery with address confirmation)
+- COD requires shipping address confirmation before payment — `shippingName`, `shippingPhone`, `shippingAddress` on SalesRequest
+- Wallet payment blocked when balance is insufficient (no debt creation from wallet payment)
+- Paid SalesRequest cancellation triggers automatic wallet refund (REFUND transaction)
+- SalesRequest → PROCESSING auto-creates a procurement Order linked via `orderId`
+- Admin manual wallet adjustments use `MANUAL_ADD`/`MANUAL_DEDUCT` transaction types
+- Notification triggers use `await Promise.allSettled()` — all channels complete before API response (fixes PM2/Windows early termination)
+
 ## Admin UI Rules
 - Admin sidebar organized into 5 collapsible nav groups (TỔNG QUAN, QUẢN LÝ ĐƠN HÀNG, TÀI CHÍNH & PHÂN TÍCH, HỖ TRỢ KHÁCH HÀNG, CÀI ĐẶT HỆ THỐNG)
 - Back to Top floating button present on all layouts (admin, customer, warehouse, accountant)
-- Zalo QR support widget at bottom-left on all layouts — do not remove or overlap
+- Zalo QR support widget consolidated into right-side floating CTA group (not standalone bottom-left)
+- Mobile bottom navigation bar includes Shop button across all authenticated pages
+
+## Public Pages
+- `/` — Landing page (light SaaS footer, tracking timeline, SVG icons, micro-interactions)
+- `/shop` — Public product browsing (accessible without login); "Mua ngay" triggers login redirect with cart retention
+- `/shop/[id]` — Product detail page with gallery, variants, pricing
+- `/tracking` — Public order tracking lookup by order code
+- `/login` `/register` — Authentication pages with optional Google OAuth
 
 ## Current Priorities
 1. Enterprise product management and sales workflow refinements
 2. Vietnamese default locale across all new features
-3. Wallet/payment flow integrity
-4. Notification delivery (SYSTEM + EMAIL + TELEGRAM + ZALO channels)
+3. Wallet/payment flow integrity (COD + wallet + refunds)
+4. Notification delivery (SYSTEM + EMAIL + TELEGRAM + ZALO channels) — `await Promise.allSettled` pattern
 5. CI pipeline (build + typecheck must pass)
 6. Storage reliability (LOCAL default; R2/GDrive/GCS as alternatives)
 7. Production stability on Windows + PM2
+8. Mobile-responsive UI across all authenticated layouts
