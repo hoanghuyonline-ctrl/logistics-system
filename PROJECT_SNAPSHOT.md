@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-23
+**Date:** 2026-05-23 (synced)
 **Branch:** `main`
-**Latest stable commit:** Post PR #379 (Delete Product) — Enterprise product management, R2 storage, dynamic domain, admin sidebar restructure
+**Latest stable commit:** Post PR #380 (Docs Sync) — Enterprise product management, Sales MVP with COD/wallet payment, public shop & tracking, mobile-responsive layout, R2/GDrive storage, dynamic domain, admin sidebar restructure
 
 ---
 
@@ -53,7 +53,7 @@
 - **Vietnamese-First Admin/Accountant/Customer UI Text** (PR #43) — Remaining scoped Admin, Accountant, and Customer hardcoded English UI text converted to `useI18n()` with additive VI/EN/ZH keys; direct shared `Pagination` and `StatusBadge` labels localized; CI/typecheck compatibility updated so PR #43 passed GitHub CI
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
-- **Production Deployment Foundation** — Dockerfile, Docker Compose with PostgreSQL/nginx, healthcheck endpoint, uploads volume persistence, .env.production.example, DEPLOYMENT.md
+- **Production Deployment Foundation** — Dockerfile and Docker Compose (optional, for local PostgreSQL dev); healthcheck endpoint; uploads volume persistence; .env.production.example; DEPLOYMENT.md. **Production runs on Windows + PM2 (not Docker)**
 - **PM2 Production Setup** (PR #50) — `ecosystem.config.js` for PM2 process management on Windows server; production `next start` instead of `npm run dev`; auto-restart on crash/reboot via `pm2-windows-startup`; structured logging to `logs/`; DEPLOYMENT_PM2.md with full command reference
 - **Accountant Dashboard** — Dedicated `(accountant)` route group with role guard, financial KPIs (revenue, profit, debt, deposits, pending payments), recent transactions table, order status summary, `/api/accountant/dashboard` API, VI/EN/ZH translations
 - **Accountant Profit API Access** — ACCOUNTANT role added to `/api/analytics/profit` role check, unlocking finance page for accountants
@@ -325,6 +325,24 @@
 - **Admin Sales Requests Management UI (PR #323)** — Dedicated admin page at `/admin/sales-requests` built with Ant Design (`antd`) components (first antd usage in project). Ant Design `Table` with columns: Code (monospace), Customer (name + phone), Product (with thumbnail), Qty, Estimated Total (vi-VN ₫), Confirmed Price, Status (Ant Design `Tag` with semantic colors per `SalesRequestStatus`), Created Date, Actions. Search by request code, product name, or customer name. Status filter dropdown for all 7 statuses. **Action 1 — Price Confirmation:** For `NEW` requests, "Xác nhận giá" button opens Ant Design `Modal` with request summary and `InputNumber` (VND formatted with ₫ suffix); triggers `POST /api/admin/sales-requests/[id]/confirm` → status transitions to `PRICE_CONFIRMED`, fires SYSTEM + TELEGRAM notification to customer. **Action 2 — Logistics Progression:** For `PAID` requests, step-by-step buttons: `PAID` → `PROCESSING` ("→ Đã đặt hàng") → `COMPLETED` ("→ Hoàn thành") via `PATCH /api/admin/sales-requests/[id]/status`, each transition fires customer notification. Admin sidebar: added 🛍️ "Quản lý đơn mua" nav link (`nav.adminSalesRequests`). 3 new API endpoints: `GET /api/admin/sales-requests` (paginated, filterable, searchable), `POST /api/admin/sales-requests/[id]/confirm`, `PATCH /api/admin/sales-requests/[id]/status`. 27+ new `salesAdmin.*` i18n keys in VI/EN/ZH. **No schema changes; no migration; antd added as dependency; production-safe.**
 
 - **Merge Admin Sales UI (PR #325)** — Consolidated `/admin/sales-requests` into `/admin/sales` as a single unified page using Ant Design Tabs. Products tab and Purchase Requests tab now live under one route (`/admin/sales`). Removed the duplicate `/admin/sales-requests` page entirely. Admin sidebar navigation simplified to single "Bán hàng" entry. All existing functionality preserved (price confirmation, status transitions, product CRUD, search, filters). **No schema changes; no migration; UI consolidation only; production-safe.**
+- **Fix: Admin Sales API Endpoints** (PRs #326, #327) — Restored admin sales-requests API routes deleted in PR #325 merge; switched admin sales page to use existing `/api/sales-requests` endpoints with proper auth and filtering
+- **Shop Product Detail Page** (PR #328) — Product detail page at `/shop/[id]` with e-commerce layout (image gallery, description, variants, pricing, "Mua ngay" button)
+- **Sales-to-Procurement Auto-Order** (PR #329) — Auto-create procurement `Order` when `SalesRequest` transitions to PROCESSING status; links SalesRequest to Order via `orderId` field
+- **Customer Status Mapping Fix** (PR #330) — Corrected status label mapping on customer `/shop/requests` page for proper Vietnamese display
+- **Admin Sales Actions Upgrade** (PR #331) — Added Cancel and Delete actions to admin sales management; fixed status labels for proper Vietnamese display
+- **Admin Sales Filter Polish** (PR #332) — Polished admin sales filter dropdown labels; extended search to customer name/phone
+- **Wallet Debt Tracking Fix** (PR #333) — Corrected wallet debt tracking and display on `/shop/requests` page
+- **Block Insufficient Wallet Payment** (PR #334) — Blocked wallet payment when balance is insufficient; clear error messaging
+- **COD Payment Method** (PR #335) — Added Cash on Delivery (COD) payment option for sales requests; `PaymentMethod` enum (WALLET/COD) on `SalesRequest`; customer COD confirmation flow; migration `20260521060000_add_payment_method_to_sales_request`
+- **Paid Sales Cancel with Refund** (PR #336) — Cancel action with automatic wallet refund for PAID sales requests; refund creates REFUND transaction
+- **COD Shipping Address Confirmation** (PR #337) — Enforced shipping address confirmation before COD payment on `/shop/requests`; required address validation
+- **Product Variants Display to Admin** (PR #338) — Save and display selected product options (capacity, color) in admin sales dashboard; `selectedOptions` JSONB on SalesRequest; migration `20260521080000_add_selected_options_to_sales_request`
+- **Admin Sales Customer Note** (PR #339) — Display customer order note in admin sales dashboard product column
+- **Dynamic Product Category Variants** (PR #340) — Product variants dynamically change based on category selection (e.g. electronics show storage/color, fashion shows size/color)
+- **Conditional Specs Tab** (PR #341) — Specs tab (weight, dimensions) only shown for electronics product categories
+- **Admin Manual Wallet Adjustment** (PR #342) — Manual wallet balance adjustment (add/deduct) in admin user management; `MANUAL_ADD`/`MANUAL_DEDUCT` transaction types; migration `20260521090000_add_manual_wallet_transaction_types`
+- **Manual Deduct UI Fix** (PR #343) — Show minus sign and red color for MANUAL_DEDUCT transactions in history UI
+- **Local Shop Order Tracking Timeline** (PR #344) — Shop order tracking timeline bypasses China-related nodes for local (Sẵn hàng VN) orders; simplified 4-step flow
 
 - **Dynamic Admin SMTP UI Configuration** (PR #345) — Converted static SMTP status display on Admin Settings page (`/admin/settings`) into editable input fields for `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_SECURE`. Values saved directly to database via `SystemConfig` model using new `PUT /api/admin/smtp-diagnostics` endpoint (upsert per key, input validation, masked password handling). GET endpoint now returns value source indicator (`db`/`env`/`none`) so UI shows "(DB)" or "(env)" labels. Email channel (`src/lib/notifications/channels/email.ts`) refactored: replaced module-level static transporter with dynamic `getSmtpConfig()` that queries DB first, falls back to `process.env`, and creates transporter per-send. Test email endpoint also checks DB before env. Resolves Next.js production `.env` caching issue where server restart was required to pick up SMTP config changes. Vietnamese-first UI with save button ("Lưu cấu hình SMTP"), loading state, toast feedback. **No schema changes (reuses existing SystemConfig key/value model); no migration; no new dependencies; backward compatible; production-safe.**
 
@@ -361,6 +379,14 @@
 - **Feat: Admin Settings Dropdown for Storage Provider + Revert next.config.ts** (PR #363) — Replaced free-text input for `STORAGE_PROVIDER` with `<select>` dropdown: "Local (Ổ cứng server)" / "Google Drive (OAuth2)" / "Google Cloud Storage". Updated labels and placeholders for all OAuth2 keys. Reverted `next.config.ts` to remove `images.remotePatterns` (unnecessary for local storage and `<img>` tags). **No schema changes; no migration; backward compatible.**
 
 - **Fix: Serve Local Uploads via API Route — Fixes 404 on Runtime-Added Files** (PR #364) — Next.js standalone mode doesn't serve files added to `public/` at runtime. New API route `src/app/api/uploads/[...path]/route.ts` reads files from `public/uploads/` using Node.js `fs.readFile()` with correct `Content-Type` headers, directory traversal prevention, and 1-year cache. `LocalStorageProvider` URL prefix changed from `/uploads` to `/api/uploads`. `/api/uploads` added to `publicPaths` in `proxy.ts`. **No schema changes; no migration; no new dependencies; backward compatible.**
+
+- **Docs Download via API** (PR #366) — PROJECT_RULES.md and PROJECT_SNAPSHOT.md downloadable via `/api/uploads` route; no new dependencies
+- **Login Redirect Fix for Shop** (PR #367) — Login redirect preserves `callbackUrl` query parameter; returns user to `/shop` after authentication instead of default dashboard
+- **Shop Mobile Bottom Nav** (PR #368) — Added "Cửa hàng" (Shop) button to mobile bottom navigation bar for easy access on all authenticated pages
+- **Mobile Nav Polish** (PR #369) — Unified colors, smaller font, active state indicators on mobile bottom navigation bar across all layouts
+- **Public Order Tracking Page** (PR #370) — Public `/tracking` page for order lookup by order code; accessible without login; added to `publicPaths` in proxy.ts; `/api/tracking` public API endpoint
+- **Landing Page UI/UX Refactor** (PR #371) — Landing page redesign with tracking timeline section, SVG icons, dark footer, micro-interactions, improved visual hierarchy
+- **Footer Light Theme** (PR #372) — Switched footer to light SaaS theme (`bg-slate-50`, dark text, orange hover links) for better readability
 
 - **Automated Order Lifecycle Email Notifications** — Professional international-standard HTML email notifications connected to all core order lifecycle events for both Shop Requests (Sẵn hàng VN) and Buying Requests (Mua hộ Trung Quốc). New `email-templates.ts` module provides responsive HTML templates following DHL/Amazon/FedEx-style layouts: branded header ("Bắc Trung Hải Logistics"), color-coded status badges, order summary tables with pricing breakdowns, CTA buttons ("Xem tiến độ đơn hàng" → thue.eu.cc), and professional footer with company contact info. **Shop Requests:** New `onSalesRequestCreated` trigger fires on `POST /api/sales-requests`; `onSalesRequestStatusChanged` upgraded from `[SYSTEM, TELEGRAM]` to `[SYSTEM, EMAIL, TELEGRAM, ZALO]` across all status change endpoints (`/api/sales-requests/[id]`, `/[id]/pay`, `/[id]/cod`). **Buying Requests:** `onOrderCreated` and `onShipmentStatusChanged` enhanced with product details (name, quantity, prices) for rich HTML rendering. All email calls wrapped in fire-and-forget try-catch; `html` field threaded through `NotificationPayload → sendNotification → sendEmail`. **No schema changes; no migration; no new dependencies; backward compatible; production-safe.**
 
@@ -403,7 +429,8 @@ pm2 restart logistics-system
 | Testing | Vitest |
 | Rich Text | TipTap (react, starter-kit, pm) |
 | Cloud Storage | @aws-sdk/client-s3 (R2), @googleapis/drive (GDrive) |
-| Infra | Windows + PM2 (production), Docker Compose (optional) |
+| Admin UI | Ant Design (antd) — admin sales management |
+| Infra | Windows + PM2 (production); Docker Compose (optional, local dev PostgreSQL only) |
 
 ## Important API Routes
 
@@ -455,8 +482,8 @@ pm2 restart logistics-system
 | `/api/admin/finance-alerts` | GET | Finance danger alerts — debt, negative balances, stale top-ups, unconfirmed pricing, unreconciled orders, refunds (ADMIN-only) |
 | `/api/admin/backup-health` | GET | Backup health check — DB/uploads backup file status, age, size, overall health, recovery guide link (ADMIN-only) |
 | `/api/admin/global-search` | GET | Global search — orders, packages, customers, leads, issues by keyword with grouped results (ADMIN-only) |
-| `/api/admin/backup/database` | POST | Manual database backup — runs pg_dump via Docker, creates timestamped .sql file (ADMIN-only) |
-| `/api/admin/backup/uploads` | POST | Manual uploads backup — compresses uploads/ into timestamped .zip file (ADMIN-only) |
+| `/api/admin/backup/database` | POST | Manual database backup — runs `.bat` script first, Docker pg_dump fallback, creates timestamped .sql file (ADMIN-only) |
+| `/api/admin/backup/uploads` | POST | Manual uploads backup — runs `.bat` script first, PowerShell Compress-Archive fallback, creates timestamped .zip file (ADMIN-only) |
 | `/api/messenger/webhook` | POST | Facebook Messenger webhook — auto-reply, order lookup, lead intake (public, no auth) |
 | `/api/products` | GET/POST | Product list (public active / admin all) and create with images/variants/specs (ADMIN) |
 | `/api/products/[id]` | PATCH/DELETE | Edit or delete product (ADMIN) |
@@ -471,6 +498,10 @@ pm2 restart logistics-system
 | `/api/admin/sales-requests/[id]/status` | PATCH | Logistics status progression: PAID → PROCESSING → COMPLETED, notifies customer (ADMIN/ACCOUNTANT) |
 | `/api/uploads/[...path]` | GET | Serve uploaded files from disk at runtime (public, no auth) — bypasses Next.js static file limitation in standalone mode |
 | `/api/admin/storage-config` | GET/PUT | Admin CRUD for storage provider settings (STORAGE_PROVIDER, GCS_*, GDRIVE_*) |
+| `/api/tracking` | GET | Public order tracking lookup by order code (no auth) |
+| `/api/webhooks/bank-transfer` | POST | Bank transfer webhook for automated top-up confirmation (public, no auth) |
+| `/api/leads/capture` | POST | Public lead capture from landing page forms (no auth) |
+| `/api/sales-requests/[id]/cod` | POST | COD payment confirmation with shipping address (CUSTOMER) |
 
 ## Important Prisma Models
 
@@ -494,9 +525,9 @@ pm2 restart logistics-system
 | **Campaign** | id, name, channel (CampaignChannel), status (CampaignStatus), targetStatus, messageTemplate, scheduledAt, notes, createdById |
 | **CustomerIssue** | id, customerId, orderCode, issueType, description, status, priority, assignedTo, resolution |
 | **Product** | id, name, description (Text), category, estimatedPrice, imageUrl, images (JSONB), variants (JSONB), specs (JSONB), isActive, sortOrder, createdById |
-| **SalesRequest** | id, requestCode, customerId, productId, productName, quantity, estimatedTotal, confirmedPrice, status (SalesRequestStatus), adminNote, customerNote, paidAt, paidFromWallet, confirmedById, confirmedAt, shippingName?, shippingPhone?, shippingAddress? |
+| **SalesRequest** | id, requestCode, customerId, productId, productName, quantity, estimatedTotal, confirmedPrice, status (SalesRequestStatus), adminNote, customerNote, paidAt, paidFromWallet, confirmedById, confirmedAt, shippingName?, shippingPhone?, shippingAddress?, paymentMethod (WALLET/COD), selectedOptions (JSONB), orderId? |
 
-**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType (DEPOSIT/ORDER_PAYMENT/REFUND/ADJUSTMENT/SALES_PAYMENT), SalesRequestStatus (NEW/CONTACTED/PRICE_CONFIRMED/PAID/PROCESSING/COMPLETED/CANCELLED), LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS)
+**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType (DEPOSIT/ORDER_PAYMENT/REFUND/ADJUSTMENT/SALES_PAYMENT/MANUAL_ADD/MANUAL_DEDUCT), SalesRequestStatus (NEW/CONTACTED/PRICE_CONFIRMED/PAID/PROCESSING/COMPLETED/CANCELLED), PaymentMethod (WALLET/COD), LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS), OrderPriority (NORMAL/HIGH/URGENT)
 
 **AuditActions:** ORDER_STATUS_CHANGE, PACKAGE_STATUS_CHANGE, WAREHOUSE_SCAN_LOOKUP, WAREHOUSE_SCAN_UPDATE, WAREHOUSE_RECEIVE_CN, WAREHOUSE_RECEIVE_VN, WAREHOUSE_DELIVERY, ORDER_PRICING_CONFIRMED
 
@@ -504,13 +535,15 @@ pm2 restart logistics-system
 
 - ~~Public landing page visual testing across all 3 locales (VI/EN/ZH)~~ (completed PR #304)
 - Customer-facing documentation for English and Chinese locales
-- Dashboard redesign (not started — landing page complete)
 - ~~Production Telegram bot/chat configuration~~ ✓ webhook registered, bot `@bactrunghai_bot` verified on `thue.eu.cc`
 - ~~Production SMTP configuration~~ ✓ dynamic Admin UI form saves to DB, bypassing `.env` caching
+- ~~Cloud storage provider (S3/R2/MinIO)~~ ✓ Cloudflare R2 (PR #373), Google Drive OAuth2 (PR #361), GCS (PR #355), Local (default)
+- ~~Sales MVP~~ ✓ Full shop with COD/wallet payment, product detail pages, admin management (PRs #315–#344)
+- ~~Public shop & tracking~~ ✓ Public `/shop`, `/tracking` pages, mobile nav, landing page refactor (PRs #366–#372)
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
-- ~~Cloud storage provider (S3/R2/MinIO)~~ ✓ Cloudflare R2 implemented (PR #373), Google Drive OAuth2 (PR #361), GCS (PR #355), Local (default)
 - API route smoke tests (orders, warehouse scan, status transitions)
 - Comprehensive E2E test suite (Playwright)
+- HTTPS/TLS configuration for production
 
 ## Unresolved Issues
 
@@ -522,28 +555,25 @@ pm2 restart logistics-system
 2. **ShipmentStatus enum in Postgres but not as a column** — validation-only layer; adding as Order column later requires data migration.
 3. **bwip-js types** — local interface used because package types don't resolve under `moduleResolution: "bundler"`. Low risk.
 4. **CI lint step uses continue-on-error** — pre-existing lint warnings are not blocking; to be resolved incrementally.
-5. **Notification delivery is fire-and-forget** — failed sends are logged but do not block APIs.
-6. **Zalo OA production integration complete** — webhook, auto-reply, order lookup, sender ID binding, and automatic status notifications all verified working.
+5. **Notification delivery uses `await Promise.allSettled`** — all channels (SYSTEM/EMAIL/TELEGRAM/ZALO) complete before API response; failures logged and tracked in `NotificationFailure` model but do not block APIs.
+6. **Zalo OA production integration complete** — webhook, auto-reply, order lookup, sender ID binding, automatic status notifications, and TOKEN_EXPIRED auto-refresh all verified working.
 7. **Telegram delivery requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in production** — failures are logged and do not block APIs.
-8. **SMTP_* now configurable via Admin UI or environment variables** — DB values (via Admin Settings page) take priority over `process.env`; `.env` values serve as fallback. Keys: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+8. **SMTP configurable via Admin UI or environment variables** — DB values (via Admin Settings page) take priority over `process.env`; `.env` values serve as fallback. Port 465 auto-forces `secure: true`. Keys: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 9. **Camera scan requires HTTPS in production** — `getUserMedia` API is restricted to secure contexts by browsers.
 10. **html5-qrcode is in maintenance mode** — library works as-is (1M weekly downloads) but author is seeking new owners; no new bug fixes expected.
 11. **Camera scanning requires real-device testing** — cannot be tested without a physical camera; 3-second duplicate-scan cooldown may need tuning.
 12. **Package status transitions are server-validated** — should remain aligned with package/shipment workflow.
 13. **Audit log uses structured console logging plus existing OrderStatusLog persistence** — full entity-wide persistent audit table is not implemented yet.
-14. **Image storage defaults to local** — stored under `public/uploads/` via `LocalStorageProvider` by default. Upload URLs served through `/api/uploads/[...path]` API route (NOT static `/uploads/...` which would 404 in standalone mode). Available providers: `LOCAL` (default), `R2` (Cloudflare R2 via `@aws-sdk/client-s3`), `gdrive` (Google Drive OAuth2), `gcs` (Google Cloud Storage). Set `STORAGE_PROVIDER` in Admin Settings or `.env`. R2 config: `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_CUSTOM_DOMAIN`.
+14. **Image storage defaults to local** — stored under `public/uploads/` via `LocalStorageProvider` by default. Upload URLs served through `/api/uploads/[...path]` API route (NOT static `/uploads/...` which would 404 in standalone mode). Available providers: `LOCAL` (default), `R2` (Cloudflare R2 via `@aws-sdk/client-s3`), `gdrive` (Google Drive OAuth2), `gcs` (Google Cloud Storage). Set `STORAGE_PROVIDER` in Admin Settings or `.env`.
 15. **Uploaded images publicly accessible** — anyone with the URL can view them via direct path; acceptable for MVP simplicity.
-16. **Zalo OA access token is short-lived** — current token works but needs OAuth refresh automation for long-term production use.
-17. **Zalo OA tier/package required** — API sending requires an active OA package (ZBS) with sufficient quota; free tier has limitations.
-18. **Zalo auto-bind requires customer initiative** — customers must message the OA at least once with a valid order code to bind their Zalo recipient ID; no admin-side manual binding yet.
+16. **Zalo OA tier/package required** — API sending requires an active OA package (ZBS) with sufficient quota; free tier has limitations.
+17. **Zalo auto-bind requires customer initiative** — customers must message the OA at least once with a valid order code to bind their Zalo recipient ID; no admin-side manual binding yet.
 18. **Smoke tests cover storage only** — 5 Vitest tests for `LocalStorageProvider`; API route and E2E tests not yet implemented.
-19. **Full Docker Compose stack not yet tested end-to-end** — only Docker build verified; needs real server validation.
-24. **Windows standalone deployment now stable** (resolved PRs #264–#266) — PM2 runs `next start` via `node_modules/next/dist/bin/next`; `/api/health` public and verified working; `@prisma/adapter-pg` externalized; CSS/static assets require manual copy after build. PM2 `watch` must remain `false`. Static/public copy remains required after every build.
-25. ~~**CUSTOMER /dashboard error not yet resolved**~~ — **Resolved** by adding error boundaries + fetch isolation hardening. See completed feature entry for full details.
+19. **Windows + PM2 deployment is the production runtime** (resolved PRs #264–#266) — PM2 runs `next start` via `node_modules/next/dist/bin/next`; `/api/health` public and verified working; `@prisma/adapter-pg` externalized; CSS/static assets require manual copy after build. PM2 `watch` must remain `false`. Static/public copy remains required after every build. Docker Compose is available for local dev PostgreSQL only — **not used in production**.
 20. **HTTPS/TLS is not configured yet** — documented in DEPLOYMENT.md as a separate step; required for camera barcode scanning.
-21. **Production requires .env.production** — docker-compose will not start without this file.
-22. **DB/app ports not exposed directly** — nginx is the public entrypoint on port 80; direct DB access requires adding port mapping.
-23. **Zalo TOKEN_EXPIRED now auto-recovered** (resolved PR #179) — System automatically refreshes access token on -216 error and retries. Requires ZALO_OA_REFRESH_TOKEN, ZALO_APP_ID, and ZALO_APP_SECRET_KEY to be configured. Manual intervention only needed if refresh token itself expires (~3 months).
-24. **APP_DOMAIN must be configured** — Set `APP_DOMAIN` in Admin Settings → "Domain hệ thống" for correct asset URL resolution. Fallback chain: DB APP_DOMAIN → env APP_DOMAIN → NEXTAUTH_URL → relative paths. New uploads store relative paths only; existing absolute URLs work as-is.
-25. **Product variants/specs stored as JSONB** — `images`, `variants`, `specs` fields on Product model are flexible JSON; no strict schema validation at DB level. Application-level validation in ProductForm component.
-26. **Admin sidebar uses collapsible groups** — 5 nav groups with chevron toggle; auto-expands on active route. Non-admin sidebars unchanged.
+21. **Zalo TOKEN_EXPIRED now auto-recovered** (resolved PR #179) — System automatically refreshes access token on -216 error and retries. Requires ZALO_OA_REFRESH_TOKEN, ZALO_APP_ID, and ZALO_APP_SECRET_KEY to be configured. Manual intervention only needed if refresh token itself expires (~3 months).
+22. **APP_DOMAIN must be configured** — Set `APP_DOMAIN` in Admin Settings → "Domain hệ thống" for correct asset URL resolution. Fallback chain: DB APP_DOMAIN → env APP_DOMAIN → NEXTAUTH_URL → relative paths. New uploads store relative paths only; existing absolute URLs work as-is.
+23. **Product variants/specs stored as JSONB** — `images`, `variants`, `specs` fields on Product model are flexible JSON; no strict schema validation at DB level. Application-level validation in ProductForm component.
+24. **Admin sidebar uses collapsible groups** — 5 nav groups with chevron toggle; auto-expands on active route. Non-admin sidebars unchanged.
+25. **COD payment requires address confirmation** — customers must confirm shipping address before COD payment on shop requests.
+26. **Sales-to-procurement auto-order** — SalesRequest PROCESSING status auto-creates a procurement Order; cancelling the SalesRequest does not auto-cancel the linked Order.
