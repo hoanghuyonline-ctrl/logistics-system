@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import type { NextRequest } from "next/server";
-import { getStorage, extractDriveFileId } from "@/lib/storage";
+import { getStorage, extractDriveFileId, uploadFileToStorage } from "@/lib/storage";
+import { buildAssetUrl, extractStorageKey } from "@/lib/url";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -24,7 +25,14 @@ export const GET = withErrorHandler(async function GET(_req: NextRequest, ctx: R
     orderBy: { createdAt: "desc" },
   });
 
-  return jsonResponse(images);
+  const resolved = await Promise.all(
+    images.map(async (img) => ({
+      ...img,
+      imageUrl: await buildAssetUrl(img.imageUrl),
+    })),
+  );
+
+  return jsonResponse(resolved);
 });
 
 export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
@@ -55,15 +63,14 @@ export const POST = withErrorHandler(async function POST(req: NextRequest, ctx: 
   const buffer = Buffer.from(bytes);
 
   const safeName = sanitizeFilename(file.name);
-  const key = `packages/${id}-${Date.now()}-${safeName}`;
-  const store = await getStorage();
-  const imageUrl = await store.upload(buffer, key);
+  const fileName = `${id}-${Date.now()}-${safeName}`;
+  const savedPath = await uploadFileToStorage(buffer, fileName, "packages");
 
   const image = await prisma.packageImage.create({
-    data: { packageId: id, imageUrl },
+    data: { packageId: id, imageUrl: savedPath },
   });
 
-  return jsonResponse(image, 201);
+  return jsonResponse({ ...image, imageUrl: await buildAssetUrl(savedPath) }, 201);
 });
 
 export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, ctx: RouteContext<"/api/packages/[id]/images">) {
@@ -91,7 +98,7 @@ export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, c
     ? driveFileId
     : isGcsUrl
       ? image.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^/]+\//, "")
-      : image.imageUrl.replace(/^\/uploads\//, "");
+      : extractStorageKey(image.imageUrl);
   await store.delete(key);
 
   await prisma.packageImage.delete({ where: { id: imageId } });

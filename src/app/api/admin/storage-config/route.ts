@@ -3,9 +3,11 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { resetStorageCache } from "@/lib/storage";
+import { resetDomainCache } from "@/lib/url";
 import type { NextRequest } from "next/server";
 
 const STORAGE_KEYS = [
+  "APP_DOMAIN",
   "STORAGE_PROVIDER",
   "GCS_BUCKET",
   "GCS_CREDENTIALS",
@@ -70,7 +72,14 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest) {
     if (SENSITIVE_KEYS.has(key) && value === "••••••••") {
       continue;
     }
-    updates.push({ key, value });
+    let cleanValue = value;
+    if (key === "APP_DOMAIN") {
+      cleanValue = value.trim().replace(/\/+$/, "");
+      if (cleanValue && !/^https?:\/\/.+/.test(cleanValue)) {
+        return errorResponse("APP_DOMAIN phải bắt đầu bằng http:// hoặc https://", 400);
+      }
+    }
+    updates.push({ key, value: cleanValue });
   }
 
   if (updates.length === 0) {
@@ -88,6 +97,7 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest) {
   );
 
   resetStorageCache();
+  resetDomainCache();
 
   return jsonResponse({ success: true, message: "Đã lưu cấu hình lưu trữ" });
 });

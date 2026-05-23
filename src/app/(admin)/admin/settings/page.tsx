@@ -811,6 +811,7 @@ export default function SettingsPage() {
             <div className="space-y-3">
               {storageConfig.map((item) => {
                 const labels: Record<string, string> = {
+                  APP_DOMAIN: "Domain hệ thống (System Domain)",
                   STORAGE_PROVIDER: "Nhà cung cấp lưu trữ",
                   GCS_BUCKET: "Tên bucket GCS (chỉ dùng cho gcs)",
                   GCS_CREDENTIALS: "Service Account JSON (chỉ dùng cho gcs)",
@@ -825,6 +826,7 @@ export default function SettingsPage() {
                   R2_PUBLIC_CUSTOM_DOMAIN: "R2 Public Custom Domain",
                 };
                 const placeholders: Record<string, string> = {
+                  APP_DOMAIN: "https://thue.eu.cc",
                   STORAGE_PROVIDER: "local, r2, gdrive, hoặc gcs",
                   GCS_BUCKET: "my-logistics-bucket",
                   GCS_CREDENTIALS: "Dán nội dung JSON Service Account...",

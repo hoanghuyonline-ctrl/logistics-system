@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, generateSalesCode, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
 import { createNotification, onSalesRequestCreated } from "@/lib/notifications";
+import { buildAssetUrl } from "@/lib/url";
 
 export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -47,7 +48,16 @@ export const GET = withErrorHandler(async function GET(request: Request) {
     prisma.salesRequest.count({ where }),
   ]);
 
-  return jsonResponse({ requests, total, page, totalPages: Math.ceil(total / limit) });
+  const resolved = await Promise.all(
+    requests.map(async (r) => ({
+      ...r,
+      product: r.product
+        ? { ...r.product, imageUrl: await buildAssetUrl(r.product.imageUrl) }
+        : r.product,
+    })),
+  );
+
+  return jsonResponse({ requests: resolved, total, page, totalPages: Math.ceil(total / limit) });
 });
 
 export const POST = withErrorHandler(async function POST(request: Request) {

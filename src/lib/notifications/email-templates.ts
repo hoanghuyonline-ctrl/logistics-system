@@ -7,7 +7,10 @@
 
 const BRAND_COLOR = "#1a56db";
 const BRAND_ACCENT = "#f97316";
-const SITE_URL = "https://thue.eu.cc";
+
+function getSiteUrl(): string {
+  return (process.env.APP_DOMAIN || process.env.NEXTAUTH_URL || "https://thue.eu.cc").replace(/\/+$/, "");
+}
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   // Buying request (Order) statuses
@@ -88,7 +91,7 @@ ${content}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr>
 <td style="text-align:center;padding-bottom:12px;">
-<a href="${SITE_URL}" style="color:${BRAND_COLOR};font-size:13px;text-decoration:none;font-weight:600;">thue.eu.cc</a>
+<a href="${getSiteUrl()}" style="color:${BRAND_COLOR};font-size:13px;text-decoration:none;font-weight:600;">thue.eu.cc</a>
 </td>
 </tr>
 <tr>
@@ -197,7 +200,7 @@ ${greeting(name)}
 </p>
 ${statusBadge("PENDING")}
 ${orderTable(rows)}
-${ctaButton("Xem tiến độ đơn hàng", `${SITE_URL}/orders`)}
+${ctaButton("Xem tiến độ đơn hàng", `${getSiteUrl()}/orders`)}
 <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
 Chi phí trên là ước tính ban đầu. Chi phí cuối cùng sẽ được xác nhận sau khi đơn hàng được xử lý hoàn tất.
 </p>`;
@@ -272,7 +275,7 @@ ${statusBadge(to)}
 ${contextMessage}
 </p>
 ${orderTable(rows)}
-${ctaButton("Xem tiến độ đơn hàng", `${SITE_URL}/orders`)}`;
+${ctaButton("Xem tiến độ đơn hàng", `${getSiteUrl()}/orders`)}`;
 
   return baseLayout(content);
 }
@@ -306,7 +309,7 @@ Yêu cầu mua hàng <strong>${code}</strong> đã được tiếp nhận. Nhân
 </p>
 ${statusBadge("NEW")}
 ${orderTable(rows)}
-${ctaButton("Xem đơn mua hàng", `${SITE_URL}/shop/requests`)}
+${ctaButton("Xem đơn mua hàng", `${getSiteUrl()}/shop/requests`)}
 <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
 Giá cuối cùng sẽ được xác nhận bởi nhân viên. Bạn sẽ nhận thông báo khi giá được duyệt.
 </p>`;
@@ -374,7 +377,7 @@ ${statusBadge(status)}
 ${contextMessage}
 </p>
 ${orderTable(rows)}
-${ctaButton("Xem đơn mua hàng", `${SITE_URL}/shop/requests`)}`;
+${ctaButton("Xem đơn mua hàng", `${getSiteUrl()}/shop/requests`)}`;
 
   return baseLayout(content);
 }
@@ -413,7 +416,7 @@ ${greeting(adminName)}
 Có đơn hàng mới cần xử lý:
 </p>
 ${orderTable(rows)}
-${ctaButton("Quản lý đơn hàng", `${SITE_URL}/admin/${params.orderType === "buying" ? "orders" : "sales"}`)}`;
+${ctaButton("Quản lý đơn hàng", `${getSiteUrl()}/admin/${params.orderType === "buying" ? "orders" : "sales"}`)}`;
 
   return baseLayout(content);
 }
