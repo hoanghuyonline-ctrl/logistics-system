@@ -14,6 +14,11 @@ interface NavItem {
   icon: string;
 }
 
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
 const customerNav: NavItem[] = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
   { labelKey: "nav.shop", href: "/shop", icon: "🛒" },
@@ -29,29 +34,56 @@ const customerNav: NavItem[] = [
 
 const NOTIFICATION_NAV_ROLES = ["CUSTOMER", "ADMIN"];
 
-const adminNav: NavItem[] = [
-  { labelKey: "nav.operations", href: "/admin/operations", icon: "🏠" },
-  { labelKey: "nav.dashboard", href: "/admin/dashboard", icon: "📊" },
-  { labelKey: "nav.users", href: "/admin/users", icon: "👥" },
-  { labelKey: "nav.orders", href: "/admin/orders", icon: "📦" },
-  { labelKey: "nav.packages", href: "/admin/packages", icon: "📫" },
-  { labelKey: "nav.finance", href: "/admin/finance", icon: "💰" },
-  { labelKey: "nav.settings", href: "/admin/settings", icon: "⚙️" },
-  { labelKey: "nav.analytics", href: "/admin/analytics", icon: "📈" },
-  { labelKey: "nav.auditLog", href: "/admin/audit-log", icon: "📝" },
-  { labelKey: "nav.supportKnowledge", href: "/admin/support-knowledge", icon: "📚" },
-  { labelKey: "nav.systemHealth", href: "/admin/system-health", icon: "🩺" },
-  { labelKey: "nav.stuckShipments", href: "/admin/stuck-shipments", icon: "⚠️" },
-  { labelKey: "nav.notificationFailures", href: "/admin/notification-failures", icon: "🔔" },
-  { labelKey: "nav.customerIssues", href: "/admin/customer-issues", icon: "📋" },
-  { labelKey: "nav.customerAlerts", href: "/admin/customer-alerts", icon: "⚠️" },
-  { labelKey: "nav.staffNotes", href: "/admin/staff-notes", icon: "🔖" },
-  { labelKey: "nav.leads", href: "/admin/leads", icon: "📥" },
-  { labelKey: "nav.crm", href: "/admin/crm", icon: "🎯" },
-  { labelKey: "nav.campaigns", href: "/admin/campaigns", icon: "📣" },
-  { labelKey: "nav.analyticsSummary", href: "/admin/analytics-summary", icon: "📈" },
-  { labelKey: "nav.adminSales", href: "/admin/sales", icon: "🛒" },
+const adminNavGroups: NavGroup[] = [
+  {
+    label: "TỔNG QUAN",
+    items: [
+      { labelKey: "nav.operations", href: "/admin/operations", icon: "🏠" },
+      { labelKey: "nav.dashboard", href: "/admin/dashboard", icon: "📊" },
+      { labelKey: "nav.users", href: "/admin/users", icon: "👥" },
+    ],
+  },
+  {
+    label: "QUẢN LÝ ĐƠN HÀNG",
+    items: [
+      { labelKey: "nav.orders", href: "/admin/orders", icon: "📦" },
+      { labelKey: "nav.packages", href: "/admin/packages", icon: "📫" },
+      { labelKey: "nav.stuckShipments", href: "/admin/stuck-shipments", icon: "⚠️" },
+      { labelKey: "nav.adminSales", href: "/admin/sales", icon: "🛒" },
+    ],
+  },
+  {
+    label: "TÀI CHÍNH & PHÂN TÍCH",
+    items: [
+      { labelKey: "nav.finance", href: "/admin/finance", icon: "💰" },
+      { labelKey: "nav.analytics", href: "/admin/analytics", icon: "📈" },
+      { labelKey: "nav.analyticsSummary", href: "/admin/analytics-summary", icon: "📈" },
+    ],
+  },
+  {
+    label: "HỖ TRỢ KHÁCH HÀNG",
+    items: [
+      { labelKey: "nav.supportKnowledge", href: "/admin/support-knowledge", icon: "📚" },
+      { labelKey: "nav.customerIssues", href: "/admin/customer-issues", icon: "📋" },
+      { labelKey: "nav.customerAlerts", href: "/admin/customer-alerts", icon: "⚠️" },
+      { labelKey: "nav.leads", href: "/admin/leads", icon: "📥" },
+      { labelKey: "nav.crm", href: "/admin/crm", icon: "🎯" },
+      { labelKey: "nav.campaigns", href: "/admin/campaigns", icon: "📣" },
+      { labelKey: "nav.staffNotes", href: "/admin/staff-notes", icon: "🔖" },
+    ],
+  },
+  {
+    label: "CÀI ĐẶT HỆ THỐNG",
+    items: [
+      { labelKey: "nav.settings", href: "/admin/settings", icon: "⚙️" },
+      { labelKey: "nav.systemHealth", href: "/admin/system-health", icon: "🩺" },
+      { labelKey: "nav.auditLog", href: "/admin/audit-log", icon: "📝" },
+      { labelKey: "nav.notificationFailures", href: "/admin/notification-failures", icon: "🔔" },
+    ],
+  },
 ];
+
+const adminNav: NavItem[] = adminNavGroups.flatMap((g) => g.items);
 
 const warehouseCNNav: NavItem[] = [
   { labelKey: "nav.dashboard", href: "/warehouse/china/dashboard", icon: "📊" },
@@ -83,12 +115,80 @@ function getNavItems(role: string): NavItem[] {
   }
 }
 
+function NavLink({ item, pathname, onNavigate, t }: {
+  item: NavItem;
+  pathname: string;
+  onNavigate?: () => void;
+  t: (key: string) => string;
+}) {
+  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 ${
+        isActive
+          ? "bg-blue-50 text-blue-700 shadow-sm"
+          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+      }`}
+    >
+      <span className="text-base w-6 text-center flex-shrink-0">{item.icon}</span>
+      <span>{t(item.labelKey)}</span>
+      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />}
+    </Link>
+  );
+}
+
+function CollapsibleGroup({ group, pathname, onNavigate, t }: {
+  group: NavGroup;
+  pathname: string;
+  onNavigate?: () => void;
+  t: (key: string) => string;
+}) {
+  const hasActive = group.items.some(
+    (item) => pathname === item.href || pathname.startsWith(item.href + "/"),
+  );
+  const [open, setOpen] = useState(hasActive);
+
+  useEffect(() => {
+    if (hasActive) setOpen(true);
+  }, [hasActive]);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center w-full px-3 py-2 text-[11px] font-semibold tracking-wide text-slate-400 hover:text-slate-600 transition-colors"
+      >
+        <span className="flex-1 text-left">{group.label}</span>
+        <svg
+          className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="space-y-0.5 mt-0.5">
+          {group.items.map((item) => (
+            <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} t={t} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { t, locale, setLocale } = useI18n();
   const role = (session?.user as Record<string, unknown>)?.role as string || "CUSTOMER";
   const navItems = getNavItems(role);
+  const isAdmin = role === "ADMIN";
 
   return (
     <>
@@ -106,26 +206,26 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                isActive
-                  ? "bg-blue-50 text-blue-700 shadow-sm"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-              }`}
-            >
-              <span className="text-base w-6 text-center flex-shrink-0">{item.icon}</span>
-              <span>{t(item.labelKey)}</span>
-              {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        {isAdmin ? (
+          <div className="space-y-2">
+            {adminNavGroups.map((group) => (
+              <CollapsibleGroup
+                key={group.label}
+                group={group}
+                pathname={pathname}
+                onNavigate={onNavigate}
+                t={t}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {navItems.map((item) => (
+              <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} t={t} />
+            ))}
+          </div>
+        )}
         {NOTIFICATION_NAV_ROLES.includes(role) && <NotificationDropdown />}
       </nav>
 
