@@ -24,9 +24,16 @@ const TRANSITIONS: Record<string, string[]> = {
   OUT_FOR_DELIVERY: ["COMPLETED"],
 };
 
+const ORDER_TYPE_BADGES: Record<string, { label: string; icon: string; color: string }> = {
+  ECOMMERCE: { label: "TMDT", icon: "🛒", color: "bg-blue-50 text-blue-600" },
+  ENTRUST: { label: "Ủy thác", icon: "📦", color: "bg-emerald-50 text-emerald-600" },
+  CONSIGNMENT: { label: "Ký gửi", icon: "🚚", color: "bg-orange-50 text-orange-600" },
+};
+
 interface Order {
   id: string;
   orderCode: string;
+  orderType: string;
   productName: string;
   quantity: number;
   status: string;
@@ -271,7 +278,10 @@ function AdminOrdersContent() {
                             </div>
                             <StatusBadge status={order.status} />
                           </div>
-                          <p className="text-sm text-slate-600 mt-0.5">{order.user.fullName}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-sm text-slate-600">{order.user.fullName}</span>
+                            {(() => { const b = ORDER_TYPE_BADGES[order.orderType]; return b ? <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${b.color}`}>{b.icon} {b.label}</span> : null; })()}
+                          </div>
                           <p className="text-sm font-bold text-slate-900 mt-1 break-all">{order.productName}</p>
                         </div>
                       }
@@ -358,7 +368,12 @@ function AdminOrdersContent() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">{order.productName}</td>
+                        <td className="px-6 py-4 text-sm text-slate-700 max-w-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate">{order.productName}</span>
+                            {(() => { const b = ORDER_TYPE_BADGES[order.orderType]; return b && order.orderType !== "ECOMMERCE" ? <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${b.color}`}>{b.icon} {b.label}</span> : null; })()}
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5">
                             <StatusBadge status={order.status} />
