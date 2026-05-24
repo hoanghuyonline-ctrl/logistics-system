@@ -123,7 +123,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   const body = await request.json();
   const { productName, productLink, quantity, unitPriceCNY, notes, productImage } = body;
 
-  if (!productName || !productLink || !quantity || !unitPriceCNY) {
+  if (!productName || !quantity || !unitPriceCNY) {
     return errorResponse("Missing required fields");
   }
 
@@ -157,7 +157,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       orderCode: generateOrderCode(),
       userId: customerId,
       productName,
-      productLink,
+      productLink: productLink || "",
       productImage,
       quantity: parseInt(quantity),
       unitPriceCNY: parseFloat(unitPriceCNY),

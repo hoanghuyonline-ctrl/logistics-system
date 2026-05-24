@@ -384,6 +384,17 @@ const vi: Record<string, string> = {
   "newOrder.priceConfirmNote": "Chi phí sẽ được công ty xác nhận sau khi kiểm tra đơn hàng.",
   "newOrder.contactCompanyNote": "Giá thực tế vui lòng liên hệ công ty.",
   "newOrder.estimateOnly": "Giá tham khảo",
+  "newOrder.productLinkOptional": "(Có thêm càng tốt - Không bắt buộc)",
+  "newOrder.imageUploadTitle": "Ảnh sản phẩm",
+  "newOrder.imageUploadRequired": "Vui lòng tải lên ít nhất 1 ảnh sản phẩm",
+  "newOrder.imageUploadDrop": "Kéo thả ảnh vào đây",
+  "newOrder.imageUploadOr": "hoặc",
+  "newOrder.imageUploadBrowse": "Chọn từ máy",
+  "newOrder.imageUploadPaste": "Nhấn Ctrl + V để dán ảnh từ clipboard",
+  "newOrder.imageUploadFormats": "JPG, PNG, WebP — tối đa 5MB mỗi ảnh",
+  "newOrder.imageUploading": "Đang tải ảnh lên...",
+  "newOrder.imageUploadError": "Tải ảnh thất bại",
+  "newOrder.imageUploadSuccess": "Ảnh đã tải lên thành công",
 
   // Pricing confirmation
   "pricing.systemEstimate": "Giá dự kiến hệ thống",
