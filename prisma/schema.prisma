@@ -172,6 +172,25 @@ model Order {
   taxCode                   String?
   companyName               String?
   companyAddress             String?
+  // Enhanced entrust fields
+  entrustShipmentType       String?     // FCL or LCL
+  entrustServices           String?     // JSON array of selected services
+  cargoValueCurrency        String?     // USD or CNY
+  cargoValueAmount          Decimal?    @db.Decimal(15, 2)
+  cargoValueVND             Decimal?    @db.Decimal(15, 2)
+  dimensionLength           Decimal?    @db.Decimal(8, 2)
+  dimensionWidth            Decimal?    @db.Decimal(8, 2)
+  dimensionHeight           Decimal?    @db.Decimal(8, 2)
+  cbm                       Decimal?    @db.Decimal(10, 4)
+  entrustQuantity           Int?
+  waybillCode               String?
+  waybillImages             String?     // JSON array of image URLs
+  relatedDocuments          String?     // JSON array of document URLs
+  cnTruckPlate              String?
+  cnDriverName              String?
+  cnDriverPhone             String?
+  cnTruckImages             String?     // JSON array of truck photo URLs
+  // Consignment fields
   consignmentTrackingNumber String?
   consignmentNotes          String?
   internationalShippingRate Decimal     @db.Decimal(10, 2)

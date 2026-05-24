@@ -65,6 +65,23 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: Ro
     if (body.taxCode !== undefined) data.taxCode = body.taxCode || null;
     if (body.companyName !== undefined) data.companyName = body.companyName || null;
     if (body.companyAddress !== undefined) data.companyAddress = body.companyAddress || null;
+    if (body.entrustShipmentType !== undefined) data.entrustShipmentType = body.entrustShipmentType || null;
+    if (body.entrustServices !== undefined) data.entrustServices = body.entrustServices ? JSON.stringify(body.entrustServices) : null;
+    if (body.cargoValueCurrency !== undefined) data.cargoValueCurrency = body.cargoValueCurrency || null;
+    if (body.cargoValueAmount !== undefined) data.cargoValueAmount = body.cargoValueAmount ? parseFloat(body.cargoValueAmount) : null;
+    if (body.cargoValueVND !== undefined) data.cargoValueVND = body.cargoValueVND ? parseFloat(body.cargoValueVND) : null;
+    if (body.dimensionLength !== undefined) data.dimensionLength = body.dimensionLength ? parseFloat(body.dimensionLength) : null;
+    if (body.dimensionWidth !== undefined) data.dimensionWidth = body.dimensionWidth ? parseFloat(body.dimensionWidth) : null;
+    if (body.dimensionHeight !== undefined) data.dimensionHeight = body.dimensionHeight ? parseFloat(body.dimensionHeight) : null;
+    if (body.cbm !== undefined) data.cbm = body.cbm ? parseFloat(body.cbm) : null;
+    if (body.entrustQuantity !== undefined) data.entrustQuantity = body.entrustQuantity ? parseInt(body.entrustQuantity) : null;
+    if (body.waybillCode !== undefined) data.waybillCode = body.waybillCode || null;
+    if (body.waybillImages !== undefined) data.waybillImages = body.waybillImages ? JSON.stringify(body.waybillImages) : null;
+    if (body.relatedDocuments !== undefined) data.relatedDocuments = body.relatedDocuments ? JSON.stringify(body.relatedDocuments) : null;
+    if (body.cnTruckPlate !== undefined) data.cnTruckPlate = body.cnTruckPlate || null;
+    if (body.cnDriverName !== undefined) data.cnDriverName = body.cnDriverName || null;
+    if (body.cnDriverPhone !== undefined) data.cnDriverPhone = body.cnDriverPhone || null;
+    if (body.cnTruckImages !== undefined) data.cnTruckImages = body.cnTruckImages ? JSON.stringify(body.cnTruckImages) : null;
   } else if (orderType === "CONSIGNMENT") {
     if (body.consignmentTrackingNumber !== undefined) data.consignmentTrackingNumber = body.consignmentTrackingNumber;
     if (body.consignmentNotes !== undefined) data.consignmentNotes = body.consignmentNotes || null;

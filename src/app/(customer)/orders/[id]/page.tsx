@@ -37,6 +37,23 @@ interface OrderDetail {
   taxCode: string | null;
   companyName: string | null;
   companyAddress: string | null;
+  entrustShipmentType: string | null;
+  entrustServices: string | null;
+  cargoValueCurrency: string | null;
+  cargoValueAmount: string | null;
+  cargoValueVND: string | null;
+  dimensionLength: string | null;
+  dimensionWidth: string | null;
+  dimensionHeight: string | null;
+  cbm: string | null;
+  entrustQuantity: number | null;
+  waybillCode: string | null;
+  waybillImages: string | null;
+  relatedDocuments: string | null;
+  cnTruckPlate: string | null;
+  cnDriverName: string | null;
+  cnDriverPhone: string | null;
+  cnTruckImages: string | null;
   consignmentTrackingNumber: string | null;
   consignmentNotes: string | null;
   internationalShippingRate: string;
@@ -404,22 +421,41 @@ export default function OrderDetailPage() {
         {order.orderType === "ENTRUST" && (
           <Card title={t("orderDetail.entrustDetails")}>
             <dl className="space-y-3 text-sm">
-              <div className="flex justify-between items-start">
-                <dt className="text-slate-500">{t("newOrder.itemName")}</dt>
-                <dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd>
-              </div>
-              {order.weightKg && (
-                <div className="flex justify-between">
-                  <dt className="text-slate-500">{t("newOrder.weight")}</dt>
-                  <dd className="font-medium text-slate-900">{order.weightKg} kg</dd>
+              <div className="flex justify-between items-start"><dt className="text-slate-500">{t("newOrder.itemName")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd></div>
+              {order.entrustShipmentType && (
+                <div className="flex justify-between"><dt className="text-slate-500">{t("entrust.shipmentType")}</dt><dd><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-xs font-semibold">{order.entrustShipmentType === "FCL" ? "🚛" : "📦"} {order.entrustShipmentType}</span></dd></div>
+              )}
+              {order.entrustServices && (() => { try { const svc = JSON.parse(order.entrustServices); return Array.isArray(svc) && svc.length > 0 ? (
+                <div className="flex justify-between items-start"><dt className="text-slate-500">{t("entrust.selectServices")}</dt><dd className="flex flex-wrap gap-1 justify-end max-w-[60%]">{svc.map((s: string) => <span key={s} className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs">{t(`entrust.${s === "PICKUP_CN" ? "pickupCn" : s === "CUSTOMS" ? "customs" : s === "SUPERVISION" ? "supervision" : s === "TRANSLOADING" ? "transloading" : "transport"}`)}</span>)}</dd></div>
+              ) : null; } catch { return null; } })()}
+              {(order.dimensionLength || order.dimensionWidth || order.dimensionHeight) && (
+                <div className="flex justify-between"><dt className="text-slate-500">{t("entrust.productInfo")}</dt><dd className="font-medium text-slate-900">{order.dimensionLength || "—"} × {order.dimensionWidth || "—"} × {order.dimensionHeight || "—"} cm</dd></div>
+              )}
+              {order.cbm && <div className="flex justify-between"><dt className="text-slate-500">CBM</dt><dd className="font-medium text-slate-900">{order.cbm} m³</dd></div>}
+              {order.entrustQuantity && <div className="flex justify-between"><dt className="text-slate-500">{t("entrust.quantity")}</dt><dd className="font-medium text-slate-900">{order.entrustQuantity}</dd></div>}
+              {order.weightKg && <div className="flex justify-between"><dt className="text-slate-500">{t("newOrder.weight")}</dt><dd className="font-medium text-slate-900">{order.weightKg} kg</dd></div>}
+              {order.volume && <div className="flex justify-between"><dt className="text-slate-500">{t("newOrder.volume")}</dt><dd className="font-medium text-slate-900">{order.volume} m³</dd></div>}
+              {order.cargoValueAmount && (
+                <div className="flex justify-between"><dt className="text-slate-500">{t("entrust.cargoValue")}</dt><dd className="font-medium text-slate-900">{order.cargoValueCurrency} {parseFloat(order.cargoValueAmount).toLocaleString()}{order.cargoValueVND ? ` ≈ ${parseFloat(order.cargoValueVND).toLocaleString()} VNĐ` : ""}</dd></div>
+              )}
+              {order.waybillCode && <div className="flex justify-between"><dt className="text-slate-500">{t("entrust.waybillCode")}</dt><dd className="font-mono font-medium text-slate-900">{order.waybillCode}</dd></div>}
+              {order.waybillImages && (() => { try { const imgs = JSON.parse(order.waybillImages); return Array.isArray(imgs) && imgs.length > 0 ? (
+                <div><dt className="text-slate-500 mb-2">{t("entrust.waybillImages")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`waybill-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
+              ) : null; } catch { return null; } })()}
+              {order.relatedDocuments && (() => { try { const docs = JSON.parse(order.relatedDocuments); return Array.isArray(docs) && docs.length > 0 ? (
+                <div><dt className="text-slate-500 mb-2">{t("entrust.relatedDocs")}</dt><dd className="space-y-1">{docs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:underline text-xs truncate">📎 {url.split("/").pop()}</a>)}</dd></div>
+              ) : null; } catch { return null; } })()}
+              {(order.cnTruckPlate || order.cnDriverName || order.cnDriverPhone) && (
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <dt className="text-slate-500 font-medium">{t("entrust.cnTruckInfo")}</dt>
+                  {order.cnTruckPlate && <div className="flex justify-between"><span className="text-slate-400">{t("entrust.truckPlate")}</span><span className="font-medium text-slate-900">{order.cnTruckPlate}</span></div>}
+                  {order.cnDriverName && <div className="flex justify-between"><span className="text-slate-400">{t("entrust.driverName")}</span><span className="font-medium text-slate-900">{order.cnDriverName}</span></div>}
+                  {order.cnDriverPhone && <div className="flex justify-between"><span className="text-slate-400">{t("entrust.driverPhone")}</span><span className="font-medium text-slate-900">{order.cnDriverPhone}</span></div>}
                 </div>
               )}
-              {order.volume && (
-                <div className="flex justify-between">
-                  <dt className="text-slate-500">{t("newOrder.volume")}</dt>
-                  <dd className="font-medium text-slate-900">{order.volume} m³</dd>
-                </div>
-              )}
+              {order.cnTruckImages && (() => { try { const imgs = JSON.parse(order.cnTruckImages); return Array.isArray(imgs) && imgs.length > 0 ? (
+                <div><dt className="text-slate-500 mb-2">{t("entrust.truckPhotos")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`truck-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
+              ) : null; } catch { return null; } })()}
               {order.requiresVat && (
                 <>
                   <div className="pt-2 border-t border-slate-100">
@@ -431,10 +467,7 @@ export default function OrderDetailPage() {
                 </>
               )}
               {order.notes && (
-                <div className="flex justify-between items-start">
-                  <dt className="text-slate-500">{t("orderDetail.notes")}</dt>
-                  <dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd>
-                </div>
+                <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.notes")}</dt><dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd></div>
               )}
             </dl>
           </Card>
