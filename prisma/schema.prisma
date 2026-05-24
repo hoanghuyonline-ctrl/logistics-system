@@ -33,6 +33,12 @@ enum OrderPriority {
   URGENT
 }
 
+enum OrderType {
+  ECOMMERCE
+  ENTRUST
+  CONSIGNMENT
+}
+
 enum ShipmentStatus {
   PENDING
   RECEIVED_CHINA
@@ -149,7 +155,9 @@ model Order {
   packageId                 String?
   productName               String
   productLink               String
+  orderType                 OrderType   @default(ECOMMERCE)
   productImage              String?
+  productSpecs              String?
   quantity                  Int
   unitPriceCNY              Decimal     @db.Decimal(10, 2)
   totalPriceCNY             Decimal     @db.Decimal(12, 2)
@@ -159,6 +167,13 @@ model Order {
   serviceFeeVND             Decimal     @db.Decimal(15, 2)
   chinaShippingFee          Decimal     @default(0) @db.Decimal(15, 2)
   weightKg                  Decimal?    @db.Decimal(8, 3)
+  volume                    Decimal?    @db.Decimal(8, 3)
+  requiresVat               Boolean     @default(false)
+  taxCode                   String?
+  companyName               String?
+  companyAddress             String?
+  consignmentTrackingNumber String?
+  consignmentNotes          String?
   internationalShippingRate Decimal     @db.Decimal(10, 2)
   internationalShippingFee  Decimal     @default(0) @db.Decimal(15, 2)
   vietnamDeliveryFee        Decimal     @default(0) @db.Decimal(15, 2)

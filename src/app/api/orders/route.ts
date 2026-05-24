@@ -121,10 +121,28 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { productName, productLink, quantity, unitPriceCNY, notes, productImage } = body;
+  const orderType = body.orderType || "ECOMMERCE";
 
-  if (!productName || !quantity || !unitPriceCNY) {
-    return errorResponse("Missing required fields");
+  if (!["ECOMMERCE", "ENTRUST", "CONSIGNMENT"].includes(orderType)) {
+    return errorResponse("Invalid order type");
+  }
+
+  // Type-specific validation
+  if (orderType === "ECOMMERCE") {
+    const { productName, quantity, unitPriceCNY } = body;
+    if (!productName || !quantity || !unitPriceCNY) {
+      return errorResponse("Missing required fields");
+    }
+  } else if (orderType === "ENTRUST") {
+    const { itemName, weight } = body;
+    if (!itemName || !weight) {
+      return errorResponse("Missing required fields for entrust order");
+    }
+  } else if (orderType === "CONSIGNMENT") {
+    const { consignmentTrackingNumber } = body;
+    if (!consignmentTrackingNumber) {
+      return errorResponse("Missing required fields for consignment order");
+    }
   }
 
   const configs = await prisma.systemConfig.findMany();
@@ -137,14 +155,18 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   const intlRate = parseFloat(configMap.international_shipping_rate || "35000");
   const vnDeliveryDefault = parseFloat(configMap.vietnam_delivery_fee_default || "30000");
 
+  // For non-ecommerce orders, use zero pricing (admin confirms costs later)
+  const unitPrice = orderType === "ECOMMERCE" ? parseFloat(body.unitPriceCNY) : 0;
+  const qty = orderType === "ECOMMERCE" ? parseInt(body.quantity) : 1;
+
   const cost = calculateOrderCost({
-    unitPriceCNY: parseFloat(unitPriceCNY),
-    quantity: parseInt(quantity),
+    unitPriceCNY: unitPrice,
+    quantity: qty,
     exchangeRate,
     serviceFeePercent,
-    chinaShippingFee: chinaShippingDefault,
+    chinaShippingFee: orderType === "ECOMMERCE" ? chinaShippingDefault : 0,
     internationalShippingRate: intlRate,
-    vietnamDeliveryFee: vnDeliveryDefault,
+    vietnamDeliveryFee: orderType === "ECOMMERCE" ? vnDeliveryDefault : 0,
   });
 
   const customerId = hasRole(user.role, ["ADMIN"]) && body.userId ? body.userId : user.id;
@@ -152,15 +174,27 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   const wallet = await prisma.wallet.findUnique({ where: { userId: customerId } });
   if (!wallet) return errorResponse("Wallet not found", 404);
 
+  // Build product name based on order type
+  let productName: string;
+  if (orderType === "ECOMMERCE") {
+    productName = body.productName;
+  } else if (orderType === "ENTRUST") {
+    productName = body.itemName;
+  } else {
+    productName = body.consignmentTrackingNumber;
+  }
+
   const order = await prisma.order.create({
     data: {
       orderCode: generateOrderCode(),
       userId: customerId,
+      orderType,
       productName,
-      productLink: productLink || "",
-      productImage,
-      quantity: parseInt(quantity),
-      unitPriceCNY: parseFloat(unitPriceCNY),
+      productLink: body.productLink || "",
+      productImage: body.productImage,
+      productSpecs: body.productSpecs || null,
+      quantity: qty,
+      unitPriceCNY: unitPrice,
       totalPriceCNY: cost.totalPriceCNY,
       exchangeRate,
       totalPriceVND: cost.totalPriceVND,
@@ -171,7 +205,17 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       internationalShippingFee: cost.internationalShippingFee,
       vietnamDeliveryFee: cost.vietnamDeliveryFee,
       totalCostVND: cost.totalCostVND,
-      notes,
+      notes: body.notes,
+      // Entrust-specific fields
+      weightKg: body.weight ? parseFloat(body.weight) : null,
+      volume: body.volume ? parseFloat(body.volume) : null,
+      requiresVat: body.requiresVat === true,
+      taxCode: body.taxCode || null,
+      companyName: body.companyName || null,
+      companyAddress: body.companyAddress || null,
+      // Consignment-specific fields
+      consignmentTrackingNumber: body.consignmentTrackingNumber || null,
+      consignmentNotes: body.consignmentNotes || null,
       statusLogs: {
         create: {
           toStatus: "PENDING",
