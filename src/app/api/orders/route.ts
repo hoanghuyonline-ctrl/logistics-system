@@ -56,6 +56,9 @@ export const GET = withErrorHandler(async function GET(request: Request) {
       { orderCode: { contains: search, mode: "insensitive" } },
       { productName: { contains: search, mode: "insensitive" } },
     ];
+    searchConditions.push(
+      { consignmentTrackingNumber: { contains: search, mode: "insensitive" } },
+    );
     if (!hasRole(user.role, ["CUSTOMER"])) {
       searchConditions.push(
         { package: { packageCode: { contains: search, mode: "insensitive" } } },

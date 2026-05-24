@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Card from "@/components/ui/Card";
@@ -20,11 +21,20 @@ const TRANSITIONS: Record<string, string[]> = {
   OUT_FOR_DELIVERY: ["COMPLETED"],
 };
 
+const ORDER_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+  ECOMMERCE: { label: "Thương mại điện tử", icon: "🛒", color: "bg-blue-100 text-blue-700" },
+  ENTRUST: { label: "Ủy thác XNK", icon: "📦", color: "bg-emerald-100 text-emerald-700" },
+  CONSIGNMENT: { label: "Ký gửi", icon: "🚚", color: "bg-orange-100 text-orange-700" },
+};
+
 interface OrderDetail {
   id: string;
   orderCode: string;
+  orderType: string;
   productName: string;
   productLink: string;
+  productImage: string | null;
+  productSpecs: string | null;
   quantity: number;
   unitPriceCNY: string;
   totalPriceCNY: string;
@@ -34,6 +44,13 @@ interface OrderDetail {
   serviceFeeVND: string;
   chinaShippingFee: string;
   weightKg: string | null;
+  volume: string | null;
+  requiresVat: boolean;
+  taxCode: string | null;
+  companyName: string | null;
+  companyAddress: string | null;
+  consignmentTrackingNumber: string | null;
+  consignmentNotes: string | null;
   internationalShippingRate: string;
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
@@ -47,9 +64,10 @@ interface OrderDetail {
   priority: string;
   trackingCodeChina: string | null;
   trackingCodeIntl: string | null;
+  notes: string | null;
   customStatusNote: string | null;
   createdAt: string;
-  user: { fullName: string; email: string; phone: string; address: string; zaloRecipientId: string | null };
+  user: { id: string; fullName: string; email: string; phone: string | null; address: string | null; zaloRecipientId: string | null };
   package: { packageCode: string; barcode: string | null } | null;
   statusLogs: Array<{
     id: string;
@@ -270,7 +288,7 @@ export default function AdminOrderDetailPage() {
           <p className="text-sm text-slate-600 mb-4">{error || "Đơn hàng không tồn tại hoặc đã bị xoá."}</p>
           <div className="flex items-center justify-center gap-3">
             <button onClick={loadOrder} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors">Thử lại</button>
-            <a href="/admin/orders" className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Quay lại danh sách</a>
+            <Link href="/admin/orders" className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Quay lại danh sách</Link>
           </div>
         </div>
       </div>
@@ -304,7 +322,19 @@ export default function AdminOrderDetailPage() {
           </span>
         }
         subtitle={`${t("orders.customer")}: ${order.user?.fullName || "—"} · ${order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "—"}`}
-        action={<StatusBadge status={order.status} />}
+        action={
+          <div className="flex items-center gap-2">
+            {(() => {
+              const typeInfo = ORDER_TYPE_LABELS[order.orderType] || ORDER_TYPE_LABELS.ECOMMERCE;
+              return (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${typeInfo.color}`}>
+                  {typeInfo.icon} {typeInfo.label}
+                </span>
+              );
+            })()}
+            <StatusBadge status={order.status} />
+          </div>
+        }
       />
 
       {/* Priority */}
@@ -344,37 +374,87 @@ export default function AdminOrderDetailPage() {
         </Card>
       )}
 
-      <Card title="Link sản phẩm">
-        {order.productLink ? (() => {
-          const domainLabels: Record<string, string> = {
-            "taobao.com": "Taobao",
-            "1688.com": "1688",
-            "tmall.com": "Tmall",
-            "alibaba.com": "Alibaba",
-          };
-          let hostname = "";
-          try { hostname = new URL(order.productLink).hostname; } catch {}
-          const matched = Object.entries(domainLabels).find(([d]) => hostname.includes(d));
-          const label = matched ? `Mở link ${matched[1]}` : "Mở sản phẩm";
-          return (
-            <div>
-              <a
-                href={order.productLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800"
-              >
-                🔗 {label} ↗
-              </a>
-              <p className="text-xs text-slate-400 mt-1 truncate max-w-full" title={order.productLink}>
-                {hostname || order.productLink}
-              </p>
+      {/* Order Type Specific Info */}
+      {order.orderType === "ECOMMERCE" && (
+        <Card title={t("orderDetail.productInfo")}>
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.product")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd></div>
+            {order.productLink ? (() => {
+              const domainLabels: Record<string, string> = { "taobao.com": "Taobao", "1688.com": "1688", "tmall.com": "Tmall", "alibaba.com": "Alibaba" };
+              let hostname = "";
+              try { hostname = new URL(order.productLink).hostname; } catch {}
+              const matched = Object.entries(domainLabels).find(([d]) => hostname.includes(d));
+              const label = matched ? `Mở link ${matched[1]}` : "Mở sản phẩm";
+              return (
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.link")}</dt>
+                  <dd><a href={order.productLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium">🔗 {label} ↗</a></dd>
+                </div>
+              );
+            })() : null}
+            {order.productSpecs && (
+              <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.specs")}</dt><dd className="text-slate-700 text-right max-w-[60%]">{order.productSpecs}</dd></div>
+            )}
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.quantity")}</dt><dd className="font-medium text-slate-900">{order.quantity}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.unitPrice")}</dt><dd className="font-medium text-slate-900">&yen;{fmt(order.unitPriceCNY)} CNY</dd></div>
+            {order.notes && (
+              <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.notes")}</dt><dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd></div>
+            )}
+          </dl>
+        </Card>
+      )}
+
+      {order.orderType === "ENTRUST" && (
+        <Card title={t("orderDetail.entrustDetails")}>
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between items-start"><dt className="text-slate-500">{t("newOrder.itemName")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd></div>
+            {order.weightKg && (
+              <div className="flex justify-between"><dt className="text-slate-500">{t("newOrder.weight")}</dt><dd className="font-medium text-slate-900">{order.weightKg} kg</dd></div>
+            )}
+            {order.volume && (
+              <div className="flex justify-between"><dt className="text-slate-500">{t("newOrder.volume")}</dt><dd className="font-medium text-slate-900">{order.volume} m³</dd></div>
+            )}
+            <div className="flex justify-between">
+              <dt className="text-slate-500">{t("newOrder.requiresVat")}</dt>
+              <dd className={`font-medium ${order.requiresVat ? "text-emerald-600" : "text-slate-400"}`}>{order.requiresVat ? "Có" : "Không"}</dd>
             </div>
-          );
-        })() : (
-          <p className="text-sm text-slate-400">Chưa có link sản phẩm</p>
-        )}
-      </Card>
+            {order.requiresVat && (
+              <>
+                {order.taxCode && <div className="flex justify-between"><dt className="text-slate-500">{t("newOrder.taxCode")}</dt><dd className="font-medium text-slate-900">{order.taxCode}</dd></div>}
+                {order.companyName && <div className="flex justify-between items-start"><dt className="text-slate-500">{t("newOrder.companyName")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.companyName}</dd></div>}
+                {order.companyAddress && <div className="flex justify-between items-start"><dt className="text-slate-500">{t("newOrder.companyAddress")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.companyAddress}</dd></div>}
+              </>
+            )}
+            {order.notes && (
+              <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.notes")}</dt><dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd></div>
+            )}
+          </dl>
+        </Card>
+      )}
+
+      {order.orderType === "CONSIGNMENT" && (
+        <Card title={t("orderDetail.consignmentDetails")}>
+          <dl className="space-y-3 text-sm">
+            {order.consignmentTrackingNumber && (
+              <div className="flex justify-between items-center">
+                <dt className="text-slate-500">{t("newOrder.consignmentTracking")}</dt>
+                <dd className="font-medium text-slate-900 inline-flex items-center gap-1.5">
+                  <span className="font-mono">{order.consignmentTrackingNumber}</span>
+                  <button type="button" onClick={() => copyToClipboard(order.consignmentTrackingNumber!)} className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Sao chép">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                  </button>
+                </dd>
+              </div>
+            )}
+            {order.consignmentNotes && (
+              <div className="flex justify-between items-start"><dt className="text-slate-500">{t("newOrder.consignmentNotes")}</dt><dd className="text-slate-700 text-right max-w-[60%]">{order.consignmentNotes}</dd></div>
+            )}
+            {order.notes && (
+              <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.notes")}</dt><dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd></div>
+            )}
+          </dl>
+        </Card>
+      )}
 
       {order.package && (
         <Card title="Kiện hàng">

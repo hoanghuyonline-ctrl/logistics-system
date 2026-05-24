@@ -10,11 +10,19 @@ import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
 import { getStatusInfo, getDelayWarning, getProgressSteps } from "@/lib/shipment-timeline-info";
 
+const ORDER_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+  ECOMMERCE: { label: "Thương mại điện tử", icon: "🛒", color: "bg-blue-100 text-blue-700" },
+  ENTRUST: { label: "Ủy thác XNK", icon: "📦", color: "bg-emerald-100 text-emerald-700" },
+  CONSIGNMENT: { label: "Ký gửi", icon: "🚚", color: "bg-orange-100 text-orange-700" },
+};
+
 interface OrderDetail {
   id: string;
   orderCode: string;
+  orderType: string;
   productName: string;
   productLink: string;
+  productSpecs: string | null;
   quantity: number;
   unitPriceCNY: string;
   totalPriceCNY: string;
@@ -24,6 +32,13 @@ interface OrderDetail {
   serviceFeeVND: string;
   chinaShippingFee: string;
   weightKg: string | null;
+  volume: string | null;
+  requiresVat: boolean;
+  taxCode: string | null;
+  companyName: string | null;
+  companyAddress: string | null;
+  consignmentTrackingNumber: string | null;
+  consignmentNotes: string | null;
   internationalShippingRate: string;
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
@@ -39,6 +54,7 @@ interface OrderDetail {
   notes: string | null;
   customStatusNote: string | null;
   createdAt: string;
+  user: { id: string; fullName: string; email: string; phone: string | null; address: string | null };
   statusLogs: Array<{
     id: string;
     fromStatus: string | null;
@@ -138,7 +154,19 @@ export default function OrderDetailPage() {
       <PageHeader
         title={`${t("orders.order")} ${order.orderCode}`}
         subtitle={`${t("orders.createdOn")} ${new Date(order.createdAt).toLocaleDateString()}`}
-        action={<StatusBadge status={order.status} />}
+        action={
+          <div className="flex items-center gap-2">
+            {(() => {
+              const typeInfo = ORDER_TYPE_LABELS[order.orderType] || ORDER_TYPE_LABELS.ECOMMERCE;
+              return (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${typeInfo.color}`}>
+                  {typeInfo.icon} {typeInfo.label}
+                </span>
+              );
+            })()}
+            <StatusBadge status={order.status} />
+          </div>
+        }
       />
 
       {order.customStatusNote && (
@@ -329,38 +357,113 @@ export default function OrderDetailPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card title={t("orderDetail.productInfo")}>
-          <dl className="space-y-3 text-sm">
-            <div className="flex justify-between items-start">
-              <dt className="text-slate-500">{t("orderDetail.product")}</dt>
-              <dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.link")}</dt>
-              <dd><a href={order.productLink} target="_blank" className="text-blue-600 hover:text-blue-700 font-medium">{t("orderDetail.viewProduct")}</a></dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.quantity")}</dt>
-              <dd className="font-medium text-slate-900">{order.quantity}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">{t("orderDetail.unitPrice")}</dt>
-              <dd className="font-medium text-slate-900">&yen;{fmt(order.unitPriceCNY)} CNY</dd>
-            </div>
-            {order.weightKg && (
-              <div className="flex justify-between">
-                <dt className="text-slate-500">{t("orderDetail.weight")}</dt>
-                <dd className="font-medium text-slate-900">{order.weightKg} kg</dd>
-              </div>
-            )}
-            {order.notes && (
+        {/* Product Info — dynamic per order type */}
+        {order.orderType === "ECOMMERCE" && (
+          <Card title={t("orderDetail.productInfo")}>
+            <dl className="space-y-3 text-sm">
               <div className="flex justify-between items-start">
-                <dt className="text-slate-500">{t("orderDetail.notes")}</dt>
-                <dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd>
+                <dt className="text-slate-500">{t("orderDetail.product")}</dt>
+                <dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd>
               </div>
-            )}
-          </dl>
-        </Card>
+              {order.productLink && (
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.link")}</dt>
+                  <dd><a href={order.productLink} target="_blank" className="text-blue-600 hover:text-blue-700 font-medium">{t("orderDetail.viewProduct")}</a></dd>
+                </div>
+              )}
+              {order.productSpecs && (
+                <div className="flex justify-between items-start">
+                  <dt className="text-slate-500">{t("orderDetail.specs")}</dt>
+                  <dd className="text-slate-700 text-right max-w-[60%]">{order.productSpecs}</dd>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <dt className="text-slate-500">{t("orderDetail.quantity")}</dt>
+                <dd className="font-medium text-slate-900">{order.quantity}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-slate-500">{t("orderDetail.unitPrice")}</dt>
+                <dd className="font-medium text-slate-900">&yen;{fmt(order.unitPriceCNY)} CNY</dd>
+              </div>
+              {order.weightKg && (
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("orderDetail.weight")}</dt>
+                  <dd className="font-medium text-slate-900">{order.weightKg} kg</dd>
+                </div>
+              )}
+              {order.notes && (
+                <div className="flex justify-between items-start">
+                  <dt className="text-slate-500">{t("orderDetail.notes")}</dt>
+                  <dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+        )}
+
+        {order.orderType === "ENTRUST" && (
+          <Card title={t("orderDetail.entrustDetails")}>
+            <dl className="space-y-3 text-sm">
+              <div className="flex justify-between items-start">
+                <dt className="text-slate-500">{t("newOrder.itemName")}</dt>
+                <dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.productName}</dd>
+              </div>
+              {order.weightKg && (
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("newOrder.weight")}</dt>
+                  <dd className="font-medium text-slate-900">{order.weightKg} kg</dd>
+                </div>
+              )}
+              {order.volume && (
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("newOrder.volume")}</dt>
+                  <dd className="font-medium text-slate-900">{order.volume} m³</dd>
+                </div>
+              )}
+              {order.requiresVat && (
+                <>
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">{t("newOrder.requiresVat")}</span>
+                  </div>
+                  {order.taxCode && <div className="flex justify-between"><dt className="text-slate-500">{t("newOrder.taxCode")}</dt><dd className="font-medium text-slate-900">{order.taxCode}</dd></div>}
+                  {order.companyName && <div className="flex justify-between items-start"><dt className="text-slate-500">{t("newOrder.companyName")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.companyName}</dd></div>}
+                  {order.companyAddress && <div className="flex justify-between items-start"><dt className="text-slate-500">{t("newOrder.companyAddress")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.companyAddress}</dd></div>}
+                </>
+              )}
+              {order.notes && (
+                <div className="flex justify-between items-start">
+                  <dt className="text-slate-500">{t("orderDetail.notes")}</dt>
+                  <dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+        )}
+
+        {order.orderType === "CONSIGNMENT" && (
+          <Card title={t("orderDetail.consignmentDetails")}>
+            <dl className="space-y-3 text-sm">
+              {order.consignmentTrackingNumber && (
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">{t("newOrder.consignmentTracking")}</dt>
+                  <dd className="font-mono font-medium text-slate-900">{order.consignmentTrackingNumber}</dd>
+                </div>
+              )}
+              {order.consignmentNotes && (
+                <div className="flex justify-between items-start">
+                  <dt className="text-slate-500">{t("newOrder.consignmentNotes")}</dt>
+                  <dd className="text-slate-700 text-right max-w-[60%]">{order.consignmentNotes}</dd>
+                </div>
+              )}
+              {order.notes && (
+                <div className="flex justify-between items-start">
+                  <dt className="text-slate-500">{t("orderDetail.notes")}</dt>
+                  <dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+        )}
 
         <Card title={t("orderDetail.costBreakdown")}>
           {order.confirmedTotalCost ? (
