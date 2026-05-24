@@ -396,6 +396,56 @@ const zh: Record<string, string> = {
   "newOrder.imageUploadError": "图片上传失败",
   "newOrder.imageUploadSuccess": "图片上传成功",
 
+  // Order types
+  "newOrder.selectType": "订单类型",
+  "newOrder.typeEcommerce": "电商购物",
+  "newOrder.typeEcommerceDesc": "从淘宝、1688、天猫购买",
+  "newOrder.typeEntrust": "委托进出口",
+  "newOrder.typeEntrustDesc": "委托进出口货物",
+  "newOrder.typeConsignment": "寄售",
+  "newOrder.typeConsignmentDesc": "寄送已有包裹",
+
+  // Ecommerce extras
+  "newOrder.productSpecs": "商品规格",
+  "newOrder.productSpecsPlaceholder": "例如：黑色、L码、220V...",
+
+  // Entrust fields
+  "newOrder.itemName": "货物名称",
+  "newOrder.itemNamePlaceholder": "例如：电子元器件、棉布...",
+  "newOrder.weight": "重量 (kg)",
+  "newOrder.volume": "体积 (m³)",
+  "newOrder.requiresVat": "需要增值税发票",
+  "newOrder.requiresVatDesc": "为此批货物开具增值税发票",
+  "newOrder.taxCode": "税号",
+  "newOrder.taxCodePlaceholder": "例如：0123456789",
+  "newOrder.companyName": "公司名称",
+  "newOrder.companyNamePlaceholder": "例如：ABC有限公司",
+  "newOrder.companyAddress": "公司地址",
+  "newOrder.companyAddressPlaceholder": "例如：胡志明市第一郡阮惠路123号",
+  "newOrder.entrustInfo": "委托信息",
+  "newOrder.entrustInfoDesc": "我们将为您处理所有进口手续、运输和清关。费用将在审核后报价。",
+  "newOrder.entrustNote": "委托费用将在公司接收订单后确认。",
+
+  // Consignment fields
+  "newOrder.consignmentTracking": "快递单号",
+  "newOrder.consignmentTrackingPlaceholder": "例如：SF1234567890",
+  "newOrder.consignmentNotes": "包裹备注",
+  "newOrder.consignmentNotesPlaceholder": "描述包裹：尺寸、内容...",
+  "newOrder.consignmentInfo": "寄售信息",
+  "newOrder.consignmentInfoDesc": "将您的包裹寄到我们的中国仓库，我们将接收并为您运送到越南。",
+  "newOrder.consignmentNote": "运费按仓库收到时的实际重量计算。",
+
+  // Address section
+  "newOrder.deliveryAddress": "越南收货地址",
+  "newOrder.editAddress": "修改地址",
+  "newOrder.fullName": "姓名",
+  "newOrder.phone": "电话",
+  "newOrder.address": "地址",
+  "newOrder.addressConfirm": "我确认这是正确的越南收货地址。",
+  "newOrder.noAddress": "您尚未设置收货地址。",
+  "newOrder.updateProfile": "请在创建订单前更新您的资料。",
+  "newOrder.goToProfile": "更新资料",
+
   // Pricing confirmation
   "pricing.systemEstimate": "系统预估价格",
   "pricing.companyConfirmed": "公司确认价格",

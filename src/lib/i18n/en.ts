@@ -396,6 +396,56 @@ const en: Record<string, string> = {
   "newOrder.imageUploadError": "Image upload failed",
   "newOrder.imageUploadSuccess": "Image uploaded successfully",
 
+  // Order types
+  "newOrder.selectType": "Order Type",
+  "newOrder.typeEcommerce": "E-Commerce",
+  "newOrder.typeEcommerceDesc": "Buy from Taobao, 1688, Tmall",
+  "newOrder.typeEntrust": "Entrust Import",
+  "newOrder.typeEntrustDesc": "Entrust import/export of goods",
+  "newOrder.typeConsignment": "Consignment",
+  "newOrder.typeConsignmentDesc": "Ship an existing package",
+
+  // Ecommerce extras
+  "newOrder.productSpecs": "Product Specifications",
+  "newOrder.productSpecsPlaceholder": "e.g., Black color, Size L, 220V...",
+
+  // Entrust fields
+  "newOrder.itemName": "Item Name",
+  "newOrder.itemNamePlaceholder": "e.g., Electronic components, Cotton fabric...",
+  "newOrder.weight": "Weight (kg)",
+  "newOrder.volume": "Volume (m³)",
+  "newOrder.requiresVat": "Require VAT Invoice",
+  "newOrder.requiresVatDesc": "Issue a VAT invoice for this shipment",
+  "newOrder.taxCode": "Tax Code",
+  "newOrder.taxCodePlaceholder": "e.g., 0123456789",
+  "newOrder.companyName": "Company Name",
+  "newOrder.companyNamePlaceholder": "e.g., ABC Company Ltd.",
+  "newOrder.companyAddress": "Company Address",
+  "newOrder.companyAddressPlaceholder": "e.g., 123 Main Street, District 1, HCMC",
+  "newOrder.entrustInfo": "Entrust Info",
+  "newOrder.entrustInfoDesc": "We will handle all import procedures, shipping, and customs clearance for your shipment. Costs will be quoted after review.",
+  "newOrder.entrustNote": "Entrust fees will be confirmed by the company after receiving the order.",
+
+  // Consignment fields
+  "newOrder.consignmentTracking": "Tracking Number",
+  "newOrder.consignmentTrackingPlaceholder": "e.g., SF1234567890",
+  "newOrder.consignmentNotes": "Package Notes",
+  "newOrder.consignmentNotesPlaceholder": "Describe the package: size, contents...",
+  "newOrder.consignmentInfo": "Consignment Info",
+  "newOrder.consignmentInfoDesc": "Send your package to our China warehouse. We will receive it and ship it to Vietnam for you.",
+  "newOrder.consignmentNote": "Shipping fees are calculated based on actual weight upon warehouse receipt.",
+
+  // Address section
+  "newOrder.deliveryAddress": "Delivery Address in Vietnam",
+  "newOrder.editAddress": "Edit Address",
+  "newOrder.fullName": "Full Name",
+  "newOrder.phone": "Phone",
+  "newOrder.address": "Address",
+  "newOrder.addressConfirm": "I confirm this is the correct delivery address in Vietnam.",
+  "newOrder.noAddress": "You have not set a delivery address.",
+  "newOrder.updateProfile": "Please update your profile before creating an order.",
+  "newOrder.goToProfile": "Update Profile",
+
   // Pricing confirmation
   "pricing.systemEstimate": "System estimated price",
   "pricing.companyConfirmed": "Company confirmed price",

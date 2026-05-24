@@ -72,7 +72,6 @@ export default function OrderImageUploader({
         setUploadingCount((c) => c - 1);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [images, uploadingCount, maxImages, onImagesChange, toast, t]
   );
 

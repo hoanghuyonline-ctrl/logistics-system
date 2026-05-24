@@ -396,6 +396,56 @@ const vi: Record<string, string> = {
   "newOrder.imageUploadError": "Tải ảnh thất bại",
   "newOrder.imageUploadSuccess": "Ảnh đã tải lên thành công",
 
+  // Order types
+  "newOrder.selectType": "Loại đơn hàng",
+  "newOrder.typeEcommerce": "Thương mại điện tử",
+  "newOrder.typeEcommerceDesc": "Mua hàng từ Taobao, 1688, Tmall",
+  "newOrder.typeEntrust": "Ủy thác XNK",
+  "newOrder.typeEntrustDesc": "Ủy thác nhập khẩu hàng hóa",
+  "newOrder.typeConsignment": "Ký gửi",
+  "newOrder.typeConsignmentDesc": "Gửi kiện hàng đã có sẵn",
+
+  // Ecommerce extras
+  "newOrder.productSpecs": "Quy cách sản phẩm",
+  "newOrder.productSpecsPlaceholder": "VD: Màu đen, Size L, 220V...",
+
+  // Entrust fields
+  "newOrder.itemName": "Tên hàng hóa",
+  "newOrder.itemNamePlaceholder": "VD: Linh kiện điện tử, Vải cotton...",
+  "newOrder.weight": "Trọng lượng (kg)",
+  "newOrder.volume": "Thể tích (m³)",
+  "newOrder.requiresVat": "Yêu cầu hóa đơn VAT",
+  "newOrder.requiresVatDesc": "Xuất hóa đơn giá trị gia tăng cho lô hàng này",
+  "newOrder.taxCode": "Mã số thuế",
+  "newOrder.taxCodePlaceholder": "VD: 0123456789",
+  "newOrder.companyName": "Tên công ty",
+  "newOrder.companyNamePlaceholder": "VD: Công ty TNHH ABC",
+  "newOrder.companyAddress": "Địa chỉ công ty",
+  "newOrder.companyAddressPlaceholder": "VD: 123 Nguyễn Huệ, Q.1, TP.HCM",
+  "newOrder.entrustInfo": "Thông tin ủy thác",
+  "newOrder.entrustInfoDesc": "Chúng tôi sẽ xử lý toàn bộ thủ tục nhập khẩu, vận chuyển và thông quan cho lô hàng của bạn. Chi phí sẽ được báo giá sau khi xem xét.",
+  "newOrder.entrustNote": "Chi phí ủy thác sẽ được công ty xác nhận sau khi tiếp nhận đơn hàng.",
+
+  // Consignment fields
+  "newOrder.consignmentTracking": "Mã vận đơn",
+  "newOrder.consignmentTrackingPlaceholder": "VD: SF1234567890",
+  "newOrder.consignmentNotes": "Ghi chú kiện hàng",
+  "newOrder.consignmentNotesPlaceholder": "Mô tả kiện hàng, kích thước, nội dung...",
+  "newOrder.consignmentInfo": "Thông tin ký gửi",
+  "newOrder.consignmentInfoDesc": "Gửi kiện hàng của bạn về kho Trung Quốc. Chúng tôi sẽ tiếp nhận và vận chuyển về Việt Nam cho bạn.",
+  "newOrder.consignmentNote": "Phí vận chuyển sẽ được tính theo cân nặng thực tế khi kho nhận kiện.",
+
+  // Address section
+  "newOrder.deliveryAddress": "Địa chỉ nhận hàng tại Việt Nam",
+  "newOrder.editAddress": "Sửa địa chỉ",
+  "newOrder.fullName": "Họ tên",
+  "newOrder.phone": "SĐT",
+  "newOrder.address": "Địa chỉ",
+  "newOrder.addressConfirm": "Tôi xác nhận đây là địa chỉ nhận hàng chính xác tại Việt Nam.",
+  "newOrder.noAddress": "Bạn chưa có địa chỉ nhận hàng.",
+  "newOrder.updateProfile": "Vui lòng cập nhật hồ sơ trước khi tạo đơn.",
+  "newOrder.goToProfile": "Cập nhật hồ sơ",
+
   // Pricing confirmation
   "pricing.systemEstimate": "Giá dự kiến hệ thống",
   "pricing.companyConfirmed": "Giá công ty xác nhận",
