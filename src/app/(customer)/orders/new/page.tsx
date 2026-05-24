@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
+import OrderImageUploader from "@/components/order/OrderImageUploader";
 import { useI18n } from "@/lib/i18n";
+
+interface UploadedImage {
+  path: string;
+  url: string;
+}
 
 export default function NewOrderPage() {
   const router = useRouter();
@@ -17,6 +23,7 @@ export default function NewOrderPage() {
     unitPriceCNY: "",
     notes: "",
   });
+  const [images, setImages] = useState<UploadedImage[]>([]);
   const [exchangeRate, setExchangeRate] = useState(3500);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,12 +46,21 @@ export default function NewOrderPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (images.length === 0) {
+      setError(t("newOrder.imageUploadRequired"));
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        productImage: images[0]?.url || "",
+      }),
     });
 
     if (!res.ok) {
@@ -73,8 +89,17 @@ export default function NewOrderPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Image Upload Zone — Primary Input */}
+              <OrderImageUploader
+                images={images}
+                onImagesChange={setImages}
+                maxImages={5}
+              />
+
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("newOrder.productName")} *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  {t("newOrder.productName")} <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={form.productName}
@@ -86,20 +111,26 @@ export default function NewOrderPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("newOrder.productLink")} *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  {t("newOrder.productLink")}
+                  <span className="ml-2 text-xs font-normal text-slate-400">
+                    {t("newOrder.productLinkOptional")}
+                  </span>
+                </label>
                 <input
                   type="url"
                   value={form.productLink}
                   onChange={(e) => setForm({ ...form, productLink: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   placeholder={t("newOrder.productLinkPlaceholder")}
-                  required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("orderDetail.quantity")} *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    {t("orderDetail.quantity")} <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="number"
                     min="1"
@@ -110,7 +141,9 @@ export default function NewOrderPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("newOrder.unitPriceCny")} *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    {t("newOrder.unitPriceCny")} <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -193,7 +226,7 @@ export default function NewOrderPage() {
 
               <button
                 type="submit"
-                disabled={loading || !addressConfirmed || !userProfile?.address}
+                disabled={loading || !addressConfirmed || !userProfile?.address || images.length === 0}
                 className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm text-sm"
               >
                 {loading ? (

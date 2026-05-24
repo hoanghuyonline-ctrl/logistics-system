@@ -384,6 +384,17 @@ const zh: Record<string, string> = {
   "newOrder.priceConfirmNote": "费用将在审核订单后由公司确认。",
   "newOrder.contactCompanyNote": "实际价格请联系公司。",
   "newOrder.estimateOnly": "仅供参考",
+  "newOrder.productLinkOptional": "(有则更好 - 非必填)",
+  "newOrder.imageUploadTitle": "商品图片",
+  "newOrder.imageUploadRequired": "请上传至少1张商品图片",
+  "newOrder.imageUploadDrop": "拖放图片到此处",
+  "newOrder.imageUploadOr": "或",
+  "newOrder.imageUploadBrowse": "浏览文件",
+  "newOrder.imageUploadPaste": "按 Ctrl + V 从剪贴板粘贴",
+  "newOrder.imageUploadFormats": "JPG、PNG、WebP — 每张最大5MB",
+  "newOrder.imageUploading": "正在上传图片...",
+  "newOrder.imageUploadError": "图片上传失败",
+  "newOrder.imageUploadSuccess": "图片上传成功",
 
   // Pricing confirmation
   "pricing.systemEstimate": "系统预估价格",

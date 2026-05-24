@@ -384,6 +384,17 @@ const en: Record<string, string> = {
   "newOrder.priceConfirmNote": "Final cost will be confirmed by the company after order review.",
   "newOrder.contactCompanyNote": "Actual price — please contact the company.",
   "newOrder.estimateOnly": "Estimate only",
+  "newOrder.productLinkOptional": "(Optional — helps us find the product faster)",
+  "newOrder.imageUploadTitle": "Product Images",
+  "newOrder.imageUploadRequired": "Please upload at least 1 product image",
+  "newOrder.imageUploadDrop": "Drag & drop images here",
+  "newOrder.imageUploadOr": "or",
+  "newOrder.imageUploadBrowse": "Browse files",
+  "newOrder.imageUploadPaste": "Press Ctrl + V to paste from clipboard",
+  "newOrder.imageUploadFormats": "JPG, PNG, WebP — max 5MB per image",
+  "newOrder.imageUploading": "Uploading image...",
+  "newOrder.imageUploadError": "Image upload failed",
+  "newOrder.imageUploadSuccess": "Image uploaded successfully",
 
   // Pricing confirmation
   "pricing.systemEstimate": "System estimated price",
