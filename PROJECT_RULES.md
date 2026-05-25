@@ -39,8 +39,9 @@
 - **Server path:** `D:\BacTrungHai\logistics-system`
 - **Runtime:** PM2 running `next start -p 3000 -H 0.0.0.0` via `ecosystem.config.js`
 - PM2 `watch` must remain `false` (prevents crash loops)
-- `.next/static` and `public` must be copied into `.next/standalone/` after every build
+- `.next/static` and `public` must be copied into `.next/standalone/` after every build (CSS/images break without this)
 - Always run `npx prisma migrate deploy` when new migrations exist
+- **Docker is NOT used in production** — Docker Compose is optional for local dev PostgreSQL only
 - Standard deploy sequence:
   ```powershell
   cd /d D:\BacTrungHai\logistics-system
@@ -66,6 +67,9 @@ All public routes are registered in `src/proxy.ts` `publicPaths`:
 - `/api/webhooks/bank-transfer` — bank transfer webhook (no auth)
 - `/api/leads/capture` — landing page lead capture (no auth)
 - `/api/uploads` — serves uploaded images from disk at runtime (no auth)
+- `/api/public/quotation` — public quotation request submission (no auth)
+- `/quotation` — public quotation form page (no auth)
+- `/knowledge` — public knowledge base articles (no auth)
 - Any new external webhook must also be added to `publicPaths` in `src/proxy.ts`
 
 ## Image Storage Rules
@@ -134,6 +138,23 @@ All public routes are registered in `src/proxy.ts` `publicPaths`:
 - `/shop/[id]` — Product detail page with gallery, variants, pricing
 - `/tracking` — Public order tracking lookup by order code
 - `/login` `/register` — Authentication pages with optional Google OAuth
+- `/quotation` — Public quotation request form (no login required, lead capture)
+- `/knowledge` — Public knowledge base / marketing articles (SEO-friendly slugs)
+
+## Order Type Rules
+- Order model supports 3 types via `OrderType` enum: ECOMMERCE, ENTRUST, CONSIGNMENT
+- Type-specific fields are optional (`?`) to prevent data corruption across types
+- Enhanced ENTRUST fields: containerType (FCL/LCL), serviceProcess (JSONB array), dimensions (L×W×H), cargoValue (USD/CNY with VND conversion), waybill/documents/truck info
+- Backend POST and PUT validation dynamically checks required fields based on orderType
+- Existing orders default to ECOMMERCE (backward compatible)
+
+## Service Request Module Rules
+- Each service module (Customs, Transport, Quotation, Knowledge) has its own Prisma model, enums, API routes, and pages
+- Service request codes use prefix format: `HQ{YYMMDD}-{random}` (customs), `VT{YYMMDD}-{random}` (transport), `BG{YYMMDD}-{random}` (quotation)
+- Quotation requests are **public** (no auth required) — used for lead generation
+- Knowledge articles use TipTap rich text editor (StarterKit extensions only: Bold, Italic, Headings, Lists, Blockquote)
+- Knowledge article slugs auto-generated from Vietnamese titles for SEO
+- Each service module follows its own status workflow (not shared with Order/Shipment status enums)
 
 ## Current Priorities
 1. Enterprise product management and sales workflow refinements
@@ -144,3 +165,5 @@ All public routes are registered in `src/proxy.ts` `publicPaths`:
 6. Storage reliability (LOCAL default; R2/GDrive/GCS as alternatives)
 7. Production stability on Windows + PM2
 8. Mobile-responsive UI across all authenticated layouts
+9. Service request modules (Customs, Transport, Quotation, Knowledge) — expand and integrate
+10. Remaining roadmap: International Trade Services, Documents Menu
