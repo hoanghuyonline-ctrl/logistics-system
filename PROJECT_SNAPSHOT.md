@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-23 (synced)
+**Date:** 2026-05-24 (synced)
 **Branch:** `main`
-**Latest stable commit:** Post PR #380 (Docs Sync) — Enterprise product management, Sales MVP with COD/wallet payment, public shop & tracking, mobile-responsive layout, R2/GDrive storage, dynamic domain, admin sidebar restructure
+**Latest stable commit:** Post PR #392 (Online Quotation Form) — Order form UI upgrade, multi-type orders (Ecommerce/Entrust/Consignment), enhanced entrust XNK (FCL/LCL, dimensions, documents), customs services menu, knowledge/marketing CMS, domestic transport menu, online quotation form
 
 ---
 
@@ -388,6 +388,22 @@
 - **Landing Page UI/UX Refactor** (PR #371) — Landing page redesign with tracking timeline section, SVG icons, dark footer, micro-interactions, improved visual hierarchy
 - **Footer Light Theme** (PR #372) — Switched footer to light SaaS theme (`bg-slate-50`, dark text, orange hover links) for better readability
 
+- **Order Form UI/UX Upgrade** (PR #385) — Product link field changed from required to optional with "(Có thêm càng tốt - Không bắt buộc)" subtext. Premium image upload zone with drag-and-drop, Ctrl+V clipboard paste, and instant cloud auto-upload via `POST /api/orders/upload`. Thumbnail preview grid with loading skeletons, delete buttons, "Cover" badge. Submit requires at least 1 uploaded image. 12 new i18n keys (VI/EN/ZH). **No schema changes; backward compatible.**
+
+- **Multi-Type Order Form** (PR #386) — New `OrderType` enum (ECOMMERCE/ENTRUST/CONSIGNMENT) with card-based type selector on create order page. Dynamic form fields: ecommerce (product link/specs/qty/price), entrust XNK (item name/weight/volume + VAT toggle with tax code/company fields), consignment (tracking number + notes). 9 new DB columns + migration `20260524050000_add_order_types`. Type-specific info sidebars with gradient colors. Backend validation per order type. 40+ new i18n keys (VI/EN/ZH). Existing orders default to ECOMMERCE.
+
+- **System-Wide Order Type Support** (PR #387) — PUT `/api/orders/[id]` updated with type-specific field validation. Admin and customer order detail pages show orderType badge + type-specific info cards (product info / entrust details with VAT / consignment tracking with copy button). Admin orders list shows orderType badge. Search includes consignmentTrackingNumber. 3 new i18n keys per locale.
+
+- **Enhanced Entrust XNK Form** (PR #388) — 17 new DB columns for FCL/LCL selection, cargo dimensions (L×W×H), auto-CBM calculation, cargo value (USD/CNY→VND live conversion), waybill with image upload, related documents upload (PDF/DOC/XLS/images up to 10MB via `POST /api/orders/upload-document`), Chinese truck info with photo upload, VAT invoice toggle with company fields. 8-section form layout. Admin + customer detail pages updated with full enhanced entrust display. Migration `20260524060000_enhanced_entrust_fields`. 45 new i18n keys (VI/EN/ZH).
+
+- **Customs Services Menu** (PR #389) — New `CustomsRequest` model with `CustomsDeclarationType` enum (5 types: Hàng kinh doanh, Gia công, Sản xuất xuất khẩu, Tạm nhập tái xuất, Phi mậu dịch) and 6 accompanying services (CO, Kiểm dịch, Hun trùng, Công bố thực phẩm, Kiểm tra chất lượng, Giấy phép nhập khẩu). 7-status workflow (PENDING → REVIEWING → QUOTED → CONFIRMED → IN_PROGRESS → COMPLETED/CANCELLED). Customer pages: `/customs` list, `/customs/new` request form, `/customs/[id]` detail. Admin pages: `/admin/customs` filterable list with search/pagination, `/admin/customs/[id]` with status/pricing controls. 4 API routes. Sidebar nav for customer (🛃) and admin. 100+ i18n keys (VI/EN/ZH). Migration `20260524070000_customs_services`.
+
+- **Knowledge/Marketing Menu** (PR #390) — New `KnowledgeArticle` model with `KnowledgeCategory` enum (7 categories: Chính sách nhập khẩu, Thuế XNK, HS Code, Tin tức Logistics, Hướng dẫn xuất khẩu, Incoterms, Cảng biển Việt Nam). Admin CMS (`/admin/knowledge`): create/edit/delete articles with TipTap rich text editor, publish/unpublish toggle, search & category filters. Public knowledge base (`/knowledge`): category pill filters, search, responsive card grid, article detail with cover images & view count tracking. SEO-friendly slugs auto-generated from Vietnamese titles. Sidebar nav for customer (📚) and admin (NỘI DUNG & MARKETING section). 55+ i18n keys (VI/EN/ZH). Migration `20260524080000_knowledge_articles`.
+
+- **Domestic Transport Menu** (PR #391) — New `TransportRequest` model with `TransportServiceType` enum (3 types: TRUCK_NORTH_SOUTH, INNER_CITY_DELIVERY, TRANSIT_WAREHOUSE) and `TransportRequestStatus` enum (8 statuses). Customer pages: `/transport` list, `/transport/new` dynamic form (pickup/delivery for trucking, warehouse fields for storage, cargo info for all types, refrigeration toggle), `/transport/[id]` detail. Admin pages: `/admin/transport` filterable list with search/pagination, `/admin/transport/[id]` with status/pricing/notes controls. Request code format `VT{YYMMDD}-{random}`. 4 API routes. Sidebar nav for customer (🚚) and admin. 80+ i18n keys (VI/EN/ZH). Migration `20260524090000_domestic_transport`.
+
+- **Online Quotation Form** (PR #392) — New `QuotationRequest` model with `QuotationServiceType` enum (6 types: IMPORT_EXPORT, CUSTOMS_CLEARANCE, DOMESTIC_TRANSPORT, WAREHOUSE_STORAGE, INTERNATIONAL_TRADE, OTHER) and `QuotationStatus` enum (6 statuses: NEW → CONTACTED → QUOTED → ACCEPTED → REJECTED → EXPIRED). Public form (`/quotation`) — no login required, service type selector, cargo/route info, contact details for lead capture. Success page with request code `BG{YYMMDD}-{random}`. Admin management (`/admin/quotation`): filterable list with search/pagination, detail page with pricing controls and quote notes. Auto-sets QUOTED status when admin enters price. 3 API routes. Sidebar nav for customer (💰) and admin (NỘI DUNG & MARKETING section). 75+ i18n keys (VI/EN/ZH). Migration `20260524100000_online_quotation`.
+
 - **Automated Order Lifecycle Email Notifications** — Professional international-standard HTML email notifications connected to all core order lifecycle events for both Shop Requests (Sẵn hàng VN) and Buying Requests (Mua hộ Trung Quốc). New `email-templates.ts` module provides responsive HTML templates following DHL/Amazon/FedEx-style layouts: branded header ("Bắc Trung Hải Logistics"), color-coded status badges, order summary tables with pricing breakdowns, CTA buttons ("Xem tiến độ đơn hàng" → thue.eu.cc), and professional footer with company contact info. **Shop Requests:** New `onSalesRequestCreated` trigger fires on `POST /api/sales-requests`; `onSalesRequestStatusChanged` upgraded from `[SYSTEM, TELEGRAM]` to `[SYSTEM, EMAIL, TELEGRAM, ZALO]` across all status change endpoints (`/api/sales-requests/[id]`, `/[id]/pay`, `/[id]/cod`). **Buying Requests:** `onOrderCreated` and `onShipmentStatusChanged` enhanced with product details (name, quantity, prices) for rich HTML rendering. All email calls wrapped in fire-and-forget try-catch; `html` field threaded through `NotificationPayload → sendNotification → sendEmail`. **No schema changes; no migration; no new dependencies; backward compatible; production-safe.**
 
 **Fix (PR #295):** Fixed Windows `.bat` script execution — replaced fragile `execSync('cmd /c "path"')` with safe `execFileSync("cmd.exe", ["/c", scriptPath])` to handle paths with backslashes (e.g. `D:\BacTrungHai\...`). Also replaced `execSync` with `execFileSync` for Docker/PowerShell fallback commands. Uploads backup now creates empty `uploads/` folder gracefully instead of returning 404 error. Added `windowsHide: true` to prevent console window flash. Extracts stderr from failed script execution for better error messages.
@@ -433,6 +449,15 @@ pm2 restart logistics-system
 | Cloud Storage | @aws-sdk/client-s3 (R2), @googleapis/drive (GDrive) |
 | Admin UI | Ant Design (antd) — admin sales management |
 | Infra | Windows + PM2 (production); Docker Compose (optional, local dev PostgreSQL only) |
+
+## Service Request Modules
+
+| Module | Model | Enums | Customer Routes | Admin Routes | API Prefix | Migration |
+|--------|-------|-------|----------------|-------------|------------|-----------|
+| Customs | CustomsRequest | CustomsDeclarationType (5), CustomsRequestStatus (7) | /customs, /customs/new, /customs/[id] | /admin/customs, /admin/customs/[id] | /api/customs, /api/admin/customs | 20260524070000 |
+| Transport | TransportRequest | TransportServiceType (3), TransportRequestStatus (8) | /transport, /transport/new, /transport/[id] | /admin/transport, /admin/transport/[id] | /api/transport, /api/admin/transport | 20260524090000 |
+| Quotation | QuotationRequest | QuotationServiceType (6), QuotationStatus (6) | /quotation (public) | /admin/quotation, /admin/quotation/[id] | /api/public/quotation, /api/admin/quotation | 20260524100000 |
+| Knowledge | KnowledgeArticle | KnowledgeCategory (7) | /knowledge (public) | /admin/knowledge, /admin/knowledge/[id], /admin/knowledge/new | — | 20260524080000 |
 
 ## Important API Routes
 
@@ -504,6 +529,19 @@ pm2 restart logistics-system
 | `/api/webhooks/bank-transfer` | POST | Bank transfer webhook for automated top-up confirmation (public, no auth) |
 | `/api/leads/capture` | POST | Public lead capture from landing page forms (no auth) |
 | `/api/sales-requests/[id]/cod` | POST | COD payment confirmation with shipping address (CUSTOMER) |
+| `/api/orders/upload` | POST | Order image upload — JPG/PNG/WebP, max 5MB (CUSTOMER/ADMIN) |
+| `/api/orders/upload-document` | POST | Order document upload — PDF/DOC/XLS/images, max 10MB (CUSTOMER/ADMIN) |
+| `/api/customs` | GET/POST | Customer customs request list & create |
+| `/api/customs/[id]` | GET | Customer customs request detail |
+| `/api/admin/customs` | GET | Admin customs request list with filters & pagination |
+| `/api/admin/customs/[id]` | PUT | Admin customs request status/pricing update |
+| `/api/transport` | GET/POST | Customer transport request list & create |
+| `/api/transport/[id]` | GET | Customer transport request detail |
+| `/api/admin/transport` | GET | Admin transport request list with filters & pagination |
+| `/api/admin/transport/[id]` | PUT | Admin transport request status/pricing update |
+| `/api/public/quotation` | POST | Public quotation request submit (no auth) |
+| `/api/admin/quotation` | GET | Admin quotation request list with filters & pagination |
+| `/api/admin/quotation/[id]` | GET/PUT | Admin quotation request detail & update |
 
 ## Important Prisma Models
 
@@ -528,8 +566,12 @@ pm2 restart logistics-system
 | **CustomerIssue** | id, customerId, orderCode, issueType, description, status, priority, assignedTo, resolution |
 | **Product** | id, name, description (Text), category, estimatedPrice, imageUrl, images (JSONB), variants (JSONB), specs (JSONB), isActive, sortOrder, createdById |
 | **SalesRequest** | id, requestCode, customerId, productId, productName, quantity, estimatedTotal, confirmedPrice, status (SalesRequestStatus), adminNote, customerNote, paidAt, paidFromWallet, confirmedById, confirmedAt, shippingName?, shippingPhone?, shippingAddress?, paymentMethod (WALLET/COD), selectedOptions (JSONB), orderId? |
+| **CustomsRequest** | id, requestCode, customerId, declarationType, accompanyingServices (JSONB), companyName?, hsCode?, goodsDescription?, estimatedValue?, currency?, status, quotedPrice?, adminNote?, customerNote? |
+| **KnowledgeArticle** | id, title, slug, content (Text), excerpt?, coverImage?, category (KnowledgeCategory), isPublished, viewCount, authorId |
+| **TransportRequest** | id, requestCode, customerId, serviceType (TransportServiceType), status (TransportRequestStatus), pickupCity?, pickupAddress?, pickupContactName?, pickupContactPhone?, pickupDate?, deliveryCity?, deliveryAddress?, deliveryContactName?, deliveryContactPhone?, warehouseCity?, storageDuration?, storageNote?, cargoDescription?, cargoWeight?, cargoVolume?, cargoQuantity?, cargoType?, requiresRefrigeration, quotedPrice?, adminNote?, customerNote? |
+| **QuotationRequest** | id, requestCode, status (QuotationStatus), serviceType (QuotationServiceType), serviceDetail?, cargoDescription?, cargoWeight?, cargoVolume?, originCity?, destinationCity?, contactName, contactEmail, contactPhone, companyName?, quotedPrice?, quotedNote?, quotedAt?, adminNote?, respondedBy? |
 
-**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType (DEPOSIT/ORDER_PAYMENT/REFUND/ADJUSTMENT/SALES_PAYMENT/MANUAL_ADD/MANUAL_DEDUCT), SalesRequestStatus (NEW/CONTACTED/PRICE_CONFIRMED/PAID/PROCESSING/COMPLETED/CANCELLED), PaymentMethod (WALLET/COD), LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS), OrderPriority (NORMAL/HIGH/URGENT)
+**Enums:** OrderStatus (10 values), ShipmentStatus (8 values), PackageStatus, Role, TransactionType (DEPOSIT/ORDER_PAYMENT/REFUND/ADJUSTMENT/SALES_PAYMENT/MANUAL_ADD/MANUAL_DEDUCT), SalesRequestStatus (NEW/CONTACTED/PRICE_CONFIRMED/PAID/PROCESSING/COMPLETED/CANCELLED), PaymentMethod (WALLET/COD), LeadSource (ZALO/FACEBOOK/WEBSITE/REFERRAL/OTHER), LeadStatus (NEW/CONTACTED/INTERESTED/CONVERTED/LOST), CampaignStatus (DRAFT/SCHEDULED/COMPLETED/CANCELLED), CampaignChannel (ZALO/FACEBOOK/EMAIL/SMS), OrderPriority (NORMAL/HIGH/URGENT), OrderType (ECOMMERCE/ENTRUST/CONSIGNMENT), CustomsDeclarationType (KINH_DOANH/GIA_CONG/SAN_XUAT_XUAT_KHAU/TAM_NHAP_TAI_XUAT/PHI_MAU_DICH), CustomsRequestStatus (7 values), TransportServiceType (TRUCK_NORTH_SOUTH/INNER_CITY_DELIVERY/TRANSIT_WAREHOUSE), TransportRequestStatus (8 values), KnowledgeCategory (7 values), QuotationServiceType (6 values), QuotationStatus (6 values)
 
 **AuditActions:** ORDER_STATUS_CHANGE, PACKAGE_STATUS_CHANGE, WAREHOUSE_SCAN_LOOKUP, WAREHOUSE_SCAN_UPDATE, WAREHOUSE_RECEIVE_CN, WAREHOUSE_RECEIVE_VN, WAREHOUSE_DELIVERY, ORDER_PRICING_CONFIRMED
 
@@ -542,6 +584,14 @@ pm2 restart logistics-system
 - ~~Cloud storage provider (S3/R2/MinIO)~~ ✓ Cloudflare R2 (PR #373), Google Drive OAuth2 (PR #361), GCS (PR #355), Local (default)
 - ~~Sales MVP~~ ✓ Full shop with COD/wallet payment, product detail pages, admin management (PRs #315–#344)
 - ~~Public shop & tracking~~ ✓ Public `/shop`, `/tracking` pages, mobile nav, landing page refactor (PRs #366–#372)
+- ~~Order form upgrade~~ ✓ Optional product link, premium image upload, multi-type form (PRs #385–387)
+- ~~Enhanced Entrust XNK~~ ✓ FCL/LCL, dimensions, documents, CN truck info (PR #388)
+- ~~Customs Services Menu~~ ✓ 5 declaration types, 6 accompanying services, customer + admin (PR #389)
+- ~~Knowledge/Marketing Menu~~ ✓ Article CMS, public knowledge base, SEO categories (PR #390)
+- ~~Domestic Transport Menu~~ ✓ 3 service types, customer request form, admin management (PR #391)
+- ~~Online Quotation Form~~ ✓ Public request form, admin management, lead capture (PR #392)
+- International Trade Services (Thương mại quốc tế) — import consulting, tax calculation, HS Code, trade policy
+- Documents Menu (Chứng từ) — Invoice, Packing List, Bill of Lading, CO Forms, Manifest, AMS/ACI/ENS
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
 - API route smoke tests (orders, warehouse scan, status transitions)
 - Comprehensive E2E test suite (Playwright)
@@ -579,3 +629,7 @@ pm2 restart logistics-system
 24. **Admin sidebar uses collapsible groups** — 5 nav groups with chevron toggle; auto-expands on active route. Non-admin sidebars unchanged.
 25. **COD payment requires address confirmation** — customers must confirm shipping address before COD payment on shop requests.
 26. **Sales-to-procurement auto-order** — SalesRequest PROCESSING status auto-creates a procurement Order; cancelling the SalesRequest does not auto-cancel the linked Order.
+27. **Multi-type order form** — Order model supports ECOMMERCE/ENTRUST/CONSIGNMENT types; type-specific fields are optional to prevent data corruption. Enhanced entrust fields include FCL/LCL, dimensions, cargo value, documents, CN truck info.
+28. **Service request modules are independent** — CustomsRequest, TransportRequest, QuotationRequest each have their own models, enums, and API routes. They do not share status enums or foreign keys with each other.
+29. **Public quotation form requires no auth** — `/quotation` page and `/api/public/quotation` endpoint are publicly accessible for lead generation. Contact info (name, email, phone) is required.
+30. **Knowledge articles use TipTap** — Rich text editor with StarterKit extensions only (Bold, Italic, Headings, Lists, Blockquote). Slugs auto-generated from Vietnamese titles.
