@@ -1329,6 +1329,120 @@ const en: Record<string, string> = {
   "productDetail.specOS": "OS",
   "productDetail.specSim": "SIM",
   "productDetail.specWeight": "Weight",
+
+  // Common additions
+  "common.all": "All",
+  "common.submitting": "Submitting...",
+  "common.saving": "Saving...",
+  "common.fullName": "Full Name",
+  "common.email": "Email",
+  "common.phone": "Phone",
+
+  // Nav
+  "nav.customs": "Customs Services",
+
+  // Customs
+  "customs.title": "Customs Services",
+  "customs.subtitle": "Manage customs declaration requests and accompanying services",
+  "customs.newRequest": "New Request",
+  "customs.newRequestDesc": "Fill in details to request customs services",
+  "customs.empty": "No requests yet",
+  "customs.emptyDesc": "You haven't created any customs service requests. Click the button above to get started.",
+  "customs.notFound": "Request not found",
+  "customs.backToList": "Back to list",
+  "customs.submit": "Submit Request",
+
+  // Customs Admin
+  "customs.adminTitle": "Customs Management",
+  "customs.adminSubtitle": "View and process all customs service requests",
+  "customs.adminEmpty": "No requests yet",
+  "customs.adminEmptyDesc": "No customs service requests have been submitted yet.",
+  "customs.searchPlaceholder": "Search code, description, company, customer...",
+  "customs.statusFilter": "Status",
+  "customs.typeFilter": "Declaration Type",
+  "customs.customerInfo": "Customer Information",
+  "customs.adminControls": "Admin Controls",
+  "customs.changeStatus": "Change Status",
+  "customs.updateRequest": "Update Request",
+  "customs.updateSuccess": "Updated successfully!",
+  "customs.updateError": "Error updating request",
+  "customs.timeline": "Timeline",
+  "customs.createdAt": "Created",
+  "customs.adminNotePlaceholder": "Internal notes for this request...",
+
+  // Declaration types
+  "customs.declarationTypeLabel": "Customs Declaration Type",
+  "customs.declarationType.KINH_DOANH": "Commercial Goods",
+  "customs.declarationType.GIA_CONG": "Processing",
+  "customs.declarationType.SAN_XUAT_XUAT_KHAU": "Export Manufacturing",
+  "customs.declarationType.TAM_NHAP_TAI_XUAT": "Temporary Import / Re-export",
+  "customs.declarationType.PHI_MAU_DICH": "Non-commercial",
+
+  // Declaration descriptions
+  "customs.declarationDesc.KINH_DOANH": "Standard commercial trading goods",
+  "customs.declarationDesc.GIA_CONG": "Goods imported for processing and manufacturing",
+  "customs.declarationDesc.SAN_XUAT_XUAT_KHAU": "Raw materials imported for export production",
+  "customs.declarationDesc.TAM_NHAP_TAI_XUAT": "Goods temporarily imported then re-exported",
+  "customs.declarationDesc.PHI_MAU_DICH": "Non-commercial goods (gifts, samples, exhibitions...)",
+
+  // Accompanying services
+  "customs.accompanyingServices": "Accompanying Services",
+  "customs.service.CO": "CO (Certificate of Origin)",
+  "customs.service.QUARANTINE": "Quarantine",
+  "customs.service.FUMIGATION": "Fumigation",
+  "customs.service.FOOD_DECLARATION": "Food Declaration",
+  "customs.service.QUALITY_CHECK": "Quality Inspection",
+  "customs.service.IMPORT_LICENSE": "Import License",
+  "customs.servicesSelected": "{count} services selected",
+
+  // Goods info
+  "customs.goodsInfo": "Goods Information",
+  "customs.goodsDescription": "Goods Description",
+  "customs.goodsDescPlaceholder": "Describe the goods for customs declaration...",
+  "customs.hsCode": "HS Code",
+  "customs.originCountry": "Country of Origin",
+  "customs.originPlaceholder": "e.g. China",
+  "customs.goodsValue": "Goods Value",
+  "customs.currency": "Currency",
+  "customs.goodsWeight": "Weight (kg)",
+  "customs.goodsQuantity": "Quantity",
+  "customs.destinationPort": "Destination Port",
+  "customs.portPlaceholder": "e.g. Hai Phong, Cat Lai",
+
+  // Company info
+  "customs.companyInfo": "Company Information",
+  "customs.companyName": "Company Name",
+  "customs.taxCode": "Tax Code",
+  "customs.companyAddress": "Company Address",
+  "customs.contactName": "Contact Person",
+  "customs.contactPhone": "Contact Phone",
+  "customs.contactEmail": "Contact Email",
+
+  // Documents
+  "customs.documents": "Documents",
+  "customs.uploadDocuments": "Upload Documents",
+  "customs.uploadHint": "Invoice, Packing List, CO, Bill of Lading... (PDF, DOC, images, max 10MB)",
+
+  // Notes & pricing
+  "customs.notes": "Notes",
+  "customs.notesPlaceholder": "Additional notes for this customs request...",
+  "customs.customerNote": "Customer Note",
+  "customs.adminNote": "Admin Note",
+  "customs.quotedPrice": "Quoted Price",
+  "customs.quotedAt": "Quoted At",
+
+  // Errors
+  "customs.error.noDeclarationType": "Please select a customs declaration type",
+  "customs.error.noDescription": "Please describe the goods",
+
+  // Statuses
+  "customs.status.PENDING": "Pending",
+  "customs.status.REVIEWING": "Reviewing",
+  "customs.status.QUOTED": "Quoted",
+  "customs.status.CONFIRMED": "Confirmed",
+  "customs.status.IN_PROGRESS": "In Progress",
+  "customs.status.COMPLETED": "Completed",
+  "customs.status.CANCELLED": "Cancelled",
 };
 
 export default en;
