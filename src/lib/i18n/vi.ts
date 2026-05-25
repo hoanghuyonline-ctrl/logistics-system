@@ -1329,6 +1329,120 @@ const vi: Record<string, string> = {
   "productDetail.specOS": "Hệ điều hành",
   "productDetail.specSim": "SIM",
   "productDetail.specWeight": "Trọng lượng",
+
+  // Common additions
+  "common.all": "Tất cả",
+  "common.submitting": "Đang gửi...",
+  "common.saving": "Đang lưu...",
+  "common.fullName": "Họ tên",
+  "common.email": "Email",
+  "common.phone": "Điện thoại",
+
+  // Nav
+  "nav.customs": "Dịch vụ Hải quan",
+
+  // Customs
+  "customs.title": "Dịch vụ Hải quan",
+  "customs.subtitle": "Quản lý yêu cầu khai báo hải quan và dịch vụ kèm theo",
+  "customs.newRequest": "Tạo yêu cầu mới",
+  "customs.newRequestDesc": "Điền thông tin để yêu cầu dịch vụ hải quan",
+  "customs.empty": "Chưa có yêu cầu nào",
+  "customs.emptyDesc": "Bạn chưa tạo yêu cầu dịch vụ hải quan nào. Nhấn nút bên trên để bắt đầu.",
+  "customs.notFound": "Không tìm thấy yêu cầu",
+  "customs.backToList": "Quay lại danh sách",
+  "customs.submit": "Gửi yêu cầu",
+
+  // Customs Admin
+  "customs.adminTitle": "Quản lý Hải quan",
+  "customs.adminSubtitle": "Xem và xử lý tất cả yêu cầu dịch vụ hải quan",
+  "customs.adminEmpty": "Chưa có yêu cầu nào",
+  "customs.adminEmptyDesc": "Hiện tại chưa có yêu cầu dịch vụ hải quan nào được gửi.",
+  "customs.searchPlaceholder": "Tìm mã yêu cầu, mô tả, công ty, khách hàng...",
+  "customs.statusFilter": "Trạng thái",
+  "customs.typeFilter": "Loại khai báo",
+  "customs.customerInfo": "Thông tin khách hàng",
+  "customs.adminControls": "Điều khiển Admin",
+  "customs.changeStatus": "Thay đổi trạng thái",
+  "customs.updateRequest": "Cập nhật yêu cầu",
+  "customs.updateSuccess": "Cập nhật thành công!",
+  "customs.updateError": "Có lỗi xảy ra khi cập nhật",
+  "customs.timeline": "Thời gian",
+  "customs.createdAt": "Ngày tạo",
+  "customs.adminNotePlaceholder": "Ghi chú nội bộ cho yêu cầu này...",
+
+  // Declaration types
+  "customs.declarationTypeLabel": "Loại khai báo hải quan",
+  "customs.declarationType.KINH_DOANH": "Hàng kinh doanh",
+  "customs.declarationType.GIA_CONG": "Gia công",
+  "customs.declarationType.SAN_XUAT_XUAT_KHAU": "Sản xuất xuất khẩu",
+  "customs.declarationType.TAM_NHAP_TAI_XUAT": "Tạm nhập tái xuất",
+  "customs.declarationType.PHI_MAU_DICH": "Phi mậu dịch",
+
+  // Declaration descriptions
+  "customs.declarationDesc.KINH_DOANH": "Hàng hóa mua bán thương mại thông thường",
+  "customs.declarationDesc.GIA_CONG": "Hàng hóa nhập khẩu để gia công, chế biến",
+  "customs.declarationDesc.SAN_XUAT_XUAT_KHAU": "Nguyên liệu nhập để sản xuất hàng xuất khẩu",
+  "customs.declarationDesc.TAM_NHAP_TAI_XUAT": "Hàng tạm nhập vào VN rồi tái xuất",
+  "customs.declarationDesc.PHI_MAU_DICH": "Hàng phi thương mại (quà tặng, mẫu, hội chợ...)",
+
+  // Accompanying services
+  "customs.accompanyingServices": "Dịch vụ kèm theo",
+  "customs.service.CO": "Xin CO (Giấy chứng nhận xuất xứ)",
+  "customs.service.QUARANTINE": "Kiểm dịch",
+  "customs.service.FUMIGATION": "Hun trùng",
+  "customs.service.FOOD_DECLARATION": "Công bố thực phẩm",
+  "customs.service.QUALITY_CHECK": "Kiểm tra chất lượng",
+  "customs.service.IMPORT_LICENSE": "Xin giấy phép nhập khẩu",
+  "customs.servicesSelected": "Đã chọn {count} dịch vụ",
+
+  // Goods info
+  "customs.goodsInfo": "Thông tin hàng hóa",
+  "customs.goodsDescription": "Mô tả hàng hóa",
+  "customs.goodsDescPlaceholder": "Mô tả chi tiết về hàng hóa cần khai báo hải quan...",
+  "customs.hsCode": "Mã HS",
+  "customs.originCountry": "Nước xuất xứ",
+  "customs.originPlaceholder": "VD: Trung Quốc",
+  "customs.goodsValue": "Giá trị hàng hóa",
+  "customs.currency": "Tiền tệ",
+  "customs.goodsWeight": "Trọng lượng (kg)",
+  "customs.goodsQuantity": "Số lượng",
+  "customs.destinationPort": "Cảng đích",
+  "customs.portPlaceholder": "VD: Hải Phòng, Cát Lái",
+
+  // Company info
+  "customs.companyInfo": "Thông tin doanh nghiệp",
+  "customs.companyName": "Tên công ty",
+  "customs.taxCode": "Mã số thuế",
+  "customs.companyAddress": "Địa chỉ công ty",
+  "customs.contactName": "Người liên hệ",
+  "customs.contactPhone": "SĐT liên hệ",
+  "customs.contactEmail": "Email liên hệ",
+
+  // Documents
+  "customs.documents": "Chứng từ / Tài liệu",
+  "customs.uploadDocuments": "Tải lên chứng từ",
+  "customs.uploadHint": "Invoice, Packing List, CO, Bill of Lading... (PDF, DOC, ảnh, tối đa 10MB)",
+
+  // Notes & pricing
+  "customs.notes": "Ghi chú",
+  "customs.notesPlaceholder": "Ghi chú thêm cho yêu cầu hải quan...",
+  "customs.customerNote": "Ghi chú khách hàng",
+  "customs.adminNote": "Ghi chú Admin",
+  "customs.quotedPrice": "Báo giá",
+  "customs.quotedAt": "Ngày báo giá",
+
+  // Errors
+  "customs.error.noDeclarationType": "Vui lòng chọn loại khai báo hải quan",
+  "customs.error.noDescription": "Vui lòng mô tả hàng hóa",
+
+  // Statuses
+  "customs.status.PENDING": "Chờ xử lý",
+  "customs.status.REVIEWING": "Đang xem xét",
+  "customs.status.QUOTED": "Đã báo giá",
+  "customs.status.CONFIRMED": "Đã xác nhận",
+  "customs.status.IN_PROGRESS": "Đang thực hiện",
+  "customs.status.COMPLETED": "Hoàn thành",
+  "customs.status.CANCELLED": "Đã hủy",
 };
 
 

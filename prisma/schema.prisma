@@ -84,6 +84,24 @@ enum NotificationType {
   ZALO
 }
 
+enum CustomsDeclarationType {
+  KINH_DOANH
+  GIA_CONG
+  SAN_XUAT_XUAT_KHAU
+  TAM_NHAP_TAI_XUAT
+  PHI_MAU_DICH
+}
+
+enum CustomsRequestStatus {
+  PENDING
+  REVIEWING
+  QUOTED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 enum LeadSource {
   ZALO
   FACEBOOK
@@ -136,6 +154,7 @@ model User {
   salesRequests      SalesRequest[]       @relation("SalesRequestCustomer")
   salesConfirmations SalesRequest[]       @relation("SalesRequestConfirmer")
   productsCreated    Product[]            @relation("ProductCreator")
+  customsRequests    CustomsRequest[]     @relation("CustomsRequests")
 }
 
 model Wallet {
@@ -541,4 +560,47 @@ model SalesRequest {
 
   @@index([customerId, createdAt])
   @@index([status])
+}
+
+model CustomsRequest {
+  id                String                  @id @default(uuid())
+  requestCode       String                  @unique
+  customerId        String
+  declarationType   CustomsDeclarationType
+  status            CustomsRequestStatus    @default(PENDING)
+  // Accompanying services (JSON array of selected services)
+  accompanyingServices String?
+  // Cargo details
+  goodsDescription  String?                 @db.Text
+  hsCode            String?
+  goodsValue        Decimal?                @db.Decimal(15, 2)
+  goodsCurrency     String?
+  goodsWeight       Decimal?                @db.Decimal(10, 3)
+  goodsQuantity     Int?
+  originCountry     String?
+  destinationPort   String?
+  // Company info
+  companyName       String?
+  taxCode           String?
+  companyAddress    String?
+  contactName       String?
+  contactPhone      String?
+  contactEmail      String?
+  // Documents
+  documents         String?                 // JSON array of uploaded document URLs
+  // Pricing
+  quotedPrice       Decimal?                @db.Decimal(15, 2)
+  quotedAt          DateTime?
+  // Notes
+  customerNote      String?                 @db.Text
+  adminNote         String?                 @db.Text
+  // Timestamps
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  customer User @relation("CustomsRequests", fields: [customerId], references: [id])
+
+  @@index([customerId, createdAt])
+  @@index([status])
+  @@index([declarationType])
 }

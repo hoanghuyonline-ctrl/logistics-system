@@ -1329,6 +1329,120 @@ const zh: Record<string, string> = {
   "productDetail.specOS": "操作系统",
   "productDetail.specSim": "SIM",
   "productDetail.specWeight": "重量",
+
+  // Common additions
+  "common.all": "全部",
+  "common.submitting": "提交中...",
+  "common.saving": "保存中...",
+  "common.fullName": "姓名",
+  "common.email": "邮箱",
+  "common.phone": "电话",
+
+  // Nav
+  "nav.customs": "海关服务",
+
+  // Customs
+  "customs.title": "海关服务",
+  "customs.subtitle": "管理海关申报请求和附带服务",
+  "customs.newRequest": "新建请求",
+  "customs.newRequestDesc": "填写信息申请海关服务",
+  "customs.empty": "暂无请求",
+  "customs.emptyDesc": "您还没有创建海关服务请求。点击上方按钮开始。",
+  "customs.notFound": "未找到请求",
+  "customs.backToList": "返回列表",
+  "customs.submit": "提交请求",
+
+  // Customs Admin
+  "customs.adminTitle": "海关管理",
+  "customs.adminSubtitle": "查看和处理所有海关服务请求",
+  "customs.adminEmpty": "暂无请求",
+  "customs.adminEmptyDesc": "目前还没有海关服务请求。",
+  "customs.searchPlaceholder": "搜索请求编号、描述、公司、客户...",
+  "customs.statusFilter": "状态",
+  "customs.typeFilter": "申报类型",
+  "customs.customerInfo": "客户信息",
+  "customs.adminControls": "管理操作",
+  "customs.changeStatus": "更改状态",
+  "customs.updateRequest": "更新请求",
+  "customs.updateSuccess": "更新成功！",
+  "customs.updateError": "更新请求时出错",
+  "customs.timeline": "时间线",
+  "customs.createdAt": "创建时间",
+  "customs.adminNotePlaceholder": "此请求的内部备注...",
+
+  // Declaration types
+  "customs.declarationTypeLabel": "海关申报类型",
+  "customs.declarationType.KINH_DOANH": "经营货物",
+  "customs.declarationType.GIA_CONG": "加工",
+  "customs.declarationType.SAN_XUAT_XUAT_KHAU": "出口生产",
+  "customs.declarationType.TAM_NHAP_TAI_XUAT": "暂时进口/再出口",
+  "customs.declarationType.PHI_MAU_DICH": "非贸易",
+
+  // Declaration descriptions
+  "customs.declarationDesc.KINH_DOANH": "标准商业贸易货物",
+  "customs.declarationDesc.GIA_CONG": "进口加工和制造的货物",
+  "customs.declarationDesc.SAN_XUAT_XUAT_KHAU": "进口用于出口生产的原材料",
+  "customs.declarationDesc.TAM_NHAP_TAI_XUAT": "暂时进口后再出口的货物",
+  "customs.declarationDesc.PHI_MAU_DICH": "非商业货物（礼品、样品、展览...）",
+
+  // Accompanying services
+  "customs.accompanyingServices": "附带服务",
+  "customs.service.CO": "原产地证书 (CO)",
+  "customs.service.QUARANTINE": "检疫",
+  "customs.service.FUMIGATION": "熏蒸",
+  "customs.service.FOOD_DECLARATION": "食品申报",
+  "customs.service.QUALITY_CHECK": "质量检验",
+  "customs.service.IMPORT_LICENSE": "进口许可证",
+  "customs.servicesSelected": "已选择 {count} 项服务",
+
+  // Goods info
+  "customs.goodsInfo": "货物信息",
+  "customs.goodsDescription": "货物描述",
+  "customs.goodsDescPlaceholder": "描述需要海关申报的货物详情...",
+  "customs.hsCode": "HS编码",
+  "customs.originCountry": "原产国",
+  "customs.originPlaceholder": "如：中国",
+  "customs.goodsValue": "货物价值",
+  "customs.currency": "货币",
+  "customs.goodsWeight": "重量 (kg)",
+  "customs.goodsQuantity": "数量",
+  "customs.destinationPort": "目的港",
+  "customs.portPlaceholder": "如：海防港、吉莱港",
+
+  // Company info
+  "customs.companyInfo": "企业信息",
+  "customs.companyName": "公司名称",
+  "customs.taxCode": "税号",
+  "customs.companyAddress": "公司地址",
+  "customs.contactName": "联系人",
+  "customs.contactPhone": "联系电话",
+  "customs.contactEmail": "联系邮箱",
+
+  // Documents
+  "customs.documents": "文件/资料",
+  "customs.uploadDocuments": "上传文件",
+  "customs.uploadHint": "发票、装箱单、CO、提单...（PDF、DOC、图片，最大10MB）",
+
+  // Notes & pricing
+  "customs.notes": "备注",
+  "customs.notesPlaceholder": "海关请求的附加备注...",
+  "customs.customerNote": "客户备注",
+  "customs.adminNote": "管理员备注",
+  "customs.quotedPrice": "报价",
+  "customs.quotedAt": "报价时间",
+
+  // Errors
+  "customs.error.noDeclarationType": "请选择海关申报类型",
+  "customs.error.noDescription": "请描述货物信息",
+
+  // Statuses
+  "customs.status.PENDING": "待处理",
+  "customs.status.REVIEWING": "审核中",
+  "customs.status.QUOTED": "已报价",
+  "customs.status.CONFIRMED": "已确认",
+  "customs.status.IN_PROGRESS": "进行中",
+  "customs.status.COMPLETED": "已完成",
+  "customs.status.CANCELLED": "已取消",
 };
 
 export default zh;
