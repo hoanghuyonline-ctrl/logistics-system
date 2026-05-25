@@ -84,6 +84,23 @@ enum NotificationType {
   ZALO
 }
 
+enum TransportServiceType {
+  TRUCK_NORTH_SOUTH
+  INNER_CITY_DELIVERY
+  TRANSIT_WAREHOUSE
+}
+
+enum TransportRequestStatus {
+  PENDING
+  REVIEWING
+  QUOTED
+  CONFIRMED
+  IN_TRANSIT
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
 enum KnowledgeCategory {
   IMPORT_POLICY
   EXPORT_TAX
@@ -166,6 +183,7 @@ model User {
   productsCreated    Product[]            @relation("ProductCreator")
   customsRequests    CustomsRequest[]     @relation("CustomsRequests")
   knowledgeArticles  KnowledgeArticle[]   @relation("KnowledgeAuthor")
+  transportRequests  TransportRequest[]   @relation("TransportRequests")
 }
 
 model Wallet {
@@ -637,4 +655,49 @@ model KnowledgeArticle {
   @@index([category, isPublished])
   @@index([slug])
   @@index([isPublished, publishedAt])
+}
+
+model TransportRequest {
+  id                String                  @id @default(uuid())
+  requestCode       String                  @unique
+  customerId        String
+  serviceType       TransportServiceType
+  status            TransportRequestStatus  @default(PENDING)
+  // Pickup
+  pickupAddress     String?                 @db.Text
+  pickupCity        String?
+  pickupContactName String?
+  pickupContactPhone String?
+  pickupDate        DateTime?
+  // Delivery
+  deliveryAddress   String?                 @db.Text
+  deliveryCity      String?
+  deliveryContactName String?
+  deliveryContactPhone String?
+  // Cargo
+  cargoDescription  String?                 @db.Text
+  cargoWeight       Decimal?                @db.Decimal(10, 3)
+  cargoVolume       Decimal?                @db.Decimal(10, 3)
+  cargoQuantity     Int?
+  cargoType         String?
+  requiresRefrigeration Boolean             @default(false)
+  // Warehouse (for TRANSIT_WAREHOUSE)
+  warehouseCity     String?
+  storageDuration   Int?
+  storageNote       String?                 @db.Text
+  // Pricing
+  quotedPrice       Decimal?                @db.Decimal(15, 2)
+  quotedAt          DateTime?
+  // Notes
+  customerNote      String?                 @db.Text
+  adminNote         String?                 @db.Text
+  // Timestamps
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  customer User @relation("TransportRequests", fields: [customerId], references: [id])
+
+  @@index([customerId, createdAt])
+  @@index([status])
+  @@index([serviceType])
 }

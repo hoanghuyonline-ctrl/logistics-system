@@ -1501,6 +1501,94 @@ const vi: Record<string, string> = {
   "knowledge.category.EXPORT_GUIDE": "Hướng dẫn xuất khẩu",
   "knowledge.category.INCOTERMS": "Incoterms",
   "knowledge.category.VIETNAM_PORTS": "Cảng biển Việt Nam",
+
+  // Nav - Transport
+  "nav.transport": "Vận tải nội địa",
+
+  // Transport - Customer
+  "transport.title": "Vận tải nội địa",
+  "transport.subtitle": "Quản lý yêu cầu vận tải và kho bãi trung chuyển",
+  "transport.newRequest": "Tạo yêu cầu mới",
+  "transport.newRequestDesc": "Điền thông tin để yêu cầu dịch vụ vận tải nội địa",
+  "transport.empty": "Chưa có yêu cầu nào",
+  "transport.emptyDesc": "Tạo yêu cầu vận tải đầu tiên",
+  "transport.submitRequest": "Gửi yêu cầu",
+  "transport.backToList": "Quay lại danh sách",
+
+  // Transport - Admin
+  "transport.adminTitle": "Quản lý vận tải nội địa",
+  "transport.adminSubtitle": "Xem và xử lý các yêu cầu vận tải",
+  "transport.searchPlaceholder": "Tìm theo mã, mô tả, thành phố, tên KH...",
+  "transport.adminControls": "Điều khiển",
+  "transport.updateRequest": "Cập nhật",
+  "transport.timeline": "Dòng thời gian",
+  "transport.customerInfo": "Thông tin khách hàng",
+
+  // Transport - Service Types
+  "transport.serviceTypeLabel": "Loại dịch vụ",
+  "transport.serviceType.TRUCK_NORTH_SOUTH": "Xe tải Bắc Nam",
+  "transport.serviceType.INNER_CITY_DELIVERY": "Giao hàng nội thành",
+  "transport.serviceType.TRANSIT_WAREHOUSE": "Kho bãi trung chuyển",
+  "transport.serviceTypeDesc.TRUCK_NORTH_SOUTH": "Vận chuyển hàng hóa đường dài Bắc - Nam",
+  "transport.serviceTypeDesc.INNER_CITY_DELIVERY": "Giao hàng nhanh trong nội thành",
+  "transport.serviceTypeDesc.TRANSIT_WAREHOUSE": "Lưu kho, trung chuyển hàng hóa",
+
+  // Transport - Pickup/Delivery
+  "transport.pickupInfo": "Thông tin lấy hàng",
+  "transport.deliveryInfo": "Thông tin giao hàng",
+  "transport.routeInfo": "Thông tin tuyến đường",
+  "transport.pickup": "Lấy hàng",
+  "transport.delivery": "Giao hàng",
+  "transport.pickupCity": "Thành phố lấy hàng",
+  "transport.deliveryCity": "Thành phố giao hàng",
+  "transport.pickupAddress": "Địa chỉ lấy hàng",
+  "transport.deliveryAddress": "Địa chỉ giao hàng",
+  "transport.pickupDate": "Ngày lấy hàng",
+  "transport.contactName": "Người liên hệ",
+  "transport.contactPhone": "Số điện thoại",
+  "transport.cityPlaceholder": "VD: Hà Nội, TP.HCM...",
+  "transport.addressPlaceholder": "Nhập địa chỉ chi tiết...",
+
+  // Transport - Warehouse
+  "transport.warehouseInfo": "Thông tin kho bãi",
+  "transport.warehouseCity": "Thành phố kho",
+  "transport.storageDuration": "Thời gian lưu kho",
+  "transport.storageDurationPlaceholder": "Số ngày",
+  "transport.storageNote": "Ghi chú kho bãi",
+  "transport.storageNotePlaceholder": "Yêu cầu đặc biệt về kho bãi...",
+  "transport.days": "ngày",
+
+  // Transport - Cargo
+  "transport.cargoInfo": "Thông tin hàng hóa",
+  "transport.cargoDescription": "Mô tả hàng hóa",
+  "transport.cargoDescPlaceholder": "Mô tả loại hàng, đặc điểm...",
+  "transport.cargoWeight": "Trọng lượng (kg)",
+  "transport.cargoVolume": "Thể tích (m³)",
+  "transport.cargoQuantity": "Số lượng",
+  "transport.cargoType": "Loại hàng",
+  "transport.cargoTypePlaceholder": "VD: Hàng khô, Thực phẩm...",
+  "transport.requiresRefrigeration": "Yêu cầu xe lạnh",
+
+  // Transport - Pricing & Notes
+  "transport.quotedPrice": "Giá báo",
+  "transport.quotedAt": "Báo giá lúc",
+  "transport.notes": "Ghi chú",
+  "transport.notesPlaceholder": "Ghi chú thêm cho yêu cầu vận tải...",
+  "transport.customerNote": "Ghi chú khách hàng",
+  "transport.adminNote": "Ghi chú quản trị",
+
+  // Transport - Statuses
+  "transport.status.PENDING": "Chờ xử lý",
+  "transport.status.REVIEWING": "Đang xem xét",
+  "transport.status.QUOTED": "Đã báo giá",
+  "transport.status.CONFIRMED": "Đã xác nhận",
+  "transport.status.IN_TRANSIT": "Đang vận chuyển",
+  "transport.status.DELIVERED": "Đã giao hàng",
+  "transport.status.COMPLETED": "Hoàn thành",
+  "transport.status.CANCELLED": "Đã hủy",
+
+  // Transport - Errors
+  "transport.error.noServiceType": "Vui lòng chọn loại dịch vụ",
 };
 
 

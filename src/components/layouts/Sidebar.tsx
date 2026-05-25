@@ -29,6 +29,7 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.transactions", href: "/transactions", icon: "📋" },
   { labelKey: "nav.customs", href: "/customs", icon: "🛃" },
   { labelKey: "nav.knowledge", href: "/knowledge", icon: "📚" },
+  { labelKey: "nav.transport", href: "/transport", icon: "🚚" },
   { labelKey: "nav.issues", href: "/issues", icon: "📝" },
   { labelKey: "nav.channelLinking", href: "/notifications", icon: "🔔" },
   { labelKey: "nav.profile", href: "/profile", icon: "👤" },
@@ -53,6 +54,7 @@ const adminNavGroups: NavGroup[] = [
       { labelKey: "nav.stuckShipments", href: "/admin/stuck-shipments", icon: "⚠️" },
       { labelKey: "nav.adminSales", href: "/admin/sales", icon: "🛒" },
       { labelKey: "nav.customs", href: "/admin/customs", icon: "🛃" },
+      { labelKey: "nav.transport", href: "/admin/transport", icon: "🚚" },
     ],
   },
   {

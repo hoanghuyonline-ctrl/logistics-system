@@ -1501,6 +1501,94 @@ const zh: Record<string, string> = {
   "knowledge.category.EXPORT_GUIDE": "出口指南",
   "knowledge.category.INCOTERMS": "国际贸易术语",
   "knowledge.category.VIETNAM_PORTS": "越南港口",
+
+  // Nav - Transport
+  "nav.transport": "国内运输",
+
+  // Transport - Customer
+  "transport.title": "国内运输",
+  "transport.subtitle": "管理运输和中转仓储请求",
+  "transport.newRequest": "新建请求",
+  "transport.newRequestDesc": "填写国内运输服务请求信息",
+  "transport.empty": "暂无请求",
+  "transport.emptyDesc": "创建您的第一个运输请求",
+  "transport.submitRequest": "提交请求",
+  "transport.backToList": "返回列表",
+
+  // Transport - Admin
+  "transport.adminTitle": "国内运输管理",
+  "transport.adminSubtitle": "查看和处理运输请求",
+  "transport.searchPlaceholder": "按编号、描述、城市、客户搜索...",
+  "transport.adminControls": "控制面板",
+  "transport.updateRequest": "更新",
+  "transport.timeline": "时间线",
+  "transport.customerInfo": "客户信息",
+
+  // Transport - Service Types
+  "transport.serviceTypeLabel": "服务类型",
+  "transport.serviceType.TRUCK_NORTH_SOUTH": "南北长途运输",
+  "transport.serviceType.INNER_CITY_DELIVERY": "市内配送",
+  "transport.serviceType.TRANSIT_WAREHOUSE": "中转仓储",
+  "transport.serviceTypeDesc.TRUCK_NORTH_SOUTH": "南北长途货运",
+  "transport.serviceTypeDesc.INNER_CITY_DELIVERY": "市内快速配送",
+  "transport.serviceTypeDesc.TRANSIT_WAREHOUSE": "仓储和货物中转服务",
+
+  // Transport - Pickup/Delivery
+  "transport.pickupInfo": "取货信息",
+  "transport.deliveryInfo": "送货信息",
+  "transport.routeInfo": "路线信息",
+  "transport.pickup": "取货",
+  "transport.delivery": "送货",
+  "transport.pickupCity": "取货城市",
+  "transport.deliveryCity": "送货城市",
+  "transport.pickupAddress": "取货地址",
+  "transport.deliveryAddress": "送货地址",
+  "transport.pickupDate": "取货日期",
+  "transport.contactName": "联系人",
+  "transport.contactPhone": "电话",
+  "transport.cityPlaceholder": "例如: 河内, 胡志明市...",
+  "transport.addressPlaceholder": "输入详细地址...",
+
+  // Transport - Warehouse
+  "transport.warehouseInfo": "仓库信息",
+  "transport.warehouseCity": "仓库城市",
+  "transport.storageDuration": "存储时间",
+  "transport.storageDurationPlaceholder": "天数",
+  "transport.storageNote": "仓储备注",
+  "transport.storageNotePlaceholder": "特殊仓储要求...",
+  "transport.days": "天",
+
+  // Transport - Cargo
+  "transport.cargoInfo": "货物信息",
+  "transport.cargoDescription": "货物描述",
+  "transport.cargoDescPlaceholder": "描述货物类型和特征...",
+  "transport.cargoWeight": "重量 (kg)",
+  "transport.cargoVolume": "体积 (m³)",
+  "transport.cargoQuantity": "数量",
+  "transport.cargoType": "货物类型",
+  "transport.cargoTypePlaceholder": "例如: 干货, 食品...",
+  "transport.requiresRefrigeration": "需要冷藏车",
+
+  // Transport - Pricing & Notes
+  "transport.quotedPrice": "报价",
+  "transport.quotedAt": "报价时间",
+  "transport.notes": "备注",
+  "transport.notesPlaceholder": "运输请求的其他备注...",
+  "transport.customerNote": "客户备注",
+  "transport.adminNote": "管理员备注",
+
+  // Transport - Statuses
+  "transport.status.PENDING": "待处理",
+  "transport.status.REVIEWING": "审核中",
+  "transport.status.QUOTED": "已报价",
+  "transport.status.CONFIRMED": "已确认",
+  "transport.status.IN_TRANSIT": "运输中",
+  "transport.status.DELIVERED": "已送达",
+  "transport.status.COMPLETED": "已完成",
+  "transport.status.CANCELLED": "已取消",
+
+  // Transport - Errors
+  "transport.error.noServiceType": "请选择服务类型",
 };
 
 export default zh;
