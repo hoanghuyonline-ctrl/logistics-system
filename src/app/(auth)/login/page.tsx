@@ -100,7 +100,7 @@ export default function LoginPage() {
           <h2 className="text-4xl font-bold text-white leading-tight mb-4 whitespace-pre-line">
             {t("auth.loginBranding")}
           </h2>
-          <p className="text-blue-100 text-lg leading-relaxed">
+          <p className="text-blue-100 text-lg leading-relaxed whitespace-pre-line">
             {t("auth.loginBrandingDesc")}
           </p>
         </div>
