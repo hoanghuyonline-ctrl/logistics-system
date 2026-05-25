@@ -168,7 +168,7 @@ model User {
   email          String   @unique
   password       String
   fullName       String
-  phone          String?
+  phone          String?  @unique
   address        String?
   avatarUrl      String?
   role           Role     @default(CUSTOMER)

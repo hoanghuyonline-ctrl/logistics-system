@@ -6,16 +6,35 @@ import Link from "next/link";
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 
+const VN_PHONE_REGEX = /^(?:\+84|0)\d{9,10}$/;
+
 export default function RegisterPage() {
   const router = useRouter();
   const { t, locale, setLocale } = useI18n();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", phone: "", address: "" });
   const [error, setError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function validatePhone(value: string) {
+    if (!value.trim()) {
+      setPhoneError(t("auth.phoneRequired"));
+      return false;
+    }
+    if (!VN_PHONE_REGEX.test(value.trim())) {
+      setPhoneError(t("auth.phoneInvalid"));
+      return false;
+    }
+    setPhoneError("");
+    return true;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!validatePhone(form.phone)) return;
+
     setLoading(true);
 
     const res = await fetch("/api/auth/register", {
@@ -125,14 +144,22 @@ export default function RegisterPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("auth.phone")}</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("auth.phone")} *</label>
                 <input
-                  type="text"
+                  type="tel"
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  onChange={(e) => {
+                    setForm({ ...form, phone: e.target.value });
+                    if (phoneError) validatePhone(e.target.value);
+                  }}
+                  onBlur={(e) => validatePhone(e.target.value)}
+                  className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${phoneError ? "border-red-400" : "border-slate-300"}`}
                   placeholder={t("auth.phonePlaceholder")}
+                  required
                 />
+                {phoneError && (
+                  <p className="mt-1 text-xs text-red-500">{phoneError}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("auth.address")}</label>

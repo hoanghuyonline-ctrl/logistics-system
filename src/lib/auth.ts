@@ -6,20 +6,25 @@ import crypto from "crypto";
 import { prisma } from "./prisma";
 import { uploadFileToStorage } from "./storage";
 
+const VN_PHONE_REGEX = /^(?:\+84|0)\d{9,10}$/;
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email or Phone", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        const identifier = credentials.email.trim();
+        const isPhone = VN_PHONE_REGEX.test(identifier);
+
+        const user = isPhone
+          ? await prisma.user.findUnique({ where: { phone: identifier } })
+          : await prisma.user.findUnique({ where: { email: identifier } });
 
         if (!user || !user.isActive) return null;
 
