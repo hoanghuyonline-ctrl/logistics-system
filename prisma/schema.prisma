@@ -84,6 +84,16 @@ enum NotificationType {
   ZALO
 }
 
+enum KnowledgeCategory {
+  IMPORT_POLICY
+  EXPORT_TAX
+  HS_CODE
+  LOGISTICS_NEWS
+  EXPORT_GUIDE
+  INCOTERMS
+  VIETNAM_PORTS
+}
+
 enum CustomsDeclarationType {
   KINH_DOANH
   GIA_CONG
@@ -155,6 +165,7 @@ model User {
   salesConfirmations SalesRequest[]       @relation("SalesRequestConfirmer")
   productsCreated    Product[]            @relation("ProductCreator")
   customsRequests    CustomsRequest[]     @relation("CustomsRequests")
+  knowledgeArticles  KnowledgeArticle[]   @relation("KnowledgeAuthor")
 }
 
 model Wallet {
@@ -603,4 +614,27 @@ model CustomsRequest {
   @@index([customerId, createdAt])
   @@index([status])
   @@index([declarationType])
+}
+
+model KnowledgeArticle {
+  id            String            @id @default(uuid())
+  slug          String            @unique
+  title         String
+  summary       String?           @db.Text
+  content       String            @db.Text
+  category      KnowledgeCategory
+  coverImage    String?
+  tags          String?
+  isPublished   Boolean           @default(false)
+  viewCount     Int               @default(0)
+  authorId      String
+  publishedAt   DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  author User @relation("KnowledgeAuthor", fields: [authorId], references: [id])
+
+  @@index([category, isPublished])
+  @@index([slug])
+  @@index([isPublished, publishedAt])
 }

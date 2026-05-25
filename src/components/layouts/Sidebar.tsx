@@ -28,6 +28,7 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.wallet", href: "/wallet", icon: "💰" },
   { labelKey: "nav.transactions", href: "/transactions", icon: "📋" },
   { labelKey: "nav.customs", href: "/customs", icon: "🛃" },
+  { labelKey: "nav.knowledge", href: "/knowledge", icon: "📚" },
   { labelKey: "nav.issues", href: "/issues", icon: "📝" },
   { labelKey: "nav.channelLinking", href: "/notifications", icon: "🔔" },
   { labelKey: "nav.profile", href: "/profile", icon: "👤" },
@@ -72,6 +73,12 @@ const adminNavGroups: NavGroup[] = [
       { labelKey: "nav.crm", href: "/admin/crm", icon: "🎯" },
       { labelKey: "nav.campaigns", href: "/admin/campaigns", icon: "📣" },
       { labelKey: "nav.staffNotes", href: "/admin/staff-notes", icon: "🔖" },
+    ],
+  },
+  {
+    label: "NỘI DUNG & MARKETING",
+    items: [
+      { labelKey: "nav.knowledgeBase", href: "/admin/knowledge", icon: "📚" },
     ],
   },
   {
