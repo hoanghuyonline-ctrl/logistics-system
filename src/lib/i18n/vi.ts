@@ -1589,6 +1589,84 @@ const vi: Record<string, string> = {
 
   // Transport - Errors
   "transport.error.noServiceType": "Vui lòng chọn loại dịch vụ",
+
+  // Nav - Quotation
+  "nav.quotation": "Báo giá",
+  "nav.quotationManagement": "Quản lý báo giá",
+
+  // Quotation - Public
+  "quotation.publicTitle": "Yêu cầu báo giá",
+  "quotation.publicSubtitle": "Nhận báo giá miễn phí cho dịch vụ logistics của bạn",
+  "quotation.submitRequest": "Gửi yêu cầu báo giá",
+  "quotation.successTitle": "Gửi thành công!",
+  "quotation.successMessage": "Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất",
+  "quotation.requestCode": "Mã yêu cầu",
+  "quotation.newRequest": "Gửi yêu cầu mới",
+  "quotation.backToHome": "Về trang chủ",
+
+  // Quotation - Admin
+  "quotation.adminTitle": "Quản lý báo giá",
+  "quotation.adminSubtitle": "Xem và phản hồi yêu cầu báo giá từ khách hàng",
+  "quotation.searchPlaceholder": "Tìm theo mã, tên, email, SĐT, công ty...",
+  "quotation.adminControls": "Điều khiển",
+  "quotation.updateRequest": "Cập nhật",
+  "quotation.timeline": "Dòng thời gian",
+  "quotation.empty": "Chưa có yêu cầu báo giá nào",
+  "quotation.emptyDesc": "Yêu cầu báo giá sẽ xuất hiện khi khách hàng gửi từ trang web",
+
+  // Quotation - Service Types
+  "quotation.serviceTypeLabel": "Loại dịch vụ",
+  "quotation.serviceType.IMPORT_EXPORT": "Xuất nhập khẩu",
+  "quotation.serviceType.CUSTOMS_CLEARANCE": "Thông quan Hải quan",
+  "quotation.serviceType.DOMESTIC_TRANSPORT": "Vận tải nội địa",
+  "quotation.serviceType.WAREHOUSE_STORAGE": "Kho bãi lưu trữ",
+  "quotation.serviceType.INTERNATIONAL_TRADE": "Thương mại quốc tế",
+  "quotation.serviceType.OTHER": "Dịch vụ khác",
+
+  // Quotation - Form Fields
+  "quotation.serviceDetail": "Chi tiết dịch vụ cần báo giá",
+  "quotation.serviceDetailPlaceholder": "Mô tả chi tiết dịch vụ bạn cần...",
+  "quotation.cargoRoute": "Thông tin hàng hóa & tuyến đường",
+  "quotation.cargoDescription": "Mô tả hàng hóa",
+  "quotation.cargoDescPlaceholder": "Loại hàng, đặc điểm, yêu cầu đặc biệt...",
+  "quotation.cargoWeight": "Trọng lượng (kg)",
+  "quotation.cargoVolume": "Thể tích (m³)",
+  "quotation.originCity": "Nơi gửi",
+  "quotation.originCityPlaceholder": "VD: Quảng Châu, Thượng Hải...",
+  "quotation.destinationCity": "Nơi nhận",
+  "quotation.destinationCityPlaceholder": "VD: Hà Nội, TP.HCM...",
+
+  // Quotation - Contact
+  "quotation.contactInfo": "Thông tin liên hệ",
+  "quotation.contactName": "Họ tên",
+  "quotation.contactNamePlaceholder": "Nhập họ tên...",
+  "quotation.contactEmail": "Email",
+  "quotation.contactPhone": "Số điện thoại",
+  "quotation.companyName": "Tên công ty",
+  "quotation.companyNamePlaceholder": "Tùy chọn",
+
+  // Quotation - Response
+  "quotation.quotedPrice": "Giá báo",
+  "quotation.quotedNote": "Ghi chú báo giá",
+  "quotation.quotedNotePlaceholder": "Chi tiết về giá, điều kiện...",
+  "quotation.quotedAt": "Báo giá lúc",
+  "quotation.respondedBy": "Người phản hồi",
+  "quotation.currentQuote": "Báo giá hiện tại",
+  "quotation.adminNote": "Ghi chú nội bộ",
+
+  // Quotation - Statuses
+  "quotation.status.NEW": "Mới",
+  "quotation.status.CONTACTED": "Đã liên hệ",
+  "quotation.status.QUOTED": "Đã báo giá",
+  "quotation.status.ACCEPTED": "Đã chấp nhận",
+  "quotation.status.REJECTED": "Đã từ chối",
+  "quotation.status.EXPIRED": "Hết hạn",
+
+  // Quotation - Errors
+  "quotation.error.noServiceType": "Vui lòng chọn loại dịch vụ",
+  "quotation.error.noContactName": "Vui lòng nhập họ tên",
+  "quotation.error.noContactEmail": "Vui lòng nhập email",
+  "quotation.error.noContactPhone": "Vui lòng nhập số điện thoại",
 };
 
 

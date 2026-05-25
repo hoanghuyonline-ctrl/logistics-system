@@ -101,6 +101,24 @@ enum TransportRequestStatus {
   CANCELLED
 }
 
+enum QuotationServiceType {
+  IMPORT_EXPORT
+  CUSTOMS_CLEARANCE
+  DOMESTIC_TRANSPORT
+  WAREHOUSE_STORAGE
+  INTERNATIONAL_TRADE
+  OTHER
+}
+
+enum QuotationStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
 enum KnowledgeCategory {
   IMPORT_POLICY
   EXPORT_TAX
@@ -184,6 +202,7 @@ model User {
   customsRequests    CustomsRequest[]     @relation("CustomsRequests")
   knowledgeArticles  KnowledgeArticle[]   @relation("KnowledgeAuthor")
   transportRequests  TransportRequest[]   @relation("TransportRequests")
+  quotationResponses QuotationRequest[]   @relation("QuotationResponder")
 }
 
 model Wallet {
@@ -700,4 +719,39 @@ model TransportRequest {
   @@index([customerId, createdAt])
   @@index([status])
   @@index([serviceType])
+}
+
+model QuotationRequest {
+  id              String                @id @default(uuid())
+  requestCode     String                @unique
+  status          QuotationStatus       @default(NEW)
+  // Service
+  serviceType     QuotationServiceType
+  serviceDetail   String?               @db.Text
+  // Cargo
+  cargoDescription String?              @db.Text
+  cargoWeight     Decimal?              @db.Decimal(10, 3)
+  cargoVolume     Decimal?              @db.Decimal(10, 3)
+  originCity      String?
+  destinationCity String?
+  // Contact
+  contactName     String
+  contactEmail    String
+  contactPhone    String
+  companyName     String?
+  // Response
+  quotedPrice     Decimal?              @db.Decimal(15, 2)
+  quotedNote      String?               @db.Text
+  quotedAt        DateTime?
+  adminNote       String?               @db.Text
+  respondedBy     String?
+  // Timestamps
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  responder User? @relation("QuotationResponder", fields: [respondedBy], references: [id])
+
+  @@index([status])
+  @@index([serviceType])
+  @@index([contactEmail])
 }

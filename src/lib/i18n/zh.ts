@@ -1589,6 +1589,84 @@ const zh: Record<string, string> = {
 
   // Transport - Errors
   "transport.error.noServiceType": "请选择服务类型",
+
+  // Nav - Quotation
+  "nav.quotation": "获取报价",
+  "nav.quotationManagement": "报价管理",
+
+  // Quotation - Public
+  "quotation.publicTitle": "请求报价",
+  "quotation.publicSubtitle": "免费获取您的物流服务报价",
+  "quotation.submitRequest": "提交报价请求",
+  "quotation.successTitle": "提交成功！",
+  "quotation.successMessage": "我们将尽快与您联系",
+  "quotation.requestCode": "请求编号",
+  "quotation.newRequest": "提交新请求",
+  "quotation.backToHome": "返回首页",
+
+  // Quotation - Admin
+  "quotation.adminTitle": "报价管理",
+  "quotation.adminSubtitle": "查看和回复客户报价请求",
+  "quotation.searchPlaceholder": "按编号、姓名、邮箱、电话、公司搜索...",
+  "quotation.adminControls": "控制面板",
+  "quotation.updateRequest": "更新",
+  "quotation.timeline": "时间线",
+  "quotation.empty": "暂无报价请求",
+  "quotation.emptyDesc": "客户从网站提交后报价请求将在此显示",
+
+  // Quotation - Service Types
+  "quotation.serviceTypeLabel": "服务类型",
+  "quotation.serviceType.IMPORT_EXPORT": "进出口",
+  "quotation.serviceType.CUSTOMS_CLEARANCE": "海关清关",
+  "quotation.serviceType.DOMESTIC_TRANSPORT": "国内运输",
+  "quotation.serviceType.WAREHOUSE_STORAGE": "仓储",
+  "quotation.serviceType.INTERNATIONAL_TRADE": "国际贸易",
+  "quotation.serviceType.OTHER": "其他服务",
+
+  // Quotation - Form Fields
+  "quotation.serviceDetail": "服务详情",
+  "quotation.serviceDetailPlaceholder": "详细描述您需要的服务...",
+  "quotation.cargoRoute": "货物与路线信息",
+  "quotation.cargoDescription": "货物描述",
+  "quotation.cargoDescPlaceholder": "货物类型、特征、特殊要求...",
+  "quotation.cargoWeight": "重量 (kg)",
+  "quotation.cargoVolume": "体积 (m³)",
+  "quotation.originCity": "起运地",
+  "quotation.originCityPlaceholder": "例如: 广州, 上海...",
+  "quotation.destinationCity": "目的地",
+  "quotation.destinationCityPlaceholder": "例如: 河内, 胡志明市...",
+
+  // Quotation - Contact
+  "quotation.contactInfo": "联系信息",
+  "quotation.contactName": "姓名",
+  "quotation.contactNamePlaceholder": "输入姓名...",
+  "quotation.contactEmail": "邮箱",
+  "quotation.contactPhone": "电话",
+  "quotation.companyName": "公司名称",
+  "quotation.companyNamePlaceholder": "可选",
+
+  // Quotation - Response
+  "quotation.quotedPrice": "报价",
+  "quotation.quotedNote": "报价备注",
+  "quotation.quotedNotePlaceholder": "价格详情、条件...",
+  "quotation.quotedAt": "报价时间",
+  "quotation.respondedBy": "回复人",
+  "quotation.currentQuote": "当前报价",
+  "quotation.adminNote": "内部备注",
+
+  // Quotation - Statuses
+  "quotation.status.NEW": "新建",
+  "quotation.status.CONTACTED": "已联系",
+  "quotation.status.QUOTED": "已报价",
+  "quotation.status.ACCEPTED": "已接受",
+  "quotation.status.REJECTED": "已拒绝",
+  "quotation.status.EXPIRED": "已过期",
+
+  // Quotation - Errors
+  "quotation.error.noServiceType": "请选择服务类型",
+  "quotation.error.noContactName": "请输入姓名",
+  "quotation.error.noContactEmail": "请输入邮箱",
+  "quotation.error.noContactPhone": "请输入电话号码",
 };
 
 export default zh;
