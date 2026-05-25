@@ -30,6 +30,7 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.customs", href: "/customs", icon: "🛃" },
   { labelKey: "nav.knowledge", href: "/knowledge", icon: "📚" },
   { labelKey: "nav.transport", href: "/transport", icon: "🚚" },
+  { labelKey: "nav.quotation", href: "/quotation", icon: "💰" },
   { labelKey: "nav.issues", href: "/issues", icon: "📝" },
   { labelKey: "nav.channelLinking", href: "/notifications", icon: "🔔" },
   { labelKey: "nav.profile", href: "/profile", icon: "👤" },
@@ -81,6 +82,7 @@ const adminNavGroups: NavGroup[] = [
     label: "NỘI DUNG & MARKETING",
     items: [
       { labelKey: "nav.knowledgeBase", href: "/admin/knowledge", icon: "📚" },
+      { labelKey: "nav.quotationManagement", href: "/admin/quotation", icon: "💰" },
     ],
   },
   {

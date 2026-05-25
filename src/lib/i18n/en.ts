@@ -1589,6 +1589,84 @@ const en: Record<string, string> = {
 
   // Transport - Errors
   "transport.error.noServiceType": "Please select a service type",
+
+  // Nav - Quotation
+  "nav.quotation": "Get a Quote",
+  "nav.quotationManagement": "Quotation Management",
+
+  // Quotation - Public
+  "quotation.publicTitle": "Request a Quote",
+  "quotation.publicSubtitle": "Get a free quote for your logistics needs",
+  "quotation.submitRequest": "Submit Quote Request",
+  "quotation.successTitle": "Successfully Submitted!",
+  "quotation.successMessage": "We will contact you as soon as possible",
+  "quotation.requestCode": "Request Code",
+  "quotation.newRequest": "Submit New Request",
+  "quotation.backToHome": "Back to Home",
+
+  // Quotation - Admin
+  "quotation.adminTitle": "Quotation Management",
+  "quotation.adminSubtitle": "View and respond to customer quote requests",
+  "quotation.searchPlaceholder": "Search by code, name, email, phone, company...",
+  "quotation.adminControls": "Controls",
+  "quotation.updateRequest": "Update",
+  "quotation.timeline": "Timeline",
+  "quotation.empty": "No quote requests yet",
+  "quotation.emptyDesc": "Quote requests will appear when customers submit from the website",
+
+  // Quotation - Service Types
+  "quotation.serviceTypeLabel": "Service Type",
+  "quotation.serviceType.IMPORT_EXPORT": "Import/Export",
+  "quotation.serviceType.CUSTOMS_CLEARANCE": "Customs Clearance",
+  "quotation.serviceType.DOMESTIC_TRANSPORT": "Domestic Transport",
+  "quotation.serviceType.WAREHOUSE_STORAGE": "Warehouse Storage",
+  "quotation.serviceType.INTERNATIONAL_TRADE": "International Trade",
+  "quotation.serviceType.OTHER": "Other Services",
+
+  // Quotation - Form Fields
+  "quotation.serviceDetail": "Service Details",
+  "quotation.serviceDetailPlaceholder": "Describe the service you need in detail...",
+  "quotation.cargoRoute": "Cargo & Route Information",
+  "quotation.cargoDescription": "Cargo Description",
+  "quotation.cargoDescPlaceholder": "Type of goods, features, special requirements...",
+  "quotation.cargoWeight": "Weight (kg)",
+  "quotation.cargoVolume": "Volume (m³)",
+  "quotation.originCity": "Origin",
+  "quotation.originCityPlaceholder": "e.g. Guangzhou, Shanghai...",
+  "quotation.destinationCity": "Destination",
+  "quotation.destinationCityPlaceholder": "e.g. Hanoi, HCMC...",
+
+  // Quotation - Contact
+  "quotation.contactInfo": "Contact Information",
+  "quotation.contactName": "Full Name",
+  "quotation.contactNamePlaceholder": "Enter your name...",
+  "quotation.contactEmail": "Email",
+  "quotation.contactPhone": "Phone",
+  "quotation.companyName": "Company Name",
+  "quotation.companyNamePlaceholder": "Optional",
+
+  // Quotation - Response
+  "quotation.quotedPrice": "Quoted Price",
+  "quotation.quotedNote": "Quote Note",
+  "quotation.quotedNotePlaceholder": "Pricing details, conditions...",
+  "quotation.quotedAt": "Quoted at",
+  "quotation.respondedBy": "Responded by",
+  "quotation.currentQuote": "Current Quote",
+  "quotation.adminNote": "Internal Note",
+
+  // Quotation - Statuses
+  "quotation.status.NEW": "New",
+  "quotation.status.CONTACTED": "Contacted",
+  "quotation.status.QUOTED": "Quoted",
+  "quotation.status.ACCEPTED": "Accepted",
+  "quotation.status.REJECTED": "Rejected",
+  "quotation.status.EXPIRED": "Expired",
+
+  // Quotation - Errors
+  "quotation.error.noServiceType": "Please select a service type",
+  "quotation.error.noContactName": "Please enter your name",
+  "quotation.error.noContactEmail": "Please enter your email",
+  "quotation.error.noContactPhone": "Please enter your phone number",
 };
 
 export default en;
