@@ -1501,6 +1501,94 @@ const en: Record<string, string> = {
   "knowledge.category.EXPORT_GUIDE": "Export Guide",
   "knowledge.category.INCOTERMS": "Incoterms",
   "knowledge.category.VIETNAM_PORTS": "Vietnam Ports",
+
+  // Nav - Transport
+  "nav.transport": "Domestic Transport",
+
+  // Transport - Customer
+  "transport.title": "Domestic Transport",
+  "transport.subtitle": "Manage transport and transit warehouse requests",
+  "transport.newRequest": "New Request",
+  "transport.newRequestDesc": "Fill in details for a domestic transport service request",
+  "transport.empty": "No requests yet",
+  "transport.emptyDesc": "Create your first transport request",
+  "transport.submitRequest": "Submit Request",
+  "transport.backToList": "Back to list",
+
+  // Transport - Admin
+  "transport.adminTitle": "Domestic Transport Management",
+  "transport.adminSubtitle": "View and process transport requests",
+  "transport.searchPlaceholder": "Search by code, description, city, customer...",
+  "transport.adminControls": "Controls",
+  "transport.updateRequest": "Update",
+  "transport.timeline": "Timeline",
+  "transport.customerInfo": "Customer Information",
+
+  // Transport - Service Types
+  "transport.serviceTypeLabel": "Service Type",
+  "transport.serviceType.TRUCK_NORTH_SOUTH": "North-South Trucking",
+  "transport.serviceType.INNER_CITY_DELIVERY": "Inner-City Delivery",
+  "transport.serviceType.TRANSIT_WAREHOUSE": "Transit Warehouse",
+  "transport.serviceTypeDesc.TRUCK_NORTH_SOUTH": "Long-haul trucking between North and South",
+  "transport.serviceTypeDesc.INNER_CITY_DELIVERY": "Fast delivery within the city",
+  "transport.serviceTypeDesc.TRANSIT_WAREHOUSE": "Storage and cargo transit services",
+
+  // Transport - Pickup/Delivery
+  "transport.pickupInfo": "Pickup Information",
+  "transport.deliveryInfo": "Delivery Information",
+  "transport.routeInfo": "Route Information",
+  "transport.pickup": "Pickup",
+  "transport.delivery": "Delivery",
+  "transport.pickupCity": "Pickup City",
+  "transport.deliveryCity": "Delivery City",
+  "transport.pickupAddress": "Pickup Address",
+  "transport.deliveryAddress": "Delivery Address",
+  "transport.pickupDate": "Pickup Date",
+  "transport.contactName": "Contact Name",
+  "transport.contactPhone": "Phone",
+  "transport.cityPlaceholder": "e.g. Hanoi, HCMC...",
+  "transport.addressPlaceholder": "Enter detailed address...",
+
+  // Transport - Warehouse
+  "transport.warehouseInfo": "Warehouse Information",
+  "transport.warehouseCity": "Warehouse City",
+  "transport.storageDuration": "Storage Duration",
+  "transport.storageDurationPlaceholder": "Number of days",
+  "transport.storageNote": "Storage Note",
+  "transport.storageNotePlaceholder": "Special warehouse requirements...",
+  "transport.days": "days",
+
+  // Transport - Cargo
+  "transport.cargoInfo": "Cargo Information",
+  "transport.cargoDescription": "Cargo Description",
+  "transport.cargoDescPlaceholder": "Describe the cargo type and features...",
+  "transport.cargoWeight": "Weight (kg)",
+  "transport.cargoVolume": "Volume (m³)",
+  "transport.cargoQuantity": "Quantity",
+  "transport.cargoType": "Cargo Type",
+  "transport.cargoTypePlaceholder": "e.g. Dry goods, Food...",
+  "transport.requiresRefrigeration": "Requires refrigerated truck",
+
+  // Transport - Pricing & Notes
+  "transport.quotedPrice": "Quoted Price",
+  "transport.quotedAt": "Quoted at",
+  "transport.notes": "Notes",
+  "transport.notesPlaceholder": "Additional notes for the transport request...",
+  "transport.customerNote": "Customer Note",
+  "transport.adminNote": "Admin Note",
+
+  // Transport - Statuses
+  "transport.status.PENDING": "Pending",
+  "transport.status.REVIEWING": "Reviewing",
+  "transport.status.QUOTED": "Quoted",
+  "transport.status.CONFIRMED": "Confirmed",
+  "transport.status.IN_TRANSIT": "In Transit",
+  "transport.status.DELIVERED": "Delivered",
+  "transport.status.COMPLETED": "Completed",
+  "transport.status.CANCELLED": "Cancelled",
+
+  // Transport - Errors
+  "transport.error.noServiceType": "Please select a service type",
 };
 
 export default en;
