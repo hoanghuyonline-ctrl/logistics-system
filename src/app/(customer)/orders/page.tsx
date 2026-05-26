@@ -11,9 +11,22 @@ import Card from "@/components/ui/Card";
 import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 
+const ORDER_TYPE_ICONS: Record<string, { icon: string; color: string }> = {
+  ECOMMERCE: { icon: "🛒", color: "bg-blue-100 text-blue-700" },
+  ENTRUST: { icon: "📦", color: "bg-emerald-100 text-emerald-700" },
+  CONSIGNMENT: { icon: "🚚", color: "bg-orange-100 text-orange-700" },
+};
+
+const ORDER_TYPE_KEYS: Record<string, string> = {
+  ECOMMERCE: "customerOrder.typeEcommerce",
+  ENTRUST: "customerOrder.typeEntrust",
+  CONSIGNMENT: "customerOrder.typeConsignment",
+};
+
 interface Order {
   id: string;
   orderCode: string;
+  orderType: string;
   productName: string;
   quantity: number;
   status: string;
@@ -189,7 +202,20 @@ export default function OrdersPage() {
                             </div>
                           }
                           fields={[
-                            { label: t("orderDetail.product"), value: <span className="truncate block max-w-[200px]">{order.productName}</span>, fullWidth: true },
+                            { label: t("orderDetail.product"), value: (
+                              <div className="flex flex-col gap-1">
+                                <span className="truncate block max-w-[200px]">{order.productName}</span>
+                                {(() => {
+                                  const typeInfo = ORDER_TYPE_ICONS[order.orderType] || ORDER_TYPE_ICONS.ECOMMERCE;
+                                  const typeKey = ORDER_TYPE_KEYS[order.orderType] || ORDER_TYPE_KEYS.ECOMMERCE;
+                                  return (
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold w-fit ${typeInfo.color}`}>
+                                      {typeInfo.icon} {t(typeKey)}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                            ), fullWidth: true },
                             { label: t("orders.totalCost"), value: <span className="font-semibold">{price}</span> },
                             { label: t("orders.progress"), value: order.status !== "CANCELLED" ? `${step}/8` : t("orders.orderCancelled") },
                             { label: t("common.date"), value: new Date(order.createdAt).toLocaleDateString() },
@@ -247,9 +273,20 @@ export default function OrdersPage() {
                             )}
                           </td>
 
-                          <td className="px-3 sm:px-6 py-3 text-sm text-slate-700 max-w-xs truncate">
+                          <td className="px-3 sm:px-6 py-3 text-sm text-slate-700 max-w-xs">
                             <div className="truncate">{order.productName}</div>
-                            <div className="text-xs text-slate-400 mt-0.5">×{order.quantity}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {(() => {
+                                const typeInfo = ORDER_TYPE_ICONS[order.orderType] || ORDER_TYPE_ICONS.ECOMMERCE;
+                                const typeKey = ORDER_TYPE_KEYS[order.orderType] || ORDER_TYPE_KEYS.ECOMMERCE;
+                                return (
+                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold ${typeInfo.color}`}>
+                                    {typeInfo.icon} {t(typeKey)}
+                                  </span>
+                                );
+                              })()}
+                              <span className="text-xs text-slate-400">×{order.quantity}</span>
+                            </div>
                           </td>
 
                           {/* Status */}
