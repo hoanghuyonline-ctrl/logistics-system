@@ -201,6 +201,7 @@ export default function NewOrderPage() {
         ...payload,
         ...consignForm,
         productName: consignItems[0]?.productName || consignForm.consignmentTrackingNumber,
+        productImage: images[0]?.url || "",
         quantity: totalQty,
         unitPriceCNY: totalCNY > 0 && totalQty > 0 ? (totalCNY / totalQty).toFixed(2) : "0",
         consignmentItems: consignItems,
@@ -720,6 +721,8 @@ export default function NewOrderPage() {
               {/* ── CONSIGNMENT FIELDS ── */}
               {orderType === "CONSIGNMENT" && (
                 <>
+                  <OrderImageUploader images={images} onImagesChange={setImages} maxImages={5} />
+
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">
                       {t("newOrder.consignmentTracking")} <span className="text-red-500">*</span>
