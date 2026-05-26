@@ -260,6 +260,8 @@ model Order {
   // Consignment fields
   consignmentTrackingNumber String?
   consignmentNotes          String?
+  // Shipping address (e.g. China warehouse address)
+  shippingAddress           String?     @db.Text
   internationalShippingRate Decimal     @db.Decimal(10, 2)
   internationalShippingFee  Decimal     @default(0) @db.Decimal(15, 2)
   vietnamDeliveryFee        Decimal     @default(0) @db.Decimal(15, 2)
