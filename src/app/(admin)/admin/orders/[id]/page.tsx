@@ -285,10 +285,10 @@ export default function AdminOrderDetailPage() {
       body: JSON.stringify({ shippingAddress }),
     });
     if (res.ok) {
-      toast("Đã lưu địa chỉ nhận hàng", "success");
+      toast(t("adminOrder.addressSaved"), "success");
       loadOrder();
     } else {
-      toast("Không thể lưu địa chỉ nhận hàng", "error");
+      toast(t("adminOrder.addressSaveFailed"), "error");
     }
     setShippingAddressSaving(false);
   }
@@ -303,7 +303,7 @@ export default function AdminOrderDetailPage() {
 
   async function confirmPricing() {
     if (calculatedTotal <= 0) {
-      toast("Vui lòng nhập chi phí cuối cùng", "error");
+      toast(t("adminOrder.enterFinalCost"), "error");
       return;
     }
     setPricingSaving(true);
@@ -322,11 +322,11 @@ export default function AdminOrderDetailPage() {
       }),
     });
     if (res.ok) {
-      toast("Đã xác nhận giá đơn hàng", "success");
+      toast(t("adminOrder.pricingConfirmed"), "success");
       loadOrder();
     } else {
       const data = await res.json();
-      toast(data.error || "Không thể xác nhận giá", "error");
+      toast(data.error || t("adminOrder.pricingConfirmFailed"), "error");
     }
     setPricingSaving(false);
   }
@@ -752,67 +752,67 @@ export default function AdminOrderDetailPage() {
       </div>
 
       {/* Shipping address */}
-      <Card title="Địa chỉ nhận hàng tại Trung Quốc">
+      <Card title={t("adminOrder.shippingAddressTitle")}>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Địa chỉ nhận hàng tại Trung Quốc</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.shippingAddressLabel")}</label>
             <textarea
               value={shippingAddress}
               onChange={(e) => setShippingAddress(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               rows={2}
-              placeholder="Nhập hoặc chỉnh sửa địa chỉ nhận hàng tại Trung Quốc..."
+              placeholder={t("adminOrder.shippingAddressPlaceholder")}
             />
           </div>
           {order.user?.address && shippingAddress !== order.user.address && (
-            <p className="text-xs text-slate-400">Địa chỉ mặc định của khách: {order.user.address}</p>
+            <p className="text-xs text-slate-400">{t("adminOrder.customerDefaultAddress")}: {order.user.address}</p>
           )}
           <button onClick={saveShippingAddress} disabled={shippingAddressSaving}
             className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm">
-            {shippingAddressSaving ? "Đang lưu..." : "Lưu địa chỉ"}
+            {shippingAddressSaving ? t("adminOrder.savingAddress") : t("adminOrder.saveAddress")}
           </button>
         </div>
       </Card>
 
       {/* Confirm pricing form */}
-      <Card title={order.confirmedTotalCost ? "Cập nhật giá xác nhận" : "Xác nhận giá đơn hàng"}>
+      <Card title={order.confirmedTotalCost ? t("adminOrder.updateConfirmedPricing") : t("adminOrder.confirmOrderPricing")}>
         {orderExchangeRate > 0 && (
-          <p className="text-xs text-slate-400 mb-4">Tỷ giá hệ thống: 1 ¥ = {orderExchangeRate.toLocaleString()} VND</p>
+          <p className="text-xs text-slate-400 mb-4">{t("adminOrder.systemExchangeRate")}: 1 ¥ = {orderExchangeRate.toLocaleString()} VND</p>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Tiền hàng Sản phẩm (¥)</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.productValueCNY")}</label>
             <input type="number" min="0" step="0.01" value={pricingForm.productValueCNY}
               onChange={(e) => setPricingForm({ ...pricingForm, productValueCNY: e.target.value })}
               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0.00" />
             <p className="text-xs text-slate-400 mt-1">¥{(parseFloat(pricingForm.productValueCNY) || 0).toLocaleString()} = {productValueVND.toLocaleString()} VND</p>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Phí dịch vụ (VND)</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.serviceFeeVND")}</label>
             <input type="number" min="0" step="1000" value={pricingForm.serviceFee}
               onChange={(e) => setPricingForm({ ...pricingForm, serviceFee: e.target.value })}
               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Phí Ship Trung Quốc (VND)</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.chinaShippingVND")}</label>
             <input type="number" min="0" step="1000" value={pricingForm.chinaShipping}
               onChange={(e) => setPricingForm({ ...pricingForm, chinaShipping: e.target.value })}
               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Phí Ship Quốc tế (VND)</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.intlShippingVND")}</label>
             <input type="number" min="0" step="1000" value={pricingForm.internationalShipping}
               onChange={(e) => setPricingForm({ ...pricingForm, internationalShipping: e.target.value })}
               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Phí Giao hàng VN (VND)</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.vnDeliveryVND")}</label>
             <input type="number" min="0" step="1000" value={pricingForm.vietnamDelivery}
               onChange={(e) => setPricingForm({ ...pricingForm, vietnamDelivery: e.target.value })}
               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Chi phí cuối cùng (VND) <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.finalTotalCost")} <span className="text-red-500">*</span></label>
             <input type="text" readOnly value={calculatedTotal.toLocaleString()}
               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 font-semibold text-emerald-700 cursor-not-allowed" />
           </div>
@@ -820,9 +820,9 @@ export default function AdminOrderDetailPage() {
         <div className="mt-4 flex items-center gap-3">
           <button onClick={confirmPricing} disabled={pricingSaving}
             className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
-            {pricingSaving ? "Đang lưu..." : (order.confirmedTotalCost ? "Cập nhật giá" : "Xác nhận giá")}
+            {pricingSaving ? t("adminOrder.savingPricing") : (order.confirmedTotalCost ? t("adminOrder.updatePricing") : t("adminOrder.confirmPricing"))}
           </button>
-          <p className="text-xs text-slate-400">Khách hàng sẽ nhận thông báo khi giá được xác nhận.</p>
+          <p className="text-xs text-slate-400">{t("adminOrder.pricingNotification")}</p>
         </div>
       </Card>
 

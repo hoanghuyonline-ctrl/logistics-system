@@ -519,6 +519,34 @@ const vi: Record<string, string> = {
   "pricing.awaitingConfirmation": "Chờ công ty xác nhận giá. Chi phí thực tế sẽ được cập nhật sau khi kiểm tra đơn hàng.",
   "pricing.showEstimate": "Xem giá dự kiến ban đầu",
 
+  // Admin shipping address block
+  "adminOrder.shippingAddressTitle": "Địa chỉ nhận hàng tại Trung Quốc",
+  "adminOrder.shippingAddressLabel": "Địa chỉ nhận hàng tại Trung Quốc",
+  "adminOrder.shippingAddressPlaceholder": "Nhập hoặc chỉnh sửa địa chỉ nhận hàng tại Trung Quốc...",
+  "adminOrder.customerDefaultAddress": "Địa chỉ mặc định của khách",
+  "adminOrder.saveAddress": "Lưu địa chỉ",
+  "adminOrder.savingAddress": "Đang lưu...",
+  "adminOrder.addressSaved": "Đã lưu địa chỉ nhận hàng",
+  "adminOrder.addressSaveFailed": "Không thể lưu địa chỉ nhận hàng",
+
+  // Admin pricing form block
+  "adminOrder.updateConfirmedPricing": "Cập nhật giá xác nhận",
+  "adminOrder.confirmOrderPricing": "Xác nhận giá đơn hàng",
+  "adminOrder.systemExchangeRate": "Tỷ giá hệ thống",
+  "adminOrder.productValueCNY": "Tiền hàng Sản phẩm (¥)",
+  "adminOrder.serviceFeeVND": "Phí dịch vụ (VND)",
+  "adminOrder.chinaShippingVND": "Phí Ship Trung Quốc (VND)",
+  "adminOrder.intlShippingVND": "Phí Ship Quốc tế (VND)",
+  "adminOrder.vnDeliveryVND": "Phí Giao hàng VN (VND)",
+  "adminOrder.finalTotalCost": "Chi phí cuối cùng (VND)",
+  "adminOrder.updatePricing": "Cập nhật giá",
+  "adminOrder.confirmPricing": "Xác nhận giá",
+  "adminOrder.savingPricing": "Đang lưu...",
+  "adminOrder.pricingNotification": "Khách hàng sẽ nhận thông báo khi giá được xác nhận.",
+  "adminOrder.pricingConfirmed": "Đã xác nhận giá đơn hàng",
+  "adminOrder.pricingConfirmFailed": "Không thể xác nhận giá",
+  "adminOrder.enterFinalCost": "Vui lòng nhập chi phí cuối cùng",
+
   // Wallet
   "wallet.loading": "Đang tải ví...",
   "wallet.title": "Ví của tôi",

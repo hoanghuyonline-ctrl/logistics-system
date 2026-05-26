@@ -519,6 +519,34 @@ const en: Record<string, string> = {
   "pricing.awaitingConfirmation": "Awaiting company price confirmation. Actual cost will be updated after order review.",
   "pricing.showEstimate": "Show initial estimate",
 
+  // Admin shipping address block
+  "adminOrder.shippingAddressTitle": "Receiving Address in China",
+  "adminOrder.shippingAddressLabel": "Receiving Address in China",
+  "adminOrder.shippingAddressPlaceholder": "Enter or edit the receiving address in China...",
+  "adminOrder.customerDefaultAddress": "Customer Default Address",
+  "adminOrder.saveAddress": "Save Address",
+  "adminOrder.savingAddress": "Saving...",
+  "adminOrder.addressSaved": "Shipping address saved",
+  "adminOrder.addressSaveFailed": "Failed to save shipping address",
+
+  // Admin pricing form block
+  "adminOrder.updateConfirmedPricing": "Update Confirmed Pricing",
+  "adminOrder.confirmOrderPricing": "Confirm Order Pricing",
+  "adminOrder.systemExchangeRate": "System Exchange Rate",
+  "adminOrder.productValueCNY": "Product Cost (¥)",
+  "adminOrder.serviceFeeVND": "Service Fee (VND)",
+  "adminOrder.chinaShippingVND": "China Domestic Shipping (VND)",
+  "adminOrder.intlShippingVND": "International Shipping (CN→VN) (VND)",
+  "adminOrder.vnDeliveryVND": "Vietnam Local Delivery (VND)",
+  "adminOrder.finalTotalCost": "Final Total Cost (VND)",
+  "adminOrder.updatePricing": "Update Pricing",
+  "adminOrder.confirmPricing": "Confirm Pricing",
+  "adminOrder.savingPricing": "Saving...",
+  "adminOrder.pricingNotification": "The customer will receive a notification once the price is confirmed.",
+  "adminOrder.pricingConfirmed": "Order pricing confirmed",
+  "adminOrder.pricingConfirmFailed": "Failed to confirm pricing",
+  "adminOrder.enterFinalCost": "Please enter the final cost",
+
   // Wallet
   "wallet.loading": "Loading wallet...",
   "wallet.title": "My Wallet",

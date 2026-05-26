@@ -519,6 +519,34 @@ const zh: Record<string, string> = {
   "pricing.awaitingConfirmation": "等待公司确认价格。实际费用将在审核订单后更新。",
   "pricing.showEstimate": "查看初始预估",
 
+  // Admin shipping address block
+  "adminOrder.shippingAddressTitle": "中国收货地址",
+  "adminOrder.shippingAddressLabel": "中国收货地址",
+  "adminOrder.shippingAddressPlaceholder": "输入或编辑中国收货地址...",
+  "adminOrder.customerDefaultAddress": "客户默认地址",
+  "adminOrder.saveAddress": "保存地址",
+  "adminOrder.savingAddress": "保存中...",
+  "adminOrder.addressSaved": "收货地址已保存",
+  "adminOrder.addressSaveFailed": "无法保存收货地址",
+
+  // Admin pricing form block
+  "adminOrder.updateConfirmedPricing": "更新确认价格",
+  "adminOrder.confirmOrderPricing": "确认订单价格",
+  "adminOrder.systemExchangeRate": "系统汇率",
+  "adminOrder.productValueCNY": "产品金额 (¥)",
+  "adminOrder.serviceFeeVND": "服务费 (VND)",
+  "adminOrder.chinaShippingVND": "中国国内运费 (VND)",
+  "adminOrder.intlShippingVND": "国际运费 (中→越) (VND)",
+  "adminOrder.vnDeliveryVND": "越南本地派送费 (VND)",
+  "adminOrder.finalTotalCost": "最终费用 (VND)",
+  "adminOrder.updatePricing": "更新价格",
+  "adminOrder.confirmPricing": "确认价格",
+  "adminOrder.savingPricing": "保存中...",
+  "adminOrder.pricingNotification": "价格确认后，客户将收到通知。",
+  "adminOrder.pricingConfirmed": "订单价格已确认",
+  "adminOrder.pricingConfirmFailed": "无法确认价格",
+  "adminOrder.enterFinalCost": "请输入最终费用",
+
   // Wallet
   "wallet.loading": "正在加载钱包...",
   "wallet.title": "我的钱包",
