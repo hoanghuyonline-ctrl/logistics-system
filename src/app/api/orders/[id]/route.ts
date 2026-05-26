@@ -49,10 +49,11 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: Ro
 
   const orderType = existing.orderType;
 
-  const data: Record<string, unknown> = {
-    notes: body.notes,
-  };
+  const data: Record<string, unknown> = {};
 
+  if (body.notes !== undefined) {
+    data.notes = body.notes;
+  }
   if (body.shippingAddress !== undefined) {
     data.shippingAddress = body.shippingAddress || null;
   }
