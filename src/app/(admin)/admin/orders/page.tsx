@@ -306,17 +306,27 @@ function AdminOrdersContent() {
 
               {/* Desktop table view */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col className="w-[14%]" />
+                    <col className="w-[14%]" />
+                    <col className="w-[18%]" />
+                    <col className="w-[16%]" />
+                    <col className="w-[9%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[11%]" />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-slate-100">
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.order")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.customer")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hoạt động</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Thao tác</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.order")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orders.customer")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("orderDetail.product")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.status")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.total")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("common.date")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hoạt động</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -329,7 +339,7 @@ function AdminOrdersContent() {
 
                       return (
                       <tr key={order.id} className={`transition-colors cursor-pointer ${isCancelled ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50/50"}`} onClick={(e) => handleRowClick(e, order.id)} onAuxClick={(e) => { if (e.button === 1) handleRowClick(e, order.id); }}>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-3">
                           <div className="flex items-center gap-1.5">
                             <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[order.status] || "bg-slate-400"}`} title={t(`status.${order.status}`)} />
                             <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-blue-600 hover:text-blue-700" onClick={(e) => e.stopPropagation()}>
@@ -352,11 +362,11 @@ function AdminOrdersContent() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1">
-                            <div>
-                              <div className="text-sm font-medium text-slate-900">{order.user.fullName}</div>
-                              <div className="text-xs text-slate-400">{order.user.email}</div>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-slate-900 truncate">{order.user.fullName}</div>
+                              <div className="text-xs text-slate-400 truncate">{order.user.email}</div>
                             </div>
                             <div className="flex items-center gap-0.5 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                               {order.user.phone && (
@@ -368,13 +378,13 @@ function AdminOrdersContent() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-700 max-w-xs">
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate">{order.productName}</span>
+                        <td className="px-3 py-3 text-sm text-slate-700">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="truncate block">{order.productName}</span>
                             {(() => { const b = ORDER_TYPE_BADGES[order.orderType]; return b && order.orderType !== "ECOMMERCE" ? <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${b.color}`}>{b.icon} {b.label}</span> : null; })()}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-3">
                           <div className="flex items-center gap-1.5">
                             <StatusBadge status={order.status} />
                             {isLongPending && (
@@ -413,9 +423,9 @@ function AdminOrdersContent() {
                             );
                           })()}
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium text-slate-900">{parseFloat(order.totalCostVND).toLocaleString()} VND</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500 max-w-[200px]">
+                        <td className="px-3 py-3 text-sm font-medium text-slate-900 whitespace-nowrap">{parseFloat(order.totalCostVND).toLocaleString()} ₫</td>
+                        <td className="px-3 py-3 text-sm text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
+                        <td className="px-3 py-3 text-sm text-slate-500">
                           {(() => {
                             const noteActivity = order.orderNotes[0] ? { at: new Date(order.orderNotes[0].createdAt), name: order.orderNotes[0].user.fullName, role: order.orderNotes[0].user.role } : null;
                             const logActivity = order.statusLogs[0] ? { at: new Date(order.statusLogs[0].createdAt), name: order.statusLogs[0].changer.fullName, role: order.statusLogs[0].changer.role } : null;
@@ -429,8 +439,8 @@ function AdminOrdersContent() {
                             return <span className="truncate block" title={`${latest.name} • ${latest.at.toLocaleString()}`}>{roleLabels[latest.role] || latest.role} • {timeStr}</span>;
                           })()}
                         </td>
-                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-1 flex-wrap">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-wrap gap-1">
                             <Link href={`/admin/orders/${order.id}`} onClick={(e) => e.stopPropagation()}
                               className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title={t("orders.openDetail", "Xem chi ti\u1ebft")}>
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
