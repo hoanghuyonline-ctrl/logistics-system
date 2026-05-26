@@ -547,6 +547,98 @@ const en: Record<string, string> = {
   "adminOrder.pricingConfirmFailed": "Failed to confirm pricing",
   "adminOrder.enterFinalCost": "Please enter the final cost",
 
+  // Customer order detail — order type badges
+  "customerOrder.typeEcommerce": "E-Commerce",
+  "customerOrder.typeEntrust": "Import/Export Entrust",
+  "customerOrder.typeConsignment": "Consignment",
+
+  // Customer order detail — status note
+  "customerOrder.statusNote": "Status Note",
+
+  // Customer order detail — status descriptions & next steps
+  "status.PENDING.description": "Order created, awaiting staff to purchase from China supplier.",
+  "status.PENDING.nextStep": "Next step: Staff will place the order and update the status.",
+  "status.PENDING.delayWarning": "Order has been waiting for purchase for a long time. Please contact staff to check.",
+  "status.PURCHASED.description": "Staff has placed the order with the China supplier. Waiting for seller to ship.",
+  "status.PURCHASED.nextStep": "Next step: Waiting for the China seller to ship to the China warehouse.",
+  "status.PURCHASED.delayWarning": "The China seller has not shipped yet. Staff will contact the shop.",
+  "status.SELLER_SHIPPED.description": "China seller has shipped. Goods are on the way to the China warehouse.",
+  "status.SELLER_SHIPPED.nextStep": "Next step: China warehouse will receive, inspect, and weigh the goods.",
+  "status.ARRIVED_CHINA_WH.description": "Goods have arrived at the China warehouse. Staff is inspecting, weighing, and packing.",
+  "status.ARRIVED_CHINA_WH.nextStep": "Next step: Goods will be packed and shipped to Vietnam.",
+  "status.ARRIVED_CHINA_WH.delayWarning": "Goods have been at the China warehouse for a while. Please contact to check packing status.",
+  "status.PACKING.description": "Goods are being packed at the China warehouse, preparing for dispatch.",
+  "status.PACKING.nextStep": "Next step: The package will be loaded onto the transport vehicle to Vietnam.",
+  "status.SHIPPING_TO_VIETNAM.description": "Goods are in transit from China to Vietnam. Average transit time: 3-7 days.",
+  "status.SHIPPING_TO_VIETNAM.nextStep": "Next step: Goods arrive at the Vietnam warehouse, scanned, and prepared for delivery.",
+  "status.SHIPPING_TO_VIETNAM.delayWarning": "Transit is taking longer than usual. May be due to border congestion or traffic.",
+  "status.ARRIVED_VIETNAM_WH.description": "Goods have arrived at the Vietnam warehouse! Staff is scanning, inspecting, and arranging delivery.",
+  "status.ARRIVED_VIETNAM_WH.nextStep": "Next step: Goods will be delivered to your address.",
+  "status.ARRIVED_VIETNAM_WH.delayWarning": "Goods have been waiting for delivery for a while. Please contact to check the delivery schedule.",
+  "status.OUT_FOR_DELIVERY.description": "Goods are being delivered to your address. Please keep your phone available.",
+  "status.OUT_FOR_DELIVERY.nextStep": "Next step: Receive and inspect the products.",
+  "status.OUT_FOR_DELIVERY.delayWarning": "Delivery is slower than expected. Please contact the delivery staff.",
+  "status.COMPLETED.description": "Order completed! Thank you for using Bac Trung Hai Logistics.",
+  "status.COMPLETED.nextStep": "If there are any issues with the goods, please contact support staff.",
+  "status.CANCELLED.description": "Order has been cancelled.",
+  "status.CANCELLED.nextStep": "If you need to reorder, please create a new order or contact staff.",
+  "status.unknown.description": "Updating status.",
+
+  // Customer order detail — delay banner
+  "customerOrder.orderDelayed": "Order processing is slower than expected",
+  "customerOrder.orderDelayedHint": "The order is taking longer than expected. Please continue to monitor or contact support if needed.",
+
+  // Customer order detail — status helper banners
+  "customerOrder.sellerShipping": "Seller is shipping",
+  "customerOrder.sellerShippingDesc": "The seller is preparing to ship goods to the China warehouse.",
+  "customerOrder.intlShipping": "International shipping in progress",
+  "customerOrder.intlShippingDesc": "The order is in international transit. Delivery time may vary.",
+  "customerOrder.vnWarehouseProcessing": "Vietnam warehouse processing",
+  "customerOrder.vnWarehouseProcessingDesc": "The Vietnam warehouse is processing and preparing for delivery.",
+  "customerOrder.outForDelivery": "Preparing for delivery",
+  "customerOrder.outForDeliveryDesc": "Goods are being delivered to your address. Please keep your phone available.",
+  "customerOrder.orderCompleted": "Order delivered successfully",
+  "customerOrder.orderCompletedDesc": "Thank you for using Bac Trung Hai Logistics.",
+
+  // Customer order detail — Zalo notification
+  "customerOrder.zaloAutoNotify": "Receive automatic Zalo notifications",
+  "customerOrder.zaloLinkPrompt": "Link Zalo to receive order status updates as soon as the warehouse processes your order.",
+  "customerOrder.copied": "Copied!",
+  "customerOrder.copyOrderCode": "Copy order code",
+  "customerOrder.setupNotifChannel": "Set up notification channel →",
+  "customerOrder.zaloLinked": "Zalo Linked",
+  "customerOrder.zaloLinkedDesc": "You will automatically receive order status updates via Zalo.",
+
+  // Customer order detail — Support & Contact
+  "customerOrder.contactSupport": "Contact Support",
+  "customerOrder.zaloSupportBound": "You can message directly via Zalo OA Bac Trung Hai Logistics for the fastest support. Send the order code to look up status.",
+  "customerOrder.zaloSupportUnbound": "Link Zalo to message support directly and receive automatic notifications.",
+  "customerOrder.orSubmitComplaint": "Or submit a complaint below if you need more detailed assistance.",
+
+  // Customer order detail — Warehouse address
+  "customerOrder.copyAddress": "Copy",
+
+  // Customer order detail — Issue/complaint form
+  "customerOrder.issueSubmitted": "Complaint submitted successfully. We will process it as soon as possible.",
+  "customerOrder.submitIssueBtn": "Submit complaint / support request",
+  "customerOrder.issueFormTitle": "Submit complaint for order",
+  "customerOrder.issueTypeLabel": "Issue type",
+  "customerOrder.issueDescLabel": "Detailed description",
+  "customerOrder.issueDescPlaceholder": "Please describe your issue...",
+  "customerOrder.submitting": "Submitting...",
+  "customerOrder.submitComplaint": "Submit complaint",
+  "customerOrder.cancel": "Cancel",
+
+  // Customer order detail — Issue types
+  "customerOrder.issueShortage": "Missing Items",
+  "customerOrder.issueLateDel": "Late Delivery",
+  "customerOrder.issueWrongWeight": "Wrong Weight",
+  "customerOrder.issueDamaged": "Damaged Goods",
+  "customerOrder.issueNotReceived": "Not Received",
+  "customerOrder.issueWrongFee": "Wrong Fee",
+  "customerOrder.issueChatbot": "Chatbot/Support",
+  "customerOrder.issueOther": "Other",
+
   // Wallet
   "wallet.loading": "Loading wallet...",
   "wallet.title": "My Wallet",
