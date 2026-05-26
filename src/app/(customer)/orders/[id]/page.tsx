@@ -176,10 +176,9 @@ export default function OrderDetailPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <PageHeader
-        title={`${t("orders.order")} ${order.orderCode}`}
-        subtitle={`${t("orders.createdOn")} ${new Date(order.createdAt).toLocaleDateString()}`}
-        action={
-          <div className="flex items-center gap-2">
+        title={
+          <span className="inline-flex items-center gap-2 flex-wrap">
+            {t("orders.order")} {order.orderCode}
             {(() => {
               const typeInfo = ORDER_TYPE_ICONS[order.orderType] || ORDER_TYPE_ICONS.ECOMMERCE;
               const typeKey = ORDER_TYPE_KEYS[order.orderType] || ORDER_TYPE_KEYS.ECOMMERCE;
@@ -189,9 +188,10 @@ export default function OrderDetailPage() {
                 </span>
               );
             })()}
-            <StatusBadge status={order.status} />
-          </div>
+          </span>
         }
+        subtitle={`${t("orders.createdOn")} ${new Date(order.createdAt).toLocaleDateString()}`}
+        action={<StatusBadge status={order.status} />}
       />
 
       {order.customStatusNote && (
