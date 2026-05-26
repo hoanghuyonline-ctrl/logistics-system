@@ -752,16 +752,16 @@ export default function AdminOrderDetailPage() {
       </div>
 
       {/* Shipping address */}
-      <Card title="Địa chỉ nhận hàng">
+      <Card title="Địa chỉ nhận hàng tại Trung Quốc">
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Địa chỉ nhận hàng</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Địa chỉ nhận hàng tại Trung Quốc</label>
             <textarea
               value={shippingAddress}
               onChange={(e) => setShippingAddress(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               rows={2}
-              placeholder="Nhập hoặc chỉnh sửa địa chỉ nhận hàng..."
+              placeholder="Nhập hoặc chỉnh sửa địa chỉ nhận hàng tại Trung Quốc..."
             />
           </div>
           {order.user?.address && shippingAddress !== order.user.address && (

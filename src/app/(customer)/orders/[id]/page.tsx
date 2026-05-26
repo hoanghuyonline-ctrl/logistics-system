@@ -56,6 +56,7 @@ interface OrderDetail {
   cnTruckImages: string | null;
   consignmentTrackingNumber: string | null;
   consignmentNotes: string | null;
+  shippingAddress: string | null;
   internationalShippingRate: string;
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
@@ -495,6 +496,25 @@ export default function OrderDetailPage() {
                 </div>
               )}
             </dl>
+          </Card>
+        )}
+
+        {order.orderType === "CONSIGNMENT" && order.shippingAddress && (
+          <Card title="Địa chỉ nhận hàng tại Trung Quốc">
+            <div className="flex items-start gap-3">
+              <p className="flex-1 text-sm text-slate-800 whitespace-pre-line">{order.shippingAddress}</p>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(order.shippingAddress!)}
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                Sao chép
+              </button>
+            </div>
           </Card>
         )}
 
