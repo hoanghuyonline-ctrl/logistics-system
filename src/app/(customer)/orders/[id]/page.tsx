@@ -10,10 +10,16 @@ import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
 import { getStatusInfo, getDelayWarning, getProgressSteps } from "@/lib/shipment-timeline-info";
 
-const ORDER_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  ECOMMERCE: { label: "Thương mại điện tử", icon: "🛒", color: "bg-blue-100 text-blue-700" },
-  ENTRUST: { label: "Ủy thác XNK", icon: "📦", color: "bg-emerald-100 text-emerald-700" },
-  CONSIGNMENT: { label: "Ký gửi", icon: "🚚", color: "bg-orange-100 text-orange-700" },
+const ORDER_TYPE_ICONS: Record<string, { icon: string; color: string }> = {
+  ECOMMERCE: { icon: "🛒", color: "bg-blue-100 text-blue-700" },
+  ENTRUST: { icon: "📦", color: "bg-emerald-100 text-emerald-700" },
+  CONSIGNMENT: { icon: "🚚", color: "bg-orange-100 text-orange-700" },
+};
+
+const ORDER_TYPE_KEYS: Record<string, string> = {
+  ECOMMERCE: "customerOrder.typeEcommerce",
+  ENTRUST: "customerOrder.typeEntrust",
+  CONSIGNMENT: "customerOrder.typeConsignment",
 };
 
 interface OrderDetail {
@@ -89,15 +95,15 @@ interface OrderDetail {
   }>;
 }
 
-const ISSUE_TYPES: Record<string, string> = {
-  THIEU_HANG: "Thiếu hàng",
-  GIAO_CHAM: "Giao chậm",
-  SAI_CAN: "Sai cân nặng",
-  HONG_HANG: "Hỏng hàng",
-  CHUA_NHAN: "Chưa nhận được hàng",
-  PHI_SAI: "Phí sai",
-  CHATBOT: "Chatbot/Hỗ trợ",
-  KHAC: "Khác",
+const ISSUE_TYPE_KEYS: Record<string, string> = {
+  THIEU_HANG: "customerOrder.issueShortage",
+  GIAO_CHAM: "customerOrder.issueLateDel",
+  SAI_CAN: "customerOrder.issueWrongWeight",
+  HONG_HANG: "customerOrder.issueDamaged",
+  CHUA_NHAN: "customerOrder.issueNotReceived",
+  PHI_SAI: "customerOrder.issueWrongFee",
+  CHATBOT: "customerOrder.issueChatbot",
+  KHAC: "customerOrder.issueOther",
 };
 
 export default function OrderDetailPage() {
@@ -175,10 +181,11 @@ export default function OrderDetailPage() {
         action={
           <div className="flex items-center gap-2">
             {(() => {
-              const typeInfo = ORDER_TYPE_LABELS[order.orderType] || ORDER_TYPE_LABELS.ECOMMERCE;
+              const typeInfo = ORDER_TYPE_ICONS[order.orderType] || ORDER_TYPE_ICONS.ECOMMERCE;
+              const typeKey = ORDER_TYPE_KEYS[order.orderType] || ORDER_TYPE_KEYS.ECOMMERCE;
               return (
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${typeInfo.color}`}>
-                  {typeInfo.icon} {typeInfo.label}
+                  {typeInfo.icon} {t(typeKey)}
                 </span>
               );
             })()}
@@ -190,7 +197,7 @@ export default function OrderDetailPage() {
       {order.customStatusNote && (
         <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200">
           <span className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-          <span className="text-sm font-medium text-amber-700">Ghi chú trạng thái: {order.customStatusNote}</span>
+          <span className="text-sm font-medium text-amber-700">{t("customerOrder.statusNote")}: {order.customStatusNote}</span>
         </div>
       )}
 
@@ -205,8 +212,8 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{info.icon}</span>
                 <div>
-                  <p className="text-sm font-medium text-slate-800">{info.description}</p>
-                  <p className="text-sm text-blue-600 mt-1">{info.nextStep}</p>
+                  <p className="text-sm font-medium text-slate-800">{t(`status.${order.status}.description`, info.description)}</p>
+                  <p className="text-sm text-blue-600 mt-1">{t(`status.${order.status}.nextStep`, info.nextStep)}</p>
                 </div>
               </div>
               {delayMsg && (
@@ -254,9 +261,9 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                 <span className="text-lg shrink-0">⚠️</span>
                 <div>
-                  <p className="text-sm font-semibold text-amber-900">Đơn hàng đang xử lý chậm hơn dự kiến</p>
-                  <p className="text-sm text-amber-700 mt-1">{delayMsg}</p>
-                  <p className="text-xs text-amber-600 mt-2">Đơn hàng đang chậm hơn dự kiến. Vui lòng theo dõi thêm hoặc liên hệ hỗ trợ nếu cần.</p>
+                  <p className="text-sm font-semibold text-amber-900">{t("customerOrder.orderDelayed")}</p>
+                  <p className="text-sm text-amber-700 mt-1">{t(`status.${order.status}.delayWarning`, delayMsg!)}</p>
+                  <p className="text-xs text-amber-600 mt-2">{t("customerOrder.orderDelayedHint")}</p>
                 </div>
               </div>
             )}
@@ -264,8 +271,8 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3 p-3 bg-sky-50 border border-sky-200 rounded-xl">
                 <span className="text-lg shrink-0">📦</span>
                 <div>
-                  <p className="text-sm font-semibold text-sky-900">Người bán đang gửi hàng</p>
-                  <p className="text-sm text-sky-700 mt-0.5">Người bán đang chuẩn bị giao hàng tới kho Trung Quốc.</p>
+                  <p className="text-sm font-semibold text-sky-900">{t("customerOrder.sellerShipping")}</p>
+                  <p className="text-sm text-sky-700 mt-0.5">{t("customerOrder.sellerShippingDesc")}</p>
                 </div>
               </div>
             )}
@@ -273,8 +280,8 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3 p-3 bg-sky-50 border border-sky-200 rounded-xl">
                 <span className="text-lg shrink-0">🚛</span>
                 <div>
-                  <p className="text-sm font-semibold text-sky-900">Đang vận chuyển quốc tế</p>
-                  <p className="text-sm text-sky-700 mt-0.5">Đơn hàng đang vận chuyển quốc tế, thời gian có thể thay đổi.</p>
+                  <p className="text-sm font-semibold text-sky-900">{t("customerOrder.intlShipping")}</p>
+                  <p className="text-sm text-sky-700 mt-0.5">{t("customerOrder.intlShippingDesc")}</p>
                 </div>
               </div>
             )}
@@ -282,8 +289,8 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                 <span className="text-lg shrink-0">🏠</span>
                 <div>
-                  <p className="text-sm font-semibold text-emerald-900">Kho Việt Nam đang xử lý</p>
-                  <p className="text-sm text-emerald-700 mt-0.5">Kho Việt Nam đang xử lý và chuẩn bị giao.</p>
+                  <p className="text-sm font-semibold text-emerald-900">{t("customerOrder.vnWarehouseProcessing")}</p>
+                  <p className="text-sm text-emerald-700 mt-0.5">{t("customerOrder.vnWarehouseProcessingDesc")}</p>
                 </div>
               </div>
             )}
@@ -291,8 +298,8 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                 <span className="text-lg shrink-0">🚚</span>
                 <div>
-                  <p className="text-sm font-semibold text-emerald-900">Đang chuẩn bị giao hàng</p>
-                  <p className="text-sm text-emerald-700 mt-0.5">Hàng đang được giao đến địa chỉ của bạn. Vui lòng giữ điện thoại.</p>
+                  <p className="text-sm font-semibold text-emerald-900">{t("customerOrder.outForDelivery")}</p>
+                  <p className="text-sm text-emerald-700 mt-0.5">{t("customerOrder.outForDeliveryDesc")}</p>
                 </div>
               </div>
             )}
@@ -300,8 +307,8 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                 <span className="text-lg shrink-0">✅</span>
                 <div>
-                  <p className="text-sm font-semibold text-emerald-900">Đơn hàng đã giao thành công</p>
-                  <p className="text-sm text-emerald-700 mt-0.5">Cảm ơn bạn đã sử dụng dịch vụ Bắc Trung Hải Logistics.</p>
+                  <p className="text-sm font-semibold text-emerald-900">{t("customerOrder.orderCompleted")}</p>
+                  <p className="text-sm text-emerald-700 mt-0.5">{t("customerOrder.orderCompletedDesc")}</p>
                 </div>
               </div>
             )}
@@ -313,9 +320,9 @@ export default function OrderDetailPage() {
         <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
           <span className="text-lg shrink-0">📱</span>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-blue-900">Nhận thông báo Zalo tự động</p>
+            <p className="text-sm font-semibold text-blue-900">{t("customerOrder.zaloAutoNotify")}</p>
             <p className="text-sm text-blue-700 mt-1">
-              Liên kết Zalo để nhận cập nhật trạng thái đơn hàng ngay khi kho xử lý.
+              {t("customerOrder.zaloLinkPrompt")}
             </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="font-mono bg-white px-2.5 py-1.5 rounded border border-blue-200 text-blue-900 font-semibold text-sm">{order.orderCode}</span>
@@ -328,14 +335,14 @@ export default function OrderDetailPage() {
                 }}
                 className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
               >
-                {orderCodeCopied ? "Đã sao chép!" : "Sao chép mã đơn"}
+                {orderCodeCopied ? t("customerOrder.copied") : t("customerOrder.copyOrderCode")}
               </button>
             </div>
             <Link
               href="/notifications"
               className="inline-block mt-2 text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2"
             >
-              Cài đặt kênh thông báo →
+              {t("customerOrder.setupNotifChannel")}
             </Link>
           </div>
         </div>
@@ -345,8 +352,8 @@ export default function OrderDetailPage() {
         <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
           <span className="text-sm shrink-0">✅</span>
           <div>
-            <p className="text-sm font-medium text-emerald-800">Zalo đã liên kết</p>
-            <p className="text-xs text-emerald-700 mt-0.5">Bạn sẽ tự động nhận cập nhật trạng thái đơn hàng qua Zalo.</p>
+            <p className="text-sm font-medium text-emerald-800">{t("customerOrder.zaloLinked")}</p>
+            <p className="text-xs text-emerald-700 mt-0.5">{t("customerOrder.zaloLinkedDesc")}</p>
           </div>
         </div>
       )}
@@ -356,20 +363,20 @@ export default function OrderDetailPage() {
         <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-base">💬</span>
-            <p className="text-sm font-semibold text-slate-800">Liên hệ hỗ trợ</p>
+            <p className="text-sm font-semibold text-slate-800">{t("customerOrder.contactSupport")}</p>
           </div>
           <div className="space-y-1.5 text-sm text-slate-600">
             {zaloBound ? (
-              <p>Bạn có thể nhắn tin trực tiếp qua <span className="font-medium text-blue-700">Zalo OA Bắc Trung Hải Logistics</span> để được hỗ trợ nhanh nhất. Gửi mã đơn hàng để tra cứu trạng thái.</p>
+              <p>{t("customerOrder.zaloSupportBound")}</p>
             ) : (
               <p>
-                Liên kết Zalo để nhắn tin hỗ trợ trực tiếp và nhận thông báo tự động.{" "}
+                {t("customerOrder.zaloSupportUnbound")}{" "}
                 <Link href="/notifications" className="font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2">
-                  Cài đặt kênh thông báo →
+                  {t("customerOrder.setupNotifChannel")}
                 </Link>
               </p>
             )}
-            <p className="text-xs text-slate-500">Hoặc gửi khiếu nại bên dưới nếu cần hỗ trợ chi tiết hơn.</p>
+            <p className="text-xs text-slate-500">{t("customerOrder.orSubmitComplaint")}</p>
           </div>
         </div>
       )}
@@ -500,7 +507,7 @@ export default function OrderDetailPage() {
         )}
 
         {order.orderType === "CONSIGNMENT" && order.shippingAddress && (
-          <Card title="Địa chỉ nhận hàng tại Trung Quốc">
+          <Card title={t("adminOrder.shippingAddressTitle")}>
             <div className="flex items-start gap-3">
               <p className="flex-1 text-sm text-slate-800 whitespace-pre-line">{order.shippingAddress}</p>
               <button
@@ -512,7 +519,7 @@ export default function OrderDetailPage() {
                   <rect x="9" y="9" width="13" height="13" rx="2" />
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                 </svg>
-                Sao chép
+                {t("customerOrder.copyAddress")}
               </button>
             </div>
           </Card>
@@ -648,7 +655,7 @@ export default function OrderDetailPage() {
                   <span className="text-sm">{getStatusInfo(log.toStatus).icon}</span>
                   <StatusBadge status={log.toStatus} />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">{getStatusInfo(log.toStatus).description}</p>
+                <p className="text-xs text-slate-500 mt-1">{t(`status.${log.toStatus}.description`, getStatusInfo(log.toStatus).description)}</p>
                 {log.note && <p className="text-sm text-slate-600 mt-1 italic">{log.note}</p>}
                 <p className="text-xs text-slate-400 mt-1">
                   {new Date(log.createdAt).toLocaleString("vi-VN")} — {log.changer.fullName}
@@ -692,7 +699,7 @@ export default function OrderDetailPage() {
         <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
           <span className="text-base">✅</span>
           <span className="text-sm font-medium text-emerald-700">
-            Khiếu nại đã được gửi thành công. Chúng tôi sẽ xử lý sớm nhất.
+            {t("customerOrder.issueSubmitted")}
           </span>
         </div>
       )}
@@ -703,29 +710,29 @@ export default function OrderDetailPage() {
             className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors"
           >
             <span className="text-base">📋</span>
-            Gửi khiếu nại / yêu cầu hỗ trợ
+            {t("customerOrder.submitIssueBtn")}
           </button>
         ) : (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-800">Gửi khiếu nại cho đơn {order.orderCode}</h3>
+            <h3 className="text-sm font-semibold text-slate-800">{t("customerOrder.issueFormTitle")} {order.orderCode}</h3>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Loại vấn đề</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t("customerOrder.issueTypeLabel")}</label>
               <select
                 value={issueType}
                 onChange={(e) => setIssueType(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                {Object.entries(ISSUE_TYPES).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                {Object.entries(ISSUE_TYPE_KEYS).map(([key, tKey]) => (
+                  <option key={key} value={key}>{t(tKey)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả chi tiết</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t("customerOrder.issueDescLabel")}</label>
               <textarea
                 value={issueDesc}
                 onChange={(e) => setIssueDesc(e.target.value)}
-                placeholder="Vui lòng mô tả vấn đề của bạn..."
+                placeholder={t("customerOrder.issueDescPlaceholder")}
                 rows={3}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               />
@@ -736,13 +743,13 @@ export default function OrderDetailPage() {
                 disabled={issueSubmitting || !issueDesc.trim()}
                 className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
               >
-                {issueSubmitting ? "Đang gửi..." : "Gửi khiếu nại"}
+                {issueSubmitting ? t("customerOrder.submitting") : t("customerOrder.submitComplaint")}
               </button>
               <button
                 onClick={() => { setShowIssueForm(false); setIssueDesc(""); }}
                 className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
               >
-                Hủy
+                {t("customerOrder.cancel")}
               </button>
             </div>
           </div>

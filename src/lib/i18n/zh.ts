@@ -547,6 +547,98 @@ const zh: Record<string, string> = {
   "adminOrder.pricingConfirmFailed": "无法确认价格",
   "adminOrder.enterFinalCost": "请输入最终费用",
 
+  // Customer order detail — order type badges
+  "customerOrder.typeEcommerce": "电子商务",
+  "customerOrder.typeEntrust": "进出口委托",
+  "customerOrder.typeConsignment": "寄售",
+
+  // Customer order detail — status note
+  "customerOrder.statusNote": "状态备注",
+
+  // Customer order detail — status descriptions & next steps
+  "status.PENDING.description": "订单已创建，等待员工从中国商家采购。",
+  "status.PENDING.nextStep": "下一步：员工将下单采购并更新状态。",
+  "status.PENDING.delayWarning": "等待采购时间较长。请联系员工查询。",
+  "status.PURCHASED.description": "员工已从中国商家下单。等待卖家发货。",
+  "status.PURCHASED.nextStep": "下一步：等待中国卖家发货至中国仓库。",
+  "status.PURCHASED.delayWarning": "中国卖家尚未发货。员工将联系商家。",
+  "status.SELLER_SHIPPED.description": "中国商家已发货。货物正在运往中国仓库的途中。",
+  "status.SELLER_SHIPPED.nextStep": "下一步：中国仓库将接收、检查并称重。",
+  "status.ARRIVED_CHINA_WH.description": "货物已到达中国仓库。员工正在检查、称重和打包。",
+  "status.ARRIVED_CHINA_WH.nextStep": "下一步：货物将被打包并运往越南。",
+  "status.ARRIVED_CHINA_WH.delayWarning": "货物在中国仓库停留较长时间。请联系查询打包情况。",
+  "status.PACKING.description": "货物正在中国仓库打包，准备出库。",
+  "status.PACKING.nextStep": "下一步：包裹将装车运往越南。",
+  "status.SHIPPING_TO_VIETNAM.description": "货物正从中国运往越南。平均运输时间3-7天。",
+  "status.SHIPPING_TO_VIETNAM.nextStep": "下一步：货物到达越南仓库，扫码并准备配送。",
+  "status.SHIPPING_TO_VIETNAM.delayWarning": "运输时间比正常更长。可能由于边境拥堵或交通堵塞。",
+  "status.ARRIVED_VIETNAM_WH.description": "货物已到达越南仓库！员工正在扫码、检查并安排配送。",
+  "status.ARRIVED_VIETNAM_WH.nextStep": "下一步：货物将送到您的地址。",
+  "status.ARRIVED_VIETNAM_WH.delayWarning": "货物等待配送时间较长。请联系查询配送时间表。",
+  "status.OUT_FOR_DELIVERY.description": "货物正在送往您的地址。请保持电话畅通以便接收。",
+  "status.OUT_FOR_DELIVERY.nextStep": "下一步：接收并检查产品。",
+  "status.OUT_FOR_DELIVERY.delayWarning": "配送比预期慢。请联系配送员。",
+  "status.COMPLETED.description": "订单已完成！感谢您使用北中海物流。",
+  "status.COMPLETED.nextStep": "如果货物有任何问题，请联系客服人员。",
+  "status.CANCELLED.description": "订单已取消。",
+  "status.CANCELLED.nextStep": "如需重新下单，请创建新订单或联系员工。",
+  "status.unknown.description": "正在更新状态。",
+
+  // Customer order detail — delay banner
+  "customerOrder.orderDelayed": "订单处理比预期慢",
+  "customerOrder.orderDelayedHint": "订单处理时间超出预期。请继续关注或联系客服。",
+
+  // Customer order detail — status helper banners
+  "customerOrder.sellerShipping": "卖家正在发货",
+  "customerOrder.sellerShippingDesc": "卖家正在准备将货物发送至中国仓库。",
+  "customerOrder.intlShipping": "国际运输中",
+  "customerOrder.intlShippingDesc": "订单正在国际运输中，运输时间可能有所变化。",
+  "customerOrder.vnWarehouseProcessing": "越南仓库处理中",
+  "customerOrder.vnWarehouseProcessingDesc": "越南仓库正在处理并准备配送。",
+  "customerOrder.outForDelivery": "正在准备配送",
+  "customerOrder.outForDeliveryDesc": "货物正在送往您的地址。请保持电话畅通。",
+  "customerOrder.orderCompleted": "订单已成功送达",
+  "customerOrder.orderCompletedDesc": "感谢您使用北中海物流。",
+
+  // Customer order detail — Zalo notification
+  "customerOrder.zaloAutoNotify": "接收 Zalo 自动通知",
+  "customerOrder.zaloLinkPrompt": "绑定 Zalo 以在仓库处理订单时立即接收状态更新。",
+  "customerOrder.copied": "已复制！",
+  "customerOrder.copyOrderCode": "复制订单号",
+  "customerOrder.setupNotifChannel": "设置通知渠道 →",
+  "customerOrder.zaloLinked": "Zalo 已绑定",
+  "customerOrder.zaloLinkedDesc": "您将自动通过 Zalo 接收订单状态更新。",
+
+  // Customer order detail — Support & Contact
+  "customerOrder.contactSupport": "联系支持",
+  "customerOrder.zaloSupportBound": "您可以直接通过 Zalo OA 北中海物流发消息以获得最快支持。发送订单号以查询状态。",
+  "customerOrder.zaloSupportUnbound": "绑定 Zalo 以直接发消息获取支持并接收自动通知。",
+  "customerOrder.orSubmitComplaint": "或在下方提交投诉以获得更详细的支持。",
+
+  // Customer order detail — Warehouse address
+  "customerOrder.copyAddress": "复制",
+
+  // Customer order detail — Issue/complaint form
+  "customerOrder.issueSubmitted": "投诉已成功提交。我们将尽快处理。",
+  "customerOrder.submitIssueBtn": "提交投诉/支持请求",
+  "customerOrder.issueFormTitle": "为订单提交投诉",
+  "customerOrder.issueTypeLabel": "问题类型",
+  "customerOrder.issueDescLabel": "详细描述",
+  "customerOrder.issueDescPlaceholder": "请描述您的问题...",
+  "customerOrder.submitting": "提交中...",
+  "customerOrder.submitComplaint": "提交投诉",
+  "customerOrder.cancel": "取消",
+
+  // Customer order detail — Issue types
+  "customerOrder.issueShortage": "缺货",
+  "customerOrder.issueLateDel": "延迟交付",
+  "customerOrder.issueWrongWeight": "重量错误",
+  "customerOrder.issueDamaged": "货物损坏",
+  "customerOrder.issueNotReceived": "未收到货",
+  "customerOrder.issueWrongFee": "费用错误",
+  "customerOrder.issueChatbot": "聊天机器人/支持",
+  "customerOrder.issueOther": "其他",
+
   // Wallet
   "wallet.loading": "正在加载钱包...",
   "wallet.title": "我的钱包",

@@ -547,6 +547,98 @@ const vi: Record<string, string> = {
   "adminOrder.pricingConfirmFailed": "Không thể xác nhận giá",
   "adminOrder.enterFinalCost": "Vui lòng nhập chi phí cuối cùng",
 
+  // Customer order detail — order type badges
+  "customerOrder.typeEcommerce": "Thương mại điện tử",
+  "customerOrder.typeEntrust": "Ủy thác XNK",
+  "customerOrder.typeConsignment": "Ký gửi",
+
+  // Customer order detail — status note
+  "customerOrder.statusNote": "Ghi chú trạng thái",
+
+  // Customer order detail — status descriptions & next steps
+  "status.PENDING.description": "Đơn hàng đã được tạo, đang chờ nhân viên mua hàng từ shop Trung Quốc.",
+  "status.PENDING.nextStep": "Bước tiếp theo: nhân viên sẽ đặt mua và cập nhật trạng thái.",
+  "status.PENDING.delayWarning": "Đơn chờ mua khá lâu. Liên hệ nhân viên để kiểm tra.",
+  "status.PURCHASED.description": "Nhân viên đã đặt mua hàng từ shop Trung Quốc. Đang chờ shop gửi hàng.",
+  "status.PURCHASED.nextStep": "Bước tiếp theo: chờ người bán Trung Quốc gửi hàng đến kho TQ.",
+  "status.PURCHASED.delayWarning": "Người bán TQ chưa gửi hàng. Nhân viên sẽ liên hệ shop.",
+  "status.SELLER_SHIPPED.description": "Shop Trung Quốc đã gửi hàng. Hàng đang trên đường đến kho Trung Quốc.",
+  "status.SELLER_SHIPPED.nextStep": "Bước tiếp theo: kho TQ sẽ nhận hàng, kiểm tra và cân.",
+  "status.ARRIVED_CHINA_WH.description": "Hàng đã về đến kho Trung Quốc. Nhân viên đang kiểm tra, cân và đóng kiện.",
+  "status.ARRIVED_CHINA_WH.nextStep": "Bước tiếp theo: hàng sẽ được đóng kiện và chuyển về Việt Nam.",
+  "status.ARRIVED_CHINA_WH.delayWarning": "Hàng ở kho TQ khá lâu. Liên hệ để kiểm tra tình trạng đóng kiện.",
+  "status.PACKING.description": "Hàng đang được đóng kiện tại kho Trung Quốc, chuẩn bị xuất kho.",
+  "status.PACKING.nextStep": "Bước tiếp theo: kiện hàng sẽ được xếp lên xe vận chuyển về Việt Nam.",
+  "status.SHIPPING_TO_VIETNAM.description": "Hàng đang trên xe vận chuyển từ Trung Quốc về Việt Nam. Thời gian trung bình 3-7 ngày.",
+  "status.SHIPPING_TO_VIETNAM.nextStep": "Bước tiếp theo: hàng về kho Việt Nam, quét mã và chuẩn bị giao.",
+  "status.SHIPPING_TO_VIETNAM.delayWarning": "Vận chuyển lâu hơn bình thường. Có thể do tắc biên hoặc kẹt xe.",
+  "status.ARRIVED_VIETNAM_WH.description": "Hàng đã về kho Việt Nam! Nhân viên đang quét mã, kiểm tra và sắp xếp giao hàng.",
+  "status.ARRIVED_VIETNAM_WH.nextStep": "Bước tiếp theo: hàng sẽ được giao đến địa chỉ của bạn.",
+  "status.ARRIVED_VIETNAM_WH.delayWarning": "Hàng chờ giao khá lâu. Liên hệ để kiểm tra lịch giao.",
+  "status.OUT_FOR_DELIVERY.description": "Hàng đang được giao đến địa chỉ của bạn. Vui lòng giữ điện thoại để nhận hàng.",
+  "status.OUT_FOR_DELIVERY.nextStep": "Bước tiếp theo: nhận hàng và kiểm tra sản phẩm.",
+  "status.OUT_FOR_DELIVERY.delayWarning": "Giao hàng chậm hơn dự kiến. Liên hệ nhân viên giao hàng.",
+  "status.COMPLETED.description": "Đơn hàng đã hoàn tất! Cảm ơn bạn đã sử dụng dịch vụ Bắc Trung Hải Logistics.",
+  "status.COMPLETED.nextStep": "Nếu có vấn đề về hàng hóa, vui lòng liên hệ nhân viên hỗ trợ.",
+  "status.CANCELLED.description": "Đơn hàng đã bị hủy.",
+  "status.CANCELLED.nextStep": "Nếu cần đặt lại, vui lòng tạo đơn mới hoặc liên hệ nhân viên.",
+  "status.unknown.description": "Đang cập nhật trạng thái.",
+
+  // Customer order detail — delay banner
+  "customerOrder.orderDelayed": "Đơn hàng đang xử lý chậm hơn dự kiến",
+  "customerOrder.orderDelayedHint": "Đơn hàng đang chậm hơn dự kiến. Vui lòng theo dõi thêm hoặc liên hệ hỗ trợ nếu cần.",
+
+  // Customer order detail — status helper banners
+  "customerOrder.sellerShipping": "Người bán đang gửi hàng",
+  "customerOrder.sellerShippingDesc": "Người bán đang chuẩn bị giao hàng tới kho Trung Quốc.",
+  "customerOrder.intlShipping": "Đang vận chuyển quốc tế",
+  "customerOrder.intlShippingDesc": "Đơn hàng đang vận chuyển quốc tế, thời gian có thể thay đổi.",
+  "customerOrder.vnWarehouseProcessing": "Kho Việt Nam đang xử lý",
+  "customerOrder.vnWarehouseProcessingDesc": "Kho Việt Nam đang xử lý và chuẩn bị giao.",
+  "customerOrder.outForDelivery": "Đang chuẩn bị giao hàng",
+  "customerOrder.outForDeliveryDesc": "Hàng đang được giao đến địa chỉ của bạn. Vui lòng giữ điện thoại.",
+  "customerOrder.orderCompleted": "Đơn hàng đã giao thành công",
+  "customerOrder.orderCompletedDesc": "Cảm ơn bạn đã sử dụng dịch vụ Bắc Trung Hải Logistics.",
+
+  // Customer order detail — Zalo notification
+  "customerOrder.zaloAutoNotify": "Nhận thông báo Zalo tự động",
+  "customerOrder.zaloLinkPrompt": "Liên kết Zalo để nhận cập nhật trạng thái đơn hàng ngay khi kho xử lý.",
+  "customerOrder.copied": "Đã sao chép!",
+  "customerOrder.copyOrderCode": "Sao chép mã đơn",
+  "customerOrder.setupNotifChannel": "Cài đặt kênh thông báo →",
+  "customerOrder.zaloLinked": "Zalo đã liên kết",
+  "customerOrder.zaloLinkedDesc": "Bạn sẽ tự động nhận cập nhật trạng thái đơn hàng qua Zalo.",
+
+  // Customer order detail — Support & Contact
+  "customerOrder.contactSupport": "Liên hệ hỗ trợ",
+  "customerOrder.zaloSupportBound": "Bạn có thể nhắn tin trực tiếp qua Zalo OA Bắc Trung Hải Logistics để được hỗ trợ nhanh nhất. Gửi mã đơn hàng để tra cứu trạng thái.",
+  "customerOrder.zaloSupportUnbound": "Liên kết Zalo để nhắn tin hỗ trợ trực tiếp và nhận thông báo tự động.",
+  "customerOrder.orSubmitComplaint": "Hoặc gửi khiếu nại bên dưới nếu cần hỗ trợ chi tiết hơn.",
+
+  // Customer order detail — Warehouse address
+  "customerOrder.copyAddress": "Sao chép",
+
+  // Customer order detail — Issue/complaint form
+  "customerOrder.issueSubmitted": "Khiếu nại đã được gửi thành công. Chúng tôi sẽ xử lý sớm nhất.",
+  "customerOrder.submitIssueBtn": "Gửi khiếu nại / yêu cầu hỗ trợ",
+  "customerOrder.issueFormTitle": "Gửi khiếu nại cho đơn",
+  "customerOrder.issueTypeLabel": "Loại vấn đề",
+  "customerOrder.issueDescLabel": "Mô tả chi tiết",
+  "customerOrder.issueDescPlaceholder": "Vui lòng mô tả vấn đề của bạn...",
+  "customerOrder.submitting": "Đang gửi...",
+  "customerOrder.submitComplaint": "Gửi khiếu nại",
+  "customerOrder.cancel": "Hủy",
+
+  // Customer order detail — Issue types
+  "customerOrder.issueShortage": "Thiếu hàng",
+  "customerOrder.issueLateDel": "Giao chậm",
+  "customerOrder.issueWrongWeight": "Sai cân nặng",
+  "customerOrder.issueDamaged": "Hỏng hàng",
+  "customerOrder.issueNotReceived": "Chưa nhận được hàng",
+  "customerOrder.issueWrongFee": "Phí sai",
+  "customerOrder.issueChatbot": "Chatbot/Hỗ trợ",
+  "customerOrder.issueOther": "Khác",
+
   // Wallet
   "wallet.loading": "Đang tải ví...",
   "wallet.title": "Ví của tôi",
