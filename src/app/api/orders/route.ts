@@ -142,9 +142,16 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       return errorResponse("Missing required fields for entrust order");
     }
   } else if (orderType === "CONSIGNMENT") {
-    const { consignmentTrackingNumber } = body;
+    const { consignmentTrackingNumber, consignmentItems } = body;
     if (!consignmentTrackingNumber) {
       return errorResponse("Missing required fields for consignment order");
+    }
+    if (Array.isArray(consignmentItems) && consignmentItems.length > 0) {
+      for (const item of consignmentItems) {
+        if (!item.productName || !item.quantity || !item.unitPriceCNY) {
+          return errorResponse("Mỗi sản phẩm ký gửi phải có tên, số lượng và đơn giá");
+        }
+      }
     }
   }
 
@@ -159,8 +166,16 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   const vnDeliveryDefault = parseFloat(configMap.vietnam_delivery_fee_default || "30000");
 
   // For non-ecommerce orders, use zero pricing (admin confirms costs later)
-  const unitPrice = orderType === "ECOMMERCE" ? parseFloat(body.unitPriceCNY) : 0;
-  const qty = orderType === "ECOMMERCE" ? parseInt(body.quantity) : 1;
+  let unitPrice = orderType === "ECOMMERCE" ? parseFloat(body.unitPriceCNY) : 0;
+  let qty = orderType === "ECOMMERCE" ? parseInt(body.quantity) : 1;
+
+  // Consignment items: compute totals from items array
+  if (orderType === "CONSIGNMENT" && Array.isArray(body.consignmentItems) && body.consignmentItems.length > 0) {
+    qty = body.consignmentItems.reduce((sum: number, item: { quantity?: string }) => sum + parseInt(item.quantity || "1"), 0);
+    const totalCNY = body.consignmentItems.reduce((sum: number, item: { unitPriceCNY?: string; quantity?: string }) =>
+      sum + parseFloat(item.unitPriceCNY || "0") * parseInt(item.quantity || "1"), 0);
+    unitPrice = qty > 0 ? totalCNY / qty : 0;
+  }
 
   const cost = calculateOrderCost({
     unitPriceCNY: unitPrice,
@@ -184,7 +199,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   } else if (orderType === "ENTRUST") {
     productName = body.itemName;
   } else {
-    productName = body.consignmentTrackingNumber;
+    productName = body.productName || body.consignmentTrackingNumber;
   }
 
   const order = await prisma.order.create({
@@ -195,7 +210,9 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       productName,
       productLink: body.productLink || "",
       productImage: body.productImage,
-      productSpecs: body.productSpecs || null,
+      productSpecs: orderType === "CONSIGNMENT" && Array.isArray(body.consignmentItems)
+        ? JSON.stringify(body.consignmentItems)
+        : (body.productSpecs || null),
       quantity: qty,
       unitPriceCNY: unitPrice,
       totalPriceCNY: cost.totalPriceCNY,

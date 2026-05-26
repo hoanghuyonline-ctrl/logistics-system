@@ -489,6 +489,12 @@ const en: Record<string, string> = {
   "newOrder.consignmentNotes": "Package Notes",
   "newOrder.consignmentNotesPlaceholder": "Describe the package: size, contents...",
   "newOrder.consignmentInfo": "Consignment Info",
+  "newOrder.consignItemsTitle": "Consignment Items",
+  "newOrder.addItem": "Add Item",
+  "newOrder.removeItem": "Remove",
+  "newOrder.itemIndex": "Item #{n}",
+  "newOrder.consignSpecsPlaceholder": "Color, size, classification...",
+  "newOrder.itemCount": "item(s)",
   "newOrder.consignmentInfoDesc": "Send your package to our China warehouse. We will receive it and ship it to Vietnam for you.",
   "newOrder.consignmentNote": "Shipping fees are calculated based on actual weight upon warehouse receipt.",
 

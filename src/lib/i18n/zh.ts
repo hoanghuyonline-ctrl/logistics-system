@@ -489,6 +489,12 @@ const zh: Record<string, string> = {
   "newOrder.consignmentNotes": "包裹备注",
   "newOrder.consignmentNotesPlaceholder": "描述包裹：尺寸、内容...",
   "newOrder.consignmentInfo": "寄售信息",
+  "newOrder.consignItemsTitle": "寄售商品列表",
+  "newOrder.addItem": "添加商品",
+  "newOrder.removeItem": "删除",
+  "newOrder.itemIndex": "商品 #{n}",
+  "newOrder.consignSpecsPlaceholder": "颜色、尺码、分类...",
+  "newOrder.itemCount": "件商品",
   "newOrder.consignmentInfoDesc": "将您的包裹寄到我们的中国仓库，我们将接收并为您运送到越南。",
   "newOrder.consignmentNote": "运费按仓库收到时的实际重量计算。",
 
