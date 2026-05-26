@@ -53,6 +53,10 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: Ro
     notes: body.notes,
   };
 
+  if (body.shippingAddress !== undefined) {
+    data.shippingAddress = body.shippingAddress || null;
+  }
+
   if (orderType === "ECOMMERCE") {
     if (body.productName !== undefined) data.productName = body.productName;
     if (body.productLink !== undefined) data.productLink = body.productLink;
