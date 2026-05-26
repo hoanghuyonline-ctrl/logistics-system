@@ -251,6 +251,8 @@ export const POST = withErrorHandler(async function POST(request: Request) {
       cnDriverName: body.cnDriverName || null,
       cnDriverPhone: body.cnDriverPhone || null,
       cnTruckImages: body.cnTruckImages ? JSON.stringify(body.cnTruckImages) : null,
+      // China warehouse selection
+      chinaWarehouseId: body.chinaWarehouseId || null,
       // Consignment-specific fields
       consignmentTrackingNumber: body.consignmentTrackingNumber || null,
       consignmentNotes: body.consignmentNotes || null,

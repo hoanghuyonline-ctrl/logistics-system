@@ -74,6 +74,8 @@ interface OrderDetail {
   cnTruckImages: string | null;
   consignmentTrackingNumber: string | null;
   consignmentNotes: string | null;
+  chinaWarehouseId: string | null;
+  chinaWarehouse: { id: string; nameVi: string; nameZh: string; nameEn: string; addressVi: string; addressZh: string; addressEn: string } | null;
   shippingAddress: string | null;
   internationalShippingRate: string;
   internationalShippingFee: string;
@@ -110,7 +112,7 @@ interface OrderDetail {
 }
 
 export default function AdminOrderDetailPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const params = useParams();
   const { toast } = useToast();
   const [order, setOrder] = useState<OrderDetail | null>(null);
@@ -131,6 +133,8 @@ export default function AdminOrderDetailPage() {
   const [pricingSaving, setPricingSaving] = useState(false);
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingAddressSaving, setShippingAddressSaving] = useState(false);
+  const [chinaWarehouses, setChinaWarehouses] = useState<Array<{ id: string; nameVi: string; nameZh: string; nameEn: string; addressVi: string; addressZh: string; addressEn: string }>>([]);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
   function copyToClipboard(value: string) {
@@ -144,6 +148,7 @@ export default function AdminOrderDetailPage() {
     setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
     setWeight(d.weightKg || "");
     setCustomNote(d.customStatusNote || "");
+    setSelectedWarehouseId(d.chinaWarehouseId || "");
     const rate = parseFloat(String(d.exchangeRate)) || 0;
     setPricingForm({
       productValueCNY: d.confirmedProductCost && rate > 0
@@ -178,6 +183,10 @@ export default function AdminOrderDetailPage() {
 
   useEffect(() => {
     loadOrder();
+    fetch("/api/china-warehouses")
+      .then((r) => r.json())
+      .then((d) => setChinaWarehouses(d.warehouses || []))
+      .catch(() => {});
   }, [loadOrder]);
 
   async function updateStatus(newStatus: string) {
@@ -288,7 +297,7 @@ export default function AdminOrderDetailPage() {
     const res = await fetch(`/api/orders/${params.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shippingAddress }),
+      body: JSON.stringify({ shippingAddress, chinaWarehouseId: selectedWarehouseId || null }),
     });
     if (res.ok) {
       toast(t("adminOrder.addressSaved"), "success");
@@ -760,7 +769,45 @@ export default function AdminOrderDetailPage() {
 
       {/* Shipping address */}
       <Card title={t("adminOrder.shippingAddressTitle")}>
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {chinaWarehouses.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-2">{t("warehouse.selectTitle")}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {chinaWarehouses.map((wh) => {
+                  const isSelected = selectedWarehouseId === wh.id;
+                  const name = locale === "zh" ? wh.nameZh : locale === "en" ? wh.nameEn : wh.nameVi;
+                  const address = locale === "zh" ? wh.addressZh : locale === "en" ? wh.addressEn : wh.addressVi;
+                  return (
+                    <button
+                      key={wh.id}
+                      type="button"
+                      onClick={() => setSelectedWarehouseId(isSelected ? "" : wh.id)}
+                      className={`relative flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                        isSelected
+                          ? "border-blue-500 bg-blue-50 ring-1 ring-blue-200"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300"
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-900">{name}</div>
+                        <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{address}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">{t("adminOrder.shippingAddressLabel")}</label>
             <textarea
