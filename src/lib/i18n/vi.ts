@@ -482,6 +482,12 @@ const vi: Record<string, string> = {
   "newOrder.consignmentNotes": "Ghi chú kiện hàng",
   "newOrder.consignmentNotesPlaceholder": "Mô tả kiện hàng, kích thước, nội dung...",
   "newOrder.consignmentInfo": "Thông tin ký gửi",
+  "newOrder.consignItemsTitle": "Danh sách sản phẩm ký gửi",
+  "newOrder.addItem": "Thêm sản phẩm",
+  "newOrder.removeItem": "Xóa bớt",
+  "newOrder.itemIndex": "Sản phẩm #{n}",
+  "newOrder.consignSpecsPlaceholder": "Màu sắc, kích cỡ, phân loại...",
+  "newOrder.itemCount": "sản phẩm",
   "newOrder.consignmentInfoDesc": "Gửi kiện hàng của bạn về kho Trung Quốc. Chúng tôi sẽ tiếp nhận và vận chuyển về Việt Nam cho bạn.",
   "newOrder.consignmentNote": "Phí vận chuyển sẽ được tính theo cân nặng thực tế khi kho nhận kiện.",
 

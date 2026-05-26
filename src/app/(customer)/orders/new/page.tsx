@@ -92,6 +92,23 @@ export default function NewOrderPage() {
     consignmentTrackingNumber: "",
     consignmentNotes: "",
   });
+  const [consignItems, setConsignItems] = useState<Array<{
+    productName: string;
+    specs: string;
+    quantity: string;
+    unitPriceCNY: string;
+    notes: string;
+  }>>([{ productName: "", specs: "", quantity: "1", unitPriceCNY: "", notes: "" }]);
+
+  function addConsignItem() {
+    setConsignItems((prev) => [...prev, { productName: "", specs: "", quantity: "1", unitPriceCNY: "", notes: "" }]);
+  }
+  function removeConsignItem(index: number) {
+    setConsignItems((prev) => prev.filter((_, i) => i !== index));
+  }
+  function updateConsignItem(index: number, field: string, value: string) {
+    setConsignItems((prev) => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  }
 
   useEffect(() => {
     fetch("/api/settings/exchange-rate")
@@ -115,7 +132,7 @@ export default function NewOrderPage() {
       return !!entrustForm.itemName;
     }
     if (orderType === "CONSIGNMENT") {
-      return !!consignForm.consignmentTrackingNumber;
+      return !!consignForm.consignmentTrackingNumber && consignItems.length > 0 && consignItems.every((item) => !!item.productName && !!item.quantity && !!item.unitPriceCNY);
     }
     return false;
   }
@@ -178,9 +195,15 @@ export default function NewOrderPage() {
         productImage: images[0]?.url || "",
       };
     } else {
+      const totalQty = consignItems.reduce((sum, item) => sum + parseInt(item.quantity || "1"), 0);
+      const totalCNY = consignItems.reduce((sum, item) => sum + parseFloat(item.unitPriceCNY || "0") * parseInt(item.quantity || "1"), 0);
       payload = {
         ...payload,
         ...consignForm,
+        productName: consignItems[0]?.productName || consignForm.consignmentTrackingNumber,
+        quantity: totalQty,
+        unitPriceCNY: totalCNY > 0 && totalQty > 0 ? (totalCNY / totalQty).toFixed(2) : "0",
+        consignmentItems: consignItems,
       };
     }
 
@@ -709,6 +732,120 @@ export default function NewOrderPage() {
                       placeholder={t("newOrder.consignmentTrackingPlaceholder")}
                       required
                     />
+                  </div>
+
+                  {/* Dynamic items */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                        <span className="text-base">📋</span> {t("newOrder.consignItemsTitle")}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={addConsignItem}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        + {t("newOrder.addItem")}
+                      </button>
+                    </div>
+
+                    {consignItems.map((item, index) => (
+                      <div key={index} className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3 relative">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-slate-500">{t("newOrder.itemIndex", `#${index + 1}`).replace("{n}", String(index + 1))}</span>
+                          {consignItems.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeConsignItem(index)}
+                              className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                            >
+                              {t("newOrder.removeItem")}
+                            </button>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                            {t("newOrder.productName")} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={item.productName}
+                            onChange={(e) => updateConsignItem(index, "productName", e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder={t("newOrder.productNamePlaceholder")}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                            {t("newOrder.productSpecs")}
+                            <span className="ml-2 text-xs font-normal text-slate-400">{t("newOrder.productLinkOptional")}</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={item.specs}
+                            onChange={(e) => updateConsignItem(index, "specs", e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder={t("newOrder.consignSpecsPlaceholder")}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">
+                              {t("orderDetail.quantity")} <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateConsignItem(index, "quantity", e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">
+                              {t("newOrder.unitPriceCny")} <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={item.unitPriceCNY}
+                              onChange={(e) => updateConsignItem(index, "unitPriceCNY", e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-1">{t("orderDetail.notes")}</label>
+                          <input
+                            type="text"
+                            value={item.notes}
+                            onChange={(e) => updateConsignItem(index, "notes", e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder={t("newOrder.notesPlaceholder")}
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Consignment items summary */}
+                    {consignItems.length > 0 && (
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-blue-50 rounded-xl text-sm">
+                        <span className="text-slate-600">
+                          {consignItems.length} {t("newOrder.itemCount")} &middot; {t("orderDetail.quantity")}: {consignItems.reduce((sum, item) => sum + parseInt(item.quantity || "0"), 0)}
+                        </span>
+                        <span className="font-semibold text-blue-700">
+                          {consignItems.reduce((sum, item) => sum + parseFloat(item.unitPriceCNY || "0") * parseInt(item.quantity || "0"), 0).toFixed(2)} ¥
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
