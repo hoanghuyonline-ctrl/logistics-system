@@ -116,10 +116,11 @@ export default function AdminOrderDetailPage() {
   const [customNoteSaving, setCustomNoteSaving] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [pricingForm, setPricingForm] = useState({
-    confirmedProductCost: "",
-    confirmedShippingCost: "",
-    confirmedServiceFee: "",
-    confirmedTotalCost: "",
+    productValueCNY: "",
+    serviceFee: "",
+    chinaShipping: "",
+    internationalShipping: "",
+    vietnamDelivery: "",
   });
   const [pricingSaving, setPricingSaving] = useState(false);
   const [shippingAddress, setShippingAddress] = useState("");
@@ -137,11 +138,15 @@ export default function AdminOrderDetailPage() {
     setTracking({ trackingCodeChina: d.trackingCodeChina || "", trackingCodeIntl: d.trackingCodeIntl || "" });
     setWeight(d.weightKg || "");
     setCustomNote(d.customStatusNote || "");
+    const rate = parseFloat(String(d.exchangeRate)) || 0;
     setPricingForm({
-      confirmedProductCost: d.confirmedProductCost || "",
-      confirmedShippingCost: d.confirmedShippingCost || "",
-      confirmedServiceFee: d.confirmedServiceFee || "",
-      confirmedTotalCost: d.confirmedTotalCost || "",
+      productValueCNY: d.confirmedProductCost && rate > 0
+        ? (parseFloat(d.confirmedProductCost) / rate).toFixed(2)
+        : "",
+      serviceFee: d.confirmedServiceFee || "",
+      chinaShipping: d.chinaShippingFee || "",
+      internationalShipping: d.internationalShippingFee || "",
+      vietnamDelivery: d.vietnamDeliveryFee || "",
     });
     setShippingAddress(d.shippingAddress || d.user?.address || "");
   }
@@ -288,8 +293,16 @@ export default function AdminOrderDetailPage() {
     setShippingAddressSaving(false);
   }
 
+  const orderExchangeRate = parseFloat(String(order?.exchangeRate)) || 0;
+  const productValueVND = (parseFloat(pricingForm.productValueCNY) || 0) * orderExchangeRate;
+  const serviceFeeVal = parseFloat(pricingForm.serviceFee) || 0;
+  const chinaShippingVal = parseFloat(pricingForm.chinaShipping) || 0;
+  const intlShippingVal = parseFloat(pricingForm.internationalShipping) || 0;
+  const vnDeliveryVal = parseFloat(pricingForm.vietnamDelivery) || 0;
+  const calculatedTotal = productValueVND + serviceFeeVal + chinaShippingVal + intlShippingVal + vnDeliveryVal;
+
   async function confirmPricing() {
-    if (!pricingForm.confirmedTotalCost) {
+    if (calculatedTotal <= 0) {
       toast("Vui lòng nhập chi phí cuối cùng", "error");
       return;
     }
@@ -298,10 +311,14 @@ export default function AdminOrderDetailPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        confirmedProductCost: pricingForm.confirmedProductCost || null,
-        confirmedShippingCost: pricingForm.confirmedShippingCost || null,
-        confirmedServiceFee: pricingForm.confirmedServiceFee || null,
-        confirmedTotalCost: pricingForm.confirmedTotalCost,
+        productValueCNY: parseFloat(pricingForm.productValueCNY) || 0,
+        confirmedProductCost: productValueVND || null,
+        confirmedServiceFee: serviceFeeVal || null,
+        chinaShippingFee: chinaShippingVal || null,
+        internationalShippingFee: intlShippingVal || null,
+        vietnamDeliveryFee: vnDeliveryVal || null,
+        confirmedShippingCost: chinaShippingVal + intlShippingVal + vnDeliveryVal || null,
+        confirmedTotalCost: calculatedTotal,
       }),
     });
     if (res.ok) {
@@ -759,30 +776,45 @@ export default function AdminOrderDetailPage() {
 
       {/* Confirm pricing form */}
       <Card title={order.confirmedTotalCost ? "Cập nhật giá xác nhận" : "Xác nhận giá đơn hàng"}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {orderExchangeRate > 0 && (
+          <p className="text-xs text-slate-400 mb-4">Tỷ giá hệ thống: 1 ¥ = {orderExchangeRate.toLocaleString()} VND</p>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.confirmedProduct")} (VND)</label>
-            <input type="number" min="0" step="1000" value={pricingForm.confirmedProductCost}
-              onChange={(e) => setPricingForm({ ...pricingForm, confirmedProductCost: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Tiền hàng" />
+            <label className="block text-xs font-medium text-slate-500 mb-1">Tiền hàng Sản phẩm (¥)</label>
+            <input type="number" min="0" step="0.01" value={pricingForm.productValueCNY}
+              onChange={(e) => setPricingForm({ ...pricingForm, productValueCNY: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0.00" />
+            <p className="text-xs text-slate-400 mt-1">¥{(parseFloat(pricingForm.productValueCNY) || 0).toLocaleString()} = {productValueVND.toLocaleString()} VND</p>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.confirmedShipping")} (VND)</label>
-            <input type="number" min="0" step="1000" value={pricingForm.confirmedShippingCost}
-              onChange={(e) => setPricingForm({ ...pricingForm, confirmedShippingCost: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Phí vận chuyển" />
+            <label className="block text-xs font-medium text-slate-500 mb-1">Phí dịch vụ (VND)</label>
+            <input type="number" min="0" step="1000" value={pricingForm.serviceFee}
+              onChange={(e) => setPricingForm({ ...pricingForm, serviceFee: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.confirmedService")} (VND)</label>
-            <input type="number" min="0" step="1000" value={pricingForm.confirmedServiceFee}
-              onChange={(e) => setPricingForm({ ...pricingForm, confirmedServiceFee: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Phí dịch vụ" />
+            <label className="block text-xs font-medium text-slate-500 mb-1">Phí Ship Trung Quốc (VND)</label>
+            <input type="number" min="0" step="1000" value={pricingForm.chinaShipping}
+              onChange={(e) => setPricingForm({ ...pricingForm, chinaShipping: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">{t("pricing.finalCost")} (VND) <span className="text-red-500">*</span></label>
-            <input type="number" min="0" step="1000" value={pricingForm.confirmedTotalCost}
-              onChange={(e) => setPricingForm({ ...pricingForm, confirmedTotalCost: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold" placeholder="Tổng chi phí cuối cùng" />
+            <label className="block text-xs font-medium text-slate-500 mb-1">Phí Ship Quốc tế (VND)</label>
+            <input type="number" min="0" step="1000" value={pricingForm.internationalShipping}
+              onChange={(e) => setPricingForm({ ...pricingForm, internationalShipping: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Phí Giao hàng VN (VND)</label>
+            <input type="number" min="0" step="1000" value={pricingForm.vietnamDelivery}
+              onChange={(e) => setPricingForm({ ...pricingForm, vietnamDelivery: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Chi phí cuối cùng (VND) <span className="text-red-500">*</span></label>
+            <input type="text" readOnly value={calculatedTotal.toLocaleString()}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 font-semibold text-emerald-700 cursor-not-allowed" />
           </div>
         </div>
         <div className="mt-4 flex items-center gap-3">

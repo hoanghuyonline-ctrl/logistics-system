@@ -12,7 +12,10 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
 
   const { id } = await ctx.params;
   const body = await req.json();
-  const { confirmedProductCost, confirmedShippingCost, confirmedServiceFee, confirmedTotalCost } = body;
+  const {
+    confirmedProductCost, confirmedShippingCost, confirmedServiceFee, confirmedTotalCost,
+    chinaShippingFee, internationalShippingFee, vietnamDeliveryFee,
+  } = body;
 
   if (confirmedTotalCost == null || confirmedTotalCost < 0) {
     return errorResponse("Vui lòng nhập chi phí cuối cùng hợp lệ");
@@ -21,17 +24,20 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) return errorResponse("Order not found", 404);
 
-  const updated = await prisma.order.update({
-    where: { id },
-    data: {
-      confirmedProductCost: confirmedProductCost != null ? parseFloat(confirmedProductCost) : null,
-      confirmedShippingCost: confirmedShippingCost != null ? parseFloat(confirmedShippingCost) : null,
-      confirmedServiceFee: confirmedServiceFee != null ? parseFloat(confirmedServiceFee) : null,
-      confirmedTotalCost: parseFloat(confirmedTotalCost),
-      confirmedAt: new Date(),
-      confirmedById: user.id,
-    },
-  });
+  const data: Record<string, unknown> = {
+    confirmedProductCost: confirmedProductCost != null ? parseFloat(confirmedProductCost) : null,
+    confirmedShippingCost: confirmedShippingCost != null ? parseFloat(confirmedShippingCost) : null,
+    confirmedServiceFee: confirmedServiceFee != null ? parseFloat(confirmedServiceFee) : null,
+    confirmedTotalCost: parseFloat(confirmedTotalCost),
+    confirmedAt: new Date(),
+    confirmedById: user.id,
+  };
+
+  if (chinaShippingFee != null) data.chinaShippingFee = parseFloat(chinaShippingFee);
+  if (internationalShippingFee != null) data.internationalShippingFee = parseFloat(internationalShippingFee);
+  if (vietnamDeliveryFee != null) data.vietnamDeliveryFee = parseFloat(vietnamDeliveryFee);
+
+  const updated = await prisma.order.update({ where: { id }, data });
 
   auditLog({
     action: "ORDER_PRICING_CONFIRMED",
@@ -46,6 +52,9 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
       confirmedShippingCost,
       confirmedServiceFee,
       confirmedTotalCost,
+      chinaShippingFee,
+      internationalShippingFee,
+      vietnamDeliveryFee,
       previousEstimate: order.totalCostVND.toString(),
     },
   });
