@@ -68,6 +68,7 @@ interface OrderDetail {
   cnTruckImages: string | null;
   consignmentTrackingNumber: string | null;
   consignmentNotes: string | null;
+  shippingAddress: string | null;
   internationalShippingRate: string;
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
@@ -121,6 +122,8 @@ export default function AdminOrderDetailPage() {
     confirmedTotalCost: "",
   });
   const [pricingSaving, setPricingSaving] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingAddressSaving, setShippingAddressSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function copyToClipboard(value: string) {
@@ -140,6 +143,7 @@ export default function AdminOrderDetailPage() {
       confirmedServiceFee: d.confirmedServiceFee || "",
       confirmedTotalCost: d.confirmedTotalCost || "",
     });
+    setShippingAddress(d.shippingAddress || d.user?.address || "");
   }
 
   const loadOrder = useCallback(() => {
@@ -266,6 +270,22 @@ export default function AdminOrderDetailPage() {
     } else {
       toast(t("orderDetail.weightUpdateFailed"), "error");
     }
+  }
+
+  async function saveShippingAddress() {
+    setShippingAddressSaving(true);
+    const res = await fetch(`/api/orders/${params.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shippingAddress }),
+    });
+    if (res.ok) {
+      toast("Đã lưu địa chỉ nhận hàng", "success");
+      loadOrder();
+    } else {
+      toast("Không thể lưu địa chỉ nhận hàng", "error");
+    }
+    setShippingAddressSaving(false);
   }
 
   async function confirmPricing() {
@@ -508,6 +528,57 @@ export default function AdminOrderDetailPage() {
               <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.notes")}</dt><dd className="text-slate-700 text-right max-w-[60%]">{order.notes}</dd></div>
             )}
           </dl>
+
+          {/* Itemized consignment products table */}
+          {order.productSpecs && (() => {
+            try {
+              const items = JSON.parse(order.productSpecs);
+              if (!Array.isArray(items) || items.length === 0) return null;
+              return (
+                <div className="mt-4">
+                  <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                    <span className="text-base">📋</span> Thông tin ký gửi chi tiết
+                  </h4>
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-50 text-left">
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">#</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">Tên sản phẩm</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">Thuộc tính</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase text-right">Số lượng</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase text-right">Đơn giá (¥)</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">Ghi chú</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {items.map((item: { productName?: string; specs?: string; quantity?: string; unitPriceCNY?: string; notes?: string }, idx: number) => (
+                          <tr key={idx} className="hover:bg-slate-50/50">
+                            <td className="px-3 py-2 text-slate-400 text-xs">{idx + 1}</td>
+                            <td className="px-3 py-2 font-medium text-slate-900">{item.productName || "—"}</td>
+                            <td className="px-3 py-2 text-slate-600">{item.specs || "—"}</td>
+                            <td className="px-3 py-2 text-slate-900 text-right">{item.quantity || "—"}</td>
+                            <td className="px-3 py-2 text-slate-900 text-right font-mono">¥{item.unitPriceCNY || "0"}</td>
+                            <td className="px-3 py-2 text-slate-500 text-xs">{item.notes || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-blue-50/50 font-semibold">
+                          <td colSpan={3} className="px-3 py-2 text-slate-700 text-right">Tổng</td>
+                          <td className="px-3 py-2 text-slate-900 text-right">{items.reduce((s: number, i: { quantity?: string }) => s + parseInt(i.quantity || "0"), 0)}</td>
+                          <td className="px-3 py-2 text-blue-700 text-right font-mono">¥{items.reduce((s: number, i: { unitPriceCNY?: string; quantity?: string }) => s + parseFloat(i.unitPriceCNY || "0") * parseInt(i.quantity || "0"), 0).toFixed(2)}</td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              );
+            } catch {
+              return null;
+            }
+          })()}
         </Card>
       )}
 
@@ -662,6 +733,29 @@ export default function AdminOrderDetailPage() {
           )}
         </Card>
       </div>
+
+      {/* Shipping address */}
+      <Card title="Địa chỉ nhận hàng">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Địa chỉ nhận hàng</label>
+            <textarea
+              value={shippingAddress}
+              onChange={(e) => setShippingAddress(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              rows={2}
+              placeholder="Nhập hoặc chỉnh sửa địa chỉ nhận hàng..."
+            />
+          </div>
+          {order.user?.address && shippingAddress !== order.user.address && (
+            <p className="text-xs text-slate-400">Địa chỉ mặc định của khách: {order.user.address}</p>
+          )}
+          <button onClick={saveShippingAddress} disabled={shippingAddressSaving}
+            className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm">
+            {shippingAddressSaving ? "Đang lưu..." : "Lưu địa chỉ"}
+          </button>
+        </div>
+      </Card>
 
       {/* Confirm pricing form */}
       <Card title={order.confirmedTotalCost ? "Cập nhật giá xác nhận" : "Xác nhận giá đơn hàng"}>
