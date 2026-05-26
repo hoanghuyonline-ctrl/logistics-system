@@ -371,6 +371,13 @@ const zh: Record<string, string> = {
   "orders.minutesAgo": "分钟前",
   "orders.hoursAgo": "小时前",
   "orders.daysAgo": "天前",
+  "orders.cancelOrder": "取消订单",
+  "orders.cancelling": "取消中...",
+  "orders.cancelConfirmTitle": "确认取消订单",
+  "orders.cancelConfirmMessage": "您确定要取消此订单吗？",
+  "orders.confirmCancel": "确认取消",
+  "orders.cancelFailed": "无法取消订单，请重试。",
+  "orders.actions": "操作",
 
   // New order
   "newOrder.title": "创建新订单",

@@ -371,6 +371,13 @@ const en: Record<string, string> = {
   "orders.minutesAgo": "min ago",
   "orders.hoursAgo": "hr ago",
   "orders.daysAgo": "days ago",
+  "orders.cancelOrder": "Cancel",
+  "orders.cancelling": "Cancelling...",
+  "orders.cancelConfirmTitle": "Cancel Order",
+  "orders.cancelConfirmMessage": "Are you sure you want to cancel this order?",
+  "orders.confirmCancel": "Confirm Cancel",
+  "orders.cancelFailed": "Failed to cancel the order. Please try again.",
+  "orders.actions": "Actions",
 
   // New order
   "newOrder.title": "Create New Order",

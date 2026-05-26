@@ -371,6 +371,13 @@ const vi: Record<string, string> = {
   "orders.minutesAgo": "phút trước",
   "orders.hoursAgo": "giờ trước",
   "orders.daysAgo": "ngày trước",
+  "orders.cancelOrder": "Hủy đơn",
+  "orders.cancelling": "Đang hủy...",
+  "orders.cancelConfirmTitle": "Xác nhận hủy đơn",
+  "orders.cancelConfirmMessage": "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+  "orders.confirmCancel": "Xác nhận hủy",
+  "orders.cancelFailed": "Không thể hủy đơn hàng. Vui lòng thử lại.",
+  "orders.actions": "Thao tác",
 
   // New order
   "newOrder.title": "Tạo đơn hàng mới",
