@@ -15,6 +15,7 @@ export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: Ro
     include: {
       user: { select: { id: true, fullName: true, email: true, phone: true, address: true, zaloRecipientId: true } },
       package: true,
+      chinaWarehouse: { select: { id: true, nameVi: true, nameZh: true, nameEn: true, addressVi: true, addressZh: true, addressEn: true } },
       statusLogs: {
         orderBy: { createdAt: "asc" },
         include: { changer: { select: { fullName: true, role: true } } },
@@ -56,6 +57,9 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: Ro
   }
   if (body.shippingAddress !== undefined) {
     data.shippingAddress = body.shippingAddress || null;
+  }
+  if (body.chinaWarehouseId !== undefined) {
+    data.chinaWarehouseId = body.chinaWarehouseId || null;
   }
 
   if (orderType === "ECOMMERCE") {

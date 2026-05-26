@@ -9,6 +9,16 @@ import OrderImageUploader from "@/components/order/OrderImageUploader";
 import DocumentUploader from "@/components/order/DocumentUploader";
 import { useI18n } from "@/lib/i18n";
 
+interface ChinaWarehouse {
+  id: string;
+  nameVi: string;
+  nameZh: string;
+  nameEn: string;
+  addressVi: string;
+  addressZh: string;
+  addressEn: string;
+}
+
 interface UploadedDoc {
   path: string;
   url: string;
@@ -39,7 +49,7 @@ const ORDER_TYPE_ICONS: Record<OrderType, string> = {
 
 export default function NewOrderPage() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [orderType, setOrderType] = useState<OrderType>("ECOMMERCE");
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -48,6 +58,8 @@ export default function NewOrderPage() {
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<{ fullName: string; phone: string; address: string } | null>(null);
   const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [chinaWarehouses, setChinaWarehouses] = useState<ChinaWarehouse[]>([]);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("");
 
   // Ecommerce fields
   const [ecomForm, setEcomForm] = useState({
@@ -118,6 +130,10 @@ export default function NewOrderPage() {
       .then((r) => r.json())
       .then((d) => setUserProfile({ fullName: d.fullName || "", phone: d.phone || "", address: d.address || "" }))
       .catch(() => {});
+    fetch("/api/china-warehouses")
+      .then((r) => r.json())
+      .then((d) => setChinaWarehouses(d.warehouses || []))
+      .catch(() => {});
   }, []);
 
   const estimatedCNY = parseFloat(ecomForm.unitPriceCNY || "0") * parseInt(ecomForm.quantity || "1");
@@ -148,7 +164,7 @@ export default function NewOrderPage() {
 
     setLoading(true);
 
-    let payload: Record<string, unknown> = { orderType };
+    let payload: Record<string, unknown> = { orderType, chinaWarehouseId: selectedWarehouseId || undefined };
 
     if (orderType === "ECOMMERCE") {
       payload = {
@@ -864,6 +880,50 @@ export default function NewOrderPage() {
                     />
                   </div>
                 </>
+              )}
+
+              {/* China warehouse selection */}
+              {chinaWarehouses.length > 0 && (
+                <div className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🏭</span>
+                    <h3 className="text-sm font-semibold text-slate-800">{t("warehouse.selectTitle")}</h3>
+                  </div>
+                  <p className="text-xs text-slate-500">{t("warehouse.selectDesc")}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {chinaWarehouses.map((wh) => {
+                      const isSelected = selectedWarehouseId === wh.id;
+                      const name = locale === "zh" ? wh.nameZh : locale === "en" ? wh.nameEn : wh.nameVi;
+                      const address = locale === "zh" ? wh.addressZh : locale === "en" ? wh.addressEn : wh.addressVi;
+                      return (
+                        <button
+                          key={wh.id}
+                          type="button"
+                          onClick={() => setSelectedWarehouseId(isSelected ? "" : wh.id)}
+                          className={`relative flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                            isSelected
+                              ? "border-blue-500 bg-blue-50 ring-1 ring-blue-200"
+                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300"
+                          }`}>
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-slate-900">{name}</div>
+                            <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{address}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
 
               {/* Delivery address section */}

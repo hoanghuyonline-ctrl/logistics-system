@@ -88,6 +88,7 @@ const adminNavGroups: NavGroup[] = [
   {
     label: "CÀI ĐẶT HỆ THỐNG",
     items: [
+      { labelKey: "nav.chinaWarehouses", href: "/admin/china-warehouses", icon: "🏭" },
       { labelKey: "nav.settings", href: "/admin/settings", icon: "⚙️" },
       { labelKey: "nav.systemHealth", href: "/admin/system-health", icon: "🩺" },
       { labelKey: "nav.auditLog", href: "/admin/audit-log", icon: "📝" },
