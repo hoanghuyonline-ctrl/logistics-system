@@ -204,6 +204,7 @@ export default function NewOrderPage() {
         quantity: totalQty,
         unitPriceCNY: totalCNY > 0 && totalQty > 0 ? (totalCNY / totalQty).toFixed(2) : "0",
         consignmentItems: consignItems,
+        productImage: images[0]?.url || "",
       };
     }
 
@@ -733,6 +734,8 @@ export default function NewOrderPage() {
                       required
                     />
                   </div>
+
+                  <OrderImageUploader images={images} onImagesChange={setImages} maxImages={5} />
 
                   {/* Dynamic items */}
                   <div className="space-y-4">
