@@ -639,6 +639,84 @@ const en: Record<string, string> = {
   "customerOrder.issueChatbot": "Chatbot/Support",
   "customerOrder.issueOther": "Other",
 
+  // Admin order detail — general UI
+  "adminOrder.copied": "Copied",
+  "adminOrder.loadFailed": "Failed to load order",
+  "adminOrder.loadErrorTitle": "Failed to load order details",
+  "adminOrder.loadErrorDefault": "Order does not exist or has been deleted.",
+  "adminOrder.retry": "Retry",
+  "adminOrder.backToList": "Back to list",
+  "adminOrder.copyOrderCode": "Copy order code",
+
+  // Admin order detail — priority
+  "adminOrder.priority": "Priority",
+  "adminOrder.priorityNormal": "Normal",
+  "adminOrder.priorityHigh": "High",
+  "adminOrder.priorityUrgent": "Urgent",
+  "adminOrder.priorityUpdated": "Priority updated",
+  "adminOrder.priorityUpdateFailed": "Failed to update priority",
+
+  // Admin order detail — custom status note
+  "adminOrder.statusNoteTitle": "Status Note",
+  "adminOrder.statusNoteSaved": "Status note saved",
+  "adminOrder.statusNoteSaveFailed": "Failed to save note",
+  "adminOrder.statusNoteDeleted": "Status note deleted",
+  "adminOrder.statusNoteDeleteFailed": "Failed to delete note",
+  "adminOrder.noStatusNote": "No status note",
+  "adminOrder.editNote": "Edit",
+  "adminOrder.addNote": "Add",
+  "adminOrder.statusNotePlaceholder": "e.g., Counting inventory, Waiting for customer confirmation, Missing packages...",
+  "adminOrder.save": "Save",
+  "adminOrder.delete": "Delete",
+  "adminOrder.cancelAction": "Cancel",
+
+  // Admin order detail — customer updates
+  "adminOrder.customerUpdates": "Customer Updates",
+  "adminOrder.updateSent": "Update sent to customer",
+  "adminOrder.updateSendFailed": "Failed to send update",
+  "adminOrder.noUpdates": "No updates for customer yet",
+  "adminOrder.updatePlaceholder": "Enter update content for customer...",
+  "adminOrder.sendUpdate": "Send update to customer",
+
+  // Admin order detail — product link
+  "adminOrder.openLink": "Open link",
+  "adminOrder.openProduct": "Open product",
+
+  // Admin order detail — VAT
+  "adminOrder.vatYes": "Yes",
+  "adminOrder.vatNo": "No",
+
+  // Admin order detail — consignment table
+  "adminOrder.consignmentItemsTitle": "Detailed Consignment Information",
+  "adminOrder.colProductName": "Product Name",
+  "adminOrder.colAttributes": "Attributes",
+  "adminOrder.colQuantity": "Quantity",
+  "adminOrder.colUnitPrice": "Unit Price (¥)",
+  "adminOrder.colNotes": "Notes",
+  "adminOrder.total": "Total",
+
+  // Admin order detail — package
+  "adminOrder.package": "Package",
+  "adminOrder.packageCode": "Package Code",
+  "adminOrder.copyPackageCode": "Copy package code",
+  "adminOrder.copyBarcode": "Copy barcode",
+
+  // Admin order detail — customer contact
+  "adminOrder.zaloLinked": "Linked",
+  "adminOrder.zaloNotLinked": "Not linked",
+  "adminOrder.copyPhone": "Copy phone",
+  "adminOrder.openZalo": "Open Zalo",
+  "adminOrder.copyEmail": "Copy email",
+  "adminOrder.zaloOALinked": "Zalo OA linked",
+  "adminOrder.zaloNotLinkedWarning": "Customer has not linked Zalo — will not receive Zalo notifications",
+  "adminOrder.zaloLinkGuide": "Guide customer to link: Open Zalo, scan Bac Trung Hai OA QR code, then send the order code below.",
+  "adminOrder.zaloAutoLink": "After customer sends the order code, the system will automatically link their Zalo account.",
+
+  // Admin order detail — tracking tooltips
+  "adminOrder.copyCnTracking": "Copy China tracking code",
+  "adminOrder.copyIntlTracking": "Copy international tracking code",
+  "adminOrder.copyCn": "Copy",
+
   // Wallet
   "wallet.loading": "Loading wallet...",
   "wallet.title": "My Wallet",

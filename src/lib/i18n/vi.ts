@@ -639,6 +639,84 @@ const vi: Record<string, string> = {
   "customerOrder.issueChatbot": "Chatbot/Hỗ trợ",
   "customerOrder.issueOther": "Khác",
 
+  // Admin order detail — general UI
+  "adminOrder.copied": "Đã sao chép",
+  "adminOrder.loadFailed": "Không thể tải đơn hàng",
+  "adminOrder.loadErrorTitle": "Không thể tải chi tiết đơn hàng",
+  "adminOrder.loadErrorDefault": "Đơn hàng không tồn tại hoặc đã bị xoá.",
+  "adminOrder.retry": "Thử lại",
+  "adminOrder.backToList": "Quay lại danh sách",
+  "adminOrder.copyOrderCode": "Sao chép mã đơn",
+
+  // Admin order detail — priority
+  "adminOrder.priority": "Độ ưu tiên",
+  "adminOrder.priorityNormal": "Bình thường",
+  "adminOrder.priorityHigh": "Ưu tiên",
+  "adminOrder.priorityUrgent": "Khẩn cấp",
+  "adminOrder.priorityUpdated": "Đã cập nhật độ ưu tiên",
+  "adminOrder.priorityUpdateFailed": "Không thể cập nhật độ ưu tiên",
+
+  // Admin order detail — custom status note
+  "adminOrder.statusNoteTitle": "Ghi chú trạng thái",
+  "adminOrder.statusNoteSaved": "Đã lưu ghi chú trạng thái",
+  "adminOrder.statusNoteSaveFailed": "Không thể lưu ghi chú",
+  "adminOrder.statusNoteDeleted": "Đã xoá ghi chú trạng thái",
+  "adminOrder.statusNoteDeleteFailed": "Không thể xoá ghi chú",
+  "adminOrder.noStatusNote": "Chưa có ghi chú trạng thái",
+  "adminOrder.editNote": "Sửa",
+  "adminOrder.addNote": "Thêm",
+  "adminOrder.statusNotePlaceholder": "Ví dụ: Đang kiểm đếm, Chờ khách xác nhận, Hàng thiếu kiện...",
+  "adminOrder.save": "Lưu",
+  "adminOrder.delete": "Xoá",
+  "adminOrder.cancelAction": "Huỷ",
+
+  // Admin order detail — customer updates
+  "adminOrder.customerUpdates": "Cập nhật cho khách hàng",
+  "adminOrder.updateSent": "Đã gửi cập nhật cho khách",
+  "adminOrder.updateSendFailed": "Không thể gửi cập nhật",
+  "adminOrder.noUpdates": "Chưa có cập nhật nào cho khách",
+  "adminOrder.updatePlaceholder": "Nhập nội dung cập nhật cho khách...",
+  "adminOrder.sendUpdate": "Gửi cập nhật cho khách",
+
+  // Admin order detail — product link
+  "adminOrder.openLink": "Mở link",
+  "adminOrder.openProduct": "Mở sản phẩm",
+
+  // Admin order detail — VAT
+  "adminOrder.vatYes": "Có",
+  "adminOrder.vatNo": "Không",
+
+  // Admin order detail — consignment table
+  "adminOrder.consignmentItemsTitle": "Thông tin ký gửi chi tiết",
+  "adminOrder.colProductName": "Tên sản phẩm",
+  "adminOrder.colAttributes": "Thuộc tính",
+  "adminOrder.colQuantity": "Số lượng",
+  "adminOrder.colUnitPrice": "Đơn giá (¥)",
+  "adminOrder.colNotes": "Ghi chú",
+  "adminOrder.total": "Tổng",
+
+  // Admin order detail — package
+  "adminOrder.package": "Kiện hàng",
+  "adminOrder.packageCode": "Mã kiện",
+  "adminOrder.copyPackageCode": "Sao chép mã kiện",
+  "adminOrder.copyBarcode": "Sao chép barcode",
+
+  // Admin order detail — customer contact
+  "adminOrder.zaloLinked": "Đã liên kết",
+  "adminOrder.zaloNotLinked": "Chưa liên kết",
+  "adminOrder.copyPhone": "Sao chép SĐT",
+  "adminOrder.openZalo": "Mở Zalo",
+  "adminOrder.copyEmail": "Sao chép email",
+  "adminOrder.zaloOALinked": "Đã liên kết Zalo OA",
+  "adminOrder.zaloNotLinkedWarning": "Khách chưa liên kết Zalo — không nhận được thông báo qua Zalo",
+  "adminOrder.zaloLinkGuide": "Hướng dẫn khách liên kết: Mở Zalo, quét mã QR OA Bắc Trung Hải, rồi nhắn mã đơn bên dưới.",
+  "adminOrder.zaloAutoLink": "Sau khi khách nhắn mã đơn, hệ thống sẽ tự động liên kết tài khoản Zalo.",
+
+  // Admin order detail — tracking tooltips
+  "adminOrder.copyCnTracking": "Sao chép mã vận đơn TQ",
+  "adminOrder.copyIntlTracking": "Sao chép mã vận đơn quốc tế",
+  "adminOrder.copyCn": "Sao chép",
+
   // Wallet
   "wallet.loading": "Đang tải ví...",
   "wallet.title": "Ví của tôi",

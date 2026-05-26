@@ -639,6 +639,84 @@ const zh: Record<string, string> = {
   "customerOrder.issueChatbot": "聊天机器人/支持",
   "customerOrder.issueOther": "其他",
 
+  // Admin order detail — general UI
+  "adminOrder.copied": "已复制",
+  "adminOrder.loadFailed": "无法加载订单",
+  "adminOrder.loadErrorTitle": "无法加载订单详情",
+  "adminOrder.loadErrorDefault": "订单不存在或已被删除。",
+  "adminOrder.retry": "重试",
+  "adminOrder.backToList": "返回列表",
+  "adminOrder.copyOrderCode": "复制订单号",
+
+  // Admin order detail — priority
+  "adminOrder.priority": "优先级",
+  "adminOrder.priorityNormal": "普通",
+  "adminOrder.priorityHigh": "高优先",
+  "adminOrder.priorityUrgent": "紧急",
+  "adminOrder.priorityUpdated": "优先级已更新",
+  "adminOrder.priorityUpdateFailed": "无法更新优先级",
+
+  // Admin order detail — custom status note
+  "adminOrder.statusNoteTitle": "状态备注",
+  "adminOrder.statusNoteSaved": "状态备注已保存",
+  "adminOrder.statusNoteSaveFailed": "无法保存备注",
+  "adminOrder.statusNoteDeleted": "状态备注已删除",
+  "adminOrder.statusNoteDeleteFailed": "无法删除备注",
+  "adminOrder.noStatusNote": "暂无状态备注",
+  "adminOrder.editNote": "编辑",
+  "adminOrder.addNote": "添加",
+  "adminOrder.statusNotePlaceholder": "例如：正在清点、等待客户确认、缺少包裹...",
+  "adminOrder.save": "保存",
+  "adminOrder.delete": "删除",
+  "adminOrder.cancelAction": "取消",
+
+  // Admin order detail — customer updates
+  "adminOrder.customerUpdates": "客户更新",
+  "adminOrder.updateSent": "已发送更新给客户",
+  "adminOrder.updateSendFailed": "无法发送更新",
+  "adminOrder.noUpdates": "暂无客户更新",
+  "adminOrder.updatePlaceholder": "输入发送给客户的更新内容...",
+  "adminOrder.sendUpdate": "发送更新给客户",
+
+  // Admin order detail — product link
+  "adminOrder.openLink": "打开链接",
+  "adminOrder.openProduct": "打开产品",
+
+  // Admin order detail — VAT
+  "adminOrder.vatYes": "是",
+  "adminOrder.vatNo": "否",
+
+  // Admin order detail — consignment table
+  "adminOrder.consignmentItemsTitle": "寄售详细信息",
+  "adminOrder.colProductName": "商品名称",
+  "adminOrder.colAttributes": "属性",
+  "adminOrder.colQuantity": "数量",
+  "adminOrder.colUnitPrice": "单价 (¥)",
+  "adminOrder.colNotes": "备注",
+  "adminOrder.total": "合计",
+
+  // Admin order detail — package
+  "adminOrder.package": "包裹",
+  "adminOrder.packageCode": "包裹编号",
+  "adminOrder.copyPackageCode": "复制包裹编号",
+  "adminOrder.copyBarcode": "复制条形码",
+
+  // Admin order detail — customer contact
+  "adminOrder.zaloLinked": "已绑定",
+  "adminOrder.zaloNotLinked": "未绑定",
+  "adminOrder.copyPhone": "复制电话",
+  "adminOrder.openZalo": "打开 Zalo",
+  "adminOrder.copyEmail": "复制邮箱",
+  "adminOrder.zaloOALinked": "已绑定 Zalo OA",
+  "adminOrder.zaloNotLinkedWarning": "客户未绑定 Zalo — 无法通过 Zalo 接收通知",
+  "adminOrder.zaloLinkGuide": "指导客户绑定：打开 Zalo，扫描北中海 OA 二维码，然后发送下方的订单号。",
+  "adminOrder.zaloAutoLink": "客户发送订单号后，系统将自动绑定其 Zalo 账户。",
+
+  // Admin order detail — tracking tooltips
+  "adminOrder.copyCnTracking": "复制中国运单号",
+  "adminOrder.copyIntlTracking": "复制国际运单号",
+  "adminOrder.copyCn": "复制",
+
   // Wallet
   "wallet.loading": "正在加载钱包...",
   "wallet.title": "我的钱包",

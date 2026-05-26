@@ -21,10 +21,16 @@ const TRANSITIONS: Record<string, string[]> = {
   OUT_FOR_DELIVERY: ["COMPLETED"],
 };
 
-const ORDER_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  ECOMMERCE: { label: "Thương mại điện tử", icon: "🛒", color: "bg-blue-100 text-blue-700" },
-  ENTRUST: { label: "Ủy thác XNK", icon: "📦", color: "bg-emerald-100 text-emerald-700" },
-  CONSIGNMENT: { label: "Ký gửi", icon: "🚚", color: "bg-orange-100 text-orange-700" },
+const ORDER_TYPE_ICONS: Record<string, { icon: string; color: string }> = {
+  ECOMMERCE: { icon: "🛒", color: "bg-blue-100 text-blue-700" },
+  ENTRUST: { icon: "📦", color: "bg-emerald-100 text-emerald-700" },
+  CONSIGNMENT: { icon: "🚚", color: "bg-orange-100 text-orange-700" },
+};
+
+const ORDER_TYPE_KEYS: Record<string, string> = {
+  ECOMMERCE: "customerOrder.typeEcommerce",
+  ENTRUST: "customerOrder.typeEntrust",
+  CONSIGNMENT: "customerOrder.typeConsignment",
 };
 
 interface OrderDetail {
@@ -129,7 +135,7 @@ export default function AdminOrderDetailPage() {
 
   function copyToClipboard(value: string) {
     navigator.clipboard.writeText(value).then(() => {
-      toast("Đã sao chép", "success");
+      toast(t("adminOrder.copied"), "success");
     });
   }
 
@@ -164,7 +170,7 @@ export default function AdminOrderDetailPage() {
       })
       .catch((err) => {
         console.error("[admin/orders/detail] load failed:", err);
-        setError(err?.message || "Không thể tải đơn hàng");
+        setError(err?.message || t("adminOrder.loadFailed"));
       })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,11 +212,11 @@ export default function AdminOrderDetailPage() {
       body: JSON.stringify({ customStatusNote: customNote }),
     });
     if (res.ok) {
-      toast("Đã lưu ghi chú trạng thái", "success");
+      toast(t("adminOrder.statusNoteSaved"), "success");
       setCustomNoteEditing(false);
       loadOrder();
     } else {
-      toast("Không thể lưu ghi chú", "error");
+      toast(t("adminOrder.statusNoteSaveFailed"), "error");
     }
     setCustomNoteSaving(false);
   }
@@ -223,12 +229,12 @@ export default function AdminOrderDetailPage() {
       body: JSON.stringify({ customStatusNote: "" }),
     });
     if (res.ok) {
-      toast("Đã xoá ghi chú trạng thái", "success");
+      toast(t("adminOrder.statusNoteDeleted"), "success");
       setCustomNote("");
       setCustomNoteEditing(false);
       loadOrder();
     } else {
-      toast("Không thể xoá ghi chú", "error");
+      toast(t("adminOrder.statusNoteDeleteFailed"), "error");
     }
     setCustomNoteSaving(false);
   }
@@ -241,11 +247,11 @@ export default function AdminOrderDetailPage() {
       body: JSON.stringify({ content: newNote.trim() }),
     });
     if (res.ok) {
-      toast("Đã gửi cập nhật cho khách", "success");
+      toast(t("adminOrder.updateSent"), "success");
       setNewNote("");
       loadOrder();
     } else {
-      toast("Không thể gửi cập nhật", "error");
+      toast(t("adminOrder.updateSendFailed"), "error");
     }
   }
 
@@ -256,10 +262,10 @@ export default function AdminOrderDetailPage() {
       body: JSON.stringify({ priority: newPriority }),
     });
     if (res.ok) {
-      toast("Đã cập nhật độ ưu tiên", "success");
+      toast(t("adminOrder.priorityUpdated"), "success");
       loadOrder();
     } else {
-      toast("Không thể cập nhật độ ưu tiên", "error");
+      toast(t("adminOrder.priorityUpdateFailed"), "error");
     }
   }
 
@@ -338,11 +344,11 @@ export default function AdminOrderDetailPage() {
       <div className="max-w-lg mx-auto mt-12 text-center">
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8">
           <span className="text-4xl mb-4 block">⚠️</span>
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">Không thể tải chi tiết đơn hàng</h2>
-          <p className="text-sm text-slate-600 mb-4">{error || "Đơn hàng không tồn tại hoặc đã bị xoá."}</p>
+          <h2 className="text-lg font-semibold text-slate-800 mb-2">{t("adminOrder.loadErrorTitle")}</h2>
+          <p className="text-sm text-slate-600 mb-4">{error || t("adminOrder.loadErrorDefault")}</p>
           <div className="flex items-center justify-center gap-3">
-            <button onClick={loadOrder} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors">Thử lại</button>
-            <Link href="/admin/orders" className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Quay lại danh sách</Link>
+            <button onClick={loadOrder} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors">{t("adminOrder.retry")}</button>
+            <Link href="/admin/orders" className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">{t("adminOrder.backToList")}</Link>
           </div>
         </div>
       </div>
@@ -366,7 +372,7 @@ export default function AdminOrderDetailPage() {
               type="button"
               onClick={() => copyToClipboard(order.orderCode)}
               className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-              title="Sao chép mã đơn"
+              title={t("adminOrder.copyOrderCode")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -379,10 +385,11 @@ export default function AdminOrderDetailPage() {
         action={
           <div className="flex items-center gap-2">
             {(() => {
-              const typeInfo = ORDER_TYPE_LABELS[order.orderType] || ORDER_TYPE_LABELS.ECOMMERCE;
+              const typeInfo = ORDER_TYPE_ICONS[order.orderType] || ORDER_TYPE_ICONS.ECOMMERCE;
+              const typeKey = ORDER_TYPE_KEYS[order.orderType] || ORDER_TYPE_KEYS.ECOMMERCE;
               return (
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${typeInfo.color}`}>
-                  {typeInfo.icon} {typeInfo.label}
+                  {typeInfo.icon} {t(typeKey)}
                 </span>
               );
             })()}
@@ -392,20 +399,20 @@ export default function AdminOrderDetailPage() {
       />
 
       {/* Priority */}
-      <Card title="Độ ưu tiên">
+      <Card title={t("adminOrder.priority")}>
         <div className="flex gap-2 flex-wrap">
           {(["NORMAL", "HIGH", "URGENT"] as const).map((p) => {
-            const config: Record<string, { label: string; active: string; inactive: string }> = {
-              NORMAL: { label: "Bình thường", active: "bg-slate-600 text-white", inactive: "bg-white text-slate-600 border-slate-300 hover:bg-slate-50" },
-              HIGH: { label: "Ưu tiên", active: "bg-amber-500 text-white", inactive: "bg-white text-amber-600 border-amber-300 hover:bg-amber-50" },
-              URGENT: { label: "Khẩn cấp", active: "bg-red-600 text-white", inactive: "bg-white text-red-600 border-red-300 hover:bg-red-50" },
+            const config: Record<string, { labelKey: string; active: string; inactive: string }> = {
+              NORMAL: { labelKey: "adminOrder.priorityNormal", active: "bg-slate-600 text-white", inactive: "bg-white text-slate-600 border-slate-300 hover:bg-slate-50" },
+              HIGH: { labelKey: "adminOrder.priorityHigh", active: "bg-amber-500 text-white", inactive: "bg-white text-amber-600 border-amber-300 hover:bg-amber-50" },
+              URGENT: { labelKey: "adminOrder.priorityUrgent", active: "bg-red-600 text-white", inactive: "bg-white text-red-600 border-red-300 hover:bg-red-50" },
             };
             const c = config[p];
             const isActive = order.priority === p;
             return (
               <button key={p} onClick={() => updatePriority(p)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${isActive ? c.active : c.inactive}`}>
-                {c.label}
+                {t(c.labelKey)}
               </button>
             );
           })}
@@ -438,7 +445,7 @@ export default function AdminOrderDetailPage() {
               let hostname = "";
               try { hostname = new URL(order.productLink).hostname; } catch {}
               const matched = Object.entries(domainLabels).find(([d]) => hostname.includes(d));
-              const label = matched ? `Mở link ${matched[1]}` : "Mở sản phẩm";
+              const label = matched ? `${t("adminOrder.openLink")} ${matched[1]}` : t("adminOrder.openProduct");
               return (
                 <div className="flex justify-between">
                   <dt className="text-slate-500">{t("orderDetail.link")}</dt>
@@ -508,7 +515,7 @@ export default function AdminOrderDetailPage() {
             ) : null; } catch { return null; } })()}
             <div className="flex justify-between">
               <dt className="text-slate-500">{t("newOrder.requiresVat")}</dt>
-              <dd className={`font-medium ${order.requiresVat ? "text-emerald-600" : "text-slate-400"}`}>{order.requiresVat ? "Có" : "Không"}</dd>
+              <dd className={`font-medium ${order.requiresVat ? "text-emerald-600" : "text-slate-400"}`}>{order.requiresVat ? t("adminOrder.vatYes") : t("adminOrder.vatNo")}</dd>
             </div>
             {order.requiresVat && (
               <>
@@ -532,7 +539,7 @@ export default function AdminOrderDetailPage() {
                 <dt className="text-slate-500">{t("newOrder.consignmentTracking")}</dt>
                 <dd className="font-medium text-slate-900 inline-flex items-center gap-1.5">
                   <span className="font-mono">{order.consignmentTrackingNumber}</span>
-                  <button type="button" onClick={() => copyToClipboard(order.consignmentTrackingNumber!)} className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Sao chép">
+                  <button type="button" onClick={() => copyToClipboard(order.consignmentTrackingNumber!)} className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title={t("adminOrder.copyCn")}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                   </button>
                 </dd>
@@ -554,18 +561,18 @@ export default function AdminOrderDetailPage() {
               return (
                 <div className="mt-4">
                   <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                    <span className="text-base">📋</span> Thông tin ký gửi chi tiết
+                    <span className="text-base">📋</span> {t("adminOrder.consignmentItemsTitle")}
                   </h4>
                   <div className="overflow-x-auto border border-slate-200 rounded-xl">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-slate-50 text-left">
                           <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">#</th>
-                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">Tên sản phẩm</th>
-                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">Thuộc tính</th>
-                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase text-right">Số lượng</th>
-                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase text-right">Đơn giá (¥)</th>
-                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">Ghi chú</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">{t("adminOrder.colProductName")}</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">{t("adminOrder.colAttributes")}</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase text-right">{t("adminOrder.colQuantity")}</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase text-right">{t("adminOrder.colUnitPrice")}</th>
+                          <th className="px-3 py-2.5 text-xs font-semibold text-slate-500 uppercase">{t("adminOrder.colNotes")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -582,7 +589,7 @@ export default function AdminOrderDetailPage() {
                       </tbody>
                       <tfoot>
                         <tr className="bg-blue-50/50 font-semibold">
-                          <td colSpan={3} className="px-3 py-2 text-slate-700 text-right">Tổng</td>
+                          <td colSpan={3} className="px-3 py-2 text-slate-700 text-right">{t("adminOrder.total")}</td>
                           <td className="px-3 py-2 text-slate-900 text-right">{items.reduce((s: number, i: { quantity?: string }) => s + parseInt(i.quantity || "0"), 0)}</td>
                           <td className="px-3 py-2 text-blue-700 text-right font-mono">¥{items.reduce((s: number, i: { unitPriceCNY?: string; quantity?: string }) => s + parseFloat(i.unitPriceCNY || "0") * parseInt(i.quantity || "0"), 0).toFixed(2)}</td>
                           <td></td>
@@ -600,17 +607,17 @@ export default function AdminOrderDetailPage() {
       )}
 
       {order.package && (
-        <Card title="Kiện hàng">
+        <Card title={t("adminOrder.package")}>
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between items-center">
-              <dt className="text-slate-500">Mã kiện</dt>
+              <dt className="text-slate-500">{t("adminOrder.packageCode")}</dt>
               <dd className="font-medium text-slate-900 inline-flex items-center gap-1.5">
                 {order.package.packageCode}
                 <button
                   type="button"
                   onClick={() => copyToClipboard(order.package!.packageCode)}
                   className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                  title="Sao chép mã kiện"
+                  title={t("adminOrder.copyPackageCode")}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -628,7 +635,7 @@ export default function AdminOrderDetailPage() {
                     type="button"
                     onClick={() => copyToClipboard(order.package!.barcode!)}
                     className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Sao chép barcode"
+                    title={t("adminOrder.copyBarcode")}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -649,7 +656,7 @@ export default function AdminOrderDetailPage() {
             <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.email")}</dt><dd className="font-medium text-slate-900">{order.user?.email || "—"}</dd></div>
             <div className="flex justify-between"><dt className="text-slate-500">{t("orderDetail.phone")}</dt><dd className="font-medium text-slate-900">{order.user?.phone || "—"}</dd></div>
             <div className="flex justify-between items-start"><dt className="text-slate-500">{t("orderDetail.address")}</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{order.user?.address || "—"}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">Zalo</dt><dd className={`font-medium ${order.user?.zaloRecipientId ? "text-emerald-600" : "text-amber-600"}`}>{order.user?.zaloRecipientId ? "Đã liên kết" : "Chưa liên kết"}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">Zalo</dt><dd className={`font-medium ${order.user?.zaloRecipientId ? "text-emerald-600" : "text-amber-600"}`}>{order.user?.zaloRecipientId ? t("adminOrder.zaloLinked") : t("adminOrder.zaloNotLinked")}</dd></div>
           </dl>
 
           {/* Quick contact actions */}
@@ -660,7 +667,7 @@ export default function AdminOrderDetailPage() {
                   onClick={() => copyToClipboard(order.user.phone!)}
                   className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors"
                 >
-                  Sao chép SĐT
+                  {t("adminOrder.copyPhone")}
                 </button>
                 <a
                   href={`https://zalo.me/${order.user?.phone?.replace(/^0/, "84") || ""}`}
@@ -668,7 +675,7 @@ export default function AdminOrderDetailPage() {
                   rel="noopener noreferrer"
                   className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 transition-colors"
                 >
-                  Mở Zalo
+                  {t("adminOrder.openZalo")}
                 </a>
               </>
             )}
@@ -676,37 +683,37 @@ export default function AdminOrderDetailPage() {
               onClick={() => copyToClipboard(order.user?.email || "")}
               className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors"
             >
-              Sao chép email
+              {t("adminOrder.copyEmail")}
             </button>
             <button
               onClick={() => copyToClipboard(order.orderCode)}
               className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors"
             >
-              Sao chép mã đơn
+              {t("adminOrder.copyOrderCode")}
             </button>
           </div>
 
           {order.user?.zaloRecipientId && (
             <div className="mt-2 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-xs font-medium text-emerald-700">Đã liên kết Zalo OA</span>
+              <span className="text-xs font-medium text-emerald-700">{t("adminOrder.zaloOALinked")}</span>
             </div>
           )}
 
           {!order.user?.zaloRecipientId && (
             <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 space-y-2">
-              <p className="font-medium">Khách chưa liên kết Zalo — không nhận được thông báo qua Zalo</p>
-              <p>Hướng dẫn khách liên kết: Mở Zalo, quét mã QR OA Bắc Trung Hải, rồi nhắn mã đơn bên dưới.</p>
+              <p className="font-medium">{t("adminOrder.zaloNotLinkedWarning")}</p>
+              <p>{t("adminOrder.zaloLinkGuide")}</p>
               <div className="flex items-center gap-2">
                 <span className="font-mono bg-white px-2 py-1 rounded border border-amber-300 text-amber-900 font-semibold">{order.orderCode}</span>
                 <button
                   onClick={() => copyToClipboard(order.orderCode)}
                   className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-lg text-xs font-medium hover:bg-amber-200 transition-colors"
                 >
-                  Sao chép mã đơn
+                  {t("adminOrder.copyOrderCode")}
                 </button>
               </div>
-              <p className="text-xs text-amber-600">Sau khi khách nhắn mã đơn, hệ thống sẽ tự động liên kết tài khoản Zalo.</p>
+              <p className="text-xs text-amber-600">{t("adminOrder.zaloAutoLink")}</p>
             </div>
           )}
         </Card>
@@ -827,7 +834,7 @@ export default function AdminOrderDetailPage() {
       </Card>
 
       {/* Custom status note — separate from system status */}
-      <Card title="Ghi chú trạng thái">
+      <Card title={t("adminOrder.statusNoteTitle")}>
         {!customNoteEditing ? (
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
@@ -837,7 +844,7 @@ export default function AdminOrderDetailPage() {
                   <span className="text-sm font-medium text-amber-700">{order.customStatusNote}</span>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Chưa có ghi chú trạng thái</p>
+                <p className="text-sm text-slate-400">{t("adminOrder.noStatusNote")}</p>
               )}
             </div>
             <button
@@ -845,7 +852,7 @@ export default function AdminOrderDetailPage() {
               onClick={() => setCustomNoteEditing(true)}
               className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
             >
-              {order.customStatusNote ? "Sửa" : "Thêm"}
+              {order.customStatusNote ? t("adminOrder.editNote") : t("adminOrder.addNote")}
             </button>
           </div>
         ) : (
@@ -854,7 +861,7 @@ export default function AdminOrderDetailPage() {
               type="text"
               value={customNote}
               onChange={(e) => setCustomNote(e.target.value)}
-              placeholder="Ví dụ: Đang kiểm đếm, Chờ khách xác nhận, Hàng thiếu kiện..."
+              placeholder={t("adminOrder.statusNotePlaceholder")}
               className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
             <div className="flex gap-2">
@@ -864,7 +871,7 @@ export default function AdminOrderDetailPage() {
                 disabled={customNoteSaving}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                Lưu
+                {t("adminOrder.save")}
               </button>
               {order.customStatusNote && (
                 <button
@@ -873,7 +880,7 @@ export default function AdminOrderDetailPage() {
                   disabled={customNoteSaving}
                   className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
                 >
-                  Xoá
+                  {t("adminOrder.delete")}
                 </button>
               )}
               <button
@@ -881,7 +888,7 @@ export default function AdminOrderDetailPage() {
                 onClick={() => { setCustomNoteEditing(false); setCustomNote(order.customStatusNote || ""); }}
                 className="px-4 py-2 border border-slate-300 text-sm rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
               >
-                Huỷ
+                {t("adminOrder.cancelAction")}
               </button>
             </div>
           </div>
@@ -902,7 +909,7 @@ export default function AdminOrderDetailPage() {
                     type="button"
                     onClick={() => copyToClipboard(tracking.trackingCodeChina)}
                     className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-300 text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors shrink-0"
-                    title="Sao chép mã vận đơn TQ"
+                    title={t("adminOrder.copyCnTracking")}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -923,7 +930,7 @@ export default function AdminOrderDetailPage() {
                     type="button"
                     onClick={() => copyToClipboard(tracking.trackingCodeIntl)}
                     className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-300 text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors shrink-0"
-                    title="Sao chép mã vận đơn quốc tế"
+                    title={t("adminOrder.copyIntlTracking")}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -957,7 +964,7 @@ export default function AdminOrderDetailPage() {
         </Card>
       </div>
 
-      <Card title="Cập nhật cho khách hàng">
+      <Card title={t("adminOrder.customerUpdates")}>
         <div className="space-y-3 mb-4">
           {order.orderNotes.map((note) => (
             <div key={note.id} className="bg-slate-50 rounded-xl p-4">
@@ -968,7 +975,7 @@ export default function AdminOrderDetailPage() {
             </div>
           ))}
           {order.orderNotes.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-2">Chưa có cập nhật nào cho khách</p>
+            <p className="text-sm text-slate-400 text-center py-2">{t("adminOrder.noUpdates")}</p>
           )}
         </div>
         <div className="flex gap-3">
@@ -976,11 +983,11 @@ export default function AdminOrderDetailPage() {
             type="text"
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Nhập nội dung cập nhật cho khách..."
+            placeholder={t("adminOrder.updatePlaceholder")}
             className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           />
           <button onClick={sendNote} className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap">
-            Gửi cập nhật cho khách
+            {t("adminOrder.sendUpdate")}
           </button>
         </div>
       </Card>
