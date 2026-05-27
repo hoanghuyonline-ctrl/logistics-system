@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
 
   const role = token.role as string;
 
-  if (pathname.startsWith("/admin") && role !== "ADMIN" && role !== "ACCOUNTANT") {
+  if (pathname.startsWith("/admin") && role !== "ADMIN" && role !== "ACCOUNTANT" && role !== "STAFF") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
