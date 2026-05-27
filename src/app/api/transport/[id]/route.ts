@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 
 export const GET = withErrorHandler(async function GET(_req: NextRequest, ctx: RouteContext<"/api/transport/[id]">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
+  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
