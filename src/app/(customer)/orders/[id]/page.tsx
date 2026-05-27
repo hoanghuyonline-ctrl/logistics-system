@@ -63,6 +63,15 @@ interface OrderDetail {
   consignmentTrackingNumber: string | null;
   consignmentNotes: string | null;
   shippingAddress: string | null;
+  chinaWarehouse: {
+    id: string;
+    nameVi: string;
+    nameZh: string;
+    nameEn: string;
+    addressVi: string;
+    addressZh: string;
+    addressEn: string;
+  } | null;
   internationalShippingRate: string;
   internationalShippingFee: string;
   vietnamDeliveryFee: string;
@@ -107,7 +116,7 @@ const ISSUE_TYPE_KEYS: Record<string, string> = {
 };
 
 export default function OrderDetailPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const params = useParams();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,6 +128,7 @@ export default function OrderDetailPage() {
   const [issueSuccess, setIssueSuccess] = useState(false);
   const [zaloBound, setZaloBound] = useState<boolean | null>(null);
   const [orderCodeCopied, setOrderCodeCopied] = useState(false);
+  const [warehouseCopied, setWarehouseCopied] = useState(false);
 
   useEffect(() => {
     fetch(`/api/orders/${params.id}`)
@@ -506,7 +516,43 @@ export default function OrderDetailPage() {
           </Card>
         )}
 
-        {order.orderType === "CONSIGNMENT" && order.shippingAddress && (
+        {order.chinaWarehouse && (() => {
+          const wh = order.chinaWarehouse;
+          const whName = locale === "zh" ? wh.nameZh : locale === "en" ? wh.nameEn : wh.nameVi;
+          const whAddress = locale === "zh" ? wh.addressZh : locale === "en" ? wh.addressEn : wh.addressVi;
+          const copyText = `${whName}\n${whAddress}`;
+          return (
+            <Card title={t("adminOrder.shippingAddressTitle")}>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🏭</span>
+                  <span className="text-sm font-semibold text-slate-900">{whName}</span>
+                </div>
+                <p className="text-sm text-slate-700 whitespace-pre-line pl-7">{whAddress}</p>
+                <div className="pl-7">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(copyText).then(() => {
+                        setWarehouseCopied(true);
+                        setTimeout(() => setWarehouseCopied(false), 2000);
+                      });
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    {warehouseCopied ? t("customerOrder.copied") : t("customerOrder.copyAddress")}
+                  </button>
+                </div>
+              </div>
+            </Card>
+          );
+        })()}
+
+        {order.orderType === "CONSIGNMENT" && order.shippingAddress && !order.chinaWarehouse && (
           <Card title={t("adminOrder.shippingAddressTitle")}>
             <div className="flex items-start gap-3">
               <p className="flex-1 text-sm text-slate-800 whitespace-pre-line">{order.shippingAddress}</p>

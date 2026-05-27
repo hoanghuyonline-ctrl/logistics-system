@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
+import { onWarehouseChanged } from "@/lib/notifications";
 import type { NextRequest } from "next/server";
 
 export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: RouteContext<"/api/orders/[id]">) {
@@ -45,10 +46,14 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: Ro
   const { id } = await ctx.params;
   const body = await req.json();
 
-  const existing = await prisma.order.findUnique({ where: { id }, select: { orderType: true } });
+  const existing = await prisma.order.findUnique({
+    where: { id },
+    select: { orderType: true, userId: true, orderCode: true, chinaWarehouseId: true },
+  });
   if (!existing) return errorResponse("Order not found", 404);
 
   const orderType = existing.orderType;
+  const previousWarehouseId = existing.chinaWarehouseId;
 
   const data: Record<string, unknown> = {};
 
@@ -97,7 +102,35 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: Ro
     if (body.productName !== undefined) data.productName = body.productName;
   }
 
-  const order = await prisma.order.update({ where: { id }, data });
+  const order = await prisma.order.update({
+    where: { id },
+    data,
+    include: { chinaWarehouse: true },
+  });
+
+  // Notify customer when warehouse is changed
+  if (
+    body.chinaWarehouseId !== undefined &&
+    body.chinaWarehouseId !== previousWarehouseId &&
+    order.chinaWarehouse
+  ) {
+    const orderUser = await prisma.user.findUnique({
+      where: { id: existing.userId },
+      select: { email: true, fullName: true },
+    });
+    onWarehouseChanged({
+      userId: existing.userId,
+      userEmail: orderUser?.email ?? undefined,
+      userName: orderUser?.fullName ?? undefined,
+      orderId: id,
+      orderCode: existing.orderCode,
+      warehouseName: order.chinaWarehouse.nameVi,
+      warehouseAddress: order.chinaWarehouse.addressVi,
+      channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
+    }).catch((err) => {
+      console.error("[order-update] Failed to notify warehouse change:", err);
+    });
+  }
 
   return jsonResponse(order);
 });

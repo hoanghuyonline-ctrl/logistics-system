@@ -52,6 +52,8 @@ export {
   onCustomerIssueCreated,
   onCustomerIssueStatusChanged,
   onCustomerVisibleOrderNote,
+  onPricingConfirmed,
+  onWarehouseChanged,
   onWalletEvent,
   onSalesRequestCreated,
   onSalesRequestStatusChanged,
