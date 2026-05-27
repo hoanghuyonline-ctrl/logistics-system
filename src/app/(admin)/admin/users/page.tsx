@@ -336,15 +336,19 @@ export default function UsersPage() {
                 ]}
                 actions={
                   <>
-                    <button onClick={() => openEditModal(u)}
-                      className="text-xs font-medium px-2.5 py-1 rounded-lg text-blue-600 hover:bg-blue-50">
-                      {t("users.edit")}
-                    </button>
-                    <button onClick={() => toggleActive(u.id, u.isActive)}
-                      className={`text-xs font-medium px-2.5 py-1 rounded-lg ${u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"}`}>
-                      {u.isActive ? t("users.deactivate") : t("users.activate")}
-                    </button>
-                    {u.wallet && (
+                    {!(isStaff && u.role === "ADMIN") && (
+                      <button onClick={() => openEditModal(u)}
+                        className="text-xs font-medium px-2.5 py-1 rounded-lg text-blue-600 hover:bg-blue-50">
+                        {t("users.edit")}
+                      </button>
+                    )}
+                    {!(isStaff && u.role === "ADMIN") && (
+                      <button onClick={() => toggleActive(u.id, u.isActive)}
+                        className={`text-xs font-medium px-2.5 py-1 rounded-lg ${u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"}`}>
+                        {u.isActive ? t("users.deactivate") : t("users.activate")}
+                      </button>
+                    )}
+                    {u.wallet && !(isStaff && u.role === "ADMIN") && (
                       <button onClick={() => openWalletModal(u)}
                         className="text-xs font-medium px-2.5 py-1 rounded-lg text-amber-600 hover:bg-amber-50">
                         \u0110i\u1ec1u ch\u1ec9nh v\u00ed
@@ -416,10 +420,12 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => openEditModal(u)}
-                          className="text-xs font-medium px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
-                          {t("users.edit")}
-                        </button>
+                        {!(isStaff && u.role === "ADMIN") && (
+                          <button onClick={() => openEditModal(u)}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
+                            {t("users.edit")}
+                          </button>
+                        )}
                         {!isStaff && (
                           <button onClick={() => toggleActive(u.id, u.isActive)}
                             className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"}`}>

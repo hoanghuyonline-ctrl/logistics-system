@@ -28,6 +28,12 @@ export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: Ro
   });
 
   if (!found) return errorResponse("User not found", 404);
+
+  // STAFF cannot view ADMIN account details
+  if (user.role === "STAFF" && found.role === "ADMIN") {
+    return errorResponse("Staff cannot view or modify admin accounts", 403);
+  }
+
   return jsonResponse(found);
 });
 
@@ -41,8 +47,15 @@ export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: Ro
   const body = await req.json();
   const { fullName, email, phone, address, role, isActive } = body;
 
-  if (user.role === "STAFF" && role === "ADMIN") {
-    return errorResponse("Staff cannot assign admin role", 403);
+  // STAFF cannot modify any user who currently holds ADMIN role
+  if (user.role === "STAFF") {
+    const targetUser = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (targetUser?.role === "ADMIN") {
+      return errorResponse("Staff cannot view or modify admin accounts", 403);
+    }
+    if (role === "ADMIN") {
+      return errorResponse("Staff cannot assign admin role", 403);
+    }
   }
 
   if (email) {
