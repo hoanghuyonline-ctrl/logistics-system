@@ -5,6 +5,7 @@ import {
   orderStatusChangedEmail,
   pricingConfirmedEmail,
   warehouseChangedEmail,
+  staffPricingSubmittedEmail,
   salesRequestCreatedEmail,
   salesRequestStatusChangedEmail,
 } from "./email-templates";
@@ -359,6 +360,44 @@ export async function onPricingConfirmed(params: {
     orderId: params.orderId,
     orderCode: params.orderCode,
     channels: params.channels ?? ALL_CHANNELS,
+  });
+}
+
+export async function onStaffPricingSubmitted(params: {
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  staffName: string;
+  orderId: string;
+  orderCode: string;
+  confirmedTotalCost: number;
+  channels?: NotificationChannel[];
+}): Promise<NotificationResult> {
+  const name = params.userName || "Admin";
+  const totalFormatted = params.confirmedTotalCost.toLocaleString("vi-VN");
+
+  let html: string | undefined;
+  try {
+    html = staffPricingSubmittedEmail({
+      adminName: name,
+      staffName: params.staffName,
+      orderCode: params.orderCode,
+      confirmedTotalCost: params.confirmedTotalCost,
+    });
+  } catch (err) {
+    console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onStaffPricingSubmitted]:", err);
+  }
+
+  return sendNotification({
+    userId: params.userId,
+    userEmail: params.userEmail,
+    userName: params.userName,
+    title: `Yêu cầu duyệt giá — Đơn ${params.orderCode}`,
+    message: `Nhân viên ${params.staffName} vừa gửi yêu cầu duyệt giá cho đơn ${params.orderCode}: ${totalFormatted} VND. Vui lòng phê duyệt.`,
+    html,
+    orderId: params.orderId,
+    orderCode: params.orderCode,
+    channels: params.channels ?? ["SYSTEM", "TELEGRAM", "EMAIL"],
   });
 }
 

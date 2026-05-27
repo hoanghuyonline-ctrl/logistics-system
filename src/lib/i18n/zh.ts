@@ -717,6 +717,25 @@ const zh: Record<string, string> = {
   "adminOrder.copyIntlTracking": "复制国际运单号",
   "adminOrder.copyCn": "复制",
 
+  // Staff pricing approval workflow
+  "adminOrder.staffPricingTitle": "输入订单价格",
+  "adminOrder.submitForApproval": "提交价格审批",
+  "adminOrder.staffPricingNote": "价格将发送给管理员审批后再通知客户。",
+  "adminOrder.pricingSubmittedForApproval": "已提交价格审批申请",
+  "adminOrder.pricingSubmitFailed": "提交价格审批失败",
+  "adminOrder.pricingPendingTitle": "价格审批待处理",
+  "adminOrder.pricingPendingDescPrefix": "员工",
+  "adminOrder.pricingPendingDescSuffix": "已提交该订单的价格审批申请。请审核并批准。",
+  "adminOrder.staff": "员工",
+  "adminOrder.proposedTotal": "建议总费用",
+  "adminOrder.approvePublish": "批准并通知客户",
+  "adminOrder.rejectSendBack": "拒绝并退回",
+  "adminOrder.pricingApproved": "价格已批准并已通知客户",
+  "adminOrder.pricingRejected": "价格已拒绝 — 已退回给员工",
+  "adminOrder.pricingActionFailed": "价格审批操作失败",
+  "adminOrder.pricingAwaitingApproval": "价格等待管理员审批",
+  "adminOrder.pricingAwaitingApprovalDesc": "您已提交价格审批申请。请等待管理员批准后再将价格发送给客户。",
+
   // Wallet
   "wallet.loading": "正在加载钱包...",
   "wallet.title": "我的钱包",

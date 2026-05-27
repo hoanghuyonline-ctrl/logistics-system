@@ -9,7 +9,7 @@ import { auditLog } from "@/lib/audit";
 
 export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/status">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
     return errorResponse("Forbidden", 403);
   }
 

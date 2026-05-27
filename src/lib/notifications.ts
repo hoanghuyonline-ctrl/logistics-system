@@ -54,6 +54,7 @@ export {
   onCustomerVisibleOrderNote,
   onPricingConfirmed,
   onWarehouseChanged,
+  onStaffPricingSubmitted,
   onWalletEvent,
   onSalesRequestCreated,
   onSalesRequestStatusChanged,
