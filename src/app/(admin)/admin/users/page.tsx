@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import MobileDataCard from "@/components/ui/MobileDataCard";
+import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
 
 interface User {
@@ -37,6 +38,7 @@ function timeAgo(dateStr: string, currentTime: number, t: (key: string, fallback
 
 const roleColors: Record<string, string> = {
   ADMIN: "bg-violet-50 text-violet-700",
+  STAFF: "bg-cyan-50 text-cyan-700",
   CUSTOMER: "bg-blue-50 text-blue-700",
   WAREHOUSE_CN: "bg-amber-50 text-amber-700",
   WAREHOUSE_VN: "bg-teal-50 text-teal-700",
@@ -46,6 +48,7 @@ const roleColors: Record<string, string> = {
 export default function UsersPage() {
   const { t } = useI18n();
   const { data: session } = useSession();
+  const { toast } = useToast();
   const currentUserId = (session?.user as Record<string, unknown>)?.id as string | undefined;
   const [users, setUsers] = useState<User[]>([]);
   const [page, setPage] = useState(1);
@@ -154,6 +157,7 @@ export default function UsersPage() {
       return;
     }
     setEditUser(null);
+    toast(t("users.updateSuccess"), "success");
     loadUsers();
   }
 
@@ -269,6 +273,7 @@ export default function UsersPage() {
             <select value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
               className="px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
               <option value="CUSTOMER">{t("role.CUSTOMER")}</option>
+              <option value="STAFF">{t("role.STAFF")}</option>
               <option value="ADMIN">{t("role.ADMIN")}</option>
               <option value="WAREHOUSE_CN">{t("role.WAREHOUSE_CN")}</option>
               <option value="WAREHOUSE_VN">{t("role.WAREHOUSE_VN")}</option>
@@ -291,6 +296,7 @@ export default function UsersPage() {
           className="px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
           <option value="">{t("users.allRoles")}</option>
           <option value="CUSTOMER">{t("role.CUSTOMER")}</option>
+          <option value="STAFF">{t("role.STAFF")}</option>
           <option value="ADMIN">{t("role.ADMIN")}</option>
           <option value="WAREHOUSE_CN">{t("role.WAREHOUSE_CN")}</option>
           <option value="WAREHOUSE_VN">{t("role.WAREHOUSE_VN")}</option>
@@ -465,6 +471,7 @@ export default function UsersPage() {
                 <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                   <option value="CUSTOMER">{t("role.CUSTOMER")}</option>
+                  <option value="STAFF">{t("role.STAFF")}</option>
                   <option value="ADMIN">{t("role.ADMIN")}</option>
                   <option value="WAREHOUSE_CN">{t("role.WAREHOUSE_CN")}</option>
                   <option value="WAREHOUSE_VN">{t("role.WAREHOUSE_VN")}</option>
