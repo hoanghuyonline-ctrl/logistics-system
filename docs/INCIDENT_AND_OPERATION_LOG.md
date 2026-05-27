@@ -2,7 +2,7 @@
 
 **In bảng ghi sự cố ra giấy hoặc dùng file Excel tương ứng. Ghi lại MỌI sự cố để rút kinh nghiệm.**
 
-**Website:** https://thue.eu.cc | **Hotline:** 0901 234 567
+**Website:** https://bactrunghai.vn | **Hotline:** 0901 234 567
 
 ---
 
@@ -40,7 +40,7 @@
 
 | Sự cố | Mức độ | Dấu hiệu | Xử lý nhanh |
 |-------|--------|----------|-------------|
-| Website down | 🔴 Khẩn cấp | Không truy cập được thue.eu.cc | `pm2 restart logistics-system` → xem BACKUP_AND_RECOVERY.md |
+| Website down | 🔴 Khẩn cấp | Không truy cập được bactrunghai.vn | `pm2 restart logistics-system` → xem BACKUP_AND_RECOVERY.md |
 | Chatbot không trả lời | 🟡 Trung bình | Gửi tin nhắn test không có phản hồi | Kiểm tra `pm2 status` → restart app |
 | Zalo notification fail | 🟡 Trung bình | Khách không nhận thông báo Zalo | Kiểm tra ZALO_OA_ACCESS_TOKEN trong .env |
 | Telegram bot lỗi | 🟡 Trung bình | Bot không reply | Kiểm tra TELEGRAM_BOT_TOKEN → restart |
@@ -315,4 +315,4 @@ Xin lỗi về sự nhầm lẫn."
 
 **Bắc Trung Hải Logistics** — Nhật ký sự cố & vận hành
 
-Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://thue.eu.cc
+Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://bactrunghai.vn

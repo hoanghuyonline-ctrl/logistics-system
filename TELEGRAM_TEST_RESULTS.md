@@ -2,7 +2,7 @@
 
 **Ngày:** 2026-05-12
 **Bot:** @bactrunghai_bot
-**Production:** https://thue.eu.cc
+**Production:** https://bactrunghai.vn
 **Phương pháp:** Gửi webhook payload trực tiếp qua `POST /api/telegram/webhook`
 
 ---

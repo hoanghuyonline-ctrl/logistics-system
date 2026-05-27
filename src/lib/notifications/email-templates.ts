@@ -9,7 +9,7 @@ const BRAND_COLOR = "#1a56db";
 const BRAND_ACCENT = "#f97316";
 
 function getSiteUrl(): string {
-  return (process.env.APP_DOMAIN || process.env.NEXTAUTH_URL || "https://thue.eu.cc").replace(/\/+$/, "");
+  return (process.env.APP_DOMAIN || process.env.NEXTAUTH_URL || "https://bactrunghai.vn").replace(/\/+$/, "");
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
@@ -91,13 +91,13 @@ ${content}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr>
 <td style="text-align:center;padding-bottom:12px;">
-<a href="${getSiteUrl()}" style="color:${BRAND_COLOR};font-size:13px;text-decoration:none;font-weight:600;">thue.eu.cc</a>
+<a href="${getSiteUrl()}" style="color:${BRAND_COLOR};font-size:13px;text-decoration:none;font-weight:600;">bactrunghai.vn</a>
 </td>
 </tr>
 <tr>
 <td style="text-align:center;font-size:12px;color:#94a3b8;line-height:1.6;">
 Công ty TNHH Bắc Trung Hải Logistics<br>
-Email hỗ trợ: support@thue.eu.cc | Hotline: 0899.123.456<br>
+Email hỗ trợ: support@bactrunghai.vn | Hotline: 0899.123.456<br>
 Đây là email tự động — vui lòng không trả lời trực tiếp.
 </td>
 </tr>

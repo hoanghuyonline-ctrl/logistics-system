@@ -523,13 +523,13 @@ export default function SettingsPage() {
         ) : (
           <>
             <p className="text-sm text-slate-500 mb-3">
-              Đây là domain chính của hệ thống, dùng để tạo link ảnh, email, và các URL công khai. Ví dụ: <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">https://thue.eu.cc</code>
+              Đây là domain chính của hệ thống, dùng để tạo link ảnh, email, và các URL công khai. Ví dụ: <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">https://bactrunghai.vn</code>
             </p>
             <div className="flex items-center gap-3">
               <input
                 type="text"
                 className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="https://thue.eu.cc"
+                placeholder="https://bactrunghai.vn"
                 value={appDomain}
                 onChange={(e) => { setAppDomain(e.target.value); setAppDomainError(""); }}
               />
@@ -912,7 +912,7 @@ export default function SettingsPage() {
                   R2_ACCESS_KEY_ID: "R2 Access Key ID",
                   R2_SECRET_ACCESS_KEY: "R2 Secret Access Key",
                   R2_BUCKET_NAME: "logistics-uploads",
-                  R2_PUBLIC_CUSTOM_DOMAIN: "https://cdn.thue.eu.cc",
+                  R2_PUBLIC_CUSTOM_DOMAIN: "https://cdn.bactrunghai.vn",
                 };
                 const isSecret = ["GCS_CREDENTIALS", "GDRIVE_CLIENT_SECRET", "GDRIVE_REFRESH_TOKEN", "R2_SECRET_ACCESS_KEY"].includes(item.key);
                 const isDropdown = item.key === "STORAGE_PROVIDER";

@@ -2,7 +2,7 @@
 
 Hướng dẫn kết nối webhook Messenger với Meta Developer Platform cho production.
 
-**Webhook URL:** `https://thue.eu.cc/api/messenger/webhook`
+**Webhook URL:** `https://bactrunghai.vn/api/messenger/webhook`
 
 ---
 
@@ -28,7 +28,7 @@ Hướng dẫn kết nối webhook Messenger với Meta Developer Platform cho p
 
 1. Trong Messenger Settings → **Webhooks** → **Add Callback URL**
 2. Điền thông tin:
-   - **Callback URL:** `https://thue.eu.cc/api/messenger/webhook`
+   - **Callback URL:** `https://bactrunghai.vn/api/messenger/webhook`
    - **Verify Token:** giá trị trùng với `MESSENGER_VERIFY_TOKEN` trong `.env` production
 3. Nhấn **Verify and Save**
 4. Meta sẽ gửi GET request với `hub.verify_token` — server trả về `hub.challenge` nếu token khớp
@@ -94,14 +94,14 @@ MESSENGER_PAGE_ACCESS_TOKEN=your_page_access_token_here
 ### Từ command line (test thủ công)
 
 ```bash
-curl -s "https://thue.eu.cc/api/messenger/webhook?hub.mode=subscribe&hub.verify_token=YOUR_TOKEN&hub.challenge=test123"
+curl -s "https://bactrunghai.vn/api/messenger/webhook?hub.mode=subscribe&hub.verify_token=YOUR_TOKEN&hub.challenge=test123"
 # Kết quả mong đợi: test123
 ```
 
 ### Kiểm tra nhận tin nhắn (test payload)
 
 ```bash
-curl -s -X POST https://thue.eu.cc/api/messenger/webhook \
+curl -s -X POST https://bactrunghai.vn/api/messenger/webhook \
   -H "Content-Type: application/json" \
   -d '{
     "object": "page",

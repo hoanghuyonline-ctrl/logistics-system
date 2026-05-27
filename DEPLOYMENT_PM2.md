@@ -54,7 +54,7 @@ Create `.env.production` (or use existing `.env`):
 
 ```env
 DATABASE_URL="postgresql://postgres:123456@localhost:5433/logistics_db?schema=public"
-NEXTAUTH_URL="https://thue.eu.cc"
+NEXTAUTH_URL="https://bactrunghai.vn"
 NEXTAUTH_SECRET="<your-secret>"
 PORT=3000
 
@@ -265,7 +265,7 @@ pm2 logs logistics-system --lines 20
   │       └── logistics_db
   │
   ├── Reverse Proxy (Cloudflare / nginx)
-  │   └── thue.eu.cc → localhost:3000
+  │   └── bactrunghai.vn → localhost:3000
   │
   └── Logs
       ├── logs/out.log
