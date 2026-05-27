@@ -7,6 +7,7 @@ export {
   onCustomerVisibleOrderNote,
   onPricingConfirmed,
   onWarehouseChanged,
+  onStaffPricingSubmitted,
   onSalesRequestCreated,
   onWalletEvent,
 } from "./triggers";

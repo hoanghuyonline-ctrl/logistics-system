@@ -717,6 +717,25 @@ const vi: Record<string, string> = {
   "adminOrder.copyIntlTracking": "Sao chép mã vận đơn quốc tế",
   "adminOrder.copyCn": "Sao chép",
 
+  // Staff pricing approval workflow
+  "adminOrder.staffPricingTitle": "Nhập giá đơn hàng",
+  "adminOrder.submitForApproval": "Gửi yêu cầu duyệt giá",
+  "adminOrder.staffPricingNote": "Giá sẽ được gửi cho Admin duyệt trước khi thông báo cho khách hàng.",
+  "adminOrder.pricingSubmittedForApproval": "Đã gửi yêu cầu duyệt giá cho Admin",
+  "adminOrder.pricingSubmitFailed": "Gửi yêu cầu duyệt giá thất bại",
+  "adminOrder.pricingPendingTitle": "Yêu cầu duyệt giá đang chờ",
+  "adminOrder.pricingPendingDescPrefix": "Nhân viên",
+  "adminOrder.pricingPendingDescSuffix": "vừa gửi yêu cầu duyệt giá cho đơn hàng này. Vui lòng kiểm tra và phê duyệt.",
+  "adminOrder.staff": "Nhân viên",
+  "adminOrder.proposedTotal": "Tổng chi phí đề xuất",
+  "adminOrder.approvePublish": "Duyệt giá",
+  "adminOrder.rejectSendBack": "Từ chối",
+  "adminOrder.pricingApproved": "Đã duyệt giá và thông báo cho khách hàng",
+  "adminOrder.pricingRejected": "Đã từ chối yêu cầu giá — gửi lại cho nhân viên",
+  "adminOrder.pricingActionFailed": "Thao tác duyệt giá thất bại",
+  "adminOrder.pricingAwaitingApproval": "Giá đang chờ Admin duyệt",
+  "adminOrder.pricingAwaitingApprovalDesc": "Bạn đã gửi yêu cầu duyệt giá. Vui lòng đợi Admin phê duyệt trước khi giá được gửi cho khách hàng.",
+
   // Wallet
   "wallet.loading": "Đang tải ví...",
   "wallet.title": "Ví của tôi",

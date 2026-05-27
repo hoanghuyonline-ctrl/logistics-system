@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -86,6 +87,9 @@ interface OrderDetail {
   confirmedServiceFee: string | null;
   confirmedTotalCost: string | null;
   confirmedAt: string | null;
+  isPricingPendingApproval: boolean;
+  pricingSubmittedByStaff: { fullName: string } | null;
+  staffSubmittedPricingAt: string | null;
   status: string;
   priority: string;
   trackingCodeChina: string | null;
@@ -114,7 +118,10 @@ interface OrderDetail {
 export default function AdminOrderDetailPage() {
   const { t, locale } = useI18n();
   const params = useParams();
+  const { data: session } = useSession();
   const { toast } = useToast();
+  const userRole = (session?.user as Record<string, unknown>)?.role as string || "ADMIN";
+  const isStaff = userRole === "STAFF";
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [tracking, setTracking] = useState({ trackingCodeChina: "", trackingCodeIntl: "" });
@@ -342,6 +349,53 @@ export default function AdminOrderDetailPage() {
     } else {
       const data = await res.json();
       toast(data.error || t("adminOrder.pricingConfirmFailed"), "error");
+    }
+    setPricingSaving(false);
+  }
+
+  async function submitPricingForApproval() {
+    if (calculatedTotal <= 0) {
+      toast(t("adminOrder.enterFinalCost"), "error");
+      return;
+    }
+    setPricingSaving(true);
+    const res = await fetch(`/api/orders/${params.id}/submit-pricing`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        productValueCNY: parseFloat(pricingForm.productValueCNY) || 0,
+        confirmedProductCost: productValueVND || null,
+        confirmedServiceFee: serviceFeeVal || null,
+        chinaShippingFee: chinaShippingVal || null,
+        internationalShippingFee: intlShippingVal || null,
+        vietnamDeliveryFee: vnDeliveryVal || null,
+        confirmedShippingCost: chinaShippingVal + intlShippingVal + vnDeliveryVal || null,
+        confirmedTotalCost: calculatedTotal,
+      }),
+    });
+    if (res.ok) {
+      toast(t("adminOrder.pricingSubmittedForApproval"), "success");
+      loadOrder();
+    } else {
+      const data = await res.json();
+      toast(data.error || t("adminOrder.pricingSubmitFailed"), "error");
+    }
+    setPricingSaving(false);
+  }
+
+  async function handleApprovePricing(action: "approve" | "reject") {
+    setPricingSaving(true);
+    const res = await fetch(`/api/orders/${params.id}/approve-pricing`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    if (res.ok) {
+      toast(action === "approve" ? t("adminOrder.pricingApproved") : t("adminOrder.pricingRejected"), "success");
+      loadOrder();
+    } else {
+      const data = await res.json();
+      toast(data.error || t("adminOrder.pricingActionFailed"), "error");
     }
     setPricingSaving(false);
   }
@@ -828,8 +882,49 @@ export default function AdminOrderDetailPage() {
         </div>
       </Card>
 
+      {/* Pricing approval banner for ADMIN */}
+      {!isStaff && order.isPricingPendingApproval && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⏳</span>
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-900 mb-1">{t("adminOrder.pricingPendingTitle")}</h3>
+              <p className="text-sm text-amber-700 mb-1">
+                {t("adminOrder.pricingPendingDescPrefix")} <strong>{order.pricingSubmittedByStaff?.fullName || t("adminOrder.staff")}</strong> {t("adminOrder.pricingPendingDescSuffix")}
+              </p>
+              <p className="text-sm font-semibold text-amber-900 mb-3">
+                {t("adminOrder.proposedTotal")}: {fmt(order.confirmedTotalCost)} VND
+              </p>
+              <div className="flex items-center gap-3">
+                <button onClick={() => handleApprovePricing("approve")} disabled={pricingSaving}
+                  className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                  {t("adminOrder.approvePublish")}
+                </button>
+                <button onClick={() => handleApprovePricing("reject")} disabled={pricingSaving}
+                  className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50">
+                  {t("adminOrder.rejectSendBack")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending approval indicator for STAFF */}
+      {isStaff && order.isPricingPendingApproval && (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">📨</span>
+            <div>
+              <h3 className="font-semibold text-blue-900">{t("adminOrder.pricingAwaitingApproval")}</h3>
+              <p className="text-sm text-blue-700">{t("adminOrder.pricingAwaitingApprovalDesc")}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm pricing form */}
-      <Card title={order.confirmedTotalCost ? t("adminOrder.updateConfirmedPricing") : t("adminOrder.confirmOrderPricing")}>
+      <Card title={isStaff ? t("adminOrder.staffPricingTitle") : (order.confirmedTotalCost ? t("adminOrder.updateConfirmedPricing") : t("adminOrder.confirmOrderPricing"))}>
         {orderExchangeRate > 0 && (
           <p className="text-xs text-slate-400 mb-4">{t("adminOrder.systemExchangeRate")}: 1 ¥ = {orderExchangeRate.toLocaleString()} VND</p>
         )}
@@ -872,11 +967,23 @@ export default function AdminOrderDetailPage() {
           </div>
         </div>
         <div className="mt-4 flex items-center gap-3">
-          <button onClick={confirmPricing} disabled={pricingSaving}
-            className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
-            {pricingSaving ? t("adminOrder.savingPricing") : (order.confirmedTotalCost ? t("adminOrder.updatePricing") : t("adminOrder.confirmPricing"))}
-          </button>
-          <p className="text-xs text-slate-400">{t("adminOrder.pricingNotification")}</p>
+          {isStaff ? (
+            <>
+              <button onClick={submitPricingForApproval} disabled={pricingSaving || order.isPricingPendingApproval}
+                className="px-5 py-2.5 bg-amber-600 text-white text-sm font-semibold rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-50">
+                {pricingSaving ? t("adminOrder.savingPricing") : t("adminOrder.submitForApproval")}
+              </button>
+              <p className="text-xs text-slate-400">{t("adminOrder.staffPricingNote")}</p>
+            </>
+          ) : (
+            <>
+              <button onClick={confirmPricing} disabled={pricingSaving}
+                className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                {pricingSaving ? t("adminOrder.savingPricing") : (order.confirmedTotalCost ? t("adminOrder.updatePricing") : t("adminOrder.confirmPricing"))}
+              </button>
+              <p className="text-xs text-slate-400">{t("adminOrder.pricingNotification")}</p>
+            </>
+          )}
         </div>
       </Card>
 

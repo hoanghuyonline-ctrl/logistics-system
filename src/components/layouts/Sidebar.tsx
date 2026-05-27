@@ -36,7 +36,23 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.profile", href: "/profile", icon: "👤" },
 ];
 
-const NOTIFICATION_NAV_ROLES = ["CUSTOMER", "ADMIN"];
+const NOTIFICATION_NAV_ROLES = ["CUSTOMER", "ADMIN", "STAFF"];
+
+const STAFF_HIDDEN_HREFS = new Set([
+  "/admin/finance",
+  "/admin/settings",
+  "/admin/china-warehouses",
+]);
+
+function getStaffNavGroups(): NavGroup[] {
+  return adminNavGroups
+    .filter((g) => g.label !== "TÀI CHÍNH & PHÂN TÍCH")
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) => !STAFF_HIDDEN_HREFS.has(item.href)),
+    }))
+    .filter((g) => g.items.length > 0);
+}
 
 const adminNavGroups: NavGroup[] = [
   {
@@ -122,6 +138,7 @@ const accountantNav: NavItem[] = [
 function getNavItems(role: string): NavItem[] {
   switch (role) {
     case "ADMIN": return adminNav;
+    case "STAFF": return getStaffNavGroups().flatMap((g) => g.items);
     case "WAREHOUSE_CN": return warehouseCNNav;
     case "WAREHOUSE_VN": return warehouseVNNav;
     case "ACCOUNTANT": return accountantNav;
@@ -202,7 +219,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { t, locale, setLocale } = useI18n();
   const role = (session?.user as Record<string, unknown>)?.role as string || "CUSTOMER";
   const navItems = getNavItems(role);
-  const isAdmin = role === "ADMIN";
+  const isAdmin = role === "ADMIN" || role === "STAFF";
+  const navGroups = role === "STAFF" ? getStaffNavGroups() : adminNavGroups;
 
   return (
     <>
@@ -223,7 +241,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
         {isAdmin ? (
           <div className="space-y-2">
-            {adminNavGroups.map((group) => (
+            {navGroups.map((group) => (
               <CollapsibleGroup
                 key={group.label}
                 group={group}

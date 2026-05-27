@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 
 export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/tracking">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

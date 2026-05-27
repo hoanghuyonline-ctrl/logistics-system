@@ -9,6 +9,7 @@ datasource db {
 enum Role {
   CUSTOMER
   ADMIN
+  STAFF
   WAREHOUSE_CN
   WAREHOUSE_VN
   ACCOUNTANT
@@ -203,6 +204,7 @@ model User {
   knowledgeArticles  KnowledgeArticle[]   @relation("KnowledgeAuthor")
   transportRequests  TransportRequest[]   @relation("TransportRequests")
   quotationResponses QuotationRequest[]   @relation("QuotationResponder")
+  staffPricingSubmissions Order[]          @relation("StaffPricingSubmitter")
 }
 
 model Wallet {
@@ -274,6 +276,9 @@ model Order {
   confirmedTotalCost        Decimal?    @db.Decimal(15, 2)
   confirmedAt               DateTime?
   confirmedById             String?
+  isPricingPendingApproval  Boolean     @default(false)
+  staffSubmittedPricingAt   DateTime?
+  pricingSubmittedByStaffId String?
   status                    OrderStatus @default(PENDING)
   priority                  OrderPriority @default(NORMAL)
   trackingCodeChina         String?
@@ -283,14 +288,15 @@ model Order {
   createdAt                 DateTime    @default(now())
   updatedAt                 DateTime    @updatedAt
 
-  user            User             @relation(fields: [userId], references: [id])
-  package         Package?         @relation(fields: [packageId], references: [id])
-  chinaWarehouse  ChinaWarehouse?  @relation(fields: [chinaWarehouseId], references: [id])
-  statusLogs      OrderStatusLog[]
-  orderNotes      OrderNote[]
-  transactions    Transaction[]
-  notifications   Notification[]
-  salesRequests   SalesRequest[]
+  user                    User             @relation(fields: [userId], references: [id])
+  package                 Package?         @relation(fields: [packageId], references: [id])
+  chinaWarehouse          ChinaWarehouse?  @relation(fields: [chinaWarehouseId], references: [id])
+  pricingSubmittedByStaff User?            @relation("StaffPricingSubmitter", fields: [pricingSubmittedByStaffId], references: [id])
+  statusLogs              OrderStatusLog[]
+  orderNotes              OrderNote[]
+  transactions            Transaction[]
+  notifications           Notification[]
+  salesRequests           SalesRequest[]
 }
 
 model OrderStatusLog {

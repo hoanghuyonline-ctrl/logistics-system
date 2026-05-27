@@ -717,6 +717,25 @@ const en: Record<string, string> = {
   "adminOrder.copyIntlTracking": "Copy international tracking code",
   "adminOrder.copyCn": "Copy",
 
+  // Staff pricing approval workflow
+  "adminOrder.staffPricingTitle": "Enter Order Pricing",
+  "adminOrder.submitForApproval": "Submit Pricing for Admin Approval",
+  "adminOrder.staffPricingNote": "Pricing will be sent to Admin for approval before notifying the customer.",
+  "adminOrder.pricingSubmittedForApproval": "Pricing submitted for Admin approval",
+  "adminOrder.pricingSubmitFailed": "Failed to submit pricing for approval",
+  "adminOrder.pricingPendingTitle": "Pricing Approval Pending",
+  "adminOrder.pricingPendingDescPrefix": "Staff member",
+  "adminOrder.pricingPendingDescSuffix": "has submitted pricing for this order. Please review and approve.",
+  "adminOrder.staff": "Staff",
+  "adminOrder.proposedTotal": "Proposed Total Cost",
+  "adminOrder.approvePublish": "Approve & Publish to Customer",
+  "adminOrder.rejectSendBack": "Reject & Send Back",
+  "adminOrder.pricingApproved": "Pricing approved and customer notified",
+  "adminOrder.pricingRejected": "Pricing rejected — sent back to staff",
+  "adminOrder.pricingActionFailed": "Pricing action failed",
+  "adminOrder.pricingAwaitingApproval": "Pricing Awaiting Admin Approval",
+  "adminOrder.pricingAwaitingApprovalDesc": "You have submitted pricing for approval. Please wait for Admin to approve before the price is sent to the customer.",
+
   // Wallet
   "wallet.loading": "Loading wallet...",
   "wallet.title": "My Wallet",

@@ -17,6 +17,7 @@ export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: Ro
       user: { select: { id: true, fullName: true, email: true, phone: true, address: true, zaloRecipientId: true } },
       package: true,
       chinaWarehouse: { select: { id: true, nameVi: true, nameZh: true, nameEn: true, addressVi: true, addressZh: true, addressEn: true } },
+      pricingSubmittedByStaff: { select: { fullName: true } },
       statusLogs: {
         orderBy: { createdAt: "asc" },
         include: { changer: { select: { fullName: true, role: true } } },
@@ -39,7 +40,7 @@ export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: Ro
 
 export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: RouteContext<"/api/orders/[id]">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

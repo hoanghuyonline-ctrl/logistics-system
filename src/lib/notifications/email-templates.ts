@@ -382,6 +382,40 @@ ${ctaButton("Xem đơn mua hàng", `${getSiteUrl()}/shop/requests`)}`;
   return baseLayout(content);
 }
 
+export function staffPricingSubmittedEmail(params: {
+  adminName?: string;
+  staffName?: string;
+  orderCode?: string;
+  confirmedTotalCost?: number;
+}): string {
+  const name = params.adminName || "Admin";
+  const staff = params.staffName || "Nhân viên";
+  const code = params.orderCode || "N/A";
+  const total = safeNum(params.confirmedTotalCost);
+
+  const rows: Array<{ label: string; value: string; highlight?: boolean }> = [
+    { label: "Mã đơn hàng", value: `<strong>${code}</strong>` },
+    { label: "Nhân viên gửi", value: staff },
+    { label: "Giá đề xuất", value: fmtVND(total), highlight: true },
+  ];
+
+  const content = `
+${greeting(name)}
+<p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
+Nhân viên <strong>${staff}</strong> vừa gửi yêu cầu duyệt giá cho đơn hàng <strong>${code}</strong>:
+</p>
+<p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;background-color:#fefce8;padding:14px 18px;border-radius:8px;border-left:4px solid #eab308;">
+Tổng chi phí đề xuất: <strong style="color:#b45309;">${fmtVND(total)}</strong>
+</p>
+${orderTable(rows)}
+${ctaButton("Xem & Duyệt giá", `${getSiteUrl()}/admin/orders`)}
+<p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
+Vui lòng kiểm tra và phê duyệt hoặc từ chối yêu cầu giá này.
+</p>`;
+
+  return baseLayout(content);
+}
+
 export function pricingConfirmedEmail(params: {
   userName?: string;
   orderCode?: string;
