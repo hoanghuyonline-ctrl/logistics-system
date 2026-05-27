@@ -6,13 +6,13 @@ import type { NextRequest } from "next/server";
 
 export const GET = withErrorHandler(async function GET(_req: NextRequest, ctx: RouteContext<"/api/customs/[id]">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
+  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
   const { id } = await ctx.params;
 
-  const where = hasRole(user.role, ["ADMIN"]) ? { id } : { id, customerId: user.id };
+  const where = hasRole(user.role, ["ADMIN", "STAFF"]) ? { id } : { id, customerId: user.id };
 
   const request = await prisma.customsRequest.findFirst({
     where,

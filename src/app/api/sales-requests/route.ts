@@ -62,7 +62,7 @@ export const GET = withErrorHandler(async function GET(request: Request) {
 
 export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
+  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -71,7 +71,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
 
   if (!productName) return errorResponse("Tên sản phẩm là bắt buộc");
 
-  const customerId = hasRole(user.role, ["ADMIN"]) && body.customerId ? body.customerId : user.id;
+  const customerId = hasRole(user.role, ["ADMIN", "STAFF"]) && body.customerId ? body.customerId : user.id;
 
   let estimatedTotal: number | null = null;
   let resolvedProductName = productName;

@@ -38,7 +38,7 @@ export const GET = withErrorHandler(async function GET() {
 
 export const POST = withErrorHandler(async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
+  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -53,7 +53,7 @@ export const POST = withErrorHandler(async function POST(req: NextRequest) {
     return errorResponse("Vui lòng mô tả hàng hóa", 400);
   }
 
-  const customerId = hasRole(user.role, ["ADMIN"]) && body.customerId ? body.customerId : user.id;
+  const customerId = hasRole(user.role, ["ADMIN", "STAFF"]) && body.customerId ? body.customerId : user.id;
 
   const request = await prisma.customsRequest.create({
     data: {

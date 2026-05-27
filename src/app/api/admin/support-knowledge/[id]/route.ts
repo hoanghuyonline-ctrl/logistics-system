@@ -7,7 +7,7 @@ export const PATCH = withErrorHandler(async function PATCH(
   ctx: RouteContext<"/api/admin/support-knowledge/[id]">,
 ) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -41,7 +41,7 @@ export const DELETE = withErrorHandler(async function DELETE(
   ctx: RouteContext<"/api/admin/support-knowledge/[id]">,
 ) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

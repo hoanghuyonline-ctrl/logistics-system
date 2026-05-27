@@ -24,7 +24,7 @@ function daysSince(date: Date): number {
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

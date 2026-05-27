@@ -4,7 +4,7 @@ import type { Prisma } from "@prisma/client";
 
 export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -45,7 +45,7 @@ export const GET = withErrorHandler(async function GET(request: Request) {
 
 export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -79,7 +79,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
 
 export const PUT = withErrorHandler(async function PUT(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

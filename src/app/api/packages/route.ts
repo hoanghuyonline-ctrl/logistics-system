@@ -5,7 +5,7 @@ import { getCurrentUser, hasRole, generatePackageCode, jsonResponse, errorRespon
 
 export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF", "WAREHOUSE_CN", "WAREHOUSE_VN"])) {
     return errorResponse("Forbidden", 403);
   }
 

@@ -19,7 +19,7 @@ function generateRequestCode(): string {
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
+  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -34,7 +34,7 @@ export const GET = withErrorHandler(async function GET() {
 
 export const POST = withErrorHandler(async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
+  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

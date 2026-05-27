@@ -74,7 +74,7 @@ export const GET = withErrorHandler(async function GET(request: Request) {
   const baseWhere: Record<string, unknown> = {};
   if (hasRole(user.role, ["CUSTOMER"])) baseWhere.userId = user.id;
 
-  const isAdminOrAccountant = hasRole(user.role, ["ADMIN", "ACCOUNTANT"]);
+  const isAdminOrAccountant = hasRole(user.role, ["ADMIN", "ACCOUNTANT", "STAFF"]);
 
   const [orders, total, ...extra] = await Promise.all([
     prisma.order.findMany({
@@ -119,7 +119,7 @@ export const GET = withErrorHandler(async function GET(request: Request) {
 
 export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN"])) {
+  if (!user || !hasRole(user.role, ["CUSTOMER", "ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -187,7 +187,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
     vietnamDeliveryFee: orderType === "ECOMMERCE" ? vnDeliveryDefault : 0,
   });
 
-  const customerId = hasRole(user.role, ["ADMIN"]) && body.userId ? body.userId : user.id;
+  const customerId = hasRole(user.role, ["ADMIN", "STAFF"]) && body.userId ? body.userId : user.id;
 
   const wallet = await prisma.wallet.findUnique({ where: { userId: customerId } });
   if (!wallet) return errorResponse("Wallet not found", 404);

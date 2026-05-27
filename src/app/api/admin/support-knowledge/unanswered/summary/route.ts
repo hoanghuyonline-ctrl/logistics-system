@@ -3,7 +3,7 @@ import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler 
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
