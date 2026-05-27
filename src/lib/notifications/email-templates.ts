@@ -382,6 +382,88 @@ ${ctaButton("Xem đơn mua hàng", `${getSiteUrl()}/shop/requests`)}`;
   return baseLayout(content);
 }
 
+export function pricingConfirmedEmail(params: {
+  userName?: string;
+  orderCode?: string;
+  productName?: string;
+  confirmedProductCost?: number;
+  confirmedShippingCost?: number;
+  confirmedServiceFee?: number;
+  confirmedTotalCost?: number;
+}): string {
+  const name = params.userName || "bạn";
+  const code = params.orderCode || "N/A";
+  const product = params.productName || "Sản phẩm";
+  const total = safeNum(params.confirmedTotalCost);
+
+  const rows: Array<{ label: string; value: string; highlight?: boolean }> = [
+    { label: "Mã đơn hàng", value: `<strong>${code}</strong>` },
+    { label: "Sản phẩm", value: product },
+  ];
+  if (safeNum(params.confirmedProductCost) > 0) {
+    rows.push({ label: "Tiền hàng", value: fmtVND(params.confirmedProductCost) });
+  }
+  if (safeNum(params.confirmedShippingCost) > 0) {
+    rows.push({ label: "Phí vận chuyển", value: fmtVND(params.confirmedShippingCost) });
+  }
+  if (safeNum(params.confirmedServiceFee) > 0) {
+    rows.push({ label: "Phí dịch vụ", value: fmtVND(params.confirmedServiceFee) });
+  }
+  rows.push({ label: "Chi phí cuối cùng", value: fmtVND(total), highlight: true });
+
+  const content = `
+${greeting(name)}
+<p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
+Đơn hàng <strong>${code}</strong> đã được công ty xác nhận giá chính thức:
+</p>
+<p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;background-color:#f0fdf4;padding:14px 18px;border-radius:8px;border-left:4px solid #16a34a;">
+Tổng chi phí cuối cùng: <strong style="color:#16a34a;">${fmtVND(total)}</strong>
+</p>
+${orderTable(rows)}
+${ctaButton("Xem đơn hàng", `${getSiteUrl()}/orders`)}
+<p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
+Đây là chi phí chính thức sau khi công ty đã xác nhận. Số tiền sẽ được trừ từ ví khi đơn hàng hoàn tất.
+</p>`;
+
+  return baseLayout(content);
+}
+
+export function warehouseChangedEmail(params: {
+  userName?: string;
+  orderCode?: string;
+  warehouseName?: string;
+  warehouseAddress?: string;
+}): string {
+  const name = params.userName || "bạn";
+  const code = params.orderCode || "N/A";
+  const whName = params.warehouseName || "Kho Trung Quốc";
+  const whAddress = params.warehouseAddress || "";
+
+  const rows: Array<{ label: string; value: string; highlight?: boolean }> = [
+    { label: "Mã đơn hàng", value: `<strong>${code}</strong>` },
+    { label: "Kho nhận hàng", value: `<strong>${whName}</strong>`, highlight: true },
+  ];
+  if (whAddress) {
+    rows.push({ label: "Địa chỉ kho", value: whAddress });
+  }
+
+  const content = `
+${greeting(name)}
+<p style="margin:0 0 8px;font-size:15px;color:#334155;line-height:1.6;">
+Kho nhận hàng tại Trung Quốc cho đơn hàng <strong>${code}</strong> đã được cập nhật:
+</p>
+<p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;background-color:#eff6ff;padding:14px 18px;border-radius:8px;border-left:4px solid ${BRAND_COLOR};">
+Kho mới: <strong>${whName}</strong>${whAddress ? `<br/>Địa chỉ: ${whAddress}` : ""}
+</p>
+${orderTable(rows)}
+${ctaButton("Xem đơn hàng", `${getSiteUrl()}/orders`)}
+<p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
+Vui lòng sử dụng địa chỉ kho mới khi gửi hàng đến Trung Quốc.
+</p>`;
+
+  return baseLayout(content);
+}
+
 export function adminNewOrderAlertEmail(params: {
   adminName?: string;
   customerName?: string;

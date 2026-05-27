@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler } from "@/lib/utils";
-import { createNotification } from "@/lib/notifications";
+import { onPricingConfirmed } from "@/lib/notifications";
 import { auditLog } from "@/lib/audit";
 import type { NextRequest } from "next/server";
 
@@ -59,13 +59,23 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, ctx
     },
   });
 
-  // Notify customer about confirmed pricing (fire-and-forget)
-  const totalFormatted = parseFloat(confirmedTotalCost).toLocaleString("vi-VN");
-  createNotification({
+  // Multi-channel notification for pricing confirmation
+  const orderUser = await prisma.user.findUnique({
+    where: { id: order.userId },
+    select: { email: true, fullName: true },
+  });
+  onPricingConfirmed({
     userId: order.userId,
-    title: "Giá đơn hàng đã được xác nhận",
-    message: `Đơn hàng ${order.orderCode} đã được công ty xác nhận giá: ${totalFormatted} VND.`,
+    userEmail: orderUser?.email ?? undefined,
+    userName: orderUser?.fullName ?? undefined,
     orderId: order.id,
+    orderCode: order.orderCode,
+    productName: order.productName || undefined,
+    confirmedProductCost: confirmedProductCost != null ? parseFloat(confirmedProductCost) : undefined,
+    confirmedShippingCost: confirmedShippingCost != null ? parseFloat(confirmedShippingCost) : undefined,
+    confirmedServiceFee: confirmedServiceFee != null ? parseFloat(confirmedServiceFee) : undefined,
+    confirmedTotalCost: parseFloat(confirmedTotalCost),
+    channels: ["SYSTEM", "EMAIL", "TELEGRAM", "ZALO"],
   }).catch((err) => {
     console.error("[confirm-pricing] Failed to notify customer:", err);
   });

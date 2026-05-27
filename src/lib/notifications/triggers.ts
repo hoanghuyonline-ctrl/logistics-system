@@ -3,6 +3,8 @@ import { orderCreatedTemplate, shipmentStatusChangedTemplate } from "./templates
 import {
   orderCreatedEmail,
   orderStatusChangedEmail,
+  pricingConfirmedEmail,
+  warehouseChangedEmail,
   salesRequestCreatedEmail,
   salesRequestStatusChangedEmail,
 } from "./email-templates";
@@ -312,6 +314,87 @@ export async function onSalesRequestStatusChanged(params: {
     title,
     message,
     html,
+    channels: params.channels ?? ALL_CHANNELS,
+  });
+}
+
+export async function onPricingConfirmed(params: {
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  orderId: string;
+  orderCode: string;
+  productName?: string;
+  confirmedProductCost?: number;
+  confirmedShippingCost?: number;
+  confirmedServiceFee?: number;
+  confirmedTotalCost: number;
+  channels?: NotificationChannel[];
+}): Promise<NotificationResult> {
+  const name = params.userName || "bạn";
+  const totalFormatted = params.confirmedTotalCost.toLocaleString("vi-VN");
+
+  let html: string | undefined;
+  try {
+    html = pricingConfirmedEmail({
+      userName: name,
+      orderCode: params.orderCode || "N/A",
+      productName: params.productName || "Sản phẩm",
+      confirmedProductCost: params.confirmedProductCost,
+      confirmedShippingCost: params.confirmedShippingCost,
+      confirmedServiceFee: params.confirmedServiceFee,
+      confirmedTotalCost: params.confirmedTotalCost,
+    });
+  } catch (err) {
+    console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onPricingConfirmed]:", err);
+  }
+
+  return sendNotification({
+    userId: params.userId,
+    userEmail: params.userEmail,
+    userName: params.userName,
+    title: `Đơn ${params.orderCode} — Giá đã xác nhận`,
+    message: `Chào ${name}, đơn hàng ${params.orderCode} đã được xác nhận giá: ${totalFormatted} VND. Vui lòng kiểm tra chi tiết trên hệ thống.`,
+    html,
+    orderId: params.orderId,
+    orderCode: params.orderCode,
+    channels: params.channels ?? ALL_CHANNELS,
+  });
+}
+
+export async function onWarehouseChanged(params: {
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  orderId: string;
+  orderCode: string;
+  warehouseName: string;
+  warehouseAddress: string;
+  channels?: NotificationChannel[];
+}): Promise<NotificationResult> {
+  const name = params.userName || "bạn";
+
+  let html: string | undefined;
+  try {
+    html = warehouseChangedEmail({
+      userName: name,
+      orderCode: params.orderCode || "N/A",
+      warehouseName: params.warehouseName,
+      warehouseAddress: params.warehouseAddress,
+    });
+  } catch (err) {
+    console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onWarehouseChanged]:", err);
+  }
+
+  return sendNotification({
+    userId: params.userId,
+    userEmail: params.userEmail,
+    userName: params.userName,
+    title: `Đơn ${params.orderCode} — Kho nhận hàng TQ đã cập nhật`,
+    message: `Chào ${name}, kho nhận hàng tại Trung Quốc cho đơn ${params.orderCode} đã được chuyển sang: ${params.warehouseName}. Địa chỉ: ${params.warehouseAddress}`,
+    html,
+    orderId: params.orderId,
+    orderCode: params.orderCode,
     channels: params.channels ?? ALL_CHANNELS,
   });
 }
