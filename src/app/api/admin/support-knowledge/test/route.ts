@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

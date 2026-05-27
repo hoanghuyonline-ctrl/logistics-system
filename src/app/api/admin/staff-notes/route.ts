@@ -5,7 +5,7 @@ import { getCurrentUser, hasRole, jsonResponse, errorResponse, withErrorHandler 
 
 export const GET = withErrorHandler(async function GET(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -46,7 +46,7 @@ export const GET = withErrorHandler(async function GET(request: Request) {
 
 export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -76,7 +76,7 @@ export const POST = withErrorHandler(async function POST(request: Request) {
 
 export const PUT = withErrorHandler(async function PUT(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF", "WAREHOUSE_CN", "WAREHOUSE_VN", "ACCOUNTANT"])) {
     return errorResponse("Forbidden", 403);
   }
 

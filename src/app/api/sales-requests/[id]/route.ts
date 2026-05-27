@@ -213,7 +213,7 @@ const DELETABLE_STATUSES = ["NEW", "CANCELLED"];
 
 export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, ctx: RouteContext<"/api/sales-requests/[id]">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

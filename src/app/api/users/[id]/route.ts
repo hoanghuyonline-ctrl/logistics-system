@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 
 export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
@@ -33,13 +33,17 @@ export const GET = withErrorHandler(async function GET(req: NextRequest, ctx: Ro
 
 export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: RouteContext<"/api/users/[id]">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
   const { id } = await ctx.params;
   const body = await req.json();
   const { fullName, email, phone, address, role, isActive } = body;
+
+  if (user.role === "STAFF" && role === "ADMIN") {
+    return errorResponse("Staff cannot assign admin role", 403);
+  }
 
   if (email) {
     const existing = await prisma.user.findFirst({ where: { email, NOT: { id } } });

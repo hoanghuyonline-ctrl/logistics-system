@@ -6,7 +6,7 @@ import { getNotificationConfig } from "@/lib/notification-config";
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN", "ACCOUNTANT"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "ACCOUNTANT", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

@@ -5,7 +5,7 @@ import { recordLeadActivity } from "@/lib/lead-activity";
 
 export const POST = withErrorHandler(async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

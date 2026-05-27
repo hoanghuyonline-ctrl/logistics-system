@@ -4,7 +4,7 @@ import { DEFAULT_TEMPLATES } from "@/lib/knowledge-templates";
 
 export const POST = withErrorHandler(async function POST() {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

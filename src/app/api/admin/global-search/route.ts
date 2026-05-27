@@ -8,7 +8,7 @@ const LIMIT = 5;
 
 export const GET = withErrorHandler(async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

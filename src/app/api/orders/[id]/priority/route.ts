@@ -8,7 +8,7 @@ const VALID_PRIORITIES = ["NORMAL", "HIGH", "URGENT"] as const;
 
 export const PUT = withErrorHandler(async function PUT(req: NextRequest, ctx: RouteContext<"/api/orders/[id]/priority">) {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 

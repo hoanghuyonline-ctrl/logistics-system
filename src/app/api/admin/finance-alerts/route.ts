@@ -20,7 +20,7 @@ const SEV_ORDER: Record<Severity, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW
 
 export const GET = withErrorHandler(async function GET() {
   const user = await getCurrentUser();
-  if (!user || !hasRole(user.role, ["ADMIN"])) {
+  if (!user || !hasRole(user.role, ["ADMIN", "STAFF"])) {
     return errorResponse("Forbidden", 403);
   }
 
