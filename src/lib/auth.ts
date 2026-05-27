@@ -110,6 +110,25 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      // Re-validate role from DB on every token refresh so admin
+      // role changes take effect without requiring the user to re-login.
+      if (!user && token.id) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true, isActive: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            if (!dbUser.isActive) {
+              return { ...token, id: null, role: null };
+            }
+          }
+        } catch {
+          // DB unavailable — keep existing token role
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

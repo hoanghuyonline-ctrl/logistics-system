@@ -38,19 +38,15 @@ const customerNav: NavItem[] = [
 
 const NOTIFICATION_NAV_ROLES = ["CUSTOMER", "ADMIN", "STAFF"];
 
-const STAFF_HIDDEN_HREFS = new Set([
-  "/admin/finance",
-  "/admin/settings",
-  "/admin/china-warehouses",
+const STAFF_ALLOWED_GROUPS = new Set([
+  "TỔNG QUAN",
+  "QUẢN LÝ ĐƠN HÀNG",
+  "HỖ TRỢ KHÁCH HÀNG",
 ]);
 
 function getStaffNavGroups(): NavGroup[] {
   return adminNavGroups
-    .filter((g) => g.label !== "TÀI CHÍNH & PHÂN TÍCH")
-    .map((g) => ({
-      ...g,
-      items: g.items.filter((item) => !STAFF_HIDDEN_HREFS.has(item.href)),
-    }))
+    .filter((g) => STAFF_ALLOWED_GROUPS.has(g.label))
     .filter((g) => g.items.length > 0);
 }
 
