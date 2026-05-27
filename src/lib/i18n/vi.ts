@@ -85,6 +85,7 @@ const vi: Record<string, string> = {
   "role.CUSTOMER": "Khách hàng",
   "role.WAREHOUSE_CN": "Kho Trung Quốc",
   "role.WAREHOUSE_VN": "Kho Việt Nam",
+  "role.STAFF": "Nhân viên điều hành",
   "role.ACCOUNTANT": "Kế toán",
 
   // Landing page
@@ -830,7 +831,7 @@ const vi: Record<string, string> = {
   "users.deleteConfirmTitle": "Xác nhận vô hiệu hóa",
   "users.deleteConfirmMessage": "Bạn có chắc muốn vô hiệu hóa người dùng này? Tài khoản sẽ bị khóa và không thể đăng nhập.",
   "users.cannotDeleteSelf": "Không thể vô hiệu hóa tài khoản của chính bạn",
-  "users.updateSuccess": "Cập nhật người dùng thành công",
+  "users.updateSuccess": "Cập nhật người dùng thành công!",
   "users.updateFailed": "Không thể cập nhật người dùng",
   "users.deactivateSuccess": "Đã vô hiệu hóa người dùng",
   "users.deactivateFailed": "Không thể vô hiệu hóa người dùng",

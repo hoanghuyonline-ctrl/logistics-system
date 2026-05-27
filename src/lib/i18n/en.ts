@@ -85,6 +85,7 @@ const en: Record<string, string> = {
   "role.CUSTOMER": "Customer",
   "role.WAREHOUSE_CN": "China Warehouse",
   "role.WAREHOUSE_VN": "Vietnam Warehouse",
+  "role.STAFF": "Staff Operator",
   "role.ACCOUNTANT": "Accountant",
 
   // Landing page

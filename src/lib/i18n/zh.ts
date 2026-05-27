@@ -85,6 +85,7 @@ const zh: Record<string, string> = {
   "role.CUSTOMER": "客户",
   "role.WAREHOUSE_CN": "中国仓库",
   "role.WAREHOUSE_VN": "越南仓库",
+  "role.STAFF": "运营员工",
   "role.ACCOUNTANT": "会计",
 
   // Landing page
