@@ -8,6 +8,7 @@ import {
   staffPricingSubmittedEmail,
   salesRequestCreatedEmail,
   salesRequestStatusChangedEmail,
+  resolveEmailSiteUrl,
 } from "./email-templates";
 import type { NotificationChannel, NotificationResult } from "./types";
 
@@ -34,6 +35,7 @@ export async function onOrderCreated(params: {
 
   let html: string | undefined;
   try {
+    const siteUrl = await resolveEmailSiteUrl();
     html = orderCreatedEmail({
       userName: params.userName || "bạn",
       orderCode: params.orderCode || "N/A",
@@ -42,6 +44,7 @@ export async function onOrderCreated(params: {
       unitPriceCNY: params.unitPriceCNY ?? 0,
       exchangeRate: params.exchangeRate ?? 3500,
       totalCostVND: params.totalCostVND ?? 0,
+      siteUrl,
     });
   } catch (err) {
     console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onOrderCreated]:", err);
@@ -81,6 +84,7 @@ export async function onShipmentStatusChanged(params: {
 
   let html: string | undefined;
   try {
+    const siteUrl = await resolveEmailSiteUrl();
     html = orderStatusChangedEmail({
       userName: params.userName || "bạn",
       orderCode: params.orderCode || "N/A",
@@ -88,6 +92,7 @@ export async function onShipmentStatusChanged(params: {
       fromStatus: params.fromStatus || "PENDING",
       toStatus: params.toStatus || "PENDING",
       totalCostVND: params.totalCostVND ?? undefined,
+      siteUrl,
     });
   } catch (err) {
     console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onShipmentStatusChanged]:", err);
@@ -214,12 +219,14 @@ export async function onSalesRequestCreated(params: {
   const name = params.userName || "bạn";
   let html: string | undefined;
   try {
+    const siteUrl = await resolveEmailSiteUrl();
     html = salesRequestCreatedEmail({
       userName: name,
       requestCode: params.requestCode || "N/A",
       productName: params.productName || "Sản phẩm",
       quantity: params.quantity ?? 1,
       estimatedTotal: params.estimatedTotal ?? undefined,
+      siteUrl,
     });
   } catch (err) {
     console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onSalesRequestCreated]:", err);
@@ -296,6 +303,7 @@ export async function onSalesRequestStatusChanged(params: {
 
   let html: string | undefined;
   try {
+    const siteUrl = await resolveEmailSiteUrl();
     html = salesRequestStatusChangedEmail({
       userName: name,
       requestCode: params.requestCode || "N/A",
@@ -303,6 +311,7 @@ export async function onSalesRequestStatusChanged(params: {
       newStatus: params.newStatus || "NEW",
       confirmedPrice: params.confirmedPrice ?? undefined,
       amountPaid: params.amountPaid ?? undefined,
+      siteUrl,
     });
   } catch (err) {
     console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onSalesRequestStatusChanged]:", err);
@@ -337,6 +346,7 @@ export async function onPricingConfirmed(params: {
 
   let html: string | undefined;
   try {
+    const siteUrl = await resolveEmailSiteUrl();
     html = pricingConfirmedEmail({
       userName: name,
       orderCode: params.orderCode || "N/A",
@@ -345,6 +355,7 @@ export async function onPricingConfirmed(params: {
       confirmedShippingCost: params.confirmedShippingCost,
       confirmedServiceFee: params.confirmedServiceFee,
       confirmedTotalCost: params.confirmedTotalCost,
+      siteUrl,
     });
   } catch (err) {
     console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onPricingConfirmed]:", err);
@@ -378,11 +389,13 @@ export async function onStaffPricingSubmitted(params: {
 
   let html: string | undefined;
   try {
+    const siteUrl = await resolveEmailSiteUrl();
     html = staffPricingSubmittedEmail({
       adminName: name,
       staffName: params.staffName,
       orderCode: params.orderCode,
       confirmedTotalCost: params.confirmedTotalCost,
+      siteUrl,
     });
   } catch (err) {
     console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onStaffPricingSubmitted]:", err);
@@ -415,11 +428,13 @@ export async function onWarehouseChanged(params: {
 
   let html: string | undefined;
   try {
+    const siteUrl = await resolveEmailSiteUrl();
     html = warehouseChangedEmail({
       userName: name,
       orderCode: params.orderCode || "N/A",
       warehouseName: params.warehouseName,
       warehouseAddress: params.warehouseAddress,
+      siteUrl,
     });
   } catch (err) {
     console.error("❌ EMAIL TEMPLATE RENDER FAILURE [onWarehouseChanged]:", err);

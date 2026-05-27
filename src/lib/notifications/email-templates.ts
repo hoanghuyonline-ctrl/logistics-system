@@ -2,13 +2,25 @@
  * Professional HTML email templates for order lifecycle notifications.
  * Follows international e-commerce standards (DHL/Amazon/FedEx style).
  * All text in Vietnamese (default locale).
- * @version 2.0.0 — Pro edition with bulletproof parameter fallbacks
+ * @version 2.1.0 — DB-first domain resolution; env-var fallback eliminated
  */
+import { getAppDomain } from "@/lib/url";
 
 const BRAND_COLOR = "#1a56db";
 const BRAND_ACCENT = "#f97316";
 
-function getSiteUrl(): string {
+/**
+ * Resolve the site URL for email templates.
+ * Priority: DB SystemConfig.APP_DOMAIN → process.env.APP_DOMAIN → process.env.NEXTAUTH_URL → hardcoded fallback.
+ * This is async because it reads from the database (same source as Admin Settings UI).
+ */
+export async function resolveEmailSiteUrl(): Promise<string> {
+  const domain = await getAppDomain();
+  return domain || "https://bactrunghai.vn";
+}
+
+/** Sync fallback only used when siteUrl param is not provided (legacy compat) */
+function getSiteUrlSync(): string {
   return (process.env.APP_DOMAIN || process.env.NEXTAUTH_URL || "https://bactrunghai.vn").replace(/\/+$/, "");
 }
 
@@ -46,7 +58,7 @@ function fmtVND(amount: unknown): string {
   return safeNum(amount).toLocaleString("vi-VN") + " ₫";
 }
 
-function baseLayout(content: string): string {
+function baseLayout(content: string, siteUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -65,7 +77,7 @@ function baseLayout(content: string): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr>
 <td style="text-align:center;">
-<img src="${getSiteUrl()}/logo.jpg" alt="Bắc Trung Hải Logistics" style="max-height:40px;width:auto;display:inline-block;vertical-align:middle;margin-right:10px;" />
+<img src="${siteUrl}/logo.jpg" alt="Bắc Trung Hải Logistics" style="max-height:40px;width:auto;display:inline-block;vertical-align:middle;margin-right:10px;" />
 <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.5px;vertical-align:middle;">Bắc Trung Hải Logistics</span>
 </td>
 </tr>
@@ -91,7 +103,7 @@ ${content}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr>
 <td style="text-align:center;padding-bottom:12px;">
-<a href="${getSiteUrl()}" style="color:${BRAND_COLOR};font-size:13px;text-decoration:none;font-weight:600;">bactrunghai.vn</a>
+<a href="${siteUrl}" style="color:${BRAND_COLOR};font-size:13px;text-decoration:none;font-weight:600;">bactrunghai.vn</a>
 </td>
 </tr>
 <tr>
@@ -175,7 +187,9 @@ export function orderCreatedEmail(params: {
   unitPriceCNY?: number;
   exchangeRate?: number;
   totalCostVND?: number;
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const name = params.userName || "bạn";
   const code = params.orderCode || "N/A";
   const product = params.productName || "Sản phẩm";
@@ -200,12 +214,12 @@ ${greeting(name)}
 </p>
 ${statusBadge("PENDING")}
 ${orderTable(rows)}
-${ctaButton("Xem tiến độ đơn hàng", `${getSiteUrl()}/orders`)}
+${ctaButton("Xem tiến độ đơn hàng", `${url}/orders`)}
 <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
 Chi phí trên là ước tính ban đầu. Chi phí cuối cùng sẽ được xác nhận sau khi đơn hàng được xử lý hoàn tất.
 </p>`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
 
 export function orderStatusChangedEmail(params: {
@@ -215,7 +229,9 @@ export function orderStatusChangedEmail(params: {
   fromStatus?: string;
   toStatus?: string;
   totalCostVND?: number;
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const name = params.userName || "bạn";
   const code = params.orderCode || "N/A";
   const product = params.productName || "Sản phẩm";
@@ -275,9 +291,9 @@ ${statusBadge(to)}
 ${contextMessage}
 </p>
 ${orderTable(rows)}
-${ctaButton("Xem tiến độ đơn hàng", `${getSiteUrl()}/orders`)}`;
+${ctaButton("Xem tiến độ đơn hàng", `${url}/orders`)}`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
 
 export function salesRequestCreatedEmail(params: {
@@ -286,7 +302,9 @@ export function salesRequestCreatedEmail(params: {
   productName?: string;
   quantity?: number;
   estimatedTotal?: number;
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const name = params.userName || "bạn";
   const code = params.requestCode || "N/A";
   const product = params.productName || "Sản phẩm";
@@ -309,12 +327,12 @@ Yêu cầu mua hàng <strong>${code}</strong> đã được tiếp nhận. Nhân
 </p>
 ${statusBadge("NEW")}
 ${orderTable(rows)}
-${ctaButton("Xem đơn mua hàng", `${getSiteUrl()}/shop/requests`)}
+${ctaButton("Xem đơn mua hàng", `${url}/shop/requests`)}
 <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
 Giá cuối cùng sẽ được xác nhận bởi nhân viên. Bạn sẽ nhận thông báo khi giá được duyệt.
 </p>`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
 
 export function salesRequestStatusChangedEmail(params: {
@@ -324,7 +342,9 @@ export function salesRequestStatusChangedEmail(params: {
   newStatus?: string;
   confirmedPrice?: number;
   amountPaid?: number;
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const name = params.userName || "bạn";
   const code = params.requestCode || "N/A";
   const product = params.productName || "Sản phẩm";
@@ -377,9 +397,9 @@ ${statusBadge(status)}
 ${contextMessage}
 </p>
 ${orderTable(rows)}
-${ctaButton("Xem đơn mua hàng", `${getSiteUrl()}/shop/requests`)}`;
+${ctaButton("Xem đơn mua hàng", `${url}/shop/requests`)}`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
 
 export function staffPricingSubmittedEmail(params: {
@@ -387,7 +407,9 @@ export function staffPricingSubmittedEmail(params: {
   staffName?: string;
   orderCode?: string;
   confirmedTotalCost?: number;
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const name = params.adminName || "Admin";
   const staff = params.staffName || "Nhân viên";
   const code = params.orderCode || "N/A";
@@ -408,12 +430,12 @@ Nhân viên <strong>${staff}</strong> vừa gửi yêu cầu duyệt giá cho đ
 Tổng chi phí đề xuất: <strong style="color:#b45309;">${fmtVND(total)}</strong>
 </p>
 ${orderTable(rows)}
-${ctaButton("Xem & Duyệt giá", `${getSiteUrl()}/admin/orders`)}
+${ctaButton("Xem & Duyệt giá", `${url}/admin/orders`)}
 <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
 Vui lòng kiểm tra và phê duyệt hoặc từ chối yêu cầu giá này.
 </p>`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
 
 export function pricingConfirmedEmail(params: {
@@ -424,7 +446,9 @@ export function pricingConfirmedEmail(params: {
   confirmedShippingCost?: number;
   confirmedServiceFee?: number;
   confirmedTotalCost?: number;
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const name = params.userName || "bạn";
   const code = params.orderCode || "N/A";
   const product = params.productName || "Sản phẩm";
@@ -454,12 +478,12 @@ ${greeting(name)}
 Tổng chi phí cuối cùng: <strong style="color:#16a34a;">${fmtVND(total)}</strong>
 </p>
 ${orderTable(rows)}
-${ctaButton("Xem đơn hàng", `${getSiteUrl()}/orders`)}
+${ctaButton("Xem đơn hàng", `${url}/orders`)}
 <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
 Đây là chi phí chính thức sau khi công ty đã xác nhận. Số tiền sẽ được trừ từ ví khi đơn hàng hoàn tất.
 </p>`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
 
 export function warehouseChangedEmail(params: {
@@ -467,7 +491,9 @@ export function warehouseChangedEmail(params: {
   orderCode?: string;
   warehouseName?: string;
   warehouseAddress?: string;
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const name = params.userName || "bạn";
   const code = params.orderCode || "N/A";
   const whName = params.warehouseName || "Kho Trung Quốc";
@@ -490,12 +516,12 @@ Kho nhận hàng tại Trung Quốc cho đơn hàng <strong>${code}</strong> đ�
 Kho mới: <strong>${whName}</strong>${whAddress ? `<br/>Địa chỉ: ${whAddress}` : ""}
 </p>
 ${orderTable(rows)}
-${ctaButton("Xem đơn hàng", `${getSiteUrl()}/orders`)}
+${ctaButton("Xem đơn hàng", `${url}/orders`)}
 <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
 Vui lòng sử dụng địa chỉ kho mới khi gửi hàng đến Trung Quốc.
 </p>`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
 
 export function adminNewOrderAlertEmail(params: {
@@ -506,7 +532,9 @@ export function adminNewOrderAlertEmail(params: {
   quantity?: number;
   totalCostVND?: number;
   orderType?: "buying" | "shop";
+  siteUrl?: string;
 }): string {
+  const url = params.siteUrl || getSiteUrlSync();
   const adminName = params.adminName || "Admin";
   const typeLabel = params.orderType === "buying" ? "Mua hộ Trung Quốc" : "Sẵn hàng VN";
   const code = params.orderCode || "N/A";
@@ -532,7 +560,7 @@ ${greeting(adminName)}
 Có đơn hàng mới cần xử lý:
 </p>
 ${orderTable(rows)}
-${ctaButton("Quản lý đơn hàng", `${getSiteUrl()}/admin/${params.orderType === "buying" ? "orders" : "sales"}`)}`;
+${ctaButton("Quản lý đơn hàng", `${url}/admin/${params.orderType === "buying" ? "orders" : "sales"}`)}`;
 
-  return baseLayout(content);
+  return baseLayout(content, url);
 }
