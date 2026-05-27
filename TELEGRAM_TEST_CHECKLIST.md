@@ -1,7 +1,7 @@
 # Telegram Bot — Checklist kiểm tra trên thiết bị thật
 
 **Bot:** [@bactrunghai_bot](https://t.me/bactrunghai_bot)
-**Production:** https://thue.eu.cc
+**Production:** https://bactrunghai.vn
 **Webhook:** `POST /api/telegram/webhook`
 
 ---

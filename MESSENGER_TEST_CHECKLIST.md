@@ -19,7 +19,7 @@ Checklist kiểm tra thực tế cho Messenger order lookup MVP trên production
 
 **Test thủ công:**
 ```bash
-curl -s "https://thue.eu.cc/api/messenger/webhook?hub.mode=subscribe&hub.verify_token=YOUR_TOKEN&hub.challenge=test123"
+curl -s "https://bactrunghai.vn/api/messenger/webhook?hub.mode=subscribe&hub.verify_token=YOUR_TOKEN&hub.challenge=test123"
 # Mong đợi: test123
 ```
 

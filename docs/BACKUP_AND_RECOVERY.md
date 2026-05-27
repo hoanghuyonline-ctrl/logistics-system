@@ -1,6 +1,6 @@
 # Sao Lưu & Khôi Phục — BẮC TRUNG HẢI LOGISTICS
 
-**Cập nhật:** PR #152 | **Hệ thống:** https://thue.eu.cc
+**Cập nhật:** PR #152 | **Hệ thống:** https://bactrunghai.vn
 **Hotline kỹ thuật:** 0901 234 567
 
 > **🔴 Tài liệu này dành cho người vận hành hệ thống.** Đọc kỹ và làm theo đúng thứ tự khi cần sao lưu hoặc khôi phục.
@@ -312,7 +312,7 @@ cp /path/to/backup/.env logistics-system/.env
 
 > **⚠️ Lưu ý:** Sau khi khôi phục `.env`, kiểm tra lại:
 > - `DATABASE_URL` đúng port (5433)
-> - `NEXTAUTH_URL` đúng domain (https://thue.eu.cc)
+> - `NEXTAUTH_URL` đúng domain (https://bactrunghai.vn)
 > - `NEXTAUTH_SECRET` khớp với bản đang dùng
 > - API keys (Telegram, Zalo, Messenger) còn hoạt động
 
@@ -332,7 +332,7 @@ pm2 restart logistics-system
 pm2 status
 pm2 logs logistics-system --lines 20
 
-# 5. Test nhanh: truy cập https://thue.eu.cc và đăng nhập
+# 5. Test nhanh: truy cập https://bactrunghai.vn và đăng nhập
 ```
 
 ---
@@ -381,7 +381,7 @@ npm install
 # Copy file .env từ backup
 # Hoặc tạo lại .env với nội dung cần thiết:
 #   DATABASE_URL="postgresql://postgres:123456@localhost:5433/logistics_db?schema=public"
-#   NEXTAUTH_URL="https://thue.eu.cc"
+#   NEXTAUTH_URL="https://bactrunghai.vn"
 #   NEXTAUTH_SECRET="<your-secret>"
 #   PORT=3000
 #   (+ các API keys khác)
@@ -445,13 +445,13 @@ curl -I http://localhost:3000
 # Kiểm tra database kết nối
 pm2 logs logistics-system --lines 20
 
-# Test đăng nhập tại https://thue.eu.cc
+# Test đăng nhập tại https://bactrunghai.vn
 ```
 
 ### Bước 10: Xác nhận hoàn tất
 
 - [ ] App chạy trên PM2
-- [ ] Truy cập được https://thue.eu.cc
+- [ ] Truy cập được https://bactrunghai.vn
 - [ ] Đăng nhập thành công (admin + khách)
 - [ ] Đơn hàng cũ hiện đúng
 - [ ] Ví tiền / công nợ đúng số liệu
@@ -472,7 +472,7 @@ pm2 logs logistics-system --lines 20
 5. Nếu DB stopped:         docker start logistics-postgres
                             → đợi 10 giây
                             → pm2 restart logistics-system
-6. Kiểm tra domain:        curl -I https://thue.eu.cc
+6. Kiểm tra domain:        curl -I https://bactrunghai.vn
 7. Nếu vẫn lỗi:           → xem log đầy đủ: pm2 logs logistics-system --lines 200
                             → liên hệ kỹ thuật viên
 ```
@@ -587,4 +587,4 @@ docker stop test-postgres && docker rm test-postgres
 
 **Bắc Trung Hải Logistics** — Sao lưu & Khôi phục hệ thống
 
-Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://thue.eu.cc
+Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://bactrunghai.vn

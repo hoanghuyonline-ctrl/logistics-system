@@ -142,7 +142,7 @@ echo.
 echo  Kiem tra:
 echo    pm2 status
 echo    pm2 logs logistics-system --lines 20
-echo    Truy cap: https://thue.eu.cc va dang nhap thu
+echo    Truy cap: https://bactrunghai.vn va dang nhap thu
 echo ============================================================
 echo.
 exit /b 0

@@ -2,7 +2,7 @@
 
 **In ra giấy hoặc dán lên bàn làm việc. Đánh dấu ✓ mỗi mục đã kiểm tra.**
 
-**Website:** https://thue.eu.cc | **Hotline:** 0901 234 567
+**Website:** https://bactrunghai.vn | **Hotline:** 0901 234 567
 
 ---
 
@@ -13,7 +13,7 @@
 
 ### Hệ thống
 
-- [ ] Truy cập https://thue.eu.cc — trang mở bình thường
+- [ ] Truy cập https://bactrunghai.vn — trang mở bình thường
 - [ ] Đăng nhập tài khoản Admin — vào được dashboard
 - [ ] Kiểm tra `pm2 status` — app hiện **online** (nếu có quyền server)
 
@@ -297,4 +297,4 @@
 
 **Bắc Trung Hải Logistics** — Checklist vận hành hàng ngày
 
-Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://thue.eu.cc
+Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://bactrunghai.vn

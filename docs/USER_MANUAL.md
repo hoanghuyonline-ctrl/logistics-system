@@ -1,7 +1,7 @@
 # Hướng Dẫn Sử Dụng — BẮC TRUNG HẢI LOGISTICS
 
 **Phiên bản:** PR #151 | **Cập nhật:** 2026-05-14
-**Website:** https://thue.eu.cc
+**Website:** https://bactrunghai.vn
 **Hotline:** 0901 234 567 | **Email:** support@bactrunghai.vn
 
 ---
@@ -35,14 +35,14 @@
 
 > `[ẢNH: Trang đăng nhập — hiện form email + mật khẩu + nút Đăng nhập]`
 
-1. Truy cập https://thue.eu.cc
+1. Truy cập https://bactrunghai.vn
 2. Nhập **email** và **mật khẩu** đã được cấp
 3. Bấm **Đăng nhập**
 4. Nếu quên mật khẩu → liên hệ nhân viên qua Zalo hoặc hotline 0901 234 567
 
 > **⚠️ Lưu ý:** Mỗi tài khoản khách hàng do Admin tạo. Khách không tự đăng ký được.
 
-> **💡 Mẹo:** Lưu trang https://thue.eu.cc vào bookmark trên điện thoại để truy cập nhanh hơn.
+> **💡 Mẹo:** Lưu trang https://bactrunghai.vn vào bookmark trên điện thoại để truy cập nhanh hơn.
 
 ### 1.2 Xem Dashboard
 
@@ -211,7 +211,7 @@ Nếu không biết mã đơn → gửi câu hỏi bất kỳ, chatbot sẽ cố
 
 > `[ẢNH: Trang đăng nhập — nhập tài khoản admin]`
 
-1. Truy cập https://thue.eu.cc
+1. Truy cập https://bactrunghai.vn
 2. Đăng nhập bằng tài khoản có role **ADMIN**
 3. Hệ thống tự chuyển đến trang Admin
 
@@ -897,7 +897,7 @@ docker exec -i logistics-postgres psql -U postgres logistics_db < backup.sql
 3. Kiểm tra log lỗi: `pm2 logs logistics-system --err`
 4. Kiểm tra database: `docker ps | grep postgres`
 5. Nếu DB stopped → `docker start logistics-postgres`
-6. Kiểm tra network/DNS → `curl -I https://thue.eu.cc`
+6. Kiểm tra network/DNS → `curl -I https://bactrunghai.vn`
 7. Nếu vẫn lỗi → xem log chi tiết: `pm2 logs logistics-system --lines 200`
 
 ### 7.12 Quy trình cập nhật code
@@ -961,7 +961,7 @@ pm2 logs logistics-system --lines 20
 3. [ ] Xem log lỗi: `pm2 logs logistics-system --err --lines 50`
 4. [ ] Thử restart: `pm2 restart logistics-system`
 5. [ ] Nếu DB lỗi: `docker restart logistics-postgres` → đợi 10s → restart app
-6. [ ] Kiểm tra domain: `curl -I https://thue.eu.cc`
+6. [ ] Kiểm tra domain: `curl -I https://bactrunghai.vn`
 7. [ ] Nếu vẫn lỗi → liên hệ kỹ thuật viên
 8. [ ] Sau khi khắc phục → kiểm tra lại: đăng nhập, tạo đơn, chatbot
 
@@ -969,7 +969,7 @@ pm2 logs logistics-system --lines 20
 
 **Bắc Trung Hải Logistics** — Hệ thống quản lý vận chuyển hàng Trung Quốc - Việt Nam
 
-Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://thue.eu.cc
+Hotline: 0901 234 567 | Email: support@bactrunghai.vn | Web: https://bactrunghai.vn
 
 ---
 

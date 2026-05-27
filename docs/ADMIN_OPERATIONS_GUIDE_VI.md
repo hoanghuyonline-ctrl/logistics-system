@@ -1,7 +1,7 @@
 # Sổ Tay Vận Hành Nội Bộ — Bắc Trung Hải Logistics
 
 > **Phiên bản:** 2.0 — Tháng 5/2026
-> **Hệ thống:** https://thue.eu.cc
+> **Hệ thống:** https://bactrunghai.vn
 > **Đối tượng:** Admin, Kế toán, Kho TQ, Kho VN, Hỗ trợ khách hàng
 > **Bảo mật:** Tài liệu nội bộ — KHÔNG chia sẻ cho khách hàng
 
@@ -48,7 +48,7 @@
 
 Bắc Trung Hải Logistics CRM là hệ thống quản lý dịch vụ **mua hộ & vận chuyển hàng Trung Quốc — Việt Nam**, bao gồm:
 
-- **Website:** https://thue.eu.cc
+- **Website:** https://bactrunghai.vn
 - **Ngôn ngữ:** Tiếng Việt (mặc định), English, 中文
 - **Hoạt động 24/7** với hỗ trợ chatbot tự động trên Zalo, Telegram, Messenger
 
@@ -78,7 +78,7 @@ KHÁCH ĐẶT ĐƠN → ADMIN MUA HÀNG → KHO TQ NHẬN → ĐÓNG KIỆN → 
 | Giám đốc | Phạm Văn Tuấn |
 | Ngân hàng | Vietinbank CN Lạng Sơn |
 | Số tài khoản | 110003049134 |
-| Website | https://thue.eu.cc |
+| Website | https://bactrunghai.vn |
 
 [ẢNH: Trang chủ hệ thống — giao diện landing page]
 
@@ -1260,7 +1260,7 @@ Dashboard tổng hợp nâng cao:
 
 **Admin / Trưởng ca — Trước 9:00:**
 
-- [ ] Truy cập https://thue.eu.cc — trang mở bình thường
+- [ ] Truy cập https://bactrunghai.vn — trang mở bình thường
 - [ ] Đăng nhập Admin → Dashboard hiển thị đúng
 - [ ] Kiểm tra đơn mới qua đêm
 - [ ] Kiểm tra chip "Chờ mua" — đơn chưa đặt hàng
@@ -1624,7 +1624,7 @@ A: Vào Audit Log → Tìm theo mã đơn → Xem chi tiết thao tác, người
 
 > **Tài liệu nội bộ — Bắc Trung Hải Logistics**
 >
-> Giám đốc: Phạm Văn Tuấn | Website: https://thue.eu.cc
+> Giám đốc: Phạm Văn Tuấn | Website: https://bactrunghai.vn
 >
 > Hotline: 0901 234 567 | Email: support@bactrunghai.vn
 >

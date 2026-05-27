@@ -90,7 +90,7 @@ All public routes are registered in `src/proxy.ts` `publicPaths`:
 ### Cloudflare R2 (`STORAGE_PROVIDER="R2"`)
 - Uses `@aws-sdk/client-s3` SDK
 - Required config (Admin Settings or `.env`): `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_CUSTOM_DOMAIN`
-- Returns URLs via `R2_PUBLIC_CUSTOM_DOMAIN` (e.g. `https://cdn.thue.eu.cc/products/image.jpg`)
+- Returns URLs via `R2_PUBLIC_CUSTOM_DOMAIN` (e.g. `https://cdn.bactrunghai.vn/products/image.jpg`)
 - `next.config.ts` includes R2 custom domain in `remotePatterns`
 
 ### Google Drive (`STORAGE_PROVIDER="gdrive"`)

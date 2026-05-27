@@ -20,7 +20,7 @@ export const DEFAULT_TEMPLATES: KnowledgeTemplate[] = [
       "Bắc Trung Hải Logistics\n" +
       "Hotline: Vui lòng liên hệ nhân viên chăm sóc khách hàng.\n" +
       "Email: Liên hệ qua Zalo OA hoặc nhân viên phụ trách.\n" +
-      "Website: https://thue.eu.cc\n" +
+      "Website: https://bactrunghai.vn\n" +
       "Zalo OA: Nhắn tin trực tiếp tại đây để được hỗ trợ.",
     category: "Liên hệ & hỗ trợ",
     keywords: "liên hệ, hotline, số điện thoại, email, zalo, địa chỉ",
@@ -29,7 +29,7 @@ export const DEFAULT_TEMPLATES: KnowledgeTemplate[] = [
     title: "Cách tạo đơn hàng",
     content:
       "Để tạo đơn hàng mới:\n" +
-      "1. Đăng nhập vào hệ thống tại https://thue.eu.cc\n" +
+      "1. Đăng nhập vào hệ thống tại https://bactrunghai.vn\n" +
       "2. Nhấn \"Tạo đơn hàng\"\n" +
       "3. Dán link sản phẩm từ Taobao, 1688, Tmall hoặc các sàn TMĐT Trung Quốc\n" +
       "4. Nhập số lượng, ghi chú (nếu có)\n" +
