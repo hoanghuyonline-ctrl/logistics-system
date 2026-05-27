@@ -10,6 +10,7 @@ const ROLE_LABELS: Record<string, string> = {
   WAREHOUSE_CN: "Kho Trung Quốc",
   WAREHOUSE_VN: "Kho Việt Nam",
   ACCOUNTANT: "Kế toán",
+  STAFF: "Nhân viên",
 };
 
 export const GET = withErrorHandler(async function GET() {
@@ -23,15 +24,19 @@ export const GET = withErrorHandler(async function GET() {
     select: {
       fullName: true,
       email: true,
+      phone: true,
+      address: true,
       role: true,
       isActive: true,
       wallet: { select: { balance: true } },
     },
   });
 
-  const rows = users.map((u: { fullName: string; email: string; role: string; isActive: boolean; wallet: { balance: unknown } | null }) => ({
+  const rows = users.map((u: { fullName: string; email: string; phone: string | null; address: string | null; role: string; isActive: boolean; wallet: { balance: unknown } | null }) => ({
     "Họ tên": u.fullName,
     Email: u.email,
+    "Số điện thoại": u.phone || "",
+    "Địa chỉ": u.address || "",
     "Vai trò": ROLE_LABELS[u.role] || u.role,
     "Số dư": u.wallet ? Number(u.wallet.balance) : 0,
     "Trạng thái": u.isActive ? "Đang hoạt động" : "Đã khóa",
