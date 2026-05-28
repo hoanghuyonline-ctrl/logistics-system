@@ -560,7 +560,7 @@ export default function AdminOrderDetailPage() {
               <div className="flex justify-between items-center"><dt className="text-slate-500">{t("entrust.waybillCode")}</dt><dd className="font-medium text-slate-900 font-mono">{order.waybillCode}</dd></div>
             )}
             {order.waybillImages && (() => { try { const imgs = JSON.parse(order.waybillImages); return Array.isArray(imgs) && imgs.length > 0 ? (
-              <div><dt className="text-slate-500 mb-2">{t("entrust.waybillImages")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`waybill-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
+              <div><dt className="text-slate-500 mb-2">{t("entrust.waybillImages")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={url} alt={`waybill-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
             ) : null; } catch { return null; } })()}
             {order.relatedDocuments && (() => { try { const docs = JSON.parse(order.relatedDocuments); return Array.isArray(docs) && docs.length > 0 ? (
               <div><dt className="text-slate-500 mb-2">{t("entrust.relatedDocs")}</dt><dd className="space-y-1">{docs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:underline text-xs truncate">📎 {url.split("/").pop()}</a>)}</dd></div>
@@ -574,7 +574,7 @@ export default function AdminOrderDetailPage() {
               </div>
             )}
             {order.cnTruckImages && (() => { try { const imgs = JSON.parse(order.cnTruckImages); return Array.isArray(imgs) && imgs.length > 0 ? (
-              <div><dt className="text-slate-500 mb-2">{t("entrust.truckPhotos")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`truck-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
+              <div><dt className="text-slate-500 mb-2">{t("entrust.truckPhotos")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={url} alt={`truck-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
             ) : null; } catch { return null; } })()}
             <div className="flex justify-between">
               <dt className="text-slate-500">{t("newOrder.requiresVat")}</dt>

@@ -54,10 +54,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   UNKNOWN: "Không xác định",
 };
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-}
-
 function timeSince(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
   if (mins < 1) return "Vừa xong";

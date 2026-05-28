@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function CustomerDashboardError({
   error,
@@ -30,12 +31,12 @@ export default function CustomerDashboardError({
           >
             Thử lại
           </button>
-          <a
+          <Link
             href="/orders"
             className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             Xem đơn hàng
-          </a>
+          </Link>
         </div>
         {error?.digest && (
           <p className="mt-4 text-xs text-slate-400">Mã lỗi: {error.digest}</p>

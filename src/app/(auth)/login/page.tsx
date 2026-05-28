@@ -143,7 +143,7 @@ export default function LoginPage() {
       // 2. Trigger the OS biometric prompt
       let credential;
       try {
-        credential = await startAuthentication({ optionsJSON: options });
+        credential = await startAuthentication(options);
       } catch (err: unknown) {
         const name = err instanceof Error ? err.name : "";
         if (name === "NotAllowedError") {
@@ -209,7 +209,7 @@ export default function LoginPage() {
 
       let credential;
       try {
-        credential = await startRegistration({ optionsJSON: options });
+        credential = await startRegistration(options);
       } catch (err: unknown) {
         const name = err instanceof Error ? err.name : "";
         if (name === "NotAllowedError") {

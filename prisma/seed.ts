@@ -79,7 +79,7 @@ async function main() {
     },
   });
 
-  const accountant = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "accountant@logistics.vn" },
     update: {},
     create: {
@@ -108,7 +108,7 @@ async function main() {
     });
   }
 
-  const order1 = await prisma.order.create({
+  await prisma.order.create({
     data: {
       orderCode: "ORD-20260501-A1B2",
       userId: customer1.id,
@@ -134,7 +134,7 @@ async function main() {
     },
   });
 
-  const order2 = await prisma.order.create({
+  await prisma.order.create({
     data: {
       orderCode: "ORD-20260502-C3D4",
       userId: customer1.id,
@@ -204,7 +204,7 @@ async function main() {
     },
   });
 
-  const order4 = await prisma.order.create({
+  await prisma.order.create({
     data: {
       orderCode: "ORD-20260504-G7H8",
       userId: customer2.id,
@@ -232,7 +232,7 @@ async function main() {
     },
   });
 
-  const order5 = await prisma.order.create({
+  await prisma.order.create({
     data: {
       orderCode: "ORD-20260504-I9J0",
       userId: customer2.id,
@@ -267,7 +267,7 @@ async function main() {
     },
   });
 
-  const order6 = await prisma.order.create({
+  await prisma.order.create({
     data: {
       orderCode: "ORD-20260505-K1L2",
       userId: customer2.id,

@@ -342,11 +342,6 @@ function levelDot(level: string) {
   return "bg-green-500";
 }
 
-function urgencyBadge(count: number, thresholdRed = 1, thresholdYellow = 0) {
-  if (count >= thresholdRed) return { text: `${count}`, cls: "bg-red-100 text-red-700" };
-  if (count > thresholdYellow) return { text: `${count}`, cls: "bg-amber-100 text-amber-700" };
-  return { text: "0", cls: "bg-green-100 text-green-700" };
-}
 
 /* ISSUE_TYPE_LABELS moved inside component for i18n access */
 
@@ -506,7 +501,7 @@ export default function AdminOperationsPage() {
     } finally {
       setBackupRunning((prev) => ({ ...prev, [type]: false }));
     }
-  }, [fetchAll]);
+  }, [fetchAll, t]);
 
   /* initial load + auto-refresh every 30s */
   useEffect(() => {

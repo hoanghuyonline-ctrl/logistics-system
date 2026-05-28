@@ -22,8 +22,8 @@ const ORIGIN =
 /**
  * POST /api/auth/biometric/verify
  *
- * Body (registration):  { mode: "register", response: RegistrationResponseJSON }
- * Body (authentication): { mode: "authenticate", response: AuthenticationResponseJSON }
+ * Body (registration):   { mode: "register",      response: RegistrationResponseJSON }
+ * Body (authentication): { mode: "authenticate",  response: AuthenticationResponseJSON }
  */
 export async function POST(req: NextRequest) {
   try {
@@ -69,8 +69,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // In @simplewebauthn/server v10, registrationInfo fields are top-level
       const {
-        credential,
+        credentialID,
+        credentialPublicKey,
+        counter,
         credentialDeviceType,
         credentialBackedUp,
       } = verification.registrationInfo;
@@ -79,14 +82,18 @@ export async function POST(req: NextRequest) {
       await prisma.authenticator.create({
         data: {
           userId: cookieUserId,
-          credentialID: credential.id,
-          credentialPublicKey: Buffer.from(credential.publicKey),
-          counter: BigInt(credential.counter),
+          credentialID,
+          credentialPublicKey: Buffer.from(credentialPublicKey),
+          counter: BigInt(counter),
           credentialDeviceType,
           credentialBackedUp,
-          transports: credential.transports
-            ? JSON.stringify(credential.transports)
-            : null,
+          // transports live on the raw response, not on registrationInfo
+          transports:
+            (response as RegistrationResponseJSON).response?.transports
+              ? JSON.stringify(
+                  (response as RegistrationResponseJSON).response?.transports
+                )
+              : null,
         },
       });
 
@@ -121,14 +128,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // AuthenticatorDevice shape required by @simplewebauthn/server v10
       const verification = await verifyAuthenticationResponse({
         response: authResponse,
         expectedChallenge,
         expectedOrigin: ORIGIN,
         expectedRPID: RP_ID,
-        credential: {
-          id: authenticator.credentialID,
-          publicKey: authenticator.credentialPublicKey,
+        authenticator: {
+          credentialID: authenticator.credentialID,
+          credentialPublicKey: new Uint8Array(authenticator.credentialPublicKey),
           counter: Number(authenticator.counter),
           transports: authenticator.transports
             ? (JSON.parse(
@@ -151,7 +159,7 @@ export async function POST(req: NextRequest) {
         data: { counter: BigInt(verification.authenticationInfo.newCounter) },
       });
 
-      // Issue a NextAuth JWT session token so the client can call signIn
+      // Issue a NextAuth JWT session token
       const secret = process.env.NEXTAUTH_SECRET!;
       const token = await encode({
         token: {
@@ -164,20 +172,18 @@ export async function POST(req: NextRequest) {
         maxAge: 24 * 60 * 60,
       });
 
-      const res = NextResponse.json({
-        verified: true,
-        role: user.role,
-        // Return the encoded token so the client can set it via next-auth
-        sessionToken: token,
-      });
-      clearChallengeCookies(res);
-
-      // Set the NextAuth session cookie directly
       const isProduction = process.env.NODE_ENV === "production";
       const cookieName = isProduction
         ? "__Secure-next-auth.session-token"
         : "next-auth.session-token";
 
+      const res = NextResponse.json({
+        verified: true,
+        role: user.role,
+      });
+      clearChallengeCookies(res);
+
+      // Set the NextAuth session cookie directly
       res.cookies.set(cookieName, token, {
         httpOnly: true,
         secure: isProduction,
