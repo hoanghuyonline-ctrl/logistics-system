@@ -205,6 +205,23 @@ model User {
   transportRequests  TransportRequest[]   @relation("TransportRequests")
   quotationResponses QuotationRequest[]   @relation("QuotationResponder")
   staffPricingSubmissions Order[]          @relation("StaffPricingSubmitter")
+  authenticators         Authenticator[]
+}
+
+model Authenticator {
+  id                   String   @id @default(uuid())
+  userId               String
+  credentialID         String   @unique
+  credentialPublicKey  Bytes
+  counter              BigInt   @default(0)
+  credentialDeviceType String
+  credentialBackedUp   Boolean  @default(false)
+  transports           String?  // JSON array of AuthenticatorTransport strings
+  createdAt            DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Wallet {

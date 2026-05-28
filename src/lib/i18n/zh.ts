@@ -59,6 +59,15 @@ const zh: Record<string, string> = {
   "auth.googleAccessDenied": "您的账户已被停用，请联系客服。",
   "auth.googleError": "Google登录失败，请重试。",
   "auth.orDivider": "或",
+  "auth.biometricSignIn": "使用生物识别登录（指纹 / Face ID）",
+  "auth.biometricHint": "点击指纹图标以使用生物识别登录",
+  "auth.biometricNeedsEmail": "请先输入邮箱或手机号",
+  "auth.biometricNotSupported": "该设备或浏览器不支持生物识别登录（隐私/无痕模式可能被屏蔽）",
+  "auth.biometricCancelled": "生物识别验证已取消",
+  "auth.biometricIncognito": "无痕/隐私模式下无法使用生物识别登录",
+  "auth.biometricFailed": "生物识别认证失败，请使用密码登录",
+  "auth.biometricRegisterPrompt": "该账户尚未注册通行密钥。是否现在注册指纹/Face ID？（需要先登录）",
+  "auth.biometricRegistered": "通行密钥注册成功！下次可使用生物识别登录。",
 
   // Sidebar nav
   "nav.operations": "运营中心",

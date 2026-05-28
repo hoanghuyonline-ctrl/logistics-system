@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
+import {
+  startRegistration,
+  startAuthentication,
+  browserSupportsWebAuthn,
+} from "@simplewebauthn/browser";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,11 +21,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [webAuthnSupported, setWebAuthnSupported] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const err = params.get("error");
     if (err) setAuthError(err);
+
+    // Detect WebAuthn support — not available in incognito on some browsers
+    try {
+      setWebAuthnSupported(browserSupportsWebAuthn());
+    } catch {
+      setWebAuthnSupported(false);
+    }
   }, []);
 
   const displayError =
@@ -50,27 +64,7 @@ export default function LoginPage() {
       return;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const callback = params.get("callbackUrl");
-
-    if (callback) {
-      router.push(callback);
-      return;
-    }
-
-    const res = await fetch("/api/auth/me");
-    const user = await res.json();
-    const role = user?.role;
-
-    if (role === "ADMIN" || role === "ACCOUNTANT") {
-      router.push("/admin/dashboard");
-    } else if (role === "WAREHOUSE_CN") {
-      router.push("/warehouse/china/dashboard");
-    } else if (role === "WAREHOUSE_VN") {
-      router.push("/warehouse/vietnam/dashboard");
-    } else {
-      router.push("/dashboard");
-    }
+    await redirectByRole();
   }
 
   async function handleGoogleSignIn() {
@@ -83,6 +77,166 @@ export default function LoginPage() {
     } catch {
       setError(t("auth.googleError"));
       setGoogleLoading(false);
+    }
+  }
+
+  async function redirectByRole() {
+    const params = new URLSearchParams(window.location.search);
+    const callback = params.get("callbackUrl");
+    if (callback) {
+      router.push(callback);
+      return;
+    }
+    const res = await fetch("/api/auth/me");
+    const user = await res.json();
+    const role = user?.role;
+    if (role === "ADMIN" || role === "ACCOUNTANT") {
+      router.push("/admin/dashboard");
+    } else if (role === "WAREHOUSE_CN") {
+      router.push("/warehouse/china/dashboard");
+    } else if (role === "WAREHOUSE_VN") {
+      router.push("/warehouse/vietnam/dashboard");
+    } else {
+      router.push("/dashboard");
+    }
+  }
+
+  async function handleBiometricAuth() {
+    if (!email.trim()) {
+      setError(t("auth.biometricNeedsEmail"));
+      return;
+    }
+
+    // Guard: WebAuthn may be blocked in incognito / private mode
+    if (!webAuthnSupported) {
+      setError(t("auth.biometricNotSupported"));
+      return;
+    }
+
+    setBiometricLoading(true);
+    setError("");
+
+    try {
+      // 1. Request challenge options from server
+      const optRes = await fetch("/api/auth/biometric/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "authenticate", email: email.trim() }),
+      });
+
+      if (!optRes.ok) {
+        const data = await optRes.json();
+        if (optRes.status === 404) {
+          // No passkey registered yet — offer to register one
+          const wantRegister = window.confirm(t("auth.biometricRegisterPrompt"));
+          if (wantRegister) {
+            await handleBiometricRegister();
+          }
+          setBiometricLoading(false);
+          return;
+        }
+        throw new Error(data.error || "Failed to get options");
+      }
+
+      const { options } = await optRes.json();
+
+      // 2. Trigger the OS biometric prompt
+      let credential;
+      try {
+        credential = await startAuthentication({ optionsJSON: options });
+      } catch (err: unknown) {
+        const name = err instanceof Error ? err.name : "";
+        if (name === "NotAllowedError") {
+          setError(t("auth.biometricCancelled"));
+        } else if (name === "SecurityError") {
+          setError(t("auth.biometricIncognito"));
+        } else {
+          setError(t("auth.biometricFailed"));
+        }
+        setBiometricLoading(false);
+        return;
+      }
+
+      // 3. Verify with server and receive session cookie
+      const verifyRes = await fetch("/api/auth/biometric/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "authenticate", response: credential }),
+      });
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok || !verifyData.verified) {
+        throw new Error(verifyData.error || "Verification failed");
+      }
+
+      // 4. Redirect based on role embedded in verify response
+      await redirectByRole();
+    } catch (err: unknown) {
+      console.error("[biometric] Auth error:", err);
+      setError(
+        err instanceof Error ? err.message : t("auth.biometricFailed")
+      );
+    } finally {
+      setBiometricLoading(false);
+    }
+  }
+
+  async function handleBiometricRegister() {
+    if (!email.trim()) {
+      setError(t("auth.biometricNeedsEmail"));
+      return;
+    }
+
+    if (!webAuthnSupported) {
+      setError(t("auth.biometricNotSupported"));
+      return;
+    }
+
+    try {
+      const optRes = await fetch("/api/auth/biometric/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "register", email: email.trim() }),
+      });
+
+      if (!optRes.ok) {
+        const data = await optRes.json();
+        throw new Error(data.error || "Failed to get registration options");
+      }
+
+      const { options } = await optRes.json();
+
+      let credential;
+      try {
+        credential = await startRegistration({ optionsJSON: options });
+      } catch (err: unknown) {
+        const name = err instanceof Error ? err.name : "";
+        if (name === "NotAllowedError") {
+          setError(t("auth.biometricCancelled"));
+        } else {
+          setError(t("auth.biometricFailed"));
+        }
+        return;
+      }
+
+      const verifyRes = await fetch("/api/auth/biometric/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "register", response: credential }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.verified) {
+        throw new Error(verifyData.error || "Registration failed");
+      }
+
+      alert(t("auth.biometricRegistered"));
+    } catch (err: unknown) {
+      console.error("[biometric] Register error:", err);
+      setError(
+        err instanceof Error ? err.message : t("auth.biometricFailed")
+      );
     }
   }
 
@@ -143,6 +297,7 @@ export default function LoginPage() {
           {/* Google sign-in button */}
           <button
             type="button"
+            id="btn-google-signin"
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
             className="w-full flex items-center justify-center gap-3 py-3 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 hover:border-slate-400 disabled:opacity-50 transition-colors shadow-sm text-sm font-medium text-slate-700 mb-4"
@@ -174,28 +329,82 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("auth.emailOrPhoneLabel")}</label>
-              <input
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder={t("auth.emailOrPhonePlaceholder")}
-                required
-              />
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                {t("auth.emailOrPhoneLabel")}
+              </label>
+              {/* Email / Phone input with adjacent Fingerprint button */}
+              <div className="flex gap-2 items-stretch">
+                <input
+                  id="input-email-phone"
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder={t("auth.emailOrPhonePlaceholder")}
+                  required
+                  autoComplete="username"
+                />
+                {/* Biometric / Fingerprint button — hidden when WebAuthn not available */}
+                {webAuthnSupported && (
+                  <button
+                    type="button"
+                    id="btn-biometric-login"
+                    onClick={handleBiometricAuth}
+                    disabled={biometricLoading}
+                    title={t("auth.biometricSignIn")}
+                    className="flex items-center justify-center w-11 h-auto px-0 bg-white border border-slate-300 rounded-xl hover:bg-blue-50 hover:border-blue-400 disabled:opacity-50 transition-all duration-200 shadow-sm group"
+                    aria-label={t("auth.biometricSignIn")}
+                  >
+                    {biometricLoading ? (
+                      <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                    ) : (
+                      /* Fingerprint SVG icon */
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-5 h-5 text-slate-500 group-hover:text-blue-600 transition-colors"
+                        aria-hidden="true"
+                      >
+                        {/* Fingerprint lines */}
+                        <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+                        <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+                        <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+                        <path d="M2 12a10 10 0 0 1 18-6" />
+                        <path d="M2 17c2.3 2 4.87 3 7 3" />
+                        <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
+                        <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
+                        <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
+              {webAuthnSupported && (
+                <p className="mt-1 text-xs text-slate-400">
+                  {t("auth.biometricHint")}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">{t("auth.passwordLabel")}</label>
               <input
+                id="input-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder={t("auth.passwordPlaceholder")}
                 required
+                autoComplete="current-password"
               />
             </div>
             <button
+              id="btn-signin"
               type="submit"
               disabled={loading}
               className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm text-sm"

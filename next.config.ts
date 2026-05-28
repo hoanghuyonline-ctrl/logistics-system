@@ -6,7 +6,7 @@ const r2Domain = process.env.R2_PUBLIC_CUSTOM_DOMAIN
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["@prisma/adapter-pg", "@aws-sdk/client-s3"],
+  serverExternalPackages: ["@prisma/adapter-pg", "@aws-sdk/client-s3", "@simplewebauthn/server"],
   images: {
     remotePatterns: [
       ...(r2Domain

@@ -59,6 +59,15 @@ const vi: Record<string, string> = {
   "auth.googleAccessDenied": "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ.",
   "auth.googleError": "Đăng nhập Google thất bại. Vui lòng thử lại.",
   "auth.orDivider": "hoặc",
+  "auth.biometricSignIn": "Đăng nhập bằng sinh trắc học (vân tay / Face ID)",
+  "auth.biometricHint": "Nhấn biểu tượng vân tay để đăng nhập bằng sinh trắc học",
+  "auth.biometricNeedsEmail": "Vui lòng nhập email hoặc số điện thoại trước",
+  "auth.biometricNotSupported": "Thiết bị hoặc trình duyệt không hỗ trợ đăng nhập sinh trắc học (chế độ ẩn danh có thể bị chặn)",
+  "auth.biometricCancelled": "Xác thực sinh trắc học đã bị hủy",
+  "auth.biometricIncognito": "Đăng nhập sinh trắc học không khả dụng ở chế độ ẩn danh / riêng tư",
+  "auth.biometricFailed": "Xác thực sinh trắc học thất bại. Vui lòng đăng nhập bằng mật khẩu.",
+  "auth.biometricRegisterPrompt": "Tài khoản này chưa có passkey. Bạn có muốn đăng ký vân tay/Face ID ngay không? (Bạn cần đăng nhập trước)",
+  "auth.biometricRegistered": "Đăng ký passkey thành công! Lần sau bạn có thể đăng nhập bằng sinh trắc học.",
 
   // Sidebar nav
   "nav.operations": "Điều hành",

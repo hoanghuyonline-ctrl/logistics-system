@@ -59,6 +59,15 @@ const en: Record<string, string> = {
   "auth.googleAccessDenied": "Your account has been deactivated. Please contact support.",
   "auth.googleError": "Google sign-in failed. Please try again.",
   "auth.orDivider": "or",
+  "auth.biometricSignIn": "Sign in with biometrics (fingerprint / Face ID)",
+  "auth.biometricHint": "Tap the fingerprint icon to sign in with biometrics",
+  "auth.biometricNeedsEmail": "Please enter your email or phone first",
+  "auth.biometricNotSupported": "Biometric login is not supported on this device or browser (private/incognito mode may be blocking it)",
+  "auth.biometricCancelled": "Biometric prompt was cancelled",
+  "auth.biometricIncognito": "Biometric login is unavailable in incognito / private mode",
+  "auth.biometricFailed": "Biometric authentication failed. Please sign in with your password.",
+  "auth.biometricRegisterPrompt": "No passkey registered for this account. Would you like to register your fingerprint/Face ID now? (You must be signed in to do this)",
+  "auth.biometricRegistered": "Passkey registered successfully! You can now sign in with biometrics next time.",
 
   // Sidebar nav
   "nav.operations": "Operations",
