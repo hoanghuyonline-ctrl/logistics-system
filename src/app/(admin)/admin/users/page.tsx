@@ -351,7 +351,7 @@ export default function UsersPage() {
                     {u.wallet && !(isStaff && u.role === "ADMIN") && (
                       <button onClick={() => openWalletModal(u)}
                         className="text-xs font-medium px-2.5 py-1 rounded-lg text-amber-600 hover:bg-amber-50">
-                        \u0110i\u1ec1u ch\u1ec9nh v\u00ed
+                        Điều chỉnh ví
                       </button>
                     )}
                   </>
