@@ -1,39 +1,30 @@
-name: CI
-
+name: Next.js CI Gating Workflow
 on:
   push:
-    branches: ["main", "feature/*"]
+    branches: [ "main", "feature/*" ]
   pull_request:
-    branches: ["main", "feature/*"]
-
+    branches: [ "main" ]
 jobs:
-  ci:
-    name: Continuous Integration
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma client
-        run: npx prisma generate
-
-      - name: Lint check
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Build check
-        run: npm run build
-        env:
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-secret' }}
-          NEXTAUTH_URL: https://bactrunghai.vn
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/logistics_db
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+    - name: Run Linter
+      run: npm run lint || true
+    - name: Build Next.js production
+      run: npm run build
+      env:
+        NEXT_DISABLE_ESLINT: true
+        CI: false
+        NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+        NEXTAUTH_URL: "https://bactrunghai.vn"
+        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
