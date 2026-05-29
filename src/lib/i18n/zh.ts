@@ -80,6 +80,7 @@ const zh: Record<string, string> = {
   "nav.channelLinking": "通知与绑定",
   "nav.notifications": "通知",
   "nav.profile": "个人资料",
+  "nav.security": "安全设置",
   "nav.users": "用户管理",
   "nav.orders": "订单管理",
   "nav.packages": "包裹管理",
