@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     if (mode === "authenticate") {
       const user = await prisma.user.findUnique({
         where: { id: cookieUserId },
-        include: { authenticators: true },
+        include: { authenticators: true, credentials: true },
       });
 
       if (!user || !user.isActive) {
@@ -112,11 +112,22 @@ export async function POST(req: NextRequest) {
       const authenticator = user.authenticators.find(
         (a) => a.credentialID === authResponse.id
       );
+      const credential = user.credentials.find(
+        (c) => c.credentialID === authResponse.id
+      );
 
-      if (!authenticator) {
+      if (!authenticator && !credential) {
         return NextResponse.json(
           { error: "Passkey not found for this account." },
           { status: 400 }
+        );
+      }
+
+      const matchedKey = authenticator || credential;
+      if (!matchedKey) {
+        return NextResponse.json(
+          { error: "Internal key matching error." },
+          { status: 500 }
         );
       }
 
@@ -127,12 +138,12 @@ export async function POST(req: NextRequest) {
         expectedOrigin: ORIGIN,
         expectedRPID: RP_ID,
         authenticator: {
-          credentialID: authenticator.credentialID,
-          credentialPublicKey: new Uint8Array(authenticator.credentialPublicKey),
-          counter: Number(authenticator.counter),
-          transports: authenticator.transports
+          credentialID: matchedKey.credentialID,
+          credentialPublicKey: new Uint8Array(matchedKey.credentialPublicKey),
+          counter: Number(matchedKey.counter),
+          transports: matchedKey.transports
             ? (JSON.parse(
-                authenticator.transports
+                matchedKey.transports
               ) as AuthenticatorTransport[])
             : undefined,
         },
@@ -145,11 +156,18 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Update counter to prevent replay attacks
-      await prisma.authenticator.update({
-        where: { id: authenticator.id },
-        data: { counter: BigInt(verification.authenticationInfo.newCounter) },
-      });
+      // Update counter to prevent replay attacks in the correct database table
+      if (authenticator) {
+        await prisma.authenticator.update({
+          where: { id: authenticator.id },
+          data: { counter: BigInt(verification.authenticationInfo.newCounter) },
+        });
+      } else if (credential) {
+        await prisma.credential.update({
+          where: { id: credential.id },
+          data: { counter: BigInt(verification.authenticationInfo.newCounter) },
+        });
+      }
 
       // Issue a NextAuth JWT session token
       const secret = process.env.NEXTAUTH_SECRET!;

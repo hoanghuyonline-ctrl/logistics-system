@@ -224,6 +224,28 @@ export default function SettingsPage() {
   const [webAuthnSupported, setWebAuthnSupported] = useState(false);
   const [deviceHasBiometric, setDeviceHasBiometric] = useState(false);
   const [biometricRegistering, setBiometricRegistering] = useState(false);
+  const [credentials, setCredentials] = useState<any[]>([]);
+  const [loadingCredentials, setLoadingCredentials] = useState(true);
+  const [newKeyName, setNewKeyName] = useState("");
+
+  const loadCredentials = useCallback(async (emailAddr = adminEmail) => {
+    const targetEmail = emailAddr || adminEmail;
+    if (!targetEmail) return;
+    try {
+      const res = await fetch("/api/auth/biometric/credentials");
+      if (res.ok) {
+        const data = await res.json();
+        setCredentials(data);
+        const hasKeys = data.length > 0;
+        localStorage.setItem(`has_biometric_${targetEmail}`, hasKeys ? "true" : "false");
+        setDeviceHasBiometric(hasKeys);
+      }
+    } catch (e) {
+      console.error("Error loading biometric credentials:", e);
+    } finally {
+      setLoadingCredentials(false);
+    }
+  }, [adminEmail]);
 
   const loadNotifConfigs = useCallback(async () => {
     try {
@@ -298,12 +320,7 @@ export default function SettingsPage() {
       .then((d) => {
         if (d && d.email) {
           setAdminEmail(d.email);
-          try {
-            const stored = localStorage.getItem(`has_biometric_${d.email}`);
-            setDeviceHasBiometric(stored === "true");
-          } catch {
-            setDeviceHasBiometric(false);
-          }
+          loadCredentials(d.email);
         }
       })
       .catch(() => {});
@@ -313,7 +330,7 @@ export default function SettingsPage() {
     } catch {
       setWebAuthnSupported(false);
     }
-  }, [loadNotifConfigs]);
+  }, [loadNotifConfigs, loadCredentials]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -476,10 +493,11 @@ export default function SettingsPage() {
 
       const credential = await startRegistration(options);
 
-      const verifyRes = await fetch("/api/auth/passkey/register", {
+      const finalName = newKeyName.trim() || `Khóa Vân Tay (${new Date().toLocaleDateString("vi-VN")})`;
+      const verifyRes = await fetch("/api/auth/biometric/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ response: credential }),
+        body: JSON.stringify({ response: credential, name: finalName }),
       });
 
       const verifyData = await verifyRes.json();
@@ -487,9 +505,9 @@ export default function SettingsPage() {
         throw new Error(verifyData.error || "Xác thực thiết bị thất bại");
       }
 
-      localStorage.setItem(`has_biometric_${adminEmail}`, "true");
-      setDeviceHasBiometric(true);
       toast("Kích hoạt Đăng nhập nhanh bằng Vân tay/Thiết bị thành công!", "success");
+      setNewKeyName("");
+      loadCredentials(adminEmail);
     } catch (err: any) {
       console.error("[biometric-register] Error:", err);
       toast(err.message || "Không thể đăng ký sinh trắc học trên thiết bị này.", "error");
@@ -498,14 +516,24 @@ export default function SettingsPage() {
     }
   }
 
-  function unregisterBiometric() {
-    if (!adminEmail) return;
+  async function deleteCredential(id: string) {
+    if (!confirm("Bạn có chắc chắn muốn xóa khóa sinh trắc học này?")) return;
     try {
-      localStorage.removeItem(`has_biometric_${adminEmail}`);
-      setDeviceHasBiometric(false);
-      toast("Đã hủy liên kết Đăng nhập nhanh trên thiết bị này.", "success");
+      const res = await fetch("/api/auth/biometric/credentials", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credentialId: id }),
+      });
+
+      if (res.ok) {
+        toast("Đã xóa khóa sinh trắc học thành công.", "success");
+        loadCredentials(adminEmail);
+      } else {
+        const data = await res.json();
+        toast(data.error || "Không thể xóa khóa sinh trắc học.", "error");
+      }
     } catch {
-      // ignore
+      toast("Lỗi kết nối khi xóa khóa sinh trắc học.", "error");
     }
   }
 
@@ -601,7 +629,7 @@ export default function SettingsPage() {
 
       {/* Premium FIDO2/Passkey Biometric Registration Card for Admin/Shop Owner */}
       <Card title="🔐 Bảo mật Sinh trắc học Admin (Passkeys / FIDO2)">
-        <div className="space-y-4">
+        <div className="space-y-5">
           <p className="text-sm text-slate-600 leading-relaxed">
             Kích hoạt tính năng này cho phép bạn (Tài khoản Admin / Chủ shop) đăng nhập nhanh vào hệ thống bằng Vân tay, Khuôn mặt (Face ID / Windows Hello) hoặc mã khóa màn hình của thiết bị mà không cần nhập mật khẩu.
           </p>
@@ -610,48 +638,91 @@ export default function SettingsPage() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-xs leading-relaxed">
               ⚠️ Trình duyệt của bạn hiện tại không hỗ trợ hoặc đang chặn xác thực WebAuthn (Có thể do bạn đang sử dụng Chế độ ẩn danh / Incognito). Vui lòng thử lại trên trình duyệt chuẩn.
             </div>
-          ) : deviceHasBiometric ? (
-            <div className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex gap-3 items-center">
-                <span className="text-emerald-600 text-xl">✓</span>
-                <div className="text-xs text-emerald-800 font-medium">
-                  Hệ thống đã nhận diện được khóa liên kết Đăng nhập nhanh đang hoạt động cho tài khoản của bạn trên thiết bị này!
+          ) : (
+            <div className="space-y-5">
+              {/* Registered Devices List */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Danh sách thiết bị đã liên kết</h3>
                 </div>
+                {loadingCredentials ? (
+                  <div className="p-4 text-center text-xs text-slate-400">Đang tải danh sách...</div>
+                ) : credentials.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-400">
+                    Chưa có thiết bị nào được liên kết Đăng nhập nhanh.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {credentials.map((c) => (
+                      <div key={c.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-800 truncate">{c.name}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Loại: <span className="font-mono text-slate-600">{c.credentialDeviceType}</span> • Ngày đăng ký: {new Date(c.createdAt).toLocaleDateString("vi-VN")}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => deleteCredential(c.id)}
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-lg transition-all duration-200 shrink-0"
+                        >
+                          Xóa khóa
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={registerBiometric}
-                  disabled={biometricRegistering}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all duration-200"
-                >
-                  {biometricRegistering ? "Đang xử lý..." : "Đăng ký thêm thiết bị"}
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={unregisterBiometric}
-                  className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all duration-200"
-                >
-                  Hủy liên kết thiết bị này
-                </button>
+              {/* Add New Key Form */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Đăng ký thêm thiết bị/vân tay mới</h4>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Laptop cá nhân, iPhone 14..."
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    className="flex-1 px-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={registerBiometric}
+                    disabled={biometricRegistering}
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white text-sm font-bold rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    {biometricRegistering ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Đang thiết lập...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4"
+                        >
+                          <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+                          <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+                          <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+                          <path d="M2 12a10 10 0 0 1 18-6" />
+                          <path d="M2 17c2.3 2 4.87 3 7 3" />
+                          <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
+                          <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
+                          <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
+                        </svg>
+                        Thêm vân tay / thiết bị
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div>
-              <button
-                type="button"
-                onClick={registerBiometric}
-                disabled={biometricRegistering}
-                className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 hover:shadow disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {biometricRegistering ? (
-                  <span>Đang kích hoạt...</span>
-                ) : (
-                  <span>🔐 Kích hoạt đăng nhập bằng Khuôn mặt / Vân tay</span>
-                )}
-              </button>
             </div>
           )}
         </div>

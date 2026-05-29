@@ -206,6 +206,7 @@ model User {
   quotationResponses QuotationRequest[]   @relation("QuotationResponder")
   staffPricingSubmissions Order[]          @relation("StaffPricingSubmitter")
   authenticators         Authenticator[]
+  credentials            Credential[]
 }
 
 model Authenticator {
@@ -217,6 +218,23 @@ model Authenticator {
   credentialDeviceType String
   credentialBackedUp   Boolean  @default(false)
   transports           String?  // JSON array of AuthenticatorTransport strings
+  createdAt            DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Credential {
+  id                   String   @id @default(uuid())
+  userId               String
+  credentialID         String   @unique
+  credentialPublicKey  Bytes
+  counter              BigInt   @default(0)
+  credentialDeviceType String
+  credentialBackedUp   Boolean  @default(false)
+  transports           String?  // JSON array of AuthenticatorTransport strings
+  name                 String?  // Custom name/label for the credential
   createdAt            DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

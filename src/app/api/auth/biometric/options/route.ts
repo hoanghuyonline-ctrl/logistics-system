@@ -36,11 +36,11 @@ export async function POST(req: NextRequest) {
     const user = isPhone
       ? await prisma.user.findUnique({
           where: { phone: email.trim() },
-          include: { authenticators: true },
+          include: { authenticators: true, credentials: true },
         })
       : await prisma.user.findUnique({
           where: { email: email.trim() },
-          include: { authenticators: true },
+          include: { authenticators: true, credentials: true },
         });
 
     if (!user || !user.isActive) {
@@ -48,6 +48,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (mode === "register") {
+      const excludeCredentials = [
+        ...user.authenticators.map((a) => ({
+          id: a.credentialID,
+          transports: a.transports
+            ? (JSON.parse(a.transports) as AuthenticatorTransport[])
+            : undefined,
+        })),
+        ...user.credentials.map((c) => ({
+          id: c.credentialID,
+          transports: c.transports
+            ? (JSON.parse(c.transports) as AuthenticatorTransport[])
+            : undefined,
+        })),
+      ];
+
       const options = await generateRegistrationOptions({
         rpName: RP_NAME,
         rpID: RP_ID,
@@ -59,12 +74,7 @@ export async function POST(req: NextRequest) {
           userVerification: "preferred",
           authenticatorAttachment: "platform",
         },
-        excludeCredentials: user.authenticators.map((a) => ({
-          id: a.credentialID,
-          transports: a.transports
-            ? (JSON.parse(a.transports) as AuthenticatorTransport[])
-            : undefined,
-        })),
+        excludeCredentials,
       });
 
       const response = NextResponse.json({ options, userId: user.id });
@@ -86,22 +96,32 @@ export async function POST(req: NextRequest) {
     }
 
     if (mode === "authenticate") {
-      if (user.authenticators.length === 0) {
+      if (user.authenticators.length === 0 && user.credentials.length === 0) {
         return NextResponse.json(
           { error: "No passkeys registered for this account" },
           { status: 404 }
         );
       }
 
-      const options = await generateAuthenticationOptions({
-        rpID: RP_ID,
-        userVerification: "preferred",
-        allowCredentials: user.authenticators.map((a) => ({
+      const allowCredentials = [
+        ...user.authenticators.map((a) => ({
           id: a.credentialID,
           transports: a.transports
             ? (JSON.parse(a.transports) as AuthenticatorTransport[])
             : undefined,
         })),
+        ...user.credentials.map((c) => ({
+          id: c.credentialID,
+          transports: c.transports
+            ? (JSON.parse(c.transports) as AuthenticatorTransport[])
+            : undefined,
+        })),
+      ];
+
+      const options = await generateAuthenticationOptions({
+        rpID: RP_ID,
+        userVerification: "preferred",
+        allowCredentials,
       });
 
       const response = NextResponse.json({ options, userId: user.id });
