@@ -22,7 +22,7 @@ xcopy /E /I /Y public .next\standalone\public
 xcopy /E /I /Y prisma .next\standalone\prisma
 
 echo [6/6] Restarting PM2 process...
-pm2 restart logistics-system
+call npx.cmd pm2 restart logistics-system || call npx.cmd pm2 start ecosystem.config.js
 
 echo ============================================
 echo   Deploy completed successfully!
