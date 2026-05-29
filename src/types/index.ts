@@ -38,6 +38,11 @@ export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   OUT_FOR_DELIVERY: ["COMPLETED"],
   COMPLETED: [],
   CANCELLED: [],
+  AT_GUANGZHOU_WAREHOUSE: ["AT_NANNING_TRANSIT"],
+  AT_NANNING_TRANSIT: ["AT_PINGXIANG_BORDER"],
+  AT_PINGXIANG_BORDER: ["CUSTOMS_CLEARED_AT"],
+  CUSTOMS_CLEARED_AT: ["AT_VIETNAM_DISTRIBUTION"],
+  AT_VIETNAM_DISTRIBUTION: ["COMPLETED"],
 };
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -51,6 +56,11 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
   OUT_FOR_DELIVERY: "Out for Delivery",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
+  AT_GUANGZHOU_WAREHOUSE: "At Guangzhou Warehouse",
+  AT_NANNING_TRANSIT: "At Nanning Transit",
+  AT_PINGXIANG_BORDER: "At Pingxiang Border",
+  CUSTOMS_CLEARED_AT: "Customs Cleared",
+  AT_VIETNAM_DISTRIBUTION: "At Vietnam Distribution",
 };
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
@@ -64,4 +74,9 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
   OUT_FOR_DELIVERY: "bg-lime-100 text-lime-800",
   COMPLETED: "bg-green-100 text-green-800",
   CANCELLED: "bg-red-100 text-red-800",
+  AT_GUANGZHOU_WAREHOUSE: "bg-violet-100 text-violet-800",
+  AT_NANNING_TRANSIT: "bg-indigo-100 text-indigo-800",
+  AT_PINGXIANG_BORDER: "bg-amber-100 text-amber-800",
+  CUSTOMS_CLEARED_AT: "bg-cyan-100 text-cyan-800",
+  AT_VIETNAM_DISTRIBUTION: "bg-emerald-100 text-emerald-800",
 };

@@ -15,6 +15,11 @@ enum Role {
   ACCOUNTANT
 }
 
+enum Currency {
+  VND
+  CNY
+}
+
 enum OrderStatus {
   PENDING
   PURCHASED
@@ -26,6 +31,11 @@ enum OrderStatus {
   OUT_FOR_DELIVERY
   COMPLETED
   CANCELLED
+  AT_GUANGZHOU_WAREHOUSE
+  AT_NANNING_TRANSIT
+  AT_PINGXIANG_BORDER
+  CUSTOMS_CLEARED_AT
+  AT_VIETNAM_DISTRIBUTION
 }
 
 enum OrderPriority {
@@ -318,6 +328,7 @@ model Order {
   priority                  OrderPriority @default(NORMAL)
   trackingCodeChina         String?
   trackingCodeIntl          String?
+  currency                  Currency    @default(CNY)
   notes                     String?
   customStatusNote          String?
   createdAt                 DateTime    @default(now())
@@ -332,6 +343,7 @@ model Order {
   transactions            Transaction[]
   notifications           Notification[]
   salesRequests           SalesRequest[]
+  operatingExpenses       OperatingExpense[]
 }
 
 model OrderStatusLog {
@@ -814,4 +826,68 @@ model ChinaWarehouse {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
+}
+
+model OperatingExpense {
+  id                  String   @id @default(uuid())
+  orderId             String?
+  orderCode           String?
+  amount              Decimal  @db.Decimal(15, 2)
+  currency            Currency @default(CNY)
+  exchangeRate        Decimal  @db.Decimal(10, 2)
+  amountVND           Decimal  @db.Decimal(15, 2)
+  
+  // Bóc tách chi phí thực tế
+  loadingCnFee        Decimal  @default(0) @db.Decimal(15, 2) // Phí bốc xếp kho Trung Quốc
+  borderLiftingFee    Decimal  @default(0) @db.Decimal(15, 2) // Phí nâng hạ bãi biên giới
+  customsClearanceFee Decimal  @default(0) @db.Decimal(15, 2) // Phí thông quan hải quan
+  domesticFuelFee     Decimal  @default(0) @db.Decimal(15, 2) // Phí xăng dầu nội địa
+  otherFee            Decimal  @default(0) @db.Decimal(15, 2)
+  
+  description         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  order               Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@map("operating_expenses")
+}
+
+model OrderTimelineLog {
+  id        String      @id @default(uuid())
+  orderId   String
+  status    OrderStatus
+  location  String?
+  notes     String?
+  createdAt DateTime    @default(now())
+  
+  @@map("order_timeline_logs")
+}
+
+model SystemAuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  userId     String?
+  userEmail  String?
+  tableName  String
+  recordId   String?
+  oldData    Json?
+  newData    Json?
+  createdAt  DateTime @default(now())
+
+  @@map("system_audit_logs")
+}
+
+model FinancialSnapshot {
+  id                    String   @id @default(uuid())
+  periodType            String   // "DAILY", "MONTHLY", "QUARTERLY"
+  targetDate            DateTime
+  grossServiceRevenue   Decimal  @db.Decimal(18, 2) // Fee revenue only, strictly excluding base item costs
+  operatingExpenses     Decimal  @db.Decimal(18, 2) // Boundary transit, clearance fees, truck logistics
+  netProfit             Decimal  @db.Decimal(18, 2) // Net operational profit (Lãi thực tính)
+  cashLiquidity         Decimal  @db.Decimal(18, 2) // Liquid cash available in bank accounts (Vietinbank) + on-site vault
+  totalObligations      Decimal  @db.Decimal(18, 2) // Total payables due to China truck drivers/port handlers
+  createdAt             DateTime @default(now())
+
+  @@index([periodType, targetDate])
 }
