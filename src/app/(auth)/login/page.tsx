@@ -150,7 +150,7 @@ export default function LoginPage() {
 
     // Guard: WebAuthn may be blocked in incognito / private mode
     if (!webAuthnSupported) {
-      setError(t("auth.biometricNotSupported"));
+      router.push("/help/biometric");
       return;
     }
 
@@ -188,14 +188,8 @@ export default function LoginPage() {
         options.userVerification = "preferred";
         credential = await startAuthentication(options);
       } catch (err: unknown) {
-        const name = err instanceof Error ? err.name : "";
-        if (name === "NotAllowedError") {
-          setError(t("auth.biometricCancelled"));
-        } else if (name === "SecurityError") {
-          setError(t("auth.biometricIncognito"));
-        } else {
-          setError(t("auth.biometricFailed"));
-        }
+        console.error("OS biometric prompt error: ", err);
+        router.push("/help/biometric");
         setBiometricLoading(false);
         return;
       }
@@ -248,9 +242,8 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       console.error("[biometric] Auth error:", err);
-      setError(
-        err instanceof Error ? err.message : t("auth.biometricFailed")
-      );
+      // Redirect to premium help/biometric route instead of displaying red text error
+      router.push("/help/biometric");
     } finally {
       setBiometricLoading(false);
     }
