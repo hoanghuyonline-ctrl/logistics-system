@@ -23,6 +23,21 @@ export default function LoginPage() {
   const [authError, setAuthError] = useState("");
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [webAuthnSupported, setWebAuthnSupported] = useState(false);
+  const [deviceHasBiometric, setDeviceHasBiometric] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && email.trim()) {
+      try {
+        const stored = localStorage.getItem(`has_biometric_${email.trim()}`);
+        setDeviceHasBiometric(stored === "true");
+      } catch {
+        setDeviceHasBiometric(false);
+      }
+    } else {
+      setDeviceHasBiometric(false);
+    }
+  }, [email]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -64,7 +79,33 @@ export default function LoginPage() {
       return;
     }
 
-    await redirectByRole();
+    // Auto-prompt to register fingerprint/Face ID if supported and not yet registered on this device
+    let shouldPromptPromo = false;
+    if (webAuthnSupported && typeof window !== "undefined" && window.PublicKeyCredential) {
+      try {
+        const isAvailable = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (isAvailable) {
+          // Check if no passkey is registered yet by querying the options endpoint
+          const optRes = await fetch("/api/auth/biometric/options", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode: "authenticate", email: email.trim() }),
+          });
+          if (optRes.status === 404) {
+            shouldPromptPromo = true;
+          }
+        }
+      } catch (err) {
+        console.error("Biometric availability check error:", err);
+      }
+    }
+
+    if (shouldPromptPromo) {
+      setLoading(false);
+      setShowPromoModal(true);
+    } else {
+      await redirectByRole();
+    }
   }
 
   async function handleGoogleSignIn() {
@@ -170,8 +211,39 @@ export default function LoginPage() {
         throw new Error(verifyData.error || "Verification failed");
       }
 
-      // 4. Redirect based on role embedded in verify response
-      await redirectByRole();
+      // Safe decode helper for biometric responses on mobile (safeguarding against Unicode Escape issues)
+      let cleanRole = verifyData.role;
+      try {
+        cleanRole = typeof verifyData.role === "string" ? JSON.parse(`"${verifyData.role}"`) : verifyData.role;
+      } catch (e) {
+        console.error("Biometric string decode error: ", e);
+      }
+
+      // Save device state
+      try {
+        localStorage.setItem(`has_biometric_${email.trim()}`, "true");
+        setDeviceHasBiometric(true);
+      } catch (e) {
+        // ignore
+      }
+
+      // 4. Redirect based on role embedded in verify response (specifically processed for biometric flow)
+      const params = new URLSearchParams(window.location.search);
+      const callback = params.get("callbackUrl");
+      if (callback) {
+        router.push(callback);
+      } else {
+        const role = cleanRole;
+        if (role === "ADMIN" || role === "ACCOUNTANT") {
+          router.push("/admin/dashboard");
+        } else if (role === "WAREHOUSE_CN") {
+          router.push("/warehouse/china/dashboard");
+        } else if (role === "WAREHOUSE_VN") {
+          router.push("/warehouse/vietnam/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
+      }
     } catch (err: unknown) {
       console.error("[biometric] Auth error:", err);
       setError(
@@ -232,6 +304,14 @@ export default function LoginPage() {
       }
 
       alert(t("auth.biometricRegistered"));
+
+      // Save device state
+      try {
+        localStorage.setItem(`has_biometric_${email.trim()}`, "true");
+        setDeviceHasBiometric(true);
+      } catch (e) {
+        // ignore
+      }
     } catch (err: unknown) {
       console.error("[biometric] Register error:", err);
       setError(
@@ -402,6 +482,11 @@ export default function LoginPage() {
                 required
                 autoComplete="current-password"
               />
+              {deviceHasBiometric && (
+                <p className="mt-2 text-xs text-emerald-600 flex items-center gap-1 font-medium animate-fade-in">
+                  <span>💡 Gợi ý: Bạn đã kích hoạt đăng nhập nhanh trên thiết bị này.</span>
+                </p>
+              )}
             </div>
             <button
               id="btn-signin"
@@ -416,6 +501,44 @@ export default function LoginPage() {
                 </span>
               ) : t("common.signIn")}
             </button>
+
+            {/* Premium, prominent quick login button for biometric-enabled users */}
+            {deviceHasBiometric && webAuthnSupported && (
+              <button
+                type="button"
+                id="btn-biometric-quick-login"
+                onClick={handleBiometricAuth}
+                disabled={biometricLoading}
+                className="w-full flex items-center justify-center gap-3 py-3 bg-emerald-50 border-2 border-emerald-500 text-emerald-700 font-bold rounded-xl hover:bg-emerald-100 disabled:opacity-50 transition-all duration-200 shadow-sm text-sm mt-3 animate-fade-in hover:scale-[1.02]"
+              >
+                {biometricLoading ? (
+                  <span className="w-5 h-5 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5 text-emerald-600"
+                    >
+                      <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+                      <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+                      <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+                      <path d="M2 12a10 10 0 0 1 18-6" />
+                      <path d="M2 17c2.3 2 4.87 3 7 3" />
+                      <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
+                      <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
+                      <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
+                    </svg>
+                    Đăng nhập nhanh bằng Vân tay
+                  </>
+                )}
+              </button>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
@@ -426,6 +549,89 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* Biometric Activation Promo Modal */}
+      {showPromoModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+            {/* Top illustrative icon banner */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 py-8 flex flex-col items-center justify-center text-white relative">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-3 animate-pulse">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-9 h-9"
+                >
+                  <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+                  <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+                  <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+                  <path d="M2 12a10 10 0 0 1 18-6" />
+                  <path d="M2 17c2.3 2 4.87 3 7 3" />
+                  <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
+                  <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
+                  <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-center px-4">Kích hoạt Đăng nhập nhanh bằng Vân tay / Khuôn mặt?</h2>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-sm text-slate-600 leading-relaxed text-center mb-6">
+                Bật tính năng này giúp bạn đăng nhập nhanh trong 1 giây cho các lần sau mà không cần gõ lại mật khẩu.
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setShowPromoModal(false);
+                    await handleBiometricRegister();
+                    await redirectByRole();
+                  }}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md text-sm text-center flex items-center justify-center gap-2 hover:scale-[1.02]"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                  >
+                    <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+                    <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+                    <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+                    <path d="M2 12a10 10 0 0 1 18-6" />
+                    <path d="M2 17c2.3 2 4.87 3 7 3" />
+                    <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
+                    <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
+                    <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
+                  </svg>
+                  Quét vân tay để bật ngay
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setShowPromoModal(false);
+                    await redirectByRole();
+                  }}
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-all duration-200 text-xs text-center"
+                >
+                  Để sau
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
