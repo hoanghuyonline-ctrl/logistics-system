@@ -184,6 +184,8 @@ export default function LoginPage() {
       // 2. Trigger the OS biometric prompt
       let credential;
       try {
+        // Enforce userVerification to preferred to accommodate older Android and software-based Face Unlock (like Samsung 2D)
+        options.userVerification = "preferred";
         credential = await startAuthentication(options);
       } catch (err: unknown) {
         const name = err instanceof Error ? err.name : "";
@@ -281,6 +283,10 @@ export default function LoginPage() {
 
       let credential;
       try {
+        // Enforce userVerification to preferred to accommodate older Android and software-based Face Unlock (like Samsung 2D)
+        if (options.authenticatorSelection) {
+          options.authenticatorSelection.userVerification = "preferred";
+        }
         credential = await startRegistration(options);
       } catch (err: unknown) {
         const name = err instanceof Error ? err.name : "";
