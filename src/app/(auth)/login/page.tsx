@@ -24,7 +24,6 @@ export default function LoginPage() {
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [webAuthnSupported, setWebAuthnSupported] = useState(false);
   const [deviceHasBiometric, setDeviceHasBiometric] = useState(false);
-  const [showPromoModal, setShowPromoModal] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && email.trim()) {
@@ -79,33 +78,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Auto-prompt to register fingerprint/Face ID if supported and not yet registered on this device
-    let shouldPromptPromo = false;
-    if (webAuthnSupported && typeof window !== "undefined" && window.PublicKeyCredential) {
-      try {
-        const isAvailable = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        if (isAvailable) {
-          // Check if no passkey is registered yet by querying the options endpoint
-          const optRes = await fetch("/api/auth/biometric/options", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mode: "authenticate", email: email.trim() }),
-          });
-          if (optRes.status === 404) {
-            shouldPromptPromo = true;
-          }
-        }
-      } catch (err) {
-        console.error("Biometric availability check error:", err);
-      }
-    }
-
-    if (shouldPromptPromo) {
-      setLoading(false);
-      setShowPromoModal(true);
-    } else {
-      await redirectByRole();
-    }
+    await redirectByRole();
   }
 
   async function handleGoogleSignIn() {
@@ -168,11 +141,8 @@ export default function LoginPage() {
       if (!optRes.ok) {
         const data = await optRes.json();
         if (optRes.status === 404) {
-          // No passkey registered yet — offer to register one
-          const wantRegister = window.confirm(t("auth.biometricRegisterPrompt"));
-          if (wantRegister) {
-            await handleBiometricRegister();
-          }
+          // No passkey registered — redirect to help instructions
+          router.push("/help/biometric");
           setBiometricLoading(false);
           return;
         }
@@ -246,76 +216,6 @@ export default function LoginPage() {
       router.push("/help/biometric");
     } finally {
       setBiometricLoading(false);
-    }
-  }
-
-  async function handleBiometricRegister() {
-    if (!email.trim()) {
-      setError(t("auth.biometricNeedsEmail"));
-      return;
-    }
-
-    if (!webAuthnSupported) {
-      setError(t("auth.biometricNotSupported"));
-      return;
-    }
-
-    try {
-      const optRes = await fetch("/api/auth/biometric/options", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "register", email: email.trim() }),
-      });
-
-      if (!optRes.ok) {
-        const data = await optRes.json();
-        throw new Error(data.error || "Failed to get registration options");
-      }
-
-      const { options } = await optRes.json();
-
-      let credential;
-      try {
-        // Enforce userVerification to preferred to accommodate older Android and software-based Face Unlock (like Samsung 2D)
-        if (options.authenticatorSelection) {
-          options.authenticatorSelection.userVerification = "preferred";
-        }
-        credential = await startRegistration(options);
-      } catch (err: unknown) {
-        const name = err instanceof Error ? err.name : "";
-        if (name === "NotAllowedError") {
-          setError(t("auth.biometricCancelled"));
-        } else {
-          setError(t("auth.biometricFailed"));
-        }
-        return;
-      }
-
-      const verifyRes = await fetch("/api/auth/biometric/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "register", response: credential }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok || !verifyData.verified) {
-        throw new Error(verifyData.error || "Registration failed");
-      }
-
-      alert(t("auth.biometricRegistered"));
-
-      // Save device state
-      try {
-        localStorage.setItem(`has_biometric_${email.trim()}`, "true");
-        setDeviceHasBiometric(true);
-      } catch (e) {
-        // ignore
-      }
-    } catch (err: unknown) {
-      console.error("[biometric] Register error:", err);
-      setError(
-        err instanceof Error ? err.message : t("auth.biometricFailed")
-      );
     }
   }
 
@@ -547,90 +447,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-      </div>
-
-      {/* Biometric Activation Promo Modal */}
-      {showPromoModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
-            {/* Top illustrative icon banner */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 py-8 flex flex-col items-center justify-center text-white relative">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-3 animate-pulse">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-9 h-9"
-                >
-                  <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
-                  <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
-                  <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
-                  <path d="M2 12a10 10 0 0 1 18-6" />
-                  <path d="M2 17c2.3 2 4.87 3 7 3" />
-                  <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
-                  <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
-                  <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-center px-4">Kích hoạt Đăng nhập nhanh bằng Vân tay / Khuôn mặt?</h2>
-            </div>
-            
-            <div className="p-6">
-              <p className="text-sm text-slate-600 leading-relaxed text-center mb-6">
-                Bật tính năng này giúp bạn đăng nhập nhanh trong 1 giây cho các lần sau mà không cần gõ lại mật khẩu.
-              </p>
-              
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setShowPromoModal(false);
-                    await handleBiometricRegister();
-                    await redirectByRole();
-                  }}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md text-sm text-center flex items-center justify-center gap-2 hover:scale-[1.02]"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.25"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-4 h-4"
-                  >
-                    <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
-                    <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
-                    <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
-                    <path d="M2 12a10 10 0 0 1 18-6" />
-                    <path d="M2 17c2.3 2 4.87 3 7 3" />
-                    <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
-                    <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
-                    <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
-                  </svg>
-                  Quét vân tay để bật ngay
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setShowPromoModal(false);
-                    await redirectByRole();
-                  }}
-                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-all duration-200 text-xs text-center"
-                >
-                  Để sau
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>    </div>
   );
 }
