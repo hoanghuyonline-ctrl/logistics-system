@@ -156,6 +156,19 @@ All public routes are registered in `src/proxy.ts` `publicPaths`:
 - Knowledge article slugs auto-generated from Vietnamese titles for SEO
 - Each service module follows its own status workflow (not shared with Order/Shipment status enums)
 
+## Biometric Authentication (WebAuthn / Passkey) Rules
+- **Libraries used:** `@simplewebauthn/server` for backend verification, `@simplewebauthn/browser` for client registration/auth.
+- **Data model:** Authenticator credentials are saved in the `Credential` table linked to `User`.
+- **Management:** Users can register multiple fingerprints/passkeys via `/profile` (customer) or `/admin/settings` (admin).
+- **Trigger:** Authentication must be manual and opt-in (triggered by clicking "Đăng nhập bằng vân tay"), never automatically invoked on page load to prevent interface locks.
+- **Failures:** Failures must be caught with a simple `try-catch` showing a local message, and never lock the login page.
+
+## Multi-Currency & Border Logistics Rules
+- **Multi-Currency:** `currency` enum (`VND`, `CNY`) and `exchangeRate` must be recorded on each relevant transaction or order.
+- **Border Logistics Milestones:** Shipments progress through 5 key corridor nodes: `AT_GUANGZHOU_WAREHOUSE`, `AT_NANNING_TRANSIT`, `AT_PINGXIANG_BORDER`, `CUSTOMS_CLEARED_AT`, and `AT_VIETNAM_DISTRIBUTION`.
+- **Auditability:** Any status shift or pricing adjustment must create an append-only entry in `OrderTimelineLog` and `SystemAuditLog` to prevent ledger tampering.
+- **Expense Leak Protection:** If total operating expenses exceed 70% of pure service revenue, dashboard health indicators must trigger warning states.
+
 ## Current Priorities
 1. Enterprise product management and sales workflow refinements
 2. Vietnamese default locale across all new features
@@ -164,6 +177,6 @@ All public routes are registered in `src/proxy.ts` `publicPaths`:
 5. CI pipeline (build + typecheck must pass)
 6. Storage reliability (LOCAL default; R2/GDrive/GCS as alternatives)
 7. Production stability on Windows + PM2
-8. Mobile-responsive UI across all authenticated layouts
-9. Service request modules (Customs, Transport, Quotation, Knowledge) — expand and integrate
+8. Biometric WebAuthn stable operations and multi-fingerprint enrollment
+9. Border corridor logistics real-time dashboard analytics and cost containment
 10. Remaining roadmap: International Trade Services, Documents Menu

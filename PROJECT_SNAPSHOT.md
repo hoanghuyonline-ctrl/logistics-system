@@ -1,8 +1,8 @@
 # Project Snapshot — VN Logistics System
 
-**Date:** 2026-05-24 (synced)
+**Date:** 2026-05-29 (synced)
 **Branch:** `main`
-**Latest stable commit:** Post PR #392 (Online Quotation Form) — Order form UI upgrade, multi-type orders (Ecommerce/Entrust/Consignment), enhanced entrust XNK (FCL/LCL, dimensions, documents), customs services menu, knowledge/marketing CMS, domestic transport menu, online quotation form
+**Latest stable commit:** Integrated WebAuthn Biometric Authentication, Multi-Currency (VND/CNY), 5-Stage Border Milestones, and Advanced Operations Dashboard (Health Lights, stuck-shipment anomaly flowchart, "Cá Trê Há Miệng" interactive SVG chart, AI forecast, and print-ready strategy reporting).
 
 ---
 
@@ -53,7 +53,7 @@
 - **Vietnamese-First Admin/Accountant/Customer UI Text** (PR #43) — Remaining scoped Admin, Accountant, and Customer hardcoded English UI text converted to `useI18n()` with additive VI/EN/ZH keys; direct shared `Pagination` and `StatusBadge` labels localized; CI/typecheck compatibility updated so PR #43 passed GitHub CI
 - **CI Pipeline** — GitHub Actions workflow for npm ci, Prisma generate, lint, typecheck, and production build validation on push/pull_request
 - **Camera Barcode Scan** — Optional browser camera scan mode on warehouse scan pages, auto-submit through existing scan workflow, duplicate-scan cooldown, VI/EN/ZH translations
-- **Production Deployment Foundation** — Dockerfile and Docker Compose (optional, for local PostgreSQL dev); healthcheck endpoint; uploads volume persistence; .env.production.example; DEPLOYMENT.md. **Production runs on Windows + PM2 (not Docker)**
+- **Production Deployment Foundation** — Cwd folder, Windows Server Service startup scripts, .env.production.example, DEPLOYMENT_PM2.md and DEPLOYMENT_WINDOWS.md. **Production runs natively on Windows + PM2 (Docker standalone mode is not supported in production).**
 - **PM2 Production Setup** (PR #50) — `ecosystem.config.js` for PM2 process management on Windows server; production `next start` instead of `npm run dev`; auto-restart on crash/reboot via `pm2-windows-startup`; structured logging to `logs/`; DEPLOYMENT_PM2.md with full command reference
 - **Accountant Dashboard** — Dedicated `(accountant)` route group with role guard, financial KPIs (revenue, profit, debt, deposits, pending payments), recent transactions table, order status summary, `/api/accountant/dashboard` API, VI/EN/ZH translations
 - **Accountant Profit API Access** — ACCOUNTANT role added to `/api/analytics/profit` role check, unlocking finance page for accountants
@@ -237,6 +237,27 @@
   - **Backward compatible**: existing products with null fields render fine; `imageUrl` field preserved
 
 - **Delete Product** (PR #379) — `DELETE /api/products/[id]` endpoint (admin-only); red "Xóa" button in product list next to "Sửa"; browser `confirm()` dialog before deletion; success/error toast + auto-refresh product list; foreign key protection surfaces error via toast if product has linked SalesRequests
+
+- **Biometric WebAuthn Authentication (PR #395)** — Complete implementation of Passkey / Biometric finger-scan authentication.
+  - **Prisma Schema:** Added `Credential` model linked to `User` to save authenticator credentials (credentialID, publicKey, counter, transports, deviceType, backedUp).
+  - **Dependencies:** Integrated `@simplewebauthn/server` for backend verification and `@simplewebauthn/browser` for frontend enrollment/login.
+  - **API Routes:** Implemented `GET/POST /api/auth/webauthn/register` (registration options & verification), `GET/POST /api/auth/webauthn/authenticate` (assertion options & verification), and `DELETE /api/auth/webauthn/credentials/[id]` (deleting registered fingerprints).
+  - **User Portal UI:** Integrated multi-fingerprint registration, listing, and deletion under `/profile` (customer) and `/admin/settings` (admin).
+  - **Robust Login Flow:** Restored the standard email/password login as the primary entry point; biometric trigger is purely manual and opt-in via a dedicated "Đăng nhập bằng vân tay" button with try-catch block for graceful alert display if canceled or unsupported.
+
+- **Multi-Currency & Border Logistics Architecture (PR #396)** — Core database extension and backend transition rules to support multi-national logistics along the China-Vietnam border corridor.
+  - **Prisma Schema:** Added `Currency` ENUM (VND/CNY) to `Order` and `OperatingExpense`. Integrated append-only audit persistence with `SystemAuditLog` and `OrderTimelineLog` models.
+  - **Border Milestones:** Expanded `OrderStatus` with 5 granular transition stages: `AT_GUANGZHOU_WAREHOUSE`, `AT_NANNING_TRANSIT`, `AT_PINGXIANG_BORDER`, `CUSTOMS_CLEARED_AT`, and `AT_VIETNAM_DISTRIBUTION`.
+  - **Operational Costs:** Added `OperatingExpense` model with fields for cargo handling (`handling`), loading (`loading`), custom declaration fees (`customs`), fuel (`fuel`), and miscellaneous expenses (`other`) associated with individual orders.
+  - **Centralized Logic:** Maintained type-safety across transition segments and mappings (`ORDER_TO_SHIPMENT`, status colors/labels).
+
+- **Premium Operations & Expense Leak Prevention Dashboard (PR #397)** — Highly interactive, over-engineered dashboard featuring high-performance cost management controls.
+  - **"Health Lights" KPI Badges:** Integrated real-time status indicators (Green/Yellow/Red) alerting to "Expense Leaking" (when total operating expenses exceed 70% of pure service revenue) and customer debt levels.
+  - **Border Status Timeline Flowchart:** Rendered an interactive horizontal flowchart of the 5 border corridor milestones, equipped with real-time anomaly detection blinking red if a shipment stays stalled for >48 hours at the Pingxiang border or Customs.
+  - **"Cá Trê Há Miệng" Custom SVG Chart:** Built a high-fidelity, interactive dual-line chart comparing service revenue vs. operating expenses with HUD hovering tooltips.
+  - **7-day AI Predictive Forecast:** Displays forecasted border volume and costs based on moving averages.
+  - **Strategy Report Export:** Implemented a print-formatted CSR-friendly Strategy Report export.
+
 - **HOTFIX: Standalone Deploy CSS/Static Fix** (PR #255) — Root cause: Next.js `output: "standalone"` does NOT copy `.next/static/` or `public/` into standalone output; when running `pm2 start .next\standalone\server.js`, all CSS/JS/fonts/images return 404; landing page appears as unstyled raw HTML. Fix: deploy helper scripts (`scripts/deploy-standalone.sh` for Linux, `scripts/deploy-standalone.ps1` for Windows) that automate build → copy static → copy public → copy Prisma; updated `DEPLOYMENT_PM2.md` with standalone deploy section explaining the copy requirement and why CSS breaks without it; no code changes, no schema changes, no new dependencies
 - **HOTFIX: Infinite Dashboard Loading** (PR #256) — All 5 dashboard pages (customer, admin, warehouse CN, warehouse VN, accountant) had zero error handling on API fetches; if any fetch failed (DB timeout, auth error, non-200 response), `setLoading(false)` never executed → infinite "Đang tải..." spinner. Fix: added `try/catch` + response status checking to all dashboard fetch calls; on failure shows Vietnamese error UI ("Không thể tải dữ liệu") with reload button; `setLoading(false)` always executes via `finally`; no schema changes
 - **HOTFIX: Dashboard API Auth + Prisma Standalone** (PR #264) — `/api/health` was blocked by auth middleware (proxy.ts `publicPaths`), returning 401 for Docker/nginx healthchecks and preventing the app container from reaching "healthy" state; added `/api/health` to `publicPaths`. Also added `@prisma/adapter-pg` to `serverExternalPackages` in `next.config.ts` so the Prisma adapter is properly externalized alongside `@prisma/client` in standalone builds, preventing module-state mismatch in Docker/standalone deployments.
