@@ -46,14 +46,6 @@ export async function POST(req: NextRequest) {
 
     // --- REGISTER ---
     if (mode === "register") {
-      // Require an active session to register a passkey
-      const session = await getServerSession(authOptions);
-      if (!session?.user) {
-        return NextResponse.json(
-          { error: "You must be signed in to register a passkey." },
-          { status: 401 }
-        );
-      }
 
       const verification = await verifyRegistrationResponse({
         response: response as RegistrationResponseJSON,
