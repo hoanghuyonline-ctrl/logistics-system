@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
+import { startRegistration, browserSupportsWebAuthn } from "@simplewebauthn/browser";
 
 const CONFIG_LABELS: Record<string, { ready: string; missing: string }> = {
   ZALO_SEND_ENABLED: { ready: "Đã bật gửi tin nhắn", missing: "Chưa bật — cần đặt = true" },
@@ -219,6 +220,10 @@ export default function SettingsPage() {
   const [appDomainLoaded, setAppDomainLoaded] = useState(false);
   const [appDomainSaving, setAppDomainSaving] = useState(false);
   const [appDomainError, setAppDomainError] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [webAuthnSupported, setWebAuthnSupported] = useState(false);
+  const [deviceHasBiometric, setDeviceHasBiometric] = useState(false);
+  const [biometricRegistering, setBiometricRegistering] = useState(false);
 
   const loadNotifConfigs = useCallback(async () => {
     try {
@@ -287,6 +292,27 @@ export default function SettingsPage() {
       })
       .catch(() => {})
       .finally(() => setStorageLoading(false));
+
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.email) {
+          setAdminEmail(d.email);
+          try {
+            const stored = localStorage.getItem(`has_biometric_${d.email}`);
+            setDeviceHasBiometric(stored === "true");
+          } catch {
+            setDeviceHasBiometric(false);
+          }
+        }
+      })
+      .catch(() => {});
+
+    try {
+      setWebAuthnSupported(browserSupportsWebAuthn());
+    } catch {
+      setWebAuthnSupported(false);
+    }
   }, [loadNotifConfigs]);
 
   async function save(e: React.FormEvent) {
@@ -427,6 +453,62 @@ export default function SettingsPage() {
     }
   }
 
+  async function registerBiometric() {
+    if (!adminEmail) return;
+    setBiometricRegistering(true);
+    try {
+      const optRes = await fetch("/api/auth/biometric/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "register", email: adminEmail }),
+      });
+
+      if (!optRes.ok) {
+        const data = await optRes.json();
+        throw new Error(data.error || "Không thể lấy thông tin đăng ký");
+      }
+
+      const { options } = await optRes.json();
+
+      if (options.authenticatorSelection) {
+        options.authenticatorSelection.userVerification = "preferred";
+      }
+
+      const credential = await startRegistration(options);
+
+      const verifyRes = await fetch("/api/auth/passkey/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: credential }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.verified) {
+        throw new Error(verifyData.error || "Xác thực thiết bị thất bại");
+      }
+
+      localStorage.setItem(`has_biometric_${adminEmail}`, "true");
+      setDeviceHasBiometric(true);
+      toast("Kích hoạt Đăng nhập nhanh bằng Vân tay/Thiết bị thành công!", "success");
+    } catch (err: any) {
+      console.error("[biometric-register] Error:", err);
+      toast(err.message || "Không thể đăng ký sinh trắc học trên thiết bị này.", "error");
+    } finally {
+      setBiometricRegistering(false);
+    }
+  }
+
+  function unregisterBiometric() {
+    if (!adminEmail) return;
+    try {
+      localStorage.removeItem(`has_biometric_${adminEmail}`);
+      setDeviceHasBiometric(false);
+      toast("Đã hủy liên kết Đăng nhập nhanh trên thiết bị này.", "success");
+    } catch {
+      // ignore
+    }
+  }
+
   if (loading) return <LoadingSpinner text="Đang tải cài đặt..." />;
 
   const fields = [
@@ -516,6 +598,64 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl">
       <PageHeader title="Cài đặt hệ thống" subtitle="Cấu hình phí, tỷ giá, cước vận chuyển và kênh thông báo" />
+
+      {/* Premium FIDO2/Passkey Biometric Registration Card for Admin/Shop Owner */}
+      <Card title="🔐 Bảo mật Sinh trắc học Admin (Passkeys / FIDO2)">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Kích hoạt tính năng này cho phép bạn (Tài khoản Admin / Chủ shop) đăng nhập nhanh vào hệ thống bằng Vân tay, Khuôn mặt (Face ID / Windows Hello) hoặc mã khóa màn hình của thiết bị mà không cần nhập mật khẩu.
+          </p>
+
+          {!webAuthnSupported ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-xs leading-relaxed">
+              ⚠️ Trình duyệt của bạn hiện tại không hỗ trợ hoặc đang chặn xác thực WebAuthn (Có thể do bạn đang sử dụng Chế độ ẩn danh / Incognito). Vui lòng thử lại trên trình duyệt chuẩn.
+            </div>
+          ) : deviceHasBiometric ? (
+            <div className="space-y-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex gap-3 items-center">
+                <span className="text-emerald-600 text-xl">✓</span>
+                <div className="text-xs text-emerald-800 font-medium">
+                  Hệ thống đã nhận diện được khóa liên kết Đăng nhập nhanh đang hoạt động cho tài khoản của bạn trên thiết bị này!
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={registerBiometric}
+                  disabled={biometricRegistering}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all duration-200"
+                >
+                  {biometricRegistering ? "Đang xử lý..." : "Đăng ký thêm thiết bị"}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={unregisterBiometric}
+                  className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all duration-200"
+                >
+                  Hủy liên kết thiết bị này
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <button
+                type="button"
+                onClick={registerBiometric}
+                disabled={biometricRegistering}
+                className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 hover:shadow disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {biometricRegistering ? (
+                  <span>Đang kích hoạt...</span>
+                ) : (
+                  <span>🔐 Kích hoạt đăng nhập bằng Khuôn mặt / Vân tay</span>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      </Card>
 
       <Card title="Domain hệ thống (System Domain)">
         {!appDomainLoaded ? (
