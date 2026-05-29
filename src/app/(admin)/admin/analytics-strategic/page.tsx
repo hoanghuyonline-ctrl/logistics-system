@@ -16,16 +16,45 @@ interface Snapshot {
   createdAt: string;
 }
 
-export default function AnalyticsStrategicDashboard() {
+interface PipelineStage {
+  stage: string;
+  count: number;
+  stuckCount: number;
+  hasAnomaly: boolean;
+}
+
+interface WalletStats {
+  totalWallets: number;
+  totalWalletBalance: number;
+  totalWalletDebt: number;
+}
+
+interface HighRiskWallet {
+  id: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  balance: number;
+  debt: number;
+}
+
+export default function AnalyticsStrategicDashboardV2() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  
+  // Dashboard state
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
+  const [wallets, setWallets] = useState<WalletStats>({ totalWallets: 0, totalWalletBalance: 0, totalWalletDebt: 0 });
+  const [highRisk, setHighRisk] = useState<HighRiskWallet[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form State
+  // Modal form states
   const [periodType, setPeriodType] = useState("MONTHLY");
   const [targetDate, setTargetDate] = useState(new Date().toISOString().split("T")[0]);
   const [grossRevenue, setGrossRevenue] = useState("");
@@ -38,13 +67,35 @@ export default function AnalyticsStrategicDashboard() {
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
   };
 
+  const getStageLabel = (stage: string) => {
+    switch (stage) {
+      case "AT_GUANGZHOU_WAREHOUSE":
+        return "Kho Quảng Châu";
+      case "AT_NANNING_TRANSIT":
+        return "Trung chuyển Nam Ninh";
+      case "AT_PINGXIANG_BORDER":
+        return "Cửa khẩu Bằng Tường";
+      case "CUSTOMS_CLEARED_AT":
+        return "Thông quan Lạng Sơn";
+      case "AT_VIETNAM_DISTRIBUTION":
+        return "Trung tâm phân phối VN";
+      default:
+        return stage;
+    }
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/admin/analytics-strategic");
       if (!res.ok) throw new Error("Failed to load");
       const data = await res.json();
-      setSnapshots(data || []);
+      
+      setSnapshots(data.snapshots || []);
+      setPipeline(data.pipeline || []);
+      setWallets(data.wallets || { totalWallets: 0, totalWalletBalance: 0, totalWalletDebt: 0 });
+      setHighRisk(data.highRiskWallets || []);
+      
       setError(false);
     } catch (err) {
       console.error("[analytics-strategic] error loading:", err);
@@ -61,7 +112,7 @@ export default function AnalyticsStrategicDashboard() {
       const user = session?.user as any;
       const role = user?.role;
       if (role !== "ADMIN" && role !== "ACCOUNTANT") {
-        // Access check
+        // Access restricted
       } else {
         loadData();
       }
@@ -154,7 +205,7 @@ export default function AnalyticsStrategicDashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 bg-slate-50 rounded-3xl p-6">
         <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-500 font-medium font-sans">Đang đồng bộ số liệu tài chính chiến lược...</p>
+        <p className="text-slate-500 font-medium font-sans">Đang đồng bộ số liệu tài chính chiến lược v2...</p>
       </div>
     );
   }
@@ -180,52 +231,22 @@ export default function AnalyticsStrategicDashboard() {
     );
   }
 
-  // Calculate high-level KPIs based on the latest snapshot
+  // Extract financial KPIs
   const latestSnapshot = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
-
   const currentRevenue = latestSnapshot ? Number(latestSnapshot.grossServiceRevenue) : 0;
   const currentExpenses = latestSnapshot ? Number(latestSnapshot.operatingExpenses) : 0;
   const currentProfit = latestSnapshot ? Number(latestSnapshot.netProfit) : 0;
   const currentLiquidity = latestSnapshot ? Number(latestSnapshot.cashLiquidity) : 0;
   const currentObligations = latestSnapshot ? Number(latestSnapshot.totalObligations) : 0;
 
-  // Calculate cash liquidity safety ratio
+  // Calculate balance sheet metrics
+  const totalOutstandingDebt = wallets.totalWalletDebt;
   const liquidityRatio = currentObligations > 0 ? currentLiquidity / currentObligations : 0;
-  let liquidityHealth = { label: "N/A", color: "text-slate-400", bg: "bg-slate-100", barColor: "bg-slate-300", desc: "Không đủ dữ liệu phân tích." };
-
-  if (latestSnapshot) {
-    if (liquidityRatio >= 1.5) {
-      liquidityHealth = {
-        label: "TỐI ƯU (Hệ số an toàn)",
-        color: "text-emerald-600",
-        bg: "bg-emerald-50 border border-emerald-100",
-        barColor: "bg-emerald-500",
-        desc: "Hệ số thanh khoản cực kỳ vững chắc. Lượng tiền mặt sẵn có hoàn toàn bao phủ tất cả nghĩa vụ công nợ."
-      };
-    } else if (liquidityRatio >= 1.0) {
-      liquidityHealth = {
-        label: "TRUNG BÌNH (Cần giám sát)",
-        color: "text-amber-600",
-        bg: "bg-amber-50 border border-amber-100",
-        barColor: "bg-amber-500",
-        desc: "Tiền mặt khả dụng vừa đủ bao phủ nghĩa vụ chi trả ngắn hạn. Khuyến cáo kiểm soát dòng tiền thu nợ từ khách hàng."
-      };
-    } else {
-      liquidityHealth = {
-        label: "CẢNH BÁO RỦI RO",
-        color: "text-rose-600",
-        bg: "bg-rose-50 border border-rose-100 animate-pulse",
-        barColor: "bg-rose-500",
-        desc: "Tiền mặt khả dụng hiện tại KHÔNG đủ bao phủ nghĩa vụ chi trả ngắn hạn cho nhà xe/cảng biên giới. Yêu cầu cấp bổ sung vốn lưu động!"
-      };
-    }
-  }
-
-  // Draw simple SVG line chart comparing history
+  
+  // Visual chart parameters
   const chartWidth = 700;
-  const chartHeight = 220;
-  const padding = 30;
-
+  const chartHeight = 200;
+  const padding = 35;
   const pointsRev: string[] = [];
   const pointsExp: string[] = [];
   const pointsProf: string[] = [];
@@ -234,16 +255,13 @@ export default function AnalyticsStrategicDashboard() {
     const revs = snapshots.map(s => Number(s.grossServiceRevenue));
     const exps = snapshots.map(s => Number(s.operatingExpenses));
     const profs = snapshots.map(s => Number(s.netProfit));
+    const maxVal = Math.max(...revs, ...exps, ...profs, 100000000) * 1.15;
 
-    const maxVal = Math.max(...revs, ...exps, ...profs, 100000000) * 1.1;
-
-    snapshots.forEach((snap, index) => {
-      const x = padding + (index * (chartWidth - padding * 2)) / (snapshots.length - 1);
-      
+    snapshots.forEach((snap, idx) => {
+      const x = padding + (idx * (chartWidth - padding * 2)) / (snapshots.length - 1);
       const yRev = chartHeight - padding - (Number(snap.grossServiceRevenue) * (chartHeight - padding * 2)) / maxVal;
       const yExp = chartHeight - padding - (Number(snap.operatingExpenses) * (chartHeight - padding * 2)) / maxVal;
       const yProf = chartHeight - padding - (Number(snap.netProfit) * (chartHeight - padding * 2)) / maxVal;
-
       pointsRev.push(`${x},${yRev}`);
       pointsExp.push(`${x},${yExp}`);
       pointsProf.push(`${x},${yProf}`);
@@ -251,267 +269,359 @@ export default function AnalyticsStrategicDashboard() {
   }
 
   return (
-    <div className="space-y-8 font-sans">
+    <div className="space-y-8 font-sans pb-12">
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <div>
-          <span className="px-3 py-1 bg-amber-50 text-amber-700 font-semibold rounded-full text-xs uppercase tracking-wider block w-fit mb-2">
-            Shareholder Suite
+          <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-full text-[10px] uppercase tracking-wider block w-fit mb-2">
+            Shareholder Dashboard v2
           </span>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
-            Bảng Phân Tích Chiến Lược Cổ Đông
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+            Báo Cáo Sức Khỏe & Biên Giới Chiến Lược
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Theo dõi vĩ mô sức khỏe tài chính, lãi thực tính, thanh khoản dòng tiền.
+            Độc lập tài chính cổ đông, cân đối công nợ, quản trị rủi ro dòng tiền vĩ mô.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={handleSeedMockData}
-            className="px-4 py-2 text-xs font-semibold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 transition-all font-sans"
+            className="px-4 py-2 text-xs font-bold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 transition-all font-sans"
           >
-            📊 Tạo Dữ Liệu Mẫu
+            📊 Reset Dữ Liệu Mẫu
           </button>
           
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all font-sans"
+            className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all font-sans"
           >
-            🖨️ Xuất Báo Cáo
+            🖨️ In Báo Cáo
           </button>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl shadow-md hover:shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans"
+            className="px-5 py-2.5 text-sm font-extrabold text-white bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl shadow-md hover:shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans"
           >
-            ✍️ Nhập Số Liệu Mới
+            ✍️ Ghi Nhận Số Liệu
           </button>
         </div>
       </div>
 
-      {latestSnapshot ? (
-        <>
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {/* Revenue */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Doanh Thu Dịch Vụ Thuần</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-2 truncate">
-                {formatVND(currentRevenue)}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">Loại trừ giá trị gốc hàng hóa</p>
-            </div>
-
-            {/* Expenses */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-rose-600"></div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chi Phí Vận Hành Biên Giới</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-2 truncate">
-                {formatVND(currentExpenses)}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">Thông quan, nâng hạ, vận chuyển</p>
-            </div>
-
-            {/* Net Profit */}
-            <div className="bg-white p-6 rounded-3xl border border-emerald-100 shadow-md relative overflow-hidden group bg-gradient-to-b from-white to-emerald-50/20">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-600"></div>
-              <p className="text-emerald-700 text-xs font-bold uppercase tracking-wider">Lợi Nhuận Thực Tính (Lãi)</p>
-              <h3 className="text-2xl font-black text-emerald-800 mt-2 truncate">
-                {formatVND(currentProfit)}
-              </h3>
-              <p className="text-xs text-emerald-600 font-semibold mt-1">
-                Tỷ suất: {currentRevenue > 0 ? ((currentProfit / currentRevenue) * 100).toFixed(1) : 0}%
-              </p>
-            </div>
-
-            {/* Cash Liquidity */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Thanh Khoản Khả Dụng</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-2 truncate">
-                {formatVND(currentLiquidity)}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">Tài khoản VietinBank + Quỹ mặt</p>
-            </div>
-
-            {/* Obligations */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-purple-600"></div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Nghĩa Vụ Công Nợ Phải Trả</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-2 truncate">
-                {formatVND(currentObligations)}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">Công nợ xe Trung Quốc/hải quan</p>
-            </div>
+      {/* 1. PIPELINE BIÊN GIỚI (5-stage metrics) */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-black text-slate-800">1. Luồng Di Chuyển Hàng Hóa Biên Giới (5 Chặng)</h3>
+            <p className="text-slate-400 text-xs mt-1">Theo dõi thời gian thực lưu lượng hàng vận chuyển Trung - Việt.</p>
           </div>
+          <span className="px-2.5 py-1 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">LIVE</span>
+        </div>
 
-          {/* Dòng tiền Health Indicator & Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Liquidity Health Meter */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-800 mb-2">Thước Đo Sức Khỏe Thanh Khoản</h3>
-                <p className="text-slate-500 text-xs mb-4">
-                  Tỷ lệ tiền mặt khả dụng trên tổng nghĩa vụ công nợ hiện hữu.
-                </p>
-
-                <div className={`p-4 rounded-2xl mb-4 ${liquidityHealth.bg}`}>
-                  <span className={`text-xs font-bold uppercase ${liquidityHealth.color}`}>
-                    {liquidityHealth.label}
-                  </span>
-                  <div className="text-2xl font-black text-slate-800 mt-1">
-                    {liquidityRatio.toFixed(2)}x
-                  </div>
-                  <p className="text-slate-600 text-xs mt-2 leading-relaxed">
-                    {liquidityHealth.desc}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                {/* Visual bar slider */}
-                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-2">
-                  <div
-                    className={`h-full ${liquidityHealth.barColor} transition-all duration-500`}
-                    style={{ width: `${Math.min(liquidityRatio * 50, 100)}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase">
-                  <span>Rủi Ro (&lt; 1.0x)</span>
-                  <span>An Toàn (1.5x+)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Strategic Trend Chart */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm lg:col-span-2">
-              <h3 className="text-base font-bold text-slate-800 mb-4">Xu Hướng Lợi Nhuận Tài Chính</h3>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
+          {pipeline.map((stage, idx) => (
+            <div 
+              key={stage.stage} 
+              className={`p-5 rounded-2xl border transition-all relative overflow-hidden ${
+                stage.hasAnomaly 
+                  ? "bg-rose-50/50 border-rose-200 hover:border-rose-300" 
+                  : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
+              }`}
+            >
+              {stage.hasAnomaly && (
+                <div className="absolute top-0 right-0 w-3 h-3 bg-rose-500 rounded-bl-xl animate-pulse"></div>
+              )}
+              <span className="text-2xl font-black text-slate-300 block mb-1">0{idx + 1}</span>
+              <p className="text-slate-700 text-xs font-bold truncate">{getStageLabel(stage.stage)}</p>
               
-              {snapshots.length > 1 ? (
-                <div className="w-full overflow-x-auto">
-                  <div className="min-w-[600px] flex items-center justify-center">
-                    <svg width={chartWidth} height={chartHeight} className="overflow-visible">
-                      {/* Grid lines */}
-                      <line x1={padding} y1={padding} x2={chartWidth - padding} y2={padding} stroke="#f1f5f9" strokeWidth="1" />
-                      <line x1={padding} y1={chartHeight / 2} x2={chartWidth - padding} y2={chartHeight / 2} stroke="#f1f5f9" strokeWidth="1" />
-                      <line x1={padding} y1={chartHeight - padding} x2={chartWidth - padding} y2={chartHeight - padding} stroke="#e2e8f0" strokeWidth="1.5" />
+              <div className="flex items-baseline gap-2 mt-4">
+                <span className="text-3xl font-black text-slate-800">{stage.count}</span>
+                <span className="text-slate-400 text-xs font-semibold">đơn</span>
+              </div>
 
-                      {/* Paths */}
-                      <polyline fill="none" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={pointsRev.join(" ")} />
-                      <polyline fill="none" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pointsExp.join(" ")} />
-                      <polyline fill="none" stroke="#10b981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" points={pointsProf.join(" ")} />
-
-                      {/* Vertices & Nodes */}
-                      {snapshots.map((snap, idx) => {
-                        const x = padding + (idx * (chartWidth - padding * 2)) / (snapshots.length - 1);
-                        const revs = snapshots.map(s => Number(s.grossServiceRevenue));
-                        const exps = snapshots.map(s => Number(s.operatingExpenses));
-                        const profs = snapshots.map(s => Number(s.netProfit));
-                        const maxVal = Math.max(...revs, ...exps, ...profs, 100000000) * 1.1;
-
-                        const yRev = chartHeight - padding - (Number(snap.grossServiceRevenue) * (chartHeight - padding * 2)) / maxVal;
-                        const yProf = chartHeight - padding - (Number(snap.netProfit) * (chartHeight - padding * 2)) / maxVal;
-
-                        const dateText = new Date(snap.targetDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "2-digit" });
-
-                        return (
-                          <g key={idx} className="group/node">
-                            <circle cx={x} cy={yRev} r="5" fill="#f59e0b" className="hover:r-7 transition-all cursor-pointer" />
-                            <circle cx={x} cy={yProf} r="6" fill="#10b981" className="hover:r-8 transition-all cursor-pointer" />
-                            <text x={x} y={chartHeight - 8} textAnchor="middle" className="text-[10px] fill-slate-400 font-bold">
-                              {dateText}
-                            </text>
-                          </g>
-                        );
-                      })}
-                    </svg>
-                  </div>
-                  <div className="flex justify-center gap-6 mt-3 text-xs font-bold">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-1 bg-amber-500 rounded-full"></span>
-                      <span className="text-slate-600">Doanh Thu Thuần</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-1 bg-rose-500 rounded-full"></span>
-                      <span className="text-slate-600">Chi Phí Vận Hành</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-1 bg-emerald-500 rounded-full"></span>
-                      <span className="text-emerald-700">Lợi Nhuận (Lãi Thực)</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-48 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                  <p className="text-slate-400 text-xs">Cần ít nhất 2 bản ghi số liệu để dựng biểu đồ so sánh.</p>
+              {stage.hasAnomaly && (
+                <div className="mt-3 p-1.5 bg-rose-100 rounded-lg text-[9px] font-extrabold text-rose-700 animate-pulse text-center">
+                  ⚠️ Ùn ứ: {stage.stuckCount} đơn (&gt;48h)
                 </div>
               )}
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Snapshot Table */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-base font-bold text-slate-800 mb-4">Sổ Nhật Ký Số Liệu Cổ Đông</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 font-bold">
-                    <th className="pb-3 pl-4">Kỳ Báo Cáo</th>
-                    <th className="pb-3">Ngày Ghi Nhận</th>
-                    <th className="pb-3 text-right">Doanh Thu</th>
-                    <th className="pb-3 text-right">Chi Phí Vận Hành</th>
-                    <th className="pb-3 text-right">Lợi Nhuận Ròng</th>
-                    <th className="pb-3 text-right">Thanh Khoản (Cash)</th>
-                    <th className="pb-3 text-right">Công Nợ Phải Trả</th>
-                    <th className="pb-3 text-center pr-4">Thao Tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {snapshots.map((snap) => (
-                    <tr key={snap.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3.5 pl-4 font-semibold text-slate-700">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          snap.periodType === "DAILY" ? "bg-blue-50 text-blue-700" :
-                          snap.periodType === "MONTHLY" ? "bg-amber-50 text-amber-700" : "bg-purple-50 text-purple-700"
-                        }`}>
-                          {snap.periodType}
-                        </span>
-                      </td>
-                      <td className="py-3.5 text-slate-500 font-medium">
-                        {new Date(snap.targetDate).toLocaleDateString("vi-VN")}
-                      </td>
-                      <td className="py-3.5 text-right font-semibold text-slate-800">
-                        {formatVND(snap.grossServiceRevenue)}
-                      </td>
-                      <td className="py-3.5 text-right font-medium text-slate-600">
-                        {formatVND(snap.operatingExpenses)}
-                      </td>
-                      <td className="py-3.5 text-right font-extrabold text-emerald-600">
-                        {formatVND(snap.netProfit)}
-                      </td>
-                      <td className="py-3.5 text-right font-medium text-slate-800">
-                        {formatVND(snap.cashLiquidity)}
-                      </td>
-                      <td className="py-3.5 text-right font-medium text-slate-600">
-                        {formatVND(snap.totalObligations)}
-                      </td>
-                      <td className="py-3.5 text-center pr-4">
-                        <button
-                          onClick={() => handleDelete(snap.id)}
-                          className="px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-sans"
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* 2. CÂN ĐỐI KẾ TOÁN VÀ TIỀN MẶT (Debt-to-liquidity Balance Sheet) & WALLET STATS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Balance Sheet Ledger */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between col-span-1 lg:col-span-2">
+          <div>
+            <h3 className="text-lg font-black text-slate-800 mb-2">2. Cân Đối Dòng Tiền & Công Nợ Lũy Kế</h3>
+            <p className="text-slate-400 text-xs mb-6">
+              Đo lường lượng tiền mặt so với nghĩa vụ chi trả và công nợ chưa thu hồi.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider block">Thanh Khoản (A)</span>
+                <span className="text-xl font-black text-slate-800 mt-2 block truncate">{formatVND(currentLiquidity)}</span>
+                <span className="text-[9px] text-slate-400 mt-1 block">Tài khoản khả dụng</span>
+              </div>
+              
+              <div className="p-4 bg-purple-50/50 border border-purple-100 rounded-2xl">
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider block">Công Nợ Phải Thu (B)</span>
+                <span className="text-xl font-black text-slate-800 mt-2 block truncate">{formatVND(totalOutstandingDebt)}</span>
+                <span className="text-[9px] text-slate-400 mt-1 block">Khách hàng còn nợ</span>
+              </div>
+
+              <div className="p-4 bg-rose-50/50 border border-rose-100 rounded-2xl">
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider block">Nghĩa Vụ Phải Trả (C)</span>
+                <span className="text-xl font-black text-slate-800 mt-2 block truncate">{formatVND(currentObligations)}</span>
+                <span className="text-[9px] text-slate-400 mt-1 block">Nợ nhà xe/hải quan</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 border border-slate-100 rounded-2xl">
+                <span className="text-slate-500 text-[10px] font-bold block uppercase mb-1">Chỉ số Thanh Khoản Tức Thời (A / C)</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-800">{liquidityRatio.toFixed(2)}x</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    liquidityRatio >= 1.5 ? "bg-emerald-50 text-emerald-700" :
+                    liquidityRatio >= 1.0 ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-700 animate-pulse"
+                  }`}>
+                    {liquidityRatio >= 1.5 ? "Ổn định" : liquidityRatio >= 1.0 ? "Giám sát" : "Nguy cơ cao"}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Lượng tiền mặt có sẵn để bao phủ nợ gốc chi trả tức thời.</p>
+              </div>
+
+              <div className="p-4 border border-slate-100 rounded-2xl">
+                <span className="text-slate-500 text-[10px] font-bold block uppercase mb-1">Tổng Hệ Số Phòng Vệ ((A + B) / C)</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-800">
+                    {currentObligations > 0 ? ((currentLiquidity + totalOutstandingDebt) / currentObligations).toFixed(2) : "0.00"}x
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Đầy đủ</span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Hệ số an toàn bao gồm cả khoản phải thu gối đầu.</p>
+              </div>
             </div>
           </div>
-        </>
+
+          <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>Đối soát: Tự động đối sánh hệ thống</span>
+            <span>Cập nhật: {latestSnapshot ? new Date(latestSnapshot.createdAt).toLocaleString("vi-VN") : "N/A"}</span>
+          </div>
+        </div>
+
+        {/* User Wallets aggregate */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-black text-slate-800 mb-2">3. Trạng Thái Quỹ Ví Khách Hàng</h3>
+            <p className="text-slate-400 text-xs mb-6">
+              Tổng số lượng và biến động dư nợ hiện tại trên toàn bộ ví điện tử.
+            </p>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl">
+                <div>
+                  <span className="text-slate-400 text-[10px] font-bold uppercase block">Tổng Số Lượng Ví</span>
+                  <span className="text-slate-800 text-base font-extrabold mt-1 block">{wallets.totalWallets} tài khoản</span>
+                </div>
+                <span className="text-2xl">💳</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 bg-emerald-50/50 rounded-2xl">
+                <div>
+                  <span className="text-emerald-700 text-[10px] font-bold uppercase block">Tổng Số Dư Khả Dụng</span>
+                  <span className="text-emerald-800 text-base font-extrabold mt-1 block">{formatVND(wallets.totalWalletBalance)}</span>
+                </div>
+                <span className="text-2xl">💰</span>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 bg-rose-50/50 rounded-2xl">
+                <div>
+                  <span className="text-rose-700 text-[10px] font-bold uppercase block">Tổng Nợ Khách Hàng Kỳ Này</span>
+                  <span className="text-rose-800 text-base font-extrabold mt-1 block">{formatVND(wallets.totalWalletDebt)}</span>
+                </div>
+                <span className="text-2xl">🚨</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-amber-50 rounded-xl text-[10px] text-amber-800 font-bold mt-6 leading-relaxed">
+            💡 Kế toán trưởng lưu ý kiểm soát các ví có khoản nợ lớn quá 7 ngày chưa được tất toán.
+          </div>
+        </div>
+      </div>
+
+      {/* 3. HIGH RISK NEGATIVE BALANCE TABLE */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-black text-slate-800">4. Danh Sách Khách Hàng Dư Nợ Cao Nhất</h3>
+            <p className="text-slate-400 text-xs mt-1">Cảnh báo rủi ro đọng vốn kinh doanh của cổ đông.</p>
+          </div>
+          <span className="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-full">Top 10 Dư Nợ</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 text-slate-400 font-bold">
+                <th className="pb-3 pl-4">Khách Hàng</th>
+                <th className="pb-3">Email liên hệ</th>
+                <th className="pb-3">Số điện thoại</th>
+                <th className="pb-3 text-right">Số Dư Quỹ</th>
+                <th className="pb-3 text-right pr-4">Khoản Nợ Phải Thu</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {highRisk.map((item) => (
+                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 pl-4 font-bold text-slate-800">{item.fullName}</td>
+                  <td className="py-3.5 text-slate-500 font-medium">{item.email}</td>
+                  <td className="py-3.5 text-slate-500 font-medium">{item.phone}</td>
+                  <td className="py-3.5 text-right font-bold text-slate-400">
+                    {formatVND(item.balance)}
+                  </td>
+                  <td className="py-3.5 text-right font-black text-rose-600 pr-4">
+                    {formatVND(item.debt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 4. FINANCIAL TREND CHART */}
+      {latestSnapshot && (
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="text-base font-bold text-slate-800 mb-6">Xu Hướng Lợi Nhuận Tài Chính</h3>
+          
+          {snapshots.length > 1 ? (
+            <div className="w-full overflow-x-auto">
+              <div className="min-w-[600px] flex items-center justify-center">
+                <svg width={chartWidth} height={chartHeight} className="overflow-visible">
+                  {/* Grid lines */}
+                  <line x1={padding} y1={padding} x2={chartWidth - padding} y2={padding} stroke="#f8fafc" strokeWidth="1" />
+                  <line x1={padding} y1={chartHeight / 2} x2={chartWidth - padding} y2={chartHeight / 2} stroke="#f8fafc" strokeWidth="1" />
+                  <line x1={padding} y1={chartHeight - padding} x2={chartWidth - padding} y2={chartHeight - padding} stroke="#f1f5f9" strokeWidth="1.5" />
+
+                  {/* Lines */}
+                  <polyline fill="none" stroke="#f59e0b" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" points={pointsRev.join(" ")} />
+                  <polyline fill="none" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pointsExp.join(" ")} />
+                  <polyline fill="none" stroke="#10b981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={pointsProf.join(" ")} />
+
+                  {/* Vertices */}
+                  {snapshots.map((snap, idx) => {
+                    const x = padding + (idx * (chartWidth - padding * 2)) / (snapshots.length - 1);
+                    const revs = snapshots.map(s => Number(s.grossServiceRevenue));
+                    const exps = snapshots.map(s => Number(s.operatingExpenses));
+                    const profs = snapshots.map(s => Number(s.netProfit));
+                    const maxVal = Math.max(...revs, ...exps, ...profs, 100000000) * 1.15;
+
+                    const yRev = chartHeight - padding - (Number(snap.grossServiceRevenue) * (chartHeight - padding * 2)) / maxVal;
+                    const yProf = chartHeight - padding - (Number(snap.netProfit) * (chartHeight - padding * 2)) / maxVal;
+                    const dateText = new Date(snap.targetDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "2-digit" });
+
+                    return (
+                      <g key={idx}>
+                        <circle cx={x} cy={yRev} r="4" fill="#f59e0b" />
+                        <circle cx={x} cy={yProf} r="5" fill="#10b981" />
+                        <text x={x} y={chartHeight - 8} textAnchor="middle" className="text-[10px] fill-slate-400 font-bold">
+                          {dateText}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              <div className="flex justify-center gap-6 mt-4 text-xs font-bold">
+                <div className="flex items-center gap-2">
+                  <span className="w-3.5 h-1 bg-amber-500 rounded-full"></span>
+                  <span className="text-slate-600">Doanh Thu Thuần</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3.5 h-1 bg-rose-500 rounded-full"></span>
+                  <span className="text-slate-600">Chi Phí Vận Hành</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3.5 h-1 bg-emerald-500 rounded-full"></span>
+                  <span className="text-emerald-700">Lợi Nhuận (Lãi Thực)</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-48 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <p className="text-slate-400 text-xs">Cần ít nhất 2 bản ghi số liệu để hiển thị biểu đồ.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. METRICS DIARY LEDGER */}
+      {snapshots.length > 0 ? (
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="text-base font-bold text-slate-800 mb-4">Sổ Nhật Ký Số Liệu Cổ Đông</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 font-bold">
+                  <th className="pb-3 pl-4">Kỳ Báo Cáo</th>
+                  <th className="pb-3">Ngày Ghi Nhận</th>
+                  <th className="pb-3 text-right">Doanh Thu Thuần</th>
+                  <th className="pb-3 text-right">Chi Phí Biên Giới</th>
+                  <th className="pb-3 text-right">Lợi Nhuận Ròng</th>
+                  <th className="pb-3 text-right">Thanh Khoản (A)</th>
+                  <th className="pb-3 text-right">Nghĩa Vụ Trả (C)</th>
+                  <th className="pb-3 text-center pr-4">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {snapshots.map((snap) => (
+                  <tr key={snap.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3.5 pl-4 font-semibold text-slate-700">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        snap.periodType === "DAILY" ? "bg-blue-50 text-blue-700" :
+                        snap.periodType === "MONTHLY" ? "bg-amber-50 text-amber-700" : "bg-purple-50 text-purple-700"
+                      }`}>
+                        {snap.periodType}
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-slate-500 font-medium">
+                      {new Date(snap.targetDate).toLocaleDateString("vi-VN")}
+                    </td>
+                    <td className="py-3.5 text-right font-bold text-slate-800">
+                      {formatVND(snap.grossServiceRevenue)}
+                    </td>
+                    <td className="py-3.5 text-right font-medium text-slate-600">
+                      {formatVND(snap.operatingExpenses)}
+                    </td>
+                    <td className="py-3.5 text-right font-black text-emerald-600">
+                      {formatVND(snap.netProfit)}
+                    </td>
+                    <td className="py-3.5 text-right font-medium text-slate-800">
+                      {formatVND(snap.cashLiquidity)}
+                    </td>
+                    <td className="py-3.5 text-right font-medium text-slate-600">
+                      {formatVND(snap.totalObligations)}
+                    </td>
+                    <td className="py-3.5 text-center pr-4">
+                      <button
+                        onClick={() => handleDelete(snap.id)}
+                        className="px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-sans"
+                      >
+                        Xóa
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
         <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center shadow-sm max-w-lg mx-auto">
           <span className="text-5xl block mb-4">📈</span>
@@ -588,9 +698,6 @@ export default function AnalyticsStrategicDashboard() {
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-amber-500 font-bold"
                   required
                 />
-                <span className="text-[10px] text-slate-400 font-medium mt-1 block">
-                  Doanh thu thuần thực tế phát sinh (phí dịch vụ mua hộ, phí vận chuyển)
-                </span>
               </div>
 
               <div>
@@ -605,13 +712,10 @@ export default function AnalyticsStrategicDashboard() {
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-amber-500 font-bold"
                   required
                 />
-                <span className="text-[10px] text-slate-400 font-medium mt-1 block">
-                  Tổng chi phí thông quan, xăng dầu, nâng hạ, bốc xếp...
-                </span>
               </div>
 
               <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
-                <span className="text-[10px] font-bold text-emerald-700 uppercase">Lợi Nhuận Thực Tính (Ước Tính)</span>
+                <span className="text-[10px] font-bold text-emerald-700 uppercase">Lợi Nhuận Ròng (Ước Tính)</span>
                 <div className="text-lg font-black text-emerald-800 mt-0.5 font-sans">
                   {formatVND(Number(grossRevenue || 0) - Number(opExpenses || 0))}
                 </div>
