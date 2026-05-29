@@ -123,7 +123,7 @@ export default function LoginPage() {
 
     // Guard: WebAuthn may be blocked in incognito / private mode
     if (!webAuthnSupported) {
-      router.push("/help/biometric");
+      setError(t("auth.biometricNotSupported") || "Thiết bị hoặc trình duyệt không hỗ trợ đăng nhập sinh trắc học.");
       return;
     }
 
@@ -141,8 +141,8 @@ export default function LoginPage() {
       if (!optRes.ok) {
         const data = await optRes.json();
         if (optRes.status === 404) {
-          // No passkey registered — redirect to help instructions
-          router.push("/help/biometric");
+          // No passkey registered — show smooth helper instead of redirecting
+          setError("Tài khoản chưa được kích hoạt Đăng nhập bằng thiết bị. Vui lòng sử dụng mật khẩu.");
           setBiometricLoading(false);
           return;
         }
@@ -159,7 +159,7 @@ export default function LoginPage() {
         credential = await startAuthentication(options);
       } catch (err: unknown) {
         console.error("OS biometric prompt error: ", err);
-        router.push("/help/biometric");
+        setError(t("auth.biometricCancelled") || "Xác thực sinh trắc học đã bị hủy");
         setBiometricLoading(false);
         return;
       }
@@ -212,8 +212,7 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       console.error("[biometric] Auth error:", err);
-      // Redirect to premium help/biometric route instead of displaying red text error
-      router.push("/help/biometric");
+      setError(t("auth.biometricFailed") || "Xác thực sinh trắc học thất bại. Vui lòng đăng nhập bằng mật khẩu.");
     } finally {
       setBiometricLoading(false);
     }
