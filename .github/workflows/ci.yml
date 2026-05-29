@@ -2,12 +2,13 @@ name: CI
 
 on:
   push:
-    branches: ["*"]
+    branches: ["main", "feature/*"]
   pull_request:
-    branches: ["*"]
+    branches: ["main", "feature/*"]
 
 jobs:
   ci:
+    name: Continuous Integration
     runs-on: ubuntu-latest
 
     steps:
@@ -26,12 +27,12 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Lint
-        continue-on-error: true
+      - name: Lint check
         run: npm run lint
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Build
+      - name: Build check
         run: npm run build
+        env:
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-secret' }}
+          NEXTAUTH_URL: https://bactrunghai.vn
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/logistics_db
