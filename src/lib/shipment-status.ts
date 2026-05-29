@@ -84,6 +84,11 @@ const ORDER_TO_SHIPMENT: Record<OrderStatus, ShipmentStatus> = {
   OUT_FOR_DELIVERY:     ShipmentStatus.OUT_FOR_DELIVERY,
   COMPLETED:            ShipmentStatus.DELIVERED,
   CANCELLED:            ShipmentStatus.CANCELLED,
+  AT_GUANGZHOU_WAREHOUSE: ShipmentStatus.RECEIVED_CHINA,
+  AT_NANNING_TRANSIT:     ShipmentStatus.SHIPPED_TO_VN,
+  AT_PINGXIANG_BORDER:    ShipmentStatus.SHIPPED_TO_VN,
+  CUSTOMS_CLEARED_AT:     ShipmentStatus.SHIPPED_TO_VN,
+  AT_VIETNAM_DISTRIBUTION: ShipmentStatus.IN_VN_WAREHOUSE,
 };
 
 const SHIPMENT_TO_ORDER: Record<ShipmentStatus, OrderStatus> = {
