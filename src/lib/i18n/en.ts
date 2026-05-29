@@ -80,6 +80,7 @@ const en: Record<string, string> = {
   "nav.channelLinking": "Notifications & Linking",
   "nav.notifications": "Notifications",
   "nav.profile": "Profile",
+  "nav.security": "Security Settings",
   "nav.users": "Users",
   "nav.orders": "Orders",
   "nav.packages": "Packages",

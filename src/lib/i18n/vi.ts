@@ -80,6 +80,7 @@ const vi: Record<string, string> = {
   "nav.channelLinking": "Thông báo & Liên kết",
   "nav.notifications": "Thông báo",
   "nav.profile": "Hồ sơ",
+  "nav.security": "Cài đặt bảo mật",
   "nav.users": "Người dùng",
   "nav.orders": "Đơn hàng",
   "nav.packages": "Kiện hàng",

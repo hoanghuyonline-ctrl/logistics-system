@@ -34,6 +34,7 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.issues", href: "/issues", icon: "📝" },
   { labelKey: "nav.channelLinking", href: "/notifications", icon: "🔔" },
   { labelKey: "nav.profile", href: "/profile", icon: "👤" },
+  { labelKey: "nav.security", href: "/profile", icon: "🔐" },
 ];
 
 const NOTIFICATION_NAV_ROLES = ["CUSTOMER", "ADMIN", "STAFF"];
@@ -105,6 +106,7 @@ const adminNavGroups: NavGroup[] = [
       { labelKey: "nav.systemHealth", href: "/admin/system-health", icon: "🩺" },
       { labelKey: "nav.auditLog", href: "/admin/audit-log", icon: "📝" },
       { labelKey: "nav.notificationFailures", href: "/admin/notification-failures", icon: "🔔" },
+      { labelKey: "nav.security", href: "/profile", icon: "🔐" },
     ],
   },
 ];
