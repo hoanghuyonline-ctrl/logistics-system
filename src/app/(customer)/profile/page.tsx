@@ -98,10 +98,10 @@ export default function ProfilePage() {
       const credential = await startRegistration(options);
 
       // 4. Verify credential on Server
-      const verifyRes = await fetch("/api/auth/biometric/verify", {
+      const verifyRes = await fetch("/api/auth/passkey/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "register", response: credential }),
+        body: JSON.stringify({ response: credential }),
       });
 
       const verifyData = await verifyRes.json();
