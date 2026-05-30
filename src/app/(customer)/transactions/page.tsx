@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
+import { ClipboardList } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -17,6 +18,17 @@ interface Transaction {
   description: string;
   createdAt: string;
   order: { orderCode: string } | null;
+}
+
+function decodeUnicode(str: string): string {
+  if (!str) return "";
+  try {
+    return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, grp) => {
+      return String.fromCharCode(parseInt(grp, 16));
+    });
+  } catch (e) {
+    return str;
+  }
 }
 
 export default function TransactionsPage() {
@@ -67,13 +79,13 @@ export default function TransactionsPage() {
                 )},
                 { label: t("transactions.balance"), value: parseFloat(tx.balanceAfter).toLocaleString() },
                 { label: t("common.date"), value: new Date(tx.createdAt).toLocaleDateString() },
-                { label: t("transactions.description"), value: tx.description, fullWidth: true },
+                { label: t("transactions.description"), value: decodeUnicode(tx.description), fullWidth: true },
               ]}
             />
           ))}
           {transactions.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-12">
-              <span className="text-3xl">📋</span>
+            <div className="flex flex-col items-center gap-3 py-12">
+              <ClipboardList className="w-10 h-10 text-slate-300" />
               <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
             </div>
           )}
@@ -105,7 +117,7 @@ export default function TransactionsPage() {
                     }`}>{t(`transactions.tx.${tx.type}`, tx.type.replace(/_/g, " "))}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-700 font-medium">{tx.order?.orderCode || "—"}</td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{tx.description}</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">{decodeUnicode(tx.description)}</td>
                   <td className={`px-6 py-4 text-right text-sm font-semibold ${["ORDER_PAYMENT", "MANUAL_DEDUCT", "SALES_PAYMENT"].includes(tx.type) ? "text-red-600" : "text-emerald-600"}`}>
                     {["ORDER_PAYMENT", "MANUAL_DEDUCT", "SALES_PAYMENT"].includes(tx.type) ? "-" : "+"}{parseFloat(tx.amount).toLocaleString()}
                   </td>
@@ -115,8 +127,8 @@ export default function TransactionsPage() {
               {transactions.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-3xl">📋</span>
+                    <div className="flex flex-col items-center gap-3">
+                      <ClipboardList className="w-10 h-10 text-slate-300" />
                       <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
                     </div>
                   </td>

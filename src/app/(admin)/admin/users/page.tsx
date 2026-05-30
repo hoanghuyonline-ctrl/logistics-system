@@ -51,7 +51,8 @@ export default function UsersPage() {
   const { toast } = useToast();
   const currentUserId = (session?.user as Record<string, unknown>)?.id as string | undefined;
   const currentRole = (session?.user as Record<string, unknown>)?.role as string | undefined;
-  const isStaff = currentRole === "STAFF";
+  const isAuthorizedToEdit = currentRole === "ADMIN" || currentRole === "SUPER_ADMIN";
+  const isStaff = currentRole === "STAFF" || currentRole === "COORDINATOR";
   const [users, setUsers] = useState<User[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -111,6 +112,7 @@ export default function UsersPage() {
 
   async function createUser(e: React.FormEvent) {
     e.preventDefault();
+    if (!isAuthorizedToEdit) return;
     setCreateError("");
     const res = await fetch("/api/users", {
       method: "POST",
@@ -128,6 +130,7 @@ export default function UsersPage() {
   }
 
   async function toggleActive(userId: string, isActive: boolean) {
+    if (!isAuthorizedToEdit) return;
     await fetch(`/api/users/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -137,6 +140,7 @@ export default function UsersPage() {
   }
 
   function openEditModal(u: User) {
+    if (!isAuthorizedToEdit) return;
     setEditUser(u);
     setEditForm({ fullName: u.fullName, email: u.email, role: u.role, isActive: u.isActive });
     setEditError("");
@@ -144,7 +148,7 @@ export default function UsersPage() {
 
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault();
-    if (!editUser) return;
+    if (!editUser || !isAuthorizedToEdit) return;
     setEditSaving(true);
     setEditError("");
     const res = await fetch(`/api/users/${editUser.id}`, {
@@ -164,6 +168,7 @@ export default function UsersPage() {
   }
 
   function openWalletModal(u: User) {
+    if (!isAuthorizedToEdit) return;
     setWalletUser(u);
     setWalletAction("ADD");
     setWalletAmount(null);
@@ -173,7 +178,7 @@ export default function UsersPage() {
 
   async function submitWalletAdjust(e: React.FormEvent) {
     e.preventDefault();
-    if (!walletUser || !walletAmount || walletAmount <= 0 || !walletReason.trim()) return;
+    if (!walletUser || !walletAmount || walletAmount <= 0 || !walletReason.trim() || !isAuthorizedToEdit) return;
     setWalletSaving(true);
     setWalletError("");
     try {
@@ -198,6 +203,7 @@ export default function UsersPage() {
   }
 
   function openDeleteConfirm(u: User) {
+    if (!isAuthorizedToEdit) return;
     if (u.id === currentUserId) {
       alert(t("users.cannotDeleteSelf"));
       return;
@@ -206,7 +212,7 @@ export default function UsersPage() {
   }
 
   async function confirmDelete() {
-    if (!deleteUser) return;
+    if (!deleteUser || !isAuthorizedToEdit) return;
     setDeleteLoading(true);
     const res = await fetch(`/api/users/${deleteUser.id}`, { method: "DELETE" });
     setDeleteLoading(false);
@@ -248,7 +254,7 @@ export default function UsersPage() {
             <button onClick={exportExcel} className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors shadow-sm">
               {t("users.exportExcel")}
             </button>
-            {!isStaff && (
+            {isAuthorizedToEdit && (
               <button onClick={() => setShowCreate(!showCreate)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
                 + {t("users.createUser")}
               </button>
@@ -278,7 +284,7 @@ export default function UsersPage() {
               className="px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
               <option value="CUSTOMER">{t("role.CUSTOMER")}</option>
               <option value="STAFF">{t("role.STAFF")}</option>
-              {!isStaff && <option value="ADMIN">{t("role.ADMIN")}</option>}
+              {isAuthorizedToEdit && <option value="ADMIN">{t("role.ADMIN")}</option>}
               <option value="WAREHOUSE_CN">{t("role.WAREHOUSE_CN")}</option>
               <option value="WAREHOUSE_VN">{t("role.WAREHOUSE_VN")}</option>
               <option value="ACCOUNTANT">{t("role.ACCOUNTANT")}</option>
@@ -336,19 +342,19 @@ export default function UsersPage() {
                 ]}
                 actions={
                   <>
-                    {!(isStaff && u.role === "ADMIN") && (
+                    {isAuthorizedToEdit && (
                       <button onClick={() => openEditModal(u)}
                         className="text-xs font-medium px-2.5 py-1 rounded-lg text-blue-600 hover:bg-blue-50">
                         {t("users.edit")}
                       </button>
                     )}
-                    {!(isStaff && u.role === "ADMIN") && (
+                    {isAuthorizedToEdit && (
                       <button onClick={() => toggleActive(u.id, u.isActive)}
                         className={`text-xs font-medium px-2.5 py-1 rounded-lg ${u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"}`}>
                         {u.isActive ? t("users.deactivate") : t("users.activate")}
                       </button>
                     )}
-                    {u.wallet && !(isStaff && u.role === "ADMIN") && (
+                    {u.wallet && isAuthorizedToEdit && (
                       <button onClick={() => openWalletModal(u)}
                         className="text-xs font-medium px-2.5 py-1 rounded-lg text-amber-600 hover:bg-amber-50">
                         Điều chỉnh ví
@@ -420,25 +426,25 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1">
-                        {!(isStaff && u.role === "ADMIN") && (
+                        {isAuthorizedToEdit && (
                           <button onClick={() => openEditModal(u)}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
                             {t("users.edit")}
                           </button>
                         )}
-                        {!isStaff && (
+                        {isAuthorizedToEdit && (
                           <button onClick={() => toggleActive(u.id, u.isActive)}
                             className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"}`}>
                             {u.isActive ? t("users.deactivate") : t("users.activate")}
                           </button>
                         )}
-                        {!isStaff && u.wallet && (
+                        {isAuthorizedToEdit && u.wallet && (
                           <button onClick={() => openWalletModal(u)}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors">
                             Điều chỉnh ví
                           </button>
                         )}
-                        {!isStaff && u.isActive && u.id !== currentUserId && (
+                        {isAuthorizedToEdit && u.isActive && u.id !== currentUserId && (
                           <button onClick={() => openDeleteConfirm(u)}
                             className="text-xs font-medium px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
                             {t("users.delete")}
@@ -484,7 +490,7 @@ export default function UsersPage() {
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                   <option value="CUSTOMER">{t("role.CUSTOMER")}</option>
                   <option value="STAFF">{t("role.STAFF")}</option>
-                  {!isStaff && <option value="ADMIN">{t("role.ADMIN")}</option>}
+                  {isAuthorizedToEdit && <option value="ADMIN">{t("role.ADMIN")}</option>}
                   <option value="WAREHOUSE_CN">{t("role.WAREHOUSE_CN")}</option>
                   <option value="WAREHOUSE_VN">{t("role.WAREHOUSE_VN")}</option>
                   <option value="ACCOUNTANT">{t("role.ACCOUNTANT")}</option>
