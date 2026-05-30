@@ -496,18 +496,30 @@ export async function POST(req: NextRequest) {
     const fileName = (imageFile.name || "").toLowerCase();
     const mimeType = imageFile.type || "image/jpeg";
 
-    let selectedCategory: Category = "general";
+    let selectedCategory: Category | "bag" = "general";
     if (fileName.includes("ao") || fileName.includes("quan") || fileName.includes("vay") || fileName.includes("cloth")) {
       selectedCategory = "clothes";
-    } else if (fileName.includes("tivi") || fileName.includes("tv") || fileName.includes("laptop") || fileName.includes("dien")) {
+    } else if (fileName.includes("tui") || fileName.includes("bag") || fileName.includes("handbag") || fileName.includes("balo")) {
+      selectedCategory = "bag";
+    } else if (fileName.includes("tivi") || fileName.includes("tv") || fileName.includes("laptop") || fileName.includes("dien") || fileName.includes("phone") || fileName.includes("iphone") || fileName.includes("apple")) {
       selectedCategory = "electronics";
-    } else if (fileName.includes("tai nghe") || fileName.includes("headphone")) {
+    } else if (fileName.includes("tai nghe") || fileName.includes("headphone") || fileName.includes("earphone")) {
       selectedCategory = "headphone";
-    } else if (fileName.includes("giay") || fileName.includes("dep") || fileName.includes("shoe")) {
+    } else if (fileName.includes("giay") || fileName.includes("dep") || fileName.includes("shoe") || fileName.includes("sneaker")) {
       selectedCategory = "shoes";
     }
 
-    const imagePool = IMAGES[selectedCategory] || IMAGES.general;
+    let imagePool: string[];
+    if (selectedCategory === "bag") {
+      imagePool = [
+        "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&auto=format&fit=crop&q=60",
+        "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=60",
+        "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=500&auto=format&fit=crop&q=60"
+      ];
+    } else {
+      imagePool = IMAGES[selectedCategory] || IMAGES.general;
+    }
+
     const items: ProductItem[] = [];
 
     for (let i = 1; i <= 80; i++) {
@@ -516,9 +528,32 @@ export async function POST(req: NextRequest) {
       const imageUrl = imagePool[(i - 1) % imagePool.length];
       const supplier = SUPPLIERS[(i - 1) % SUPPLIERS.length];
 
-      const titleVi = `[Quét ảnh thông minh ${i}] Sản phẩm đồng dạng chất lượng cao`;
-      const titleZh = `[智能图搜 ${i}] 精选热销同款高质货源`;
-      const basePrice = 30 + i * 1.5;
+      let titleVi = `[Quét ảnh thông minh ${i}] Sản phẩm đồng dạng chất lượng cao`;
+      let titleZh = `[智能图搜 ${i}] 精选热销同款高质货源`;
+      let basePrice = 30 + i * 1.5;
+
+      // Map specific product properties based on detected category
+      if (selectedCategory === "bag") {
+        titleVi = `[Đồng Dạng] Túi xách nữ thời trang cao cấp Quảng Châu mẫu ${i}`;
+        titleZh = `[同款推荐] 迷你链条斜挎女包 高端手提皮包 ${i}`;
+        basePrice = 35 + i * 1.2;
+      } else if (selectedCategory === "clothes") {
+        titleVi = `[Đồng Dạng] Áo thun/Áo khoác unisex thời trang Quảng Châu mẫu ${i}`;
+        titleZh = `[同款推荐] 潮流男女装夏季短袖T恤 纯棉高品质 ${i}`;
+        basePrice = 25 + i * 1.1;
+      } else if (selectedCategory === "shoes") {
+        titleVi = `[Đồng Dạng] Giày thể thao nam nữ phong cách năng động mẫu ${i}`;
+        titleZh = `[同款推荐] 运动板鞋 潮流百搭休闲鞋 ${i}`;
+        basePrice = 45 + i * 1.3;
+      } else if (selectedCategory === "electronics") {
+        titleVi = `[Đồng Dạng] Thiết bị điện tử/Phụ kiện công nghệ cao cấp mẫu ${i}`;
+        titleZh = `[同款推荐] 高端智能数码设备 官方品质保证 ${i}`;
+        basePrice = 150 + i * 5;
+      } else if (selectedCategory === "headphone") {
+        titleVi = `[Đồng Dạng] Tai nghe bluetooth không dây chống ồn mẫu ${i}`;
+        titleZh = `[同款推荐] 降噪无线蓝牙耳机 官方正品 ${i}`;
+        basePrice = 30 + i * 1.8;
+      }
 
       if (sanitizeData(titleVi) && sanitizeData(titleZh) && sanitizeData(supplier)) {
         items.push({
@@ -535,13 +570,14 @@ export async function POST(req: NextRequest) {
             source: "ai-autocrop",
             mime: mimeType,
             cropArea: `${xMin},${yMin},${cropW},${cropH}`,
+            detectedCategory: selectedCategory,
           },
         });
       }
     }
 
     return NextResponse.json(
-      { items, total: items.length, translated: "以图搜图 (AI Auto-Crop Search)", filters: [] },
+      { items, total: items.length, translated: `以图搜图 (${selectedCategory.toUpperCase()} - Similar Matches)`, filters: [] },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
