@@ -318,9 +318,12 @@ export default function SettingsPage() {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d) => {
-        if (d && d.email) {
-          setAdminEmail(d.email);
-          loadCredentials(d.email);
+        if (d) {
+          const identifier = d.email || d.phone || d.id;
+          if (identifier) {
+            setAdminEmail(identifier);
+            loadCredentials(identifier);
+          }
         }
       })
       .catch(() => {});

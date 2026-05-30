@@ -66,8 +66,8 @@ export async function POST(req: NextRequest) {
       const options = await generateRegistrationOptions({
         rpName: RP_NAME,
         rpID: RP_ID,
-        userName: user.email,
-        userDisplayName: user.fullName,
+        userName: user.email || user.phone || user.id,
+        userDisplayName: user.fullName || user.email || user.phone || "Người dùng Bắc Trung Hải",
         attestationType: "none",
         authenticatorSelection: {
           residentKey: "preferred",

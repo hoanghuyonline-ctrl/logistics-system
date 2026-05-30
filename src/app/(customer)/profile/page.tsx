@@ -28,9 +28,10 @@ export default function ProfilePage() {
       if (res.ok) {
         const data = await res.json();
         setCredentials(data);
-        if (profile.email) {
+        const identifier = profile.email || profile.phone;
+        if (identifier) {
           const hasKeys = data.length > 0;
-          localStorage.setItem(`has_biometric_${profile.email}`, hasKeys ? "true" : "false");
+          localStorage.setItem(`has_biometric_${identifier}`, hasKeys ? "true" : "false");
           setDeviceHasBiometric(hasKeys);
         }
       }
@@ -57,10 +58,11 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    if (profile.email) {
+    const identifier = profile.email || profile.phone;
+    if (identifier) {
       loadCredentials();
     }
-  }, [profile.email]);
+  }, [profile.email, profile.phone]);
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -89,14 +91,18 @@ export default function ProfilePage() {
   }
 
   async function registerBiometric() {
-    if (!profile.email) return;
+    const identifier = profile.email || profile.phone;
+    if (!identifier) {
+      toast("Bạn cần cập nhật email hoặc số điện thoại trước khi đăng ký sinh trắc học", "error");
+      return;
+    }
     setBiometricRegistering(true);
     try {
       // 1. Get registration options from server
       const optRes = await fetch("/api/auth/biometric/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "register", email: profile.email }),
+        body: JSON.stringify({ mode: "register", email: identifier }),
       });
 
       if (!optRes.ok) {
