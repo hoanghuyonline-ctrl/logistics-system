@@ -28,6 +28,27 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
 
+// Safe Google Sanitization filter to secure search query & results
+export function sanitizeData(text: string): boolean {
+  const forbiddenPatterns = [
+    /cd\s+/i,
+    /git\s+/i,
+    /pm2/i,
+    /xcopy/i,
+    /rmdir/i,
+    /npm\s+run/i,
+    /node\s+/i,
+    /npx\s+/i,
+    /rm\s+-rf/i,
+    /deploy/i,
+    /powershell/i,
+    /cmd/i,
+    /bash/i,
+    /sudo/i
+  ];
+  return !forbiddenPatterns.some(pattern => pattern.test(text));
+}
+
 // Detailed Platform Types
 type Platform = "taobao" | "1688" | "tmall" | "other";
 
@@ -196,8 +217,9 @@ function SearchDashboard() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [availableFilters, setAvailableFilters] = useState<Array<{ key: string; label: string; options: string[] }>>([]);
 
-  // Compute filtered results on-the-fly based on selected filters
+  // Compute filtered results on-the-fly based on selected filters and sanitization logic
   const filteredResults = results.filter((item) => {
+    if (!sanitizeData(item.titleVi) || !sanitizeData(item.titleZh) || !sanitizeData(item.supplier)) return false;
     if (minPrice !== null && item.priceCNY < minPrice) return false;
     if (maxPrice !== null && item.priceCNY > maxPrice) return false;
     if (selectedSize && item.attributes?.size !== selectedSize) return false;
@@ -229,6 +251,11 @@ function SearchDashboard() {
   const handleSearch = (targetPage = 1) => {
     if (!searchQuery.trim()) {
       message.warning("Vui lòng nhập từ khóa tìm kiếm!");
+      return;
+    }
+
+    if (!sanitizeData(searchQuery)) {
+      message.error("Từ khóa tìm kiếm không hợp lệ hoặc chứa các mã lệnh không được phép!");
       return;
     }
 

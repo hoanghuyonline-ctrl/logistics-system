@@ -93,6 +93,27 @@ const DICTIONARY: Record<string, { zh: string, category: keyof typeof IMAGES }> 
   "clothes": { zh: "精品服装 (Apparel)", category: "clothes" }
 };
 
+// Safe Google Sanitization filter to secure search query & results
+export function sanitizeData(text: string): boolean {
+  const forbiddenPatterns = [
+    /cd\s+/i,
+    /git\s+/i,
+    /pm2/i,
+    /xcopy/i,
+    /rmdir/i,
+    /npm\s+run/i,
+    /node\s+/i,
+    /npx\s+/i,
+    /rm\s+-rf/i,
+    /deploy/i,
+    /powershell/i,
+    /cmd/i,
+    /bash/i,
+    /sudo/i
+  ];
+  return !forbiddenPatterns.some(pattern => pattern.test(text));
+}
+
 // Tokenizer & Accent Stripper representing deep semantic NLP preparation
 function tokenizeAndNormalize(text: string): string[] {
   return text
@@ -142,7 +163,8 @@ export async function GET(request: Request) {
   const size = searchParams.get("size") || null;
   const color = searchParams.get("color") || null;
 
-  if (!query.trim()) {
+  // Immediate block if search term fails security sanitize data filter
+  if (!query.trim() || !sanitizeData(query)) {
     return NextResponse.json(
       { items: [], total: 0, translated: "", filters: [] },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
@@ -178,7 +200,6 @@ export async function GET(request: Request) {
   }
 
   // 2. DYNAMIC FILTERS GENERATION BASED ON DETECTED INTENT CONFIDENCE
-  // If classified as general (confidence is low or query is broad), we return NO attributes to frontend!
   let filters: Array<{ key: string; label: string; options: string[] }> = [];
 
   if (category === "clothes") {
@@ -270,6 +291,11 @@ export async function GET(request: Request) {
   if (color) {
     filteredItems = filteredItems.filter(item => item.attributes.color === color);
   }
+
+  // Absolute end-to-end data sanitization: discard any item containing command/deploy rác script
+  filteredItems = filteredItems.filter(
+    item => sanitizeData(item.titleVi) && sanitizeData(item.titleZh) && sanitizeData(item.supplier)
+  );
 
   // Paginate
   const startIndex = (page - 1) * limit;
