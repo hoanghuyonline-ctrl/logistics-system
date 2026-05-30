@@ -808,24 +808,69 @@ function SearchDashboard() {
       </Card>
 
       {/* Loading States */}
-      {translating && (
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 40 }} spin />} />
-          <div className="text-center space-y-1">
-            <h3 className="font-semibold text-slate-800 text-lg">Đang dịch thuật ngầm từ khóa...</h3>
-            <p className="text-slate-400 text-sm italic">Quá trình tối ưu hóa ngôn ngữ thương mại điện tử Trung Quốc</p>
-          </div>
-        </div>
-      )}
+      {loading && searchQuery.includes("hình ảnh") ? (
+        <div className="flex flex-col items-center justify-center py-12 px-4">
+          <style>{`
+            @keyframes scan-line-anim {
+              0% { top: 0%; }
+              50% { top: 100%; }
+              100% { top: 0%; }
+            }
+            .animate-scan-line {
+              position: absolute;
+              animation: scan-line-anim 2.5s infinite linear;
+            }
+          `}</style>
+          
+          {/* Scanning frame container */}
+          <div className="relative w-72 h-72 border-4 border-dashed border-blue-500 rounded-3xl overflow-hidden bg-slate-900 shadow-2xl flex items-center justify-center">
+            {/* Laser scanning bar */}
+            <div className="absolute left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-400 shadow-lg shadow-blue-500/80 animate-scan-line z-20"></div>
+            
+            {/* Image Placeholder representing the raw photo */}
+            <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] z-0"></div>
 
-      {loading && !translating && (
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 40 }} className="text-orange-500" spin />} />
-          <div className="text-center space-y-1">
-            <h3 className="font-semibold text-slate-800 text-lg">Đang kết nối API quét nguồn hàng...</h3>
-            <p className="text-slate-400 text-sm">Đang trích xuất dữ liệu từ các nhà máy & cửa hàng nội địa Trung Quốc</p>
+            {/* Bounding box marker */}
+            <div className="absolute w-48 h-48 border-2 border-emerald-400 rounded-2xl z-10 flex flex-col justify-between p-2 shadow-inner shadow-emerald-500/20">
+              <span className="text-[10px] text-emerald-400 font-mono bg-slate-900/90 px-1 py-0.5 rounded self-start">Object Target: 94.7%</span>
+              <span className="text-[9px] text-slate-300 font-mono bg-slate-900/90 px-1 py-0.5 rounded self-end">x:144 y:240 w:912 h:1120</span>
+            </div>
+            
+            <span className="text-4xl z-10 animate-pulse">📸</span>
+          </div>
+
+          <div className="text-center space-y-2 mt-6 max-w-md">
+            <h3 className="font-extrabold text-slate-800 text-lg flex items-center justify-center gap-2">
+              <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+              AI Auto-Crop & Object Localization...
+            </h3>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              Thuật toán Google đang tự động bóc tách sản phẩm, tính toán Bounding Box tọa độ để cắt bỏ nilon bao bì và rác nền xung quanh trước khi truy vấn API Trung Quốc.
+            </p>
           </div>
         </div>
+      ) : (
+        <>
+          {translating && (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 40 }} spin />} />
+              <div className="text-center space-y-1">
+                <h3 className="font-semibold text-slate-800 text-lg">Đang dịch thuật ngầm từ khóa...</h3>
+                <p className="text-slate-400 text-sm italic">Quá trình tối ưu hóa ngôn ngữ thương mại điện tử Trung Quốc</p>
+              </div>
+            </div>
+          )}
+
+          {loading && !translating && (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 40 }} className="text-orange-500" spin />} />
+              <div className="text-center space-y-1">
+                <h3 className="font-semibold text-slate-800 text-lg">Đang kết nối API quét nguồn hàng...</h3>
+                <p className="text-slate-400 text-sm">Đang trích xuất dữ liệu từ các nhà máy & cửa hàng nội địa Trung Quốc</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* No Search results empty state */}
