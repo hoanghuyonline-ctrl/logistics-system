@@ -183,6 +183,11 @@ function SearchDashboard() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [limit] = useState(24);
+  const [total, setTotal] = useState(0);
+
   // Fetch exchange rate on mount
   useEffect(() => {
     fetch("/api/settings/exchange-rate")
@@ -203,8 +208,8 @@ function SearchDashboard() {
     return Math.round(vnd).toLocaleString("vi-VN") + " ₫";
   };
 
-  // Perform translation & mock search
-  const handleSearch = () => {
+  // Perform translation & mock search via API route
+  const handleSearch = (targetPage = 1) => {
     if (!searchQuery.trim()) {
       message.warning("Vui lòng nhập từ khóa tìm kiếm!");
       return;
@@ -212,96 +217,43 @@ function SearchDashboard() {
 
     setLoading(true);
     setTranslating(true);
-    setResults([]);
+    setPage(targetPage);
 
-    const cleanQuery = searchQuery.trim().toLowerCase();
-
-    // Check if query is in dictionary, otherwise simulate a smart Google translation
-    let translated = "其他货源 (General Items)";
-    let category = "general";
-
-    const matchedKey = Object.keys(DICTIONARY).find(key => cleanQuery.includes(key));
-    if (matchedKey) {
-      translated = DICTIONARY[matchedKey].zh;
-      category = DICTIONARY[matchedKey].category;
-    } else {
-      // Simulate real-time generic translator
-      translated = `${searchQuery.trim()} 货源 (Smart Trans)`;
-    }
-
-    setTranslatedText(translated);
-
-    // Timeline steps for the ultimate wow factor:
-    // Step 1: Dịch thuật tiếng Trung
-    setTimeout(() => {
-      setTranslating(false);
-
-      // Step 2: Quét & cào dữ liệu từ Taobao/1688/Tmall
-      setTimeout(() => {
-        let finalItems: ProductItem[] = [];
-
-        if (category !== "general" && PRESETS[category]) {
-          finalItems = PRESETS[category];
-        } else {
-          // Generate customized items dynamically based on their query!
-          finalItems = [
-            {
-              id: `gen-tb-${Date.now()}`,
-              platform: "taobao",
-              titleVi: `[Taobao] ${searchQuery} Nội Địa Trung Quốc Cao Cấp`,
-              titleZh: `${translated} 淘宝热销优质商品`,
-              priceCNY: 88.0,
-              imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60",
-              supplier: "Nhà máy Hàng tiêu dùng Chiết Giang",
-              rating: 4.7,
-              salesCount: "2,500+",
-            },
-            {
-              id: `gen-1688-${Date.now()}`,
-              platform: "1688",
-              titleVi: `[1688] Combo ${searchQuery} Bán Sỉ Giá Tận Gốc`,
-              titleZh: `${translated} 1688批发源头厂家直供`,
-              priceCNY: 25.0,
-              imageUrl: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&auto=format&fit=crop&q=60",
-              supplier: "Tổng kho Hàng xuất khẩu Nghĩa Ô",
-              rating: 4.6,
-              salesCount: "10 vạn+",
-            },
-            {
-              id: `gen-tmall-${Date.now()}`,
-              platform: "tmall",
-              titleVi: `[Tmall] ${searchQuery} Phân Phối Chính Hãng Đầy Đủ Co/Cq`,
-              titleZh: `${translated} 天猫官方旗舰店品质保证`,
-              priceCNY: 199.0,
-              imageUrl: "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500&auto=format&fit=crop&q=60",
-              supplier: "Tmall Flagship Store Global",
-              rating: 4.9,
-              salesCount: "6,000+",
-            }
-          ];
-        }
+    const url = `/api/source-search?q=${encodeURIComponent(searchQuery)}&platform=${platform}&limit=${limit}&page=${targetPage}`;
+    
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error("Search API call failed");
+        return res.json();
+      })
+      .then((data) => {
+        setTranslatedText(data.translated);
+        setResults(data.items);
+        setTotal(data.total);
 
         // Initialize default quantity to 1 for all items
         const initialQs: Record<string, number> = {};
-        finalItems.forEach(item => {
+        data.items.forEach((item: ProductItem) => {
           initialQs[item.id] = 1;
         });
         setQuantities(initialQs);
 
-        // Filter based on active platform tab
-        const filtered = finalItems.filter(item => item.platform === platform);
-        setResults(filtered.length > 0 ? filtered : finalItems);
+        message.success(`Tìm kiếm thành công! Quét được ${data.items.length} nguồn hàng (Trang ${targetPage}).`);
+      })
+      .catch((e) => {
+        console.error(e);
+        message.error("Lỗi kết nối khi quét nguồn hàng.");
+      })
+      .finally(() => {
         setLoading(false);
-        message.success(`Tìm kiếm thành công! Quét được ${finalItems.length} nguồn hàng.`);
-      }, 1000);
-
-    }, 800);
+        setTranslating(false);
+      });
   };
 
   // Trigger search when platform tab changes if query is already present
   useEffect(() => {
     if (searchQuery.trim()) {
-      handleSearch();
+      handleSearch(1);
     }
   }, [platform]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -447,7 +399,7 @@ function SearchDashboard() {
                 placeholder="Nhập từ khóa tiếng Việt (ví dụ: 'tai nghe', 'giày thể thao', 'áo khoác')..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onPressEnter={handleSearch}
+                onPressEnter={() => handleSearch(1)}
                 size="large"
                 allowClear
                 prefix={<SearchOutlined className="text-slate-400" />}
@@ -455,7 +407,7 @@ function SearchDashboard() {
               />
               <Button
                 type="primary"
-                onClick={handleSearch}
+                onClick={() => handleSearch(1)}
                 loading={loading}
                 size="large"
                 icon={<SearchOutlined />}
@@ -683,6 +635,29 @@ function SearchDashboard() {
               );
             })}
           </Row>
+
+          {/* Pagination Controls */}
+          {total > limit && (
+            <div className="flex justify-center items-center gap-4 mt-8 bg-white border border-slate-100 p-4 rounded-2xl shadow-sm max-w-md mx-auto">
+              <Button
+                disabled={page <= 1}
+                onClick={() => handleSearch(page - 1)}
+                className="rounded-xl border-slate-200 font-semibold text-xs h-9 flex items-center justify-center"
+              >
+                ◀ Trang trước
+              </Button>
+              <span className="text-slate-600 text-xs font-semibold whitespace-nowrap">
+                Trang {page} / {Math.ceil(total / limit)}
+              </span>
+              <Button
+                disabled={page >= Math.ceil(total / limit)}
+                onClick={() => handleSearch(page + 1)}
+                className="rounded-xl border-slate-200 font-semibold text-xs h-9 flex items-center justify-center"
+              >
+                Trang tiếp theo ▶
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
