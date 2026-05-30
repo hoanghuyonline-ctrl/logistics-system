@@ -251,13 +251,28 @@ function buildProductTitles(
     case "electronics": {
       const isIphone = query.toLowerCase().includes("iphone") || query.toLowerCase().includes("apple");
       if (isIphone) {
-        const models = ["iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15", "iPhone 14 Pro Max"];
-        const capacities = ["128GB", "256GB", "512GB", "1TB"];
-        attributes.model = models[(i - 1) % models.length];
-        attributes.capacity = capacities[(i - 1) % capacities.length];
-        titleVi = `[Realtime Taobao] Điện thoại ${attributes.model} bản ${attributes.capacity} Quốc Tế - Mới 100%`;
-        titleZh = `[Taobao Live Scraper ${i}] Apple/苹果 ${attributes.model} (${attributes.capacity}) 官旗原装正品`;
-        basePrice = 5500 + i * 150;
+        const models = [
+          "iPhone 15 Pro Max", 
+          "iPhone 14 Pro Max", 
+          "Cốc sạc nhanh Apple MFi 20W USB-C", 
+          "Cáp sạc Type-C to Lightning chuẩn MFi", 
+          "iPhone 15 Pro"
+        ];
+        const capacities = ["128GB", "256GB", "512GB", "1TB", "Phụ kiện"];
+        const curModel = models[(i - 1) % models.length];
+        const curCapacity = capacities[(i - 1) % capacities.length];
+        attributes.model = curModel;
+        attributes.capacity = curCapacity;
+        
+        if (curModel.includes("Cốc sạc") || curModel.includes("Cáp sạc")) {
+          titleVi = `[Phụ Kiện Realtime] ${curModel} chính hãng Apple - Chân cắm Type-C`;
+          titleZh = `[Taobao Live Scraper ${i}] 苹果官方认证 MFi 20W PD 快充头/数据线`;
+          basePrice = 99 + (i % 20) * 5;
+        } else {
+          titleVi = `[Realtime Taobao] Điện thoại ${curModel} bản ${curCapacity} Quốc Tế - Mới 100%`;
+          titleZh = `[Taobao Live Scraper ${i}] Apple/苹果 ${curModel} (${curCapacity}) 官旗原装正品`;
+          basePrice = 5500 + (i % 30) * 100;
+        }
       } else {
         const types = ["32 inch", "43 inch", "55 inch", "65 inch"];
         attributes.type = types[(i - 1) % types.length];
@@ -411,7 +426,12 @@ export async function GET(request: Request) {
     );
 
     const isAd = i % 7 === 0;
-    const finalAttributes = { ...attributes, isAd: isAd ? "true" : "false" };
+    const finalAttributes = { 
+      ...attributes, 
+      isAd: isAd ? "true" : "false",
+      exchangeRate: "3980",
+      priceVND: Math.round(basePrice * 3980).toLocaleString("vi-VN") + "đ"
+    };
 
     allItems.push({
       id: `${category}-${itemPlatform}-${i}`,
@@ -478,7 +498,7 @@ interface UniversalFeatureVector {
   shape: "cylindrical" | "spherical" | "cubic" | "planar" | "organic";
   color: string;
   texture: "solid" | "floral" | "striped" | "metallic" | "matte" | "glossy";
-  category: Category | "kitchen" | "accessory" | "general";
+  category: Category | "kitchen" | "accessory" | "tech_accessory" | "general";
 }
 
 function extractUniversalFeatureVector(
@@ -533,8 +553,13 @@ function extractUniversalFeatureVector(
   }
 
   // 4. Industry Category Mapping
-  let category: Category | "kitchen" | "accessory" | "general" = "general";
-  if (cleanName.match(/(ao|quan|vay|cloth|tui|bag|balo)/)) {
+  let category: Category | "kitchen" | "accessory" | "tech_accessory" | "general" = "general";
+  const isTechAccessory = cleanName.match(/(sac|cap|cu-sac|day-cap|charger|cable|plug|adapter|gan|20w|usb|lightning)/) ||
+                          (cleanName.match(/(box|cube|hop|day|cord|wire)/) && (cleanName.includes("dien") || cleanName.includes("electronic") || cleanName.includes("phone")));
+
+  if (isTechAccessory) {
+    category = "tech_accessory";
+  } else if (cleanName.match(/(ao|quan|vay|cloth|tui|bag|balo)/)) {
     category = "clothes";
   } else if (cleanName.match(/(giay|dep|shoe|sneaker)/)) {
     category = "shoes";
@@ -578,7 +603,13 @@ export async function POST(req: NextRequest) {
 
     // Build the dynamic image pools representing matching items
     let imagePool: string[];
-    if (vector.category === "kitchen") {
+    if (vector.category === "tech_accessory") {
+      imagePool = [
+        "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=500&auto=format&fit=crop&q=60", // Charger
+        "https://images.unsplash.com/photo-1541663116265-9d525f7dd83e?w=500&auto=format&fit=crop&q=60", // Cable
+        "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=60"  // PD charger
+      ];
+    } else if (vector.category === "kitchen") {
       imagePool = [
         "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=60", // Cup
         "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500&auto=format&fit=crop&q=60", // Pot
@@ -671,6 +702,19 @@ export async function POST(req: NextRequest) {
       let basePrice = 30 + i * 1.5;
 
       switch (vector.category) {
+        case "tech_accessory": {
+          const accessories = [
+            "Củ sạc nhanh GaN 65W công nghệ mới", 
+            "Cốc sạc nhanh Apple 20W PD chuẩn MFi", 
+            "Cáp sạc nhanh bọc dù bện siêu bền Type-C to Lightning",
+            "Cáp sạc Type-C to Type-C siêu chịu lực"
+          ];
+          const curAcc = accessories[(i - 1) % accessories.length];
+          categoryVi = curAcc;
+          categoryZh = `[智能配单 ${i}] 苹果 MFi 高能快充配件`;
+          basePrice = 89 + (i % 15) * 6;
+          break;
+        }
         case "kitchen":
           categoryVi = fileName.match(/(coc|ly|cup|bottle)/) ? "Ly/Cốc giữ nhiệt cao cấp" : "Nồi/Chảo nấu bếp thông minh";
           categoryZh = fileName.match(/(coc|ly|cup|bottle)/) ? "高档保温杯" : "智能厨房不粘锅";
@@ -725,6 +769,8 @@ export async function POST(req: NextRequest) {
             detectedColor: vector.color,
             detectedTexture: vector.texture,
             detectedCategory: vector.category,
+            exchangeRate: "3980",
+            priceVND: Math.round(basePrice * 3980).toLocaleString("vi-VN") + "đ"
           },
         });
       }
