@@ -1,26 +1,26 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { 
-  Input, 
-  Button, 
-  Card, 
-  Row, 
-  Col, 
-  Badge, 
-  Spin, 
-  InputNumber, 
-  Space, 
-  Divider, 
-  Tag, 
-  message, 
-  notification 
+import {
+  Input,
+  Button,
+  Card,
+  Row,
+  Col,
+  Badge,
+  Spin,
+  InputNumber,
+  Space,
+  Divider,
+  Tag,
+  message,
+  notification
 } from "antd";
-import { 
-  SearchOutlined, 
-  ShoppingCartOutlined, 
-  FileTextOutlined, 
-  DollarOutlined, 
+import {
+  SearchOutlined,
+  ShoppingCartOutlined,
+  FileTextOutlined,
+  DollarOutlined,
   InfoCircleOutlined,
   LoadingOutlined,
   TranslationOutlined
@@ -171,7 +171,7 @@ const DICTIONARY: Record<string, { zh: string, category: string }> = {
 
 function SearchDashboard() {
   const { t } = useI18n();
-  
+
   // States
   const [platform, setPlatform] = useState<Platform>("taobao");
   const [searchQuery, setSearchQuery] = useState("");
@@ -215,11 +215,11 @@ function SearchDashboard() {
     setResults([]);
 
     const cleanQuery = searchQuery.trim().toLowerCase();
-    
+
     // Check if query is in dictionary, otherwise simulate a smart Google translation
     let translated = "其他货源 (General Items)";
     let category = "general";
-    
+
     const matchedKey = Object.keys(DICTIONARY).find(key => cleanQuery.includes(key));
     if (matchedKey) {
       translated = DICTIONARY[matchedKey].zh;
@@ -235,11 +235,11 @@ function SearchDashboard() {
     // Step 1: Dịch thuật tiếng Trung
     setTimeout(() => {
       setTranslating(false);
-      
+
       // Step 2: Quét & cào dữ liệu từ Taobao/1688/Tmall
       setTimeout(() => {
         let finalItems: ProductItem[] = [];
-        
+
         if (category !== "general" && PRESETS[category]) {
           finalItems = PRESETS[category];
         } else {
@@ -352,7 +352,7 @@ function SearchDashboard() {
 
       if (res.ok) {
         const createdOrder = await res.json();
-        
+
         notification.success({
           message: type === "ECOMMERCE" ? "🎉 Đặt hàng trực tiếp thành công!" : "📦 Đăng ký Ký gửi thành công!",
           description: (
@@ -361,9 +361,9 @@ function SearchDashboard() {
               <p>Sản phẩm: <strong>{item.titleVi}</strong></p>
               <p>Số lượng: <strong>{qty}</strong></p>
               <Divider className="my-1.5" />
-              <Button 
-                type="primary" 
-                size="small" 
+              <Button
+                type="primary"
+                size="small"
                 href={`/orders/${createdOrder.id}`}
                 className="bg-blue-600 border-none shadow-sm hover:bg-blue-700 mt-1"
               >
@@ -388,13 +388,13 @@ function SearchDashboard() {
 
   return (
     <div className="min-h-screen pb-12">
-      <PageHeader 
-        title="Tìm kiếm nguồn hàng đa phương thức" 
+      <PageHeader
+        title="Tìm kiếm nguồn hàng đa phương thức"
         subtitle="Quét nguồn hàng trực tiếp từ Taobao, 1688, Tmall bằng tiếng Việt - Đặt mua hộ hoặc Ký gửi về Việt Nam tức thì"
       />
 
       {/* Main Sourcing Hub */}
-      <Card 
+      <Card
         bordered={false}
         className="mb-8 shadow-md rounded-2xl bg-white border border-slate-100 overflow-hidden relative"
         style={{
@@ -406,46 +406,43 @@ function SearchDashboard() {
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-100 rounded-full filter blur-3xl opacity-40 -ml-10 -mb-10"></div>
 
         <div className="max-w-4xl mx-auto py-4 relative z-10">
-          
-          {/* Platform Tab Selectors */}
-          <div className="flex justify-center gap-3 mb-6">
+
+          {/* Platform Tab Selectors - Horizontal slider on mobile, centered on desktop */}
+          <div className="flex flex-row overflow-x-auto gap-3 pb-2 mb-6 md:justify-center scrollbar-thin scrollbar-thumb-slate-200 my-4 px-2">
             <button
               onClick={() => setPlatform("taobao")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-sm ${
-                platform === "taobao" 
-                  ? "bg-[#FF5000] text-white ring-2 ring-[#FF5000] ring-offset-2" 
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap shrink-0 transition-all duration-300 transform hover:scale-105 shadow-sm ${platform === "taobao"
+                  ? "bg-[#FF5000] text-white ring-2 ring-[#FF5000] ring-offset-2"
                   : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF5000]/10"
-              }`}
+                }`}
             >
-              <span className="text-base">🛍️</span> Taobao.com
+              <span className="text-base">🛍️</span>Taobao.com
             </button>
 
             <button
               onClick={() => setPlatform("1688")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-sm ${
-                platform === "1688" 
-                  ? "bg-[#FF6C00] text-white ring-2 ring-[#FF6C00] ring-offset-2" 
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap shrink-0 transition-all duration-300 transform hover:scale-105 shadow-sm ${platform === "1688"
+                  ? "bg-[#FF6C00] text-white ring-2 ring-[#FF6C00] ring-offset-2"
                   : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF6C00]/10"
-              }`}
+                }`}
             >
-              <span className="text-base">🏭</span> 1688批发网
+              <span className="text-base">🏭</span>1688.com
             </button>
 
             <button
               onClick={() => setPlatform("tmall")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-sm ${
-                platform === "tmall" 
-                  ? "bg-[#C40000] text-white ring-2 ring-[#C40000] ring-offset-2" 
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap shrink-0 transition-all duration-300 transform hover:scale-105 shadow-sm ${platform === "tmall"
+                  ? "bg-[#C40000] text-white ring-2 ring-[#C40000] ring-offset-2"
                   : "bg-white text-slate-700 border border-slate-200 hover:bg-[#C40000]/10"
-              }`}
+                }`}
             >
-              <span className="text-base">💎</span> Tmall.com
+              <span className="text-base">💎</span>Tmall.com
             </button>
           </div>
 
-          {/* Search inputs */}
-          <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-slate-100 shadow-sm">
-            <div className="flex gap-2">
+          {/* Search inputs - Stacking layout vertically on mobile, horizontal on desktop */}
+          <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-slate-100 shadow-sm my-4">
+            <div className="flex flex-col md:flex-row gap-3">
               <Input
                 placeholder="Nhập từ khóa tiếng Việt (ví dụ: 'tai nghe', 'giày thể thao', 'áo khoác')..."
                 value={searchQuery}
@@ -454,7 +451,7 @@ function SearchDashboard() {
                 size="large"
                 allowClear
                 prefix={<SearchOutlined className="text-slate-400" />}
-                className="rounded-2xl border-slate-200 focus:border-blue-500 py-3 text-base flex-1"
+                className="rounded-2xl border-slate-200 focus:border-blue-500 py-3 text-base w-full min-h-[48px] flex items-center"
               />
               <Button
                 type="primary"
@@ -462,19 +459,19 @@ function SearchDashboard() {
                 loading={loading}
                 size="large"
                 icon={<SearchOutlined />}
-                className="px-8 rounded-2xl h-auto py-3 bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-semibold"
+                className="w-full md:w-auto min-h-[48px] px-8 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-semibold flex items-center justify-center shrink-0"
               >
                 Quét nguồn hàng
               </Button>
             </div>
 
             {/* Translation & Exchange status banner */}
-            <div className="flex flex-wrap items-center justify-between mt-3 px-2 text-xs text-slate-500 gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 px-2 text-xs text-slate-500 gap-2 my-2">
               <div className="flex items-center gap-1">
                 <TranslationOutlined className="text-blue-500" />
                 <span>Tự động dịch thuật và tối ưu từ khóa thông minh sang tiếng Trung</span>
               </div>
-              <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
+              <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium self-start sm:self-auto">
                 <DollarOutlined />
                 <span>Tỷ giá mua hộ hiện tại: <strong>1 CNY = {exchangeRate.toLocaleString("vi-VN")} đ</strong></span>
               </div>
@@ -523,7 +520,7 @@ function SearchDashboard() {
       {/* Search results displays */}
       {!loading && results.length > 0 && (
         <div className="max-w-6xl mx-auto px-4">
-          
+
           {/* Active search translation banner */}
           <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -548,7 +545,7 @@ function SearchDashboard() {
               const qty = quantities[item.id] || 1;
               const productCostCNY = item.priceCNY * qty;
               const productCostVND = productCostCNY * exchangeRate;
-              
+
               // Calculate default ecommerce breakdown for visual transparency
               const serviceFeeVND = productCostVND * 0.05;
               const chinaShippingVND = 50000;
@@ -563,17 +560,17 @@ function SearchDashboard() {
                     cover={
                       <div className="relative h-56 bg-slate-50 overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={item.imageUrl} 
-                          alt={item.titleVi} 
+                        <img
+                          src={item.imageUrl}
+                          alt={item.titleVi}
                           className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                         />
                         {/* Platform badge */}
                         <div className="absolute top-3 left-3">
-                          <Tag 
+                          <Tag
                             color={
                               item.platform === "taobao" ? "#FF5000" :
-                              item.platform === "1688" ? "#FF6C00" : "#C40000"
+                                item.platform === "1688" ? "#FF6C00" : "#C40000"
                             }
                             className="font-bold text-[11px] uppercase tracking-wide border-none px-2.5 py-0.5 text-white shadow-sm rounded-full"
                           >
@@ -589,7 +586,7 @@ function SearchDashboard() {
                         <h4 className="font-bold text-slate-800 text-sm leading-snug line-clamp-2 mb-1" title={item.titleVi}>
                           {item.titleVi}
                         </h4>
-                        
+
                         {/* Chinese Original */}
                         <p className="text-slate-400 text-xs truncate mb-3" title={item.titleZh}>
                           🇨🇳 {item.titleZh}
@@ -606,7 +603,7 @@ function SearchDashboard() {
                             <span className="text-slate-400 text-xs">Giá gốc tệ:</span>
                             <span className="text-slate-800 font-semibold font-mono text-sm">¥ {item.priceCNY.toFixed(2)}</span>
                           </div>
-                          
+
                           <div className="flex items-baseline justify-between mt-1">
                             <span className="text-slate-400 text-xs">Giá VND (tỷ giá {exchangeRate}):</span>
                             <strong className="text-orange-600 font-bold font-mono text-base">{formatVND(item.priceCNY * exchangeRate)}</strong>
