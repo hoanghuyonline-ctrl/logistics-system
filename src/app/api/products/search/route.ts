@@ -328,180 +328,200 @@ function buildProductTitles(
 
 // ── GET: Text & Link & Image URL search ──
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") || "";
-  const platform = (searchParams.get("platform") || "taobao") as Platform;
-  const sort = searchParams.get("sort") || "default";
-  const limit = parseInt(searchParams.get("limit") || "100", 10);
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const minPrice = searchParams.get("min_price") ? parseFloat(searchParams.get("min_price")!) : null;
-  const maxPrice = searchParams.get("max_price") ? parseFloat(searchParams.get("max_price")!) : null;
-  const size = searchParams.get("size") || null;
-  const color = searchParams.get("color") || null;
+  // CẤU HÌNH BỘ CHẶN THỜI GIAN CHỜ (FETCH TIMEOUT GUARD 10S):
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  if (!query.trim() || !sanitizeData(query)) {
-    return NextResponse.json(
-      { items: [], total: 0, translated: "", filters: [] },
-      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
-    );
-  }
+  try {
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q") || "";
+    const platform = (searchParams.get("platform") || "taobao") as Platform;
+    const sort = searchParams.get("sort") || "default";
+    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const minPrice = searchParams.get("min_price") ? parseFloat(searchParams.get("min_price")!) : null;
+    const maxPrice = searchParams.get("max_price") ? parseFloat(searchParams.get("max_price")!) : null;
+    const size = searchParams.get("size") || null;
+    const color = searchParams.get("color") || null;
 
-  const cleanQuery = query.trim();
+    if (!query.trim() || !sanitizeData(query)) {
+      clearTimeout(timeoutId);
+      return NextResponse.json(
+        { items: [], total: 0, translated: "", filters: [] },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      );
+    }
 
-  // ── LINK PARSER GATE ──
-  const linkInfo = parseProductLink(cleanQuery);
-  if (linkInfo) {
-    const { itemId, platform: linkPlatform } = linkInfo;
-    const titleVi = `[Đích Danh - ${linkPlatform.toUpperCase()}] Sản phẩm nhập khẩu ID: ${itemId}`;
-    const titleZh = `[链接解析 - ${linkPlatform.toUpperCase()}] 官方专区同款货源 商品ID: ${itemId}`;
-    const imageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60";
+    const cleanQuery = query.trim();
 
-    const singleItem: ProductItem = {
-      id: `link-${linkPlatform}-${itemId}`,
-      platform: linkPlatform,
-      titleVi,
-      titleZh,
-      priceCNY: 150.0,
-      imageUrl,
-      supplier: `${linkPlatform.toUpperCase()} Hàng Hãng Official`,
-      rating: 5.0,
-      salesCount: "10.000+",
-      attributes: {
-        itemId,
-        source: "link-parser",
-        isExactMatch: "true"
-      }
+    // ── LINK PARSER GATE ──
+    const linkInfo = parseProductLink(cleanQuery);
+    if (linkInfo) {
+      const { itemId, platform: linkPlatform } = linkInfo;
+      const titleVi = `[Đích Danh - ${linkPlatform.toUpperCase()}] Sản phẩm nhập khẩu ID: ${itemId}`;
+      const titleZh = `[链接解析 - ${linkPlatform.toUpperCase()}] 官方专区同款货源 商品ID: ${itemId}`;
+      const imageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60";
+
+      const singleItem: ProductItem = {
+        id: `link-${linkPlatform}-${itemId}`,
+        platform: linkPlatform,
+        titleVi,
+        titleZh,
+        priceCNY: 150.0,
+        imageUrl,
+        supplier: `${linkPlatform.toUpperCase()} Hàng Hãng Official`,
+        rating: 5.0,
+        salesCount: "10.000+",
+        attributes: {
+          itemId,
+          source: "link-parser",
+          isExactMatch: "true"
+        }
+      };
+
+      clearTimeout(timeoutId);
+      return NextResponse.json(
+        { items: [singleItem], total: 1, translated: `解析链接 → ${linkPlatform.toUpperCase()} ID: ${itemId}`, filters: [] },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      );
+    }
+
+    // Giả lập đầy đủ bộ Headers (User-Agent trình duyệt thật) để vượt tường lửa khi cào quét từ khóa trực tiếp từ trang chủ gốc
+    const mockHeaders = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "zh-CN,zh;q=0.9,vi;q=0.8,en;q=0.7",
+      "Referer": "https://s.taobao.com/",
+      "X-Requested-With": "XMLHttpRequest"
     };
+    console.log(`[Core Keyword Search] Simulating headers with UA: ${mockHeaders["User-Agent"]}`);
 
-    return NextResponse.json(
-      { items: [singleItem], total: 1, translated: `解析链接 → ${linkPlatform.toUpperCase()} ID: ${itemId}`, filters: [] },
-      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
-    );
-  }
+    // ── AUTO-TRANSLATION ──
+    const { zh: hanzi, category, pinyin } = translateVietnameseToChinese(cleanQuery);
+    const translated = `[Live Proxy: CORE_KEYWORD_SEARCH_SYNC] (${cleanQuery} → ${hanzi})`;
 
-  // Giả lập đầy đủ bộ Headers (User-Agent trình duyệt thật) để vượt tường lửa khi cào quét từ khóa trực tiếp từ trang chủ gốc
-  const mockHeaders = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "zh-CN,zh;q=0.9,vi;q=0.8,en;q=0.7",
-    "Referer": "https://s.taobao.com/",
-    "X-Requested-With": "XMLHttpRequest"
-  };
-  console.log(`[Core Keyword Search] Simulating headers with UA: ${mockHeaders["User-Agent"]}`);
-
-  // ── AUTO-TRANSLATION ──
-  const { zh: hanzi, category, pinyin } = translateVietnameseToChinese(cleanQuery);
-  const translated = `[Live Proxy: CORE_KEYWORD_SEARCH_SYNC] (${cleanQuery} → ${hanzi})`;
-
-  // Dynamic filters
-  let filters: Array<{ key: string; label: string; options: string[] }> = [];
-  if (category === "clothes") {
-    filters = [
-      { key: "size", label: "Kích cỡ", options: ["S", "M", "L", "XL", "XXL"] },
-      { key: "color", label: "Màu sắc", options: ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"] },
-    ];
-  } else if (category === "shoes") {
-    filters = [{ key: "size", label: "Cỡ giày", options: ["38", "39", "40", "41", "42", "43"] }];
-  } else if (category === "electronics" || category === "headphone") {
-    filters = [
-      { key: "voltage", label: "Điện áp", options: ["220V", "110V", "Pin sạc"] },
-      { key: "type", label: "Tính năng", options: ["Không dây", "Có dây", "Chống ồn"] },
-    ];
-  }
-
-  // Generate 300 products in category pool
-  const allItems: ProductItem[] = [];
-  const imgList = IMAGES[category] || IMAGES.general;
-  const isIphoneQuery = cleanQuery.toLowerCase().includes("iphone") || cleanQuery.toLowerCase().includes("apple");
-
-  for (let i = 1; i <= 300; i++) {
-    const itemPlatform: Platform =
-      i % 4 === 0 ? "taobao" : i % 4 === 1 ? "1688" : i % 4 === 2 ? "tmall" : "other";
-    
-    // Choose smartphone images for iPhone query to avoid returning TVs / open sign images
-    let imageUrl = imgList[(i - 1) % imgList.length];
-    if (isIphoneQuery) {
-      const phoneImages = [
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1565849906660-af608a18357f?w=500&auto=format&fit=crop&q=60"
+    // Dynamic filters
+    let filters: Array<{ key: string; label: string; options: string[] }> = [];
+    if (category === "clothes") {
+      filters = [
+        { key: "size", label: "Kích cỡ", options: ["S", "M", "L", "XL", "XXL"] },
+        { key: "color", label: "Màu sắc", options: ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"] },
       ];
-      imageUrl = phoneImages[(i - 1) % phoneImages.length];
+    } else if (category === "shoes") {
+      filters = [{ key: "size", label: "Cỡ giày", options: ["38", "39", "40", "41", "42", "43"] }];
+    } else if (category === "electronics" || category === "headphone") {
+      filters = [
+        { key: "voltage", label: "Điện áp", options: ["220V", "110V", "Pin sạc"] },
+        { key: "type", label: "Tính năng", options: ["Không dây", "Có dây", "Chống ồn"] },
+      ];
     }
 
-    const supplier = SUPPLIERS[(i - 1) % SUPPLIERS.length];
+    // Generate 300 products in category pool
+    const allItems: ProductItem[] = [];
+    const imgList = IMAGES[category] || IMAGES.general;
+    const isIphoneQuery = cleanQuery.toLowerCase().includes("iphone") || cleanQuery.toLowerCase().includes("apple");
 
-    const { titleVi, titleZh, basePrice, attributes } = buildProductTitles(
-      i, category, cleanQuery, hanzi, pinyin
+    for (let i = 1; i <= 300; i++) {
+      const itemPlatform: Platform =
+        i % 4 === 0 ? "taobao" : i % 4 === 1 ? "1688" : i % 4 === 2 ? "tmall" : "other";
+      
+      // Choose smartphone images for iPhone query to avoid returning TVs / open sign images
+      let imageUrl = imgList[(i - 1) % imgList.length];
+      if (isIphoneQuery) {
+        const phoneImages = [
+          "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60",
+          "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=60",
+          "https://images.unsplash.com/photo-1565849906660-af608a18357f?w=500&auto=format&fit=crop&q=60"
+        ];
+        imageUrl = phoneImages[(i - 1) % phoneImages.length];
+      }
+
+      const supplier = SUPPLIERS[(i - 1) % SUPPLIERS.length];
+
+      const { titleVi, titleZh, basePrice, attributes } = buildProductTitles(
+        i, category, cleanQuery, hanzi, pinyin
+      );
+
+      const isAd = i % 7 === 0;
+      const finalAttributes = { 
+        ...attributes, 
+        isAd: isAd ? "true" : "false",
+        exchangeRate: "3980",
+        priceVND: Math.round(basePrice * 3980).toLocaleString("vi-VN") + "đ"
+      };
+
+      allItems.push({
+        id: `${category}-${itemPlatform}-${i}`,
+        platform: itemPlatform,
+        titleVi,
+        titleZh,
+        priceCNY: basePrice,
+        imageUrl,
+        supplier: isAd ? `[Tài Trợ] ${supplier}` : supplier,
+        rating: parseFloat((4.5 + ((i % 5) / 10)).toFixed(1)),
+        salesCount: `${(i * 1200).toLocaleString("vi-VN")}+`,
+        attributes: finalAttributes,
+      });
+    }
+
+    // Filter out paid ads/sponsored listings to keep only organic results matching Taobao/1688 app
+    let filtered = allItems.filter(item => item.platform === platform && item.attributes.isAd !== "true");
+    if (minPrice !== null) filtered = filtered.filter(i => i.priceCNY >= minPrice);
+    if (maxPrice !== null) filtered = filtered.filter(i => i.priceCNY <= maxPrice);
+    if (size) filtered = filtered.filter(i => i.attributes.size === size);
+    if (color) filtered = filtered.filter(i => i.attributes.color === color);
+    filtered = filtered.filter(
+      i => sanitizeData(i.titleVi) && sanitizeData(i.titleZh) && sanitizeData(i.supplier)
     );
 
-    const isAd = i % 7 === 0;
-    const finalAttributes = { 
-      ...attributes, 
-      isAd: isAd ? "true" : "false",
-      exchangeRate: "3980",
-      priceVND: Math.round(basePrice * 3980).toLocaleString("vi-VN") + "đ"
-    };
-
-    allItems.push({
-      id: `${category}-${itemPlatform}-${i}`,
-      platform: itemPlatform,
-      titleVi,
-      titleZh,
-      priceCNY: basePrice,
-      imageUrl,
-      supplier: isAd ? `[Tài Trợ] ${supplier}` : supplier,
-      rating: parseFloat((4.5 + ((i % 5) / 10)).toFixed(1)),
-      salesCount: `${(i * 1200).toLocaleString("vi-VN")}+`,
-      attributes: finalAttributes,
-    });
-  }
-
-  // Filter out paid ads/sponsored listings to keep only organic results matching Taobao/1688 app
-  let filtered = allItems.filter(item => item.platform === platform && item.attributes.isAd !== "true");
-  if (minPrice !== null) filtered = filtered.filter(i => i.priceCNY >= minPrice);
-  if (maxPrice !== null) filtered = filtered.filter(i => i.priceCNY <= maxPrice);
-  if (size) filtered = filtered.filter(i => i.attributes.size === size);
-  if (color) filtered = filtered.filter(i => i.attributes.color === color);
-  filtered = filtered.filter(
-    i => sanitizeData(i.titleVi) && sanitizeData(i.titleZh) && sanitizeData(i.supplier)
-  );
-
-  // Sort mapping matching Taobao/1688 trend algorithms
-  if (sort === "renqi") {
-    // Sort by rating (popularity) descending, then sales descending
-    filtered = filtered.sort((a, b) => {
-      if (b.rating !== a.rating) return b.rating - a.rating;
-      const salesA = parseInt(a.salesCount.replace(/[^\d]/g, "")) || 0;
-      const salesB = parseInt(b.salesCount.replace(/[^\d]/g, "")) || 0;
-      return salesB - salesA;
-    });
-  } else if (sort === "sale") {
-    // Sort by sales descending
-    filtered = filtered.sort((a, b) => {
-      const salesA = parseInt(a.salesCount.replace(/[^\d]/g, "")) || 0;
-      const salesB = parseInt(b.salesCount.replace(/[^\d]/g, "")) || 0;
-      return salesB - salesA;
-    });
-  } else if (sort === "price_asc") {
-    filtered = filtered.sort((a, b) => a.priceCNY - b.priceCNY);
-  } else if (sort === "price_desc") {
-    filtered = filtered.sort((a, b) => b.priceCNY - a.priceCNY);
-  }
-
-  const paginated = filtered.slice((page - 1) * limit, page * limit);
-
-  return NextResponse.json(
-    { items: paginated, total: filtered.length, translated, filters, timestamp: Date.now() },
-    {
-      headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
-        "Surrogate-Control": "no-store",
-      },
+    // Sort mapping matching Taobao/1688 trend algorithms
+    if (sort === "renqi") {
+      // Sort by rating (popularity) descending, then sales descending
+      filtered = filtered.sort((a, b) => {
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        const salesA = parseInt(a.salesCount.replace(/[^\d]/g, "")) || 0;
+        const salesB = parseInt(b.salesCount.replace(/[^\d]/g, "")) || 0;
+        return salesB - salesA;
+      });
+    } else if (sort === "sale") {
+      // Sort by sales descending
+      filtered = filtered.sort((a, b) => {
+        const salesA = parseInt(a.salesCount.replace(/[^\d]/g, "")) || 0;
+        const salesB = parseInt(b.salesCount.replace(/[^\d]/g, "")) || 0;
+        return salesB - salesA;
+      });
+    } else if (sort === "price_asc") {
+      filtered = filtered.sort((a, b) => a.priceCNY - b.priceCNY);
+    } else if (sort === "price_desc") {
+      filtered = filtered.sort((a, b) => b.priceCNY - a.priceCNY);
     }
-  );
+
+    const paginated = filtered.slice((page - 1) * limit, page * limit);
+
+    clearTimeout(timeoutId);
+    return NextResponse.json(
+      { items: paginated, total: filtered.length, translated, filters, timestamp: Date.now() },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+          "Surrogate-Control": "no-store",
+        },
+      }
+    );
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError" || request.signal?.aborted) {
+      console.error("[text-search] Timeout 10s triggered via AbortController.");
+      return NextResponse.json(
+        { items: [], total: 0, translated: "[Live Proxy: CORE_KEYWORD_SEARCH_SYNC]", filters: [] },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+    console.error("[text-search] Error:", err);
+    return NextResponse.json({ error: "Lỗi hệ thống tìm kiếm từ khóa." }, { status: 500 });
+  }
 }
 
 interface UniversalFeatureVector {
@@ -588,6 +608,10 @@ function extractUniversalFeatureVector(
 
 // ── POST: Image File Search (FormData) ──
 export async function POST(req: NextRequest) {
+  // CẤU HÌNH BỘ CHẶN THỜI GIAN CHỜ (FETCH TIMEOUT GUARD 10S):
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
   try {
     const formData = await req.formData();
     const imageFile = formData.get("image") as File | null;
@@ -601,6 +625,7 @@ export async function POST(req: NextRequest) {
     const imageSize = bytes.byteLength;
 
     if (!bytes || imageSize === 0) {
+      clearTimeout(timeoutId);
       return NextResponse.json({ error: "File ảnh nhị phân trống hoặc bị lỗi." }, { status: 400 });
     }
 
@@ -637,6 +662,7 @@ export async function POST(req: NextRequest) {
 
     // Bắt buộc trả về mảng trống nếu không nhận diện được chủ thể đồng dạng thật từ trang chủ gốc (General)
     if (scrapedCategory === "general") {
+      clearTimeout(timeoutId);
       return NextResponse.json(
         { 
           items: [], 
@@ -809,6 +835,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    clearTimeout(timeoutId);
     return NextResponse.json(
       { 
         items, 
@@ -825,6 +852,14 @@ export async function POST(req: NextRequest) {
       }
     );
   } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError" || req.signal?.aborted) {
+      console.error("[image-search] Timeout 10s triggered via AbortController.");
+      return NextResponse.json(
+        { items: [], total: 0, translated: "[Live Proxy: CORE_SAME_ITEMS_SYNC]", filters: [] },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
     console.error("[image-search] Error:", err);
     return NextResponse.json({ error: "Lỗi hệ thống khi bóc tách vật thể từ ảnh." }, { status: 500 });
   }
