@@ -10,6 +10,9 @@ git pull origin main
 echo [2/6] Running database migrations...
 call npx.cmd prisma migrate deploy
 
+echo [2.5/6] Replacing legacy domain references in database...
+call npx.cmd tsx scripts/replace-legacy-domain.ts
+
 echo [3/6] Installing dependencies...
 call npm.cmd install
 
