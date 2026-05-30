@@ -207,7 +207,7 @@ function SearchDashboard() {
 
   // Pagination states
   const [page, setPage] = useState(1);
-  const [limit] = useState(24);
+  const [limit] = useState(50);
   const [total, setTotal] = useState(0);
 
   // Dynamic Google-system semantic filters states
@@ -704,7 +704,7 @@ function SearchDashboard() {
           </div>
 
           <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
-            <span>📦</span> Danh mục nguồn hàng quét được ({filteredResults.length} / {results.length} sản phẩm)
+            <span>📦</span> Danh mục nguồn hàng quét được ({filteredResults.length} / {total || 50} sản phẩm)
           </h3>
 
           {/* Product grid with fallback */}
