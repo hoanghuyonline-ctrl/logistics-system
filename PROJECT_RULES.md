@@ -35,6 +35,15 @@
 - Update PROJECT_SNAPSHOT.md after major features
 - Push GitHub after stable checkpoints
 
+## Multimodal Sourcing & Ordering Rules
+- **Route:** Located at `/source-search` (`src/app/(customer)/source-search/page.tsx`).
+- **Translation:** Uses standard mock platform data matched via `DICTIONARY` or simulates real-time Google translation into Chinese commercial terms.
+- **Workflow Persistence:**
+  - *Direct Purchase (Order):* Sets `orderType` to `ECOMMERCE` on `POST /api/orders` to store it as a direct order.
+  - *Consignment / Entrust:* Sets `orderType` to `CONSIGNMENT` on `POST /api/orders` and assigns a temporary `KGBTH-` tracking code.
+- **Styling:** Uses premium responsive Ant Design elements wrapped in React `Suspense` with explicit loading indicators.
+- **Commit History:** Officially deployed under stable commit `c535958c274b618b083eb6fd638a95e017730340`.
+
 ## Production Deployment (Windows + PM2)
 - **Server path:** `D:\BacTrungHai\logistics-system`
 - **Runtime:** PM2 running `next start -p 3000 -H 0.0.0.0` via `ecosystem.config.js`
