@@ -28,7 +28,6 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.myOrders", href: "/orders", icon: "📦" },
   { labelKey: "nav.wallet", href: "/wallet", icon: "💰" },
   { labelKey: "nav.transactions", href: "/transactions", icon: "📋" },
-  { labelKey: "nav.biometric", href: "/profile", icon: "🔒" },
   { labelKey: "nav.customs", href: "/customs", icon: "🛃" },
   { labelKey: "nav.knowledge", href: "/knowledge", icon: "📚" },
   { labelKey: "nav.transport", href: "/transport", icon: "🚚" },
@@ -253,9 +252,29 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ) : (
           <div className="space-y-1">
-            {navItems.map((item) => (
-              <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} t={t} />
-            ))}
+            {navItems.map((item) => {
+              const isTransactions = item.href === "/transactions";
+              return (
+                <div key={item.href} className="space-y-1">
+                  <NavLink item={item} pathname={pathname} onNavigate={onNavigate} t={t} />
+                  {isTransactions && (
+                    <Link
+                      href="/profile"
+                      onClick={onNavigate}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 ${
+                        pathname === "/profile"
+                          ? "bg-blue-50 text-blue-700 shadow-sm"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      }`}
+                    >
+                      <span className="text-base w-6 text-center flex-shrink-0">🔒</span>
+                      <span>Sinh trắc học</span>
+                      {pathname === "/profile" && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         {NOTIFICATION_NAV_ROLES.includes(role) && <NotificationDropdown />}
