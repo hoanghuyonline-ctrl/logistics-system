@@ -61,6 +61,24 @@ const SUPPLIERS = [
   "Tmall Flagship Store Headset"
 ];
 
+// NLP Intent Centroid Vectors for Cosine Similarity modeling
+const SEMANTIC_CENTROIDS = {
+  fashion: {
+    "ao": 1.0, "quan": 1.0, "vay": 1.0, "dam": 1.0, "len": 0.8,
+    "giay": 1.0, "dep": 0.9, "sneaker": 1.0, "t-shirt": 1.0, "jeans": 1.0,
+    "det": 0.7, "thoi": 0.8, "trang": 0.8, "cotton": 0.8, "khoac": 0.8,
+    "jean": 0.9, "hoodie": 1.0, "jacket": 1.0, "skirt": 1.0, "dress": 1.0,
+    "tui": 0.7, "xach": 0.7, "vi": 0.6, "quai": 0.6
+  },
+  electronics: {
+    "o": 0.8, "cam": 0.8, "dien": 1.0, "bong": 0.7, "den": 0.7,
+    "noi": 0.8, "com": 0.8, "tai": 0.9, "nghe": 0.9, "sac": 1.0,
+    "pin": 1.0, "bluetooth": 1.0, "quat": 0.9, "may": 0.8, "cong": 0.7,
+    "suat": 0.7, "220v": 1.0, "soundbar": 1.0, "loa": 1.0, "wireless": 0.9,
+    "cap": 0.8, "cable": 0.8, "charger": 1.0, "led": 0.8, "smart": 0.7
+  }
+};
+
 const DICTIONARY: Record<string, { zh: string, category: keyof typeof IMAGES }> = {
   "tai nghe": { zh: "蓝牙耳机 (Bluetooth Buds)", category: "headphone" },
   "headphone": { zh: "耳机 (Headset)", category: "headphone" },
@@ -75,25 +93,50 @@ const DICTIONARY: Record<string, { zh: string, category: keyof typeof IMAGES }> 
   "clothes": { zh: "精品服装 (Apparel)", category: "clothes" }
 };
 
-// Hàm Tokenizer phân tách từ khóa tiếng Việt chuẩn Google Intent System
-function tokenizeVietnamese(text: string): string[] {
+// Tokenizer & Accent Stripper representing deep semantic NLP preparation
+function tokenizeAndNormalize(text: string): string[] {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Loại bỏ dấu tiếng Việt để so khớp chính xác
-    .split(/[\s,.\-\/]+/)
+    .replace(/[\u0300-\u036f]/g, "") // Strip accents
+    .replace(/[^\w\s]/g, "") // Remove punctuation
+    .split(/\s+/)
     .filter(Boolean);
 }
 
+// True Vector Space Cosine Similarity calculation
+function calculateCosineSimilarity(queryTokens: string[], centroid: Record<string, number>): number {
+  const queryFreq: Record<string, number> = {};
+  for (const token of queryTokens) {
+    queryFreq[token] = (queryFreq[token] || 0) + 1;
+  }
+
+  let dotProduct = 0;
+  let queryMagnitudeSq = 0;
+  let centroidMagnitudeSq = 0;
+
+  const allKeys = new Set([...Object.keys(queryFreq), ...Object.keys(centroid)]);
+
+  for (const key of allKeys) {
+    const qVal = queryFreq[key] || 0;
+    const cVal = centroid[key] || 0;
+
+    dotProduct += qVal * cVal;
+    queryMagnitudeSq += qVal * qVal;
+    centroidMagnitudeSq += cVal * cVal;
+  }
+
+  if (queryMagnitudeSq === 0 || centroidMagnitudeSq === 0) return 0;
+  return dotProduct / (Math.sqrt(queryMagnitudeSq) * Math.sqrt(centroidMagnitudeSq));
+}
+
 export async function GET(request: Request) {
-  // Đảm bảo không cache dữ liệu deep crawl từ server bằng Header No-Cache
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") || "";
   const platform = (searchParams.get("platform") || "taobao") as Platform;
-  const limit = parseInt(searchParams.get("limit") || "40", 10); // Cấu hình mặc định trả về 40-50 sản phẩm mỗi trang
+  const limit = parseInt(searchParams.get("limit") || "40", 10);
   const page = parseInt(searchParams.get("page") || "1", 10);
 
-  // Lấy các bộ lọc thực chiến nâng cao gửi từ Frontend
   const minPrice = searchParams.get("min_price") ? parseFloat(searchParams.get("min_price")!) : null;
   const maxPrice = searchParams.get("max_price") ? parseFloat(searchParams.get("max_price")!) : null;
   const size = searchParams.get("size") || null;
@@ -107,38 +150,38 @@ export async function GET(request: Request) {
   }
 
   const cleanQuery = query.trim().toLowerCase();
-  const tokens = tokenizeVietnamese(cleanQuery);
+  const tokens = tokenizeAndNormalize(cleanQuery);
 
-  // 1. THUẬT TOÁN PHÂN TÁCH Ý ĐỊNH (INTENT PARSING)
+  // 1. SEMANTIC VECTOR SEARCH (NLP Intent Recognition)
   let category: keyof typeof IMAGES = "general";
   let translated = "";
 
-  const fashionKeywords = ["ao", "quan", "vay", "dam", "len", "giay", "dep", "sneaker", "t-shirt", "jeans", "det"];
-  const electronicKeywords = ["o cam", "dien", "bong den", "noi com", "tai nghe", "sac", "pin", "bluetooth", "quat", "may", "cong suat", "220v", "soundbar", "loa"];
-
-  const hasFashion = tokens.some(tok => fashionKeywords.includes(tok));
-  const hasElectronic = tokens.some(tok => electronicKeywords.includes(tok));
+  const fashionScore = calculateCosineSimilarity(tokens, SEMANTIC_CENTROIDS.fashion);
+  const electronicsScore = calculateCosineSimilarity(tokens, SEMANTIC_CENTROIDS.electronics);
 
   const matchedKey = Object.keys(DICTIONARY).find(key => cleanQuery.includes(key));
 
   if (matchedKey) {
     translated = DICTIONARY[matchedKey].zh;
     category = DICTIONARY[matchedKey].category;
-  } else if (hasFashion) {
-    category = "clothes";
-    translated = `${query.trim()} 潮流服装 (Fashion Wear)`;
-  } else if (hasElectronic) {
-    category = "headphone"; // Smart electric & appliances
-    translated = `${query.trim()} 智能数码 (Smart Appliances)`;
+  } else if (fashionScore > 0.15 || electronicsScore > 0.15) {
+    if (fashionScore >= electronicsScore) {
+      category = "clothes";
+      translated = `${query.trim()} 潮流服装 (Fashion Wear)`;
+    } else {
+      category = "headphone";
+      translated = `${query.trim()} 智能数码 (Smart Appliances)`;
+    }
   } else {
     category = "general";
     translated = `${query.trim()} 优质货源 (Premium Sourcing)`;
   }
 
-  // 2. THUẬT TOÁN CHUẨN HÓA ĐA BỘ LỌC DỰA TRÊN NGÀNH HÀNG
+  // 2. DYNAMIC FILTERS GENERATION BASED ON DETECTED INTENT CONFIDENCE
+  // If classified as general (confidence is low or query is broad), we return NO attributes to frontend!
   let filters: Array<{ key: string; label: string; options: string[] }> = [];
 
-  if (category === "clothes" || category === "shoes") {
+  if (category === "clothes") {
     filters = [
       { key: "size", label: "Kích cỡ", options: ["S", "M", "L", "XL", "XXL"] },
       { key: "color", label: "Màu sắc", options: ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"] }
@@ -148,13 +191,9 @@ export async function GET(request: Request) {
       { key: "voltage", label: "Điện áp", options: ["220V", "110V", "Pin sạc"] },
       { key: "type", label: "Tính năng", options: ["Không dây", "Có dây", "Chống ồn"] }
     ];
-  } else {
-    filters = [
-      { key: "material", label: "Chất liệu", options: ["Nhựa ABS", "Thép không gỉ", "Gỗ tự nhiên", "Da PU"] }
-    ];
   }
 
-  // 3. NO-CACHE DEEP CRAWL - Sinh ra danh mục lớn 60 sản phẩm mới nhất để phân trang
+  // 3. NO-CACHE DEEP CRAWL - Generate products
   const totalItems = 60;
   const allItems: ProductItem[] = [];
 
@@ -178,7 +217,7 @@ export async function GET(request: Request) {
       titleZh = `[男士/女士 ${i}] 纯色圆领高品质短袖t恤潮牌`;
       basePrice = 15 + (i * 2);
     } else if (category === "shoes") {
-      const sizes = ["S", "M", "L", "XL", "XXL"]; // Normalize sizes for fashion filters
+      const sizes = ["S", "M", "L", "XL", "XXL"];
       const colors = ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"];
       attributes.size = sizes[(i - 1) % sizes.length];
       attributes.color = colors[(i - 1) % colors.length];
@@ -215,10 +254,10 @@ export async function GET(request: Request) {
     });
   }
 
-  // Lọc theo Nền tảng
+  // Filter based on active platform
   let filteredItems = allItems.filter(item => item.platform === platform);
 
-  // Lọc nâng cao tại Backend (Khoảng giá, Size, Màu sắc)
+  // Apply inputs/filters
   if (minPrice !== null) {
     filteredItems = filteredItems.filter(item => item.priceCNY >= minPrice);
   }
@@ -232,7 +271,7 @@ export async function GET(request: Request) {
     filteredItems = filteredItems.filter(item => item.attributes.color === color);
   }
 
-  // Phân trang
+  // Paginate
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
   const paginatedItems = filteredItems.slice(startIndex, endIndex);

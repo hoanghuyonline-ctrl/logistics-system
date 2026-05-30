@@ -194,6 +194,7 @@ function SearchDashboard() {
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [availableFilters, setAvailableFilters] = useState<Array<{ key: string; label: string; options: string[] }>>([]);
 
   // Compute filtered results on-the-fly based on selected filters
   const filteredResults = results.filter((item) => {
@@ -241,6 +242,7 @@ function SearchDashboard() {
       setMaxPrice(null);
       setSelectedSize(null);
       setSelectedColor(null);
+      setAvailableFilters([]);
     }
 
     let url = `/api/source-search?q=${encodeURIComponent(searchQuery)}&platform=${platform}&limit=${limit}&page=${targetPage}`;
@@ -258,6 +260,7 @@ function SearchDashboard() {
         setTranslatedText(data.translated);
         setResults(data.items);
         setTotal(data.total);
+        setAvailableFilters(data.filters || []);
 
         // Initialize default quantity to 1 for all items
         const initialQs: Record<string, number> = {};
@@ -496,51 +499,93 @@ function SearchDashboard() {
                 </div>
 
                 {/* 2. Sizes */}
-                <div className="space-y-1.5">
-                  <span className="text-xs text-slate-500 font-semibold block">Kích cỡ (Size):</span>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {["S", "M", "L", "XL", "XXL"].map((sz) => {
-                      const isSelected = selectedSize === sz;
-                      return (
-                        <button
-                          key={sz}
-                          onClick={() => setSelectedSize(selectedSize === sz ? null : sz)}
-                          className={`py-1.5 text-xs font-semibold rounded-xl transition-all duration-300 transform active:scale-95 shadow-sm border ${
-                            isSelected
-                              ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
-                              : "bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100"
-                          }`}
-                        >
-                          {sz}
-                        </button>
-                      );
-                    })}
+                {availableFilters.some(f => f.key === "size") && (
+                  <div className="space-y-1.5">
+                    <span className="text-xs text-slate-500 font-semibold block">Kích cỡ (Size):</span>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {["S", "M", "L", "XL", "XXL"].map((sz) => {
+                        const isSelected = selectedSize === sz;
+                        return (
+                          <button
+                            key={sz}
+                            onClick={() => setSelectedSize(selectedSize === sz ? null : sz)}
+                            className={`py-1.5 text-xs font-semibold rounded-xl transition-all duration-300 transform active:scale-95 shadow-sm border ${
+                              isSelected
+                                ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
+                                : "bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100"
+                            }`}
+                          >
+                            {sz}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* 3. Colors */}
-                <div className="space-y-1.5">
-                  <span className="text-xs text-slate-500 font-semibold block">Màu sắc:</span>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {["Đen", "Trắng", "Đỏ", "Xanh", "Xám"].map((col) => {
-                      const isSelected = selectedColor === col;
-                      return (
-                        <button
-                          key={col}
-                          onClick={() => setSelectedColor(selectedColor === col ? null : col)}
-                          className={`py-1.5 text-xs font-semibold rounded-xl transition-all duration-300 transform active:scale-95 shadow-sm border truncate px-1 ${
-                            isSelected
-                              ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
-                              : "bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100"
-                          }`}
-                          title={col}
-                        >
-                          {col}
-                        </button>
-                      );
-                    })}
+                {availableFilters.some(f => f.key === "color") && (
+                  <div className="space-y-1.5">
+                    <span className="text-xs text-slate-500 font-semibold block">Màu sắc:</span>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {["Đen", "Trắng", "Đỏ", "Xanh", "Xám"].map((col) => {
+                        const isSelected = selectedColor === col;
+                        return (
+                          <button
+                            key={col}
+                            onClick={() => setSelectedColor(selectedColor === col ? null : col)}
+                            className={`py-1.5 text-xs font-semibold rounded-xl transition-all duration-300 transform active:scale-95 shadow-sm border truncate px-1 ${
+                              isSelected
+                                ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
+                                : "bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100"
+                            }`}
+                            title={col}
+                          >
+                            {col}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* 4. Voltage & Type for Electronics */}
+                {availableFilters.some(f => f.key === "voltage" || f.key === "type") && (
+                  <div className="space-y-1.5 col-span-1 md:col-span-2">
+                    <span className="text-xs text-slate-500 font-semibold block">Thông số thiết bị điện:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {availableFilters.map((f) => (
+                        <div key={f.key} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 rounded-xl px-3 py-1 text-xs">
+                          <span className="text-slate-500 font-medium">{f.label}:</span>
+                          <div className="flex gap-1">
+                            {f.options.map((opt) => {
+                              const isSelected = selectedSize === opt || selectedColor === opt;
+                              return (
+                                <button
+                                  key={opt}
+                                  onClick={() => {
+                                    if (f.key === "voltage") {
+                                      setSelectedSize(selectedSize === opt ? null : opt);
+                                    } else {
+                                      setSelectedColor(selectedColor === opt ? null : opt);
+                                    }
+                                  }}
+                                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
+                                    isSelected
+                                      ? "bg-blue-600 border-blue-600 text-white"
+                                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
+                                  }`}
+                                >
+                                  {opt}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Reset Filters trigger */}
