@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
         authenticatorSelection: {
           residentKey: "preferred",
           userVerification: "preferred",
-          authenticatorAttachment: "platform",
         },
         excludeCredentials,
       });
@@ -143,11 +142,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[biometric/options] Error:", err);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { error: err?.message || "Không thể khởi tạo tùy chọn xác thực. Hãy đảm bảo thiết bị của bạn đã bật khóa bảo mật (vân tay, khuôn mặt hoặc mã PIN)." },
+      { status: 400 }
     );
   }
 }
