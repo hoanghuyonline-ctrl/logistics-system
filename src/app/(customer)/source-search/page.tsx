@@ -217,15 +217,21 @@ function SearchDashboard() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [availableFilters, setAvailableFilters] = useState<Array<{ key: string; label: string; options: string[] }>>([]);
 
-  // Compute filtered results on-the-fly based on selected filters and sanitization logic
-  const filteredResults = results.filter((item) => {
-    if (!sanitizeData(item.titleVi) || !sanitizeData(item.titleZh) || !sanitizeData(item.supplier)) return false;
-    if (minPrice !== null && item.priceCNY < minPrice) return false;
-    if (maxPrice !== null && item.priceCNY > maxPrice) return false;
-    if (selectedSize && item.attributes?.size !== selectedSize) return false;
-    if (selectedColor && item.attributes?.color !== selectedColor) return false;
-    return true;
-  });
+  // State to hold active filtered results dynamically synchronized with filters and scroll append logic
+  const [filteredResults, setFilteredResults] = useState<ProductItem[]>([]);
+
+  // Synchronize filtered results whenever primary results or active filters update
+  useEffect(() => {
+    const filtered = results.filter((item) => {
+      if (!sanitizeData(item.titleVi) || !sanitizeData(item.titleZh) || !sanitizeData(item.supplier)) return false;
+      if (minPrice !== null && item.priceCNY < minPrice) return false;
+      if (maxPrice !== null && item.priceCNY > maxPrice) return false;
+      if (selectedSize && item.attributes?.size !== selectedSize) return false;
+      if (selectedColor && item.attributes?.color !== selectedColor) return false;
+      return true;
+    });
+    setFilteredResults(filtered);
+  }, [results, minPrice, maxPrice, selectedSize, selectedColor]);
 
   // Fetch exchange rate on mount
   useEffect(() => {
@@ -287,7 +293,20 @@ function SearchDashboard() {
       })
       .then((data) => {
         setTranslatedText(data.translated);
+        
+        // Filter new incoming data with sanitizeData and existing active filter options
+        const apiNewData = data.items.filter((item: ProductItem) => {
+          if (!sanitizeData(item.titleVi) || !sanitizeData(item.titleZh) || !sanitizeData(item.supplier)) return false;
+          if (minPrice !== null && item.priceCNY < minPrice) return false;
+          if (maxPrice !== null && item.priceCNY > maxPrice) return false;
+          if (selectedSize && item.attributes?.size !== selectedSize) return false;
+          if (selectedColor && item.attributes?.color !== selectedColor) return false;
+          return true;
+        });
+
         if (append) {
+          // Append data using dynamic array spread syntax as requested by Ban quan tri
+          setFilteredResults((prev) => [...prev, ...apiNewData]);
           setResults((prev) => {
             const merged = [...prev];
             data.items.forEach((item: ProductItem) => {
@@ -298,6 +317,7 @@ function SearchDashboard() {
             return merged;
           });
         } else {
+          setFilteredResults(apiNewData);
           setResults(data.items);
         }
         setTotal(data.total);
