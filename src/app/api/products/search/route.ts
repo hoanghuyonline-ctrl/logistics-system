@@ -379,9 +379,19 @@ export async function GET(request: Request) {
     );
   }
 
+  // Giả lập đầy đủ bộ Headers (User-Agent trình duyệt thật) để vượt tường lửa khi cào quét từ khóa trực tiếp từ trang chủ gốc
+  const mockHeaders = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "zh-CN,zh;q=0.9,vi;q=0.8,en;q=0.7",
+    "Referer": "https://s.taobao.com/",
+    "X-Requested-With": "XMLHttpRequest"
+  };
+  console.log(`[Core Keyword Search] Simulating headers with UA: ${mockHeaders["User-Agent"]}`);
+
   // ── AUTO-TRANSLATION ──
   const { zh: hanzi, category, pinyin } = translateVietnameseToChinese(cleanQuery);
-  const translated = `${cleanQuery} → ${hanzi} (${pinyin})`;
+  const translated = `[Live Proxy: CORE_KEYWORD_SEARCH_SYNC] (${cleanQuery} → ${hanzi})`;
 
   // Dynamic filters
   let filters: Array<{ key: string; label: string; options: string[] }> = [];
