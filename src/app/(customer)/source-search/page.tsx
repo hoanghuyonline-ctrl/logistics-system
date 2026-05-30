@@ -29,7 +29,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
 
 // Detailed Platform Types
-type Platform = "taobao" | "1688" | "tmall";
+type Platform = "taobao" | "1688" | "tmall" | "other";
 
 // Product Data Schema
 interface ProductItem {
@@ -377,11 +377,11 @@ function SearchDashboard() {
 
         <div className="max-w-4xl mx-auto py-4 relative z-10">
 
-          {/* Platform Tab Selectors - Horizontal slider on mobile, centered on desktop */}
-          <div className="flex flex-row overflow-x-auto gap-3 pb-2 mb-6 md:justify-center scrollbar-thin scrollbar-thumb-slate-200 my-4 px-2">
+          {/* Platform Tab Selectors - Fixed 2x2 Grid on Mobile, 4 columns on Desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 my-4 px-2">
             <button
               onClick={() => setPlatform("taobao")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap shrink-0 transition-all duration-300 transform hover:scale-105 shadow-sm ${platform === "taobao"
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-sm ${platform === "taobao"
                   ? "bg-[#FF5000] text-white ring-2 ring-[#FF5000] ring-offset-2"
                   : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF5000]/10"
                 }`}
@@ -391,7 +391,7 @@ function SearchDashboard() {
 
             <button
               onClick={() => setPlatform("1688")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap shrink-0 transition-all duration-300 transform hover:scale-105 shadow-sm ${platform === "1688"
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-sm ${platform === "1688"
                   ? "bg-[#FF6C00] text-white ring-2 ring-[#FF6C00] ring-offset-2"
                   : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF6C00]/10"
                 }`}
@@ -401,12 +401,22 @@ function SearchDashboard() {
 
             <button
               onClick={() => setPlatform("tmall")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap shrink-0 transition-all duration-300 transform hover:scale-105 shadow-sm ${platform === "tmall"
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-sm ${platform === "tmall"
                   ? "bg-[#C40000] text-white ring-2 ring-[#C40000] ring-offset-2"
                   : "bg-white text-slate-700 border border-slate-200 hover:bg-[#C40000]/10"
                 }`}
             >
               <span className="text-base">💎</span>Tmall.com
+            </button>
+
+            <button
+              onClick={() => setPlatform("other")}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-sm ${platform === "other"
+                  ? "bg-[#2563EB] text-white ring-2 ring-[#2563EB] ring-offset-2"
+                  : "bg-white text-slate-700 border border-slate-200 hover:bg-[#2563EB]/10"
+                }`}
+            >
+              <span className="text-base">🌐</span>Website Khác
             </button>
           </div>
 
@@ -414,13 +424,23 @@ function SearchDashboard() {
           <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-slate-100 shadow-sm my-4">
             <div className="flex flex-col md:flex-row gap-3">
               <Input
-                placeholder="Nhập từ khóa tiếng Việt (ví dụ: 'tai nghe', 'giày thể thao', 'áo khoác')..."
+                placeholder="Dễ tìm nguồn (Tiếng Việc)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onPressEnter={() => handleSearch(1)}
                 size="large"
                 allowClear
                 prefix={<SearchOutlined className="text-slate-400" />}
+                suffix={
+                  searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors duration-200 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg cursor-pointer"
+                    >
+                      Dọn
+                    </button>
+                  )
+                }
                 className="rounded-2xl border-slate-200 focus:border-blue-500 py-3 text-base w-full min-h-[48px] flex items-center"
               />
               <Button
@@ -598,7 +618,8 @@ function SearchDashboard() {
                           <Tag
                             color={
                               item.platform === "taobao" ? "#FF5000" :
-                                item.platform === "1688" ? "#FF6C00" : "#C40000"
+                                item.platform === "1688" ? "#FF6C00" :
+                                  item.platform === "tmall" ? "#C40000" : "#2563EB"
                             }
                             className="font-bold text-[11px] uppercase tracking-wide border-none px-2.5 py-0.5 text-white shadow-sm rounded-full"
                           >

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-type Platform = "taobao" | "1688" | "tmall";
+type Platform = "taobao" | "1688" | "tmall" | "other";
 
 interface ProductItem {
   id: string;
@@ -136,7 +136,7 @@ export async function GET(request: Request) {
   const allItems: ProductItem[] = [];
 
   for (let i = 1; i <= totalItems; i++) {
-    const itemPlatform = i % 3 === 0 ? "taobao" : i % 3 === 1 ? "1688" : "tmall";
+    const itemPlatform: Platform = i % 4 === 0 ? "taobao" : i % 4 === 1 ? "1688" : i % 4 === 2 ? "tmall" : "other";
     const imgList = IMAGES[category];
     const imageUrl = imgList[(i - 1) % imgList.length];
     const supplier = SUPPLIERS[(i - 1) % SUPPLIERS.length];
