@@ -287,6 +287,9 @@ const vi: Record<string, string> = {
   "accountant.tx.ORDER_PAYMENT": "Thanh toán",
   "accountant.tx.REFUND": "Hoàn tiền",
   "accountant.tx.ADJUSTMENT": "Điều chỉnh",
+  "accountant.tx.SALES_PAYMENT": "Thanh toán mua hàng",
+  "accountant.tx.MANUAL_ADD": "Điều chỉnh tăng số dư",
+  "accountant.tx.MANUAL_DEDUCT": "Điều chỉnh giảm số dư",
 
   // Order Detail
   "orderDetail.loading": "Đang tải chi tiết đơn hàng...",
@@ -775,6 +778,9 @@ const vi: Record<string, string> = {
   "transactions.tx.ORDER_PAYMENT": "Thanh toán đơn hàng",
   "transactions.tx.REFUND": "Hoàn tiền",
   "transactions.tx.ADJUSTMENT": "Điều chỉnh",
+  "transactions.tx.SALES_PAYMENT": "Thanh toán mua hàng",
+  "transactions.tx.MANUAL_ADD": "Điều chỉnh tăng số dư",
+  "transactions.tx.MANUAL_DEDUCT": "Điều chỉnh giảm số dư",
 
   // Profile
   "profile.loading": "Đang tải hồ sơ...",

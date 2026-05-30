@@ -9,6 +9,7 @@ import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
 import { getStatusInfo, getDelayWarning, getProgressSteps } from "@/lib/shipment-timeline-info";
+import { FileText, FileSpreadsheet, Download, FileCode, File, Paperclip } from "lucide-react";
 
 const ORDER_TYPE_ICONS: Record<string, { icon: string; color: string }> = {
   ECOMMERCE: { icon: "🛒", color: "bg-blue-100 text-blue-700" },
@@ -460,9 +461,6 @@ export default function OrderDetailPage() {
               {order.waybillImages && (() => { try { const imgs = JSON.parse(order.waybillImages); return Array.isArray(imgs) && imgs.length > 0 ? (
                 <div><dt className="text-slate-500 mb-2">{t("entrust.waybillImages")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={`waybill-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
               ) : null; } catch { return null; } })()}
-              {order.relatedDocuments && (() => { try { const docs = JSON.parse(order.relatedDocuments); return Array.isArray(docs) && docs.length > 0 ? (
-                <div><dt className="text-slate-500 mb-2">{t("entrust.relatedDocs")}</dt><dd className="space-y-1">{docs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:underline text-xs truncate">📎 {url.split("/").pop()}</a>)}</dd></div>
-              ) : null; } catch { return null; } })()}
               {(order.cnTruckPlate || order.cnDriverName || order.cnDriverPhone) && (
                 <div className="pt-2 border-t border-slate-100 space-y-2">
                   <dt className="text-slate-500 font-medium">{t("entrust.cnTruckInfo")}</dt>
@@ -570,6 +568,107 @@ export default function OrderDetailPage() {
             </div>
           </Card>
         )}
+
+        {(() => {
+          let docs: Array<{ type: string; name: string; url: string; path: string; uploadedAt?: string }> = [];
+          try {
+            const parsed = JSON.parse(order.relatedDocuments || "[]");
+            if (Array.isArray(parsed)) {
+              docs = parsed.map(d => {
+                if (typeof d === "string") {
+                  return { type: "OTHER", name: d.split("/").pop() || "Document", url: d, path: d };
+                }
+                return d;
+              });
+            }
+          } catch {}
+
+          const docTypes = [
+            { type: "INVOICE", label: "Commercial Invoice", desc: "Hóa đơn thương mại" },
+            { type: "PACKING_LIST", label: "Packing List", desc: "Phiếu đóng gói chi tiết" },
+            { type: "BILL_OF_LADING", label: "Bill of Lading", desc: "Vận đơn vận chuyển" }
+          ];
+
+          const otherDocs = docs.filter(d => !["INVOICE", "PACKING_LIST", "BILL_OF_LADING"].includes(d.type));
+
+          return (
+            <Card title="Hồ sơ Chứng từ Xuất Nhập Khẩu (XNK)">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                  <FileCode className="w-5 h-5 text-blue-600 animate-pulse" />
+                  <span className="text-xs text-slate-500 font-medium">Xem và tải xuống bộ chứng từ hải quan chính thức cho lô hàng của bạn.</span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {docTypes.map(dt => {
+                    const file = docs.find(d => d.type === dt.type);
+                    
+                    return (
+                      <div key={dt.type} className={`group relative border rounded-xl p-4 transition-all duration-300 flex flex-col justify-between min-h-[140px] ${
+                        file ? "border-blue-100 bg-blue-50/20 hover:border-blue-300 hover:shadow-sm" : "border-slate-100 bg-slate-50/50"
+                      }`}>
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                              file ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-400"
+                            }`}>{dt.type.replace("_", " ")}</span>
+                            {file && (
+                              <a href={file.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Tải xuống">
+                                <Download className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                          <h4 className="font-semibold text-slate-800 text-sm mb-1">{dt.label}</h4>
+                          <p className="text-xs text-slate-400 leading-snug">{dt.desc}</p>
+                        </div>
+
+                        {file ? (
+                          <div className="mt-3 flex items-center gap-2 p-2 bg-white border border-blue-50 rounded-lg">
+                            <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate font-mono flex-1" title={file.name}>
+                              {file.name}
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="mt-3 text-xs text-slate-400 italic py-2 text-center border border-dashed border-slate-200 rounded-lg bg-white/50">
+                            Chưa cập nhật...
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Other Documents Sub-section */}
+                {otherDocs.length > 0 && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-1.5 text-slate-700 font-semibold text-sm mb-2">
+                      <Paperclip className="w-4 h-4 text-slate-500" />
+                      <span>Chứng từ liên quan khác</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {otherDocs.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200 hover:border-blue-100 transition-all text-xs">
+                          <div className="flex items-center gap-2 truncate flex-1 pr-4">
+                            <File className="w-4 h-4 text-slate-400 shrink-0" />
+                            <div className="truncate">
+                              <p className="font-medium text-slate-700 truncate font-mono" title={file.name}>{file.name}</p>
+                              {file.uploadedAt && <span className="text-[10px] text-slate-400">{new Date(file.uploadedAt).toLocaleString("vi-VN")}</span>}
+                            </div>
+                          </div>
+                          <a href={file.url} target="_blank" rel="noopener noreferrer" className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors shrink-0" title="Tải xuống">
+                            <Download className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })()}
 
         <Card title={t("orderDetail.costBreakdown")}>
           {order.confirmedTotalCost ? (

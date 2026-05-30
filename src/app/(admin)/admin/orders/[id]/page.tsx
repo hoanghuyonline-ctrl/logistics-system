@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
+import { FileText, FileSpreadsheet, Upload, Download, Trash2, Plus, FileCode, File, Paperclip } from "lucide-react";
 
 const TRANSITIONS: Record<string, string[]> = {
   PENDING: ["PURCHASED", "CANCELLED"],
@@ -143,6 +144,98 @@ export default function AdminOrderDetailPage() {
   const [chinaWarehouses, setChinaWarehouses] = useState<Array<{ id: string; nameVi: string; nameZh: string; nameEn: string; addressVi: string; addressZh: string; addressEn: string }>>([]);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [activeDocType, setActiveDocType] = useState<"INVOICE" | "PACKING_LIST" | "BILL_OF_LADING" | "OTHER" | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleUploadDoc(type: "INVOICE" | "PACKING_LIST" | "BILL_OF_LADING" | "OTHER", file: File) {
+    setUploadingDoc(type);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/orders/upload-document", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast(data.error || "Tải lên tài liệu thất bại", "error");
+        return;
+      }
+
+      const data = await res.json();
+      
+      let currentDocs = [];
+      try {
+        currentDocs = JSON.parse(order?.relatedDocuments || "[]");
+        if (!Array.isArray(currentDocs)) currentDocs = [];
+      } catch {
+        currentDocs = [];
+      }
+
+      const newDoc = {
+        type,
+        name: file.name,
+        path: data.path,
+        url: data.url,
+        uploadedAt: new Date().toISOString()
+      };
+
+      const updatedDocs = [...currentDocs, newDoc];
+      const putRes = await fetch(`/api/orders/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relatedDocuments: updatedDocs })
+      });
+
+      if (putRes.ok) {
+        toast("Tải lên thành công", "success");
+        loadOrder();
+      } else {
+        toast("Lưu thông tin tài liệu thất bại", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Có lỗi xảy ra khi tải lên", "error");
+    } finally {
+      setUploadingDoc(null);
+      setActiveDocType(null);
+    }
+  }
+
+  async function handleDeleteDoc(index: number) {
+    if (!confirm("Bạn có chắc chắn muốn xóa tài liệu này?")) return;
+    
+    let currentDocs = [];
+    try {
+      currentDocs = JSON.parse(order?.relatedDocuments || "[]");
+      if (!Array.isArray(currentDocs)) currentDocs = [];
+    } catch {
+      currentDocs = [];
+    }
+
+    const updatedDocs = currentDocs.filter((_, i) => i !== index);
+    try {
+      const putRes = await fetch(`/api/orders/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relatedDocuments: updatedDocs })
+      });
+
+      if (putRes.ok) {
+        toast("Xóa tài liệu thành công", "success");
+        loadOrder();
+      } else {
+        toast("Xóa tài liệu thất bại", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Có lỗi xảy ra khi xóa", "error");
+    }
+  }
 
   function copyToClipboard(value: string) {
     navigator.clipboard.writeText(value).then(() => {
@@ -562,9 +655,6 @@ export default function AdminOrderDetailPage() {
             {order.waybillImages && (() => { try { const imgs = JSON.parse(order.waybillImages); return Array.isArray(imgs) && imgs.length > 0 ? (
               <div><dt className="text-slate-500 mb-2">{t("entrust.waybillImages")}</dt><dd className="flex gap-2 flex-wrap">{imgs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={url} alt={`waybill-${i}`} className="w-16 h-16 rounded-lg object-cover border border-slate-200" /></a>)}</dd></div>
             ) : null; } catch { return null; } })()}
-            {order.relatedDocuments && (() => { try { const docs = JSON.parse(order.relatedDocuments); return Array.isArray(docs) && docs.length > 0 ? (
-              <div><dt className="text-slate-500 mb-2">{t("entrust.relatedDocs")}</dt><dd className="space-y-1">{docs.map((url: string, i: number) => <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:underline text-xs truncate">📎 {url.split("/").pop()}</a>)}</dd></div>
-            ) : null; } catch { return null; } })()}
             {(order.cnTruckPlate || order.cnDriverName || order.cnDriverPhone) && (
               <div className="pt-2 border-t border-slate-100 space-y-2">
                 <dt className="text-slate-500 font-medium">{t("entrust.cnTruckInfo")}</dt>
@@ -711,6 +801,150 @@ export default function AdminOrderDetailPage() {
           </dl>
         </Card>
       )}
+
+      {(() => {
+        let docs: Array<{ type: string; name: string; url: string; path: string; uploadedAt?: string }> = [];
+        try {
+          const parsed = JSON.parse(order.relatedDocuments || "[]");
+          if (Array.isArray(parsed)) {
+            docs = parsed.map(d => {
+              if (typeof d === "string") {
+                return { type: "OTHER", name: d.split("/").pop() || "Document", url: d, path: d };
+              }
+              return d;
+            });
+          }
+        } catch {}
+
+        const docTypes = [
+          { type: "INVOICE", label: "Commercial Invoice (Hóa đơn thương mại)", desc: "Hóa đơn thương mại mua bán hàng hóa quốc tế" },
+          { type: "PACKING_LIST", label: "Packing List (Phiếu đóng gói)", desc: "Danh sách quy cách, số lượng, đóng gói chi tiết" },
+          { type: "BILL_OF_LADING", label: "Bill of Lading (Vận đơn)", desc: "Vận đơn đường biển / đường bộ quốc tế" }
+        ];
+
+        const otherDocs = docs.filter(d => !["INVOICE", "PACKING_LIST", "BILL_OF_LADING"].includes(d.type));
+
+        return (
+          <Card title="Hồ sơ Chứng từ Xuất Nhập Khẩu (XNK)">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                <FileCode className="w-5 h-5 text-blue-600 animate-pulse" />
+                <span className="text-xs text-slate-500 font-medium">Quản lý và lưu trữ bộ chứng từ hải quan chính thức cho lô hàng.</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {docTypes.map(dt => {
+                  const file = docs.find(d => d.type === dt.type);
+                  const isUploading = uploadingDoc === dt.type;
+                  
+                  return (
+                    <div key={dt.type} className="group relative border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all duration-300 rounded-xl p-4 bg-white/50 backdrop-blur-sm flex flex-col justify-between min-h-[160px]">
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 uppercase tracking-wider">{dt.type.replace("_", " ")}</span>
+                          {file && (
+                            <div className="flex gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                              <a href={file.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Tải xuống">
+                                <Download className="w-3.5 h-3.5" />
+                              </a>
+                              <button onClick={() => {
+                                const idx = docs.findIndex(d => d.type === dt.type);
+                                if (idx !== -1) handleDeleteDoc(idx);
+                              }} className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors" title="Xóa">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-semibold text-slate-800 text-sm mb-1 leading-snug">{dt.label}</h4>
+                        <p className="text-xs text-slate-400 mb-3">{dt.desc}</p>
+                      </div>
+
+                      {file ? (
+                        <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                          <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span className="text-xs text-slate-700 truncate font-mono select-all flex-1" title={file.name}>{file.name}</span>
+                        </div>
+                      ) : (
+                        <button
+                          disabled={!!uploadingDoc}
+                          onClick={() => {
+                            setActiveDocType(dt.type as any);
+                            setTimeout(() => fileInputRef.current?.click(), 50);
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 border border-dashed border-slate-300 rounded-lg text-xs font-medium text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          {isUploading ? (
+                            <>
+                              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                              <span>Đang tải...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Chọn tệp chứng từ</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Other Documents Sub-section */}
+              <div className="pt-2 border-t border-slate-100">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center gap-1.5 text-slate-700 font-semibold text-sm">
+                    <Paperclip className="w-4 h-4 text-slate-500" />
+                    <span>Chứng từ khác / Tài liệu bổ sung</span>
+                  </div>
+                  <button
+                    disabled={!!uploadingDoc}
+                    onClick={() => {
+                      setActiveDocType("OTHER");
+                      setTimeout(() => fileInputRef.current?.click(), 50);
+                    }}
+                    className="flex items-center gap-1 py-1 px-2.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors text-xs font-medium cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Thêm tài liệu</span>
+                  </button>
+                </div>
+
+                {otherDocs.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic py-2">Chưa có chứng từ bổ sung nào được đính kèm.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {otherDocs.map((file, idx) => {
+                      const absoluteIdx = docs.findIndex(d => d.url === file.url);
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all text-xs">
+                          <div className="flex items-center gap-2 truncate flex-1 pr-4">
+                            <File className="w-4 h-4 text-slate-400 shrink-0" />
+                            <div className="truncate">
+                              <p className="font-medium text-slate-700 truncate font-mono" title={file.name}>{file.name}</p>
+                              {file.uploadedAt && <span className="text-[10px] text-slate-400">{new Date(file.uploadedAt).toLocaleString("vi-VN")}</span>}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Tải xuống">
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
+                            <button onClick={() => handleDeleteDoc(absoluteIdx)} className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Xóa">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title={t("orderDetail.customerInfo")}>
@@ -1163,6 +1397,19 @@ export default function AdminOrderDetailPage() {
           ))}
         </div>
       </Card>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && activeDocType) {
+            handleUploadDoc(activeDocType, file);
+          }
+          e.target.value = "";
+        }}
+        className="hidden"
+      />
     </div>
   );
 }
