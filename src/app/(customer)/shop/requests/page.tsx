@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import LocalShopTrackingSteps from "@/components/tracking/LocalShopTrackingSteps";
+import { ShoppingBag } from "lucide-react";
 
 interface SalesRequest {
   id: string;
@@ -218,7 +219,7 @@ export default function ShopRequestsPage() {
 
       {requests.length === 0 ? (
         <div className="text-center py-16">
-          <span className="text-5xl mb-4 block">{"\uD83D\uDECD\uFE0F"}</span>
+          <ShoppingBag className="mx-auto h-16 w-16 text-slate-300 mb-4" />
           <p className="text-slate-400 mb-4">{t("sales.noRequests")}</p>
           <Link href="/shop" className="inline-block px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition">
             {t("sales.shopTitle")} &rarr;
@@ -269,7 +270,7 @@ export default function ShopRequestsPage() {
                             {req.product?.imageUrl ? (
                               <img src={req.product.imageUrl} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-xs">{"\uD83D\uDECD\uFE0F"}</span>
+                              <ShoppingBag className="w-4 h-4 text-slate-400" />
                             )}
                           </div>
                           <span className="text-slate-800 font-medium truncate max-w-[180px]">{req.productName}</span>
@@ -459,7 +460,7 @@ export default function ShopRequestsPage() {
                       {req.product?.imageUrl ? (
                         <img src={req.product.imageUrl} alt={req.productName} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xl">{"\uD83D\uDECD\uFE0F"}</span>
+                        <ShoppingBag className="w-6 h-6 text-slate-300" />
                       )}
                     </div>
                   </div>

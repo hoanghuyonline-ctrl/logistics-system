@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { LandingNavbar, LandingFooter, LandingMobileBar } from "@/components/landing";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
+import { ShoppingBag } from "lucide-react";
 
 const PENDING_KEY = "pending_sales_request";
 
@@ -268,7 +269,7 @@ export default function ProductDetailPage({
                 />
               ) : (
                 <div className="flex flex-col items-center gap-2 text-slate-300">
-                  <span className="text-7xl">{"\uD83D\uDECD\uFE0F"}</span>
+                  <ShoppingBag className="w-16 h-16 text-slate-300" />
                   <span className="text-sm">{t("productDetail.noImage")}</span>
                 </div>
               )}

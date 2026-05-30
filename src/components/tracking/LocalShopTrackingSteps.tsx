@@ -1,8 +1,11 @@
 "use client";
 
+import React from "react";
+import { ClipboardList, Building2, Truck, CheckCircle2 } from "lucide-react";
+
 interface TrackingStep {
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   timestamp: string | null;
   isActive: boolean;
   isCompleted: boolean;
@@ -31,28 +34,58 @@ export default function LocalShopTrackingSteps({ status, createdAt, paidAt }: Lo
   const steps: TrackingStep[] = [
     {
       label: "Đã tạo đơn",
-      icon: "\uD83D\uDCDD",
+      icon: <ClipboardList className="w-5 h-5 text-emerald-600" />,
       timestamp: createdAt,
       isCompleted: true,
       isActive: currentIndex === 0 && !isCancelled,
     },
     {
       label: "Đã xác nhận giá",
-      icon: "\uD83C\uDFE2",
+      icon: (
+        <Building2
+          className={`w-5 h-5 ${
+            currentIndex >= 3
+              ? "text-emerald-600"
+              : currentIndex >= 1 && currentIndex < 3 && !isCancelled
+              ? "text-blue-600"
+              : "text-slate-400"
+          }`}
+        />
+      ),
       timestamp: currentIndex >= 3 ? paidAt : null,
       isCompleted: currentIndex >= 3,
-      isActive: (currentIndex >= 1 && currentIndex < 3) && !isCancelled,
+      isActive: currentIndex >= 1 && currentIndex < 3 && !isCancelled,
     },
     {
       label: "Đang xử lý & vận chuyển",
-      icon: "\uD83D\uDE9A",
+      icon: (
+        <Truck
+          className={`w-5 h-5 ${
+            currentIndex >= 5
+              ? "text-emerald-600"
+              : (currentIndex === 3 || currentIndex === 4) && !isCancelled
+              ? "text-blue-600"
+              : "text-slate-400"
+          }`}
+        />
+      ),
       timestamp: null,
       isCompleted: currentIndex >= 5,
       isActive: (currentIndex === 3 || currentIndex === 4) && !isCancelled,
     },
     {
       label: "Giao hàng thành công",
-      icon: "\u2705",
+      icon: (
+        <CheckCircle2
+          className={`w-5 h-5 ${
+            currentIndex >= 5
+              ? "text-emerald-600"
+              : currentIndex === 5 && !isCancelled
+              ? "text-blue-600"
+              : "text-slate-400"
+          }`}
+        />
+      ),
       timestamp: null,
       isCompleted: currentIndex >= 5,
       isActive: currentIndex === 5 && !isCancelled,

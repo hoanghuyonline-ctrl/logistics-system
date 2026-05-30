@@ -8,6 +8,7 @@ import Pagination from "@/components/ui/Pagination";
 import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
+import { Edit2 } from "lucide-react";
 
 interface Campaign {
   id: string;
@@ -295,9 +296,9 @@ export default function CampaignsPage() {
                 actions={
                   <button
                     onClick={() => { setEditingCampaign(c); setEditNotes(c.notes || ""); }}
-                    className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
+                    className="text-xs p-1 border border-slate-200 rounded hover:bg-slate-50 flex items-center justify-center"
                   >
-                    \ud83d\udcdd
+                    <Edit2 className="w-3.5 h-3.5" />
                   </button>
                 }
               />
@@ -359,10 +360,10 @@ export default function CampaignsPage() {
                     <td className="py-3 px-2">
                       <button
                         onClick={() => { setEditingCampaign(c); setEditNotes(c.notes || ""); }}
-                        className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
+                        className="p-1 border border-slate-200 rounded hover:bg-slate-50 flex items-center justify-center"
                         title={t("campaigns.editNotes", "Ghi chú")}
                       >
-                        📝
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>

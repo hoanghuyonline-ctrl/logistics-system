@@ -10,6 +10,19 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import MobileDataCard from "@/components/ui/MobileDataCard";
+import {
+  CreditCard,
+  Clock,
+  RotateCcw,
+  Gem,
+  AlertTriangle,
+  ClipboardList,
+  BarChart3,
+  DollarSign,
+  TrendingUp,
+  Landmark,
+  Calendar,
+} from "lucide-react";
 
 interface TransactionItem {
   id: string;
@@ -54,13 +67,13 @@ interface HealthIndicator {
   value: number;
   tag: string;
   tagClass: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 function HealthCard({ indicator }: { indicator: HealthIndicator }) {
   return (
     <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
-      <span className="text-xl shrink-0">{indicator.icon}</span>
+      <div className="shrink-0">{indicator.icon}</div>
       <div className="flex-1 min-w-0">
         <div className="text-sm text-slate-600 truncate">{indicator.label}</div>
         <div className="text-lg font-bold text-slate-900">{indicator.value}</div>
@@ -112,7 +125,7 @@ export default function AccountantDashboard() {
   }
   if (error || !data) return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <span className="text-4xl">⚠️</span>
+      <AlertTriangle className="w-10 h-10 text-red-500 animate-bounce" />
       <p className="text-sm text-slate-600">Không thể tải dữ liệu. Vui lòng thử lại.</p>
       <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Tải lại</button>
     </div>
@@ -124,35 +137,35 @@ export default function AccountantDashboard() {
       value: data.customersWithDebt,
       tag: t("finance.needsAction"),
       tagClass: data.customersWithDebt > 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700",
-      icon: "💳",
+      icon: <CreditCard className={`w-5 h-5 shrink-0 ${data.customersWithDebt > 0 ? "text-red-500" : "text-slate-400"}`} />,
     },
     {
       label: t("finance.pendingDeposits"),
       value: data.pendingPayments,
       tag: t("finance.awaitingConfirm"),
       tagClass: data.pendingPayments > 0 ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700",
-      icon: "⏳",
+      icon: <Clock className={`w-5 h-5 shrink-0 ${data.pendingPayments > 0 ? "text-amber-500" : "text-slate-400"}`} />,
     },
     {
       label: t("finance.todayRefunds"),
       value: data.todayRefunds,
       tag: t("finance.needsAction"),
       tagClass: data.todayRefunds > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500",
-      icon: "↩️",
+      icon: <RotateCcw className={`w-5 h-5 shrink-0 ${data.todayRefunds > 0 ? "text-amber-500" : "text-slate-400"}`} />,
     },
     {
       label: t("finance.highValueToday"),
       value: data.highValueOrdersToday,
       tag: t("finance.highValue"),
       tagClass: data.highValueOrdersToday > 0 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-500",
-      icon: "💎",
+      icon: <Gem className={`w-5 h-5 shrink-0 ${data.highValueOrdersToday > 0 ? "text-purple-500" : "text-slate-400"}`} />,
     },
     {
       label: t("finance.negativeBalances"),
       value: data.negativeBalanceCount,
       tag: t("finance.needsAction"),
       tagClass: data.negativeBalanceCount > 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700",
-      icon: "⚠️",
+      icon: <AlertTriangle className={`w-5 h-5 shrink-0 ${data.negativeBalanceCount > 0 ? "text-red-500" : "text-slate-400"}`} />,
     },
   ];
 
@@ -186,28 +199,28 @@ export default function AccountantDashboard() {
           title={t("accountant.totalRevenue")}
           value={`${data.totalRevenue.toLocaleString()} VND`}
           subtitle={`${data.completedOrderCount} ${t("accountant.completedOrders")}`}
-          icon={<span>💰</span>}
+          icon={<DollarSign className="w-5 h-5 text-emerald-600" />}
           color="green"
         />
         <KPICard
           title={t("accountant.estimatedProfit")}
           value={`${data.estimatedProfit.toLocaleString()} VND`}
           subtitle={`${t("accountant.serviceFees")}: ${data.totalServiceFees.toLocaleString()}`}
-          icon={<span>📈</span>}
+          icon={<TrendingUp className="w-5 h-5 text-purple-600" />}
           color="purple"
         />
         <KPICard
           title={t("accountant.pendingPayments")}
           value={data.pendingPayments}
           subtitle={t("accountant.awaitingPayment")}
-          icon={<span>⏳</span>}
+          icon={<Clock className="w-5 h-5 text-amber-600" />}
           color="yellow"
         />
         <KPICard
           title={t("accountant.totalDebt")}
           value={`${data.totalDebt.toLocaleString()} VND`}
           subtitle={data.customersWithDebt > 0 ? `${data.customersWithDebt} ${t("finance.customersOwing")}` : t("accountant.outstandingDebt")}
-          icon={<span>📋</span>}
+          icon={<ClipboardList className="w-5 h-5 text-red-600" />}
           color="red"
         />
       </div>
@@ -217,14 +230,14 @@ export default function AccountantDashboard() {
           title={t("accountant.totalDeposits")}
           value={`${data.totalDeposits.toLocaleString()} VND`}
           subtitle={`${data.totalDepositCount} ${t("accountant.transactions")}`}
-          icon={<span>🏦</span>}
+          icon={<Landmark className="w-5 h-5 text-blue-600" />}
           color="blue"
         />
         <KPICard
           title={t("accountant.monthDeposits")}
           value={`${data.monthDeposits.toLocaleString()} VND`}
           subtitle={`${data.monthDepositCount} ${t("accountant.thisMonth")}`}
-          icon={<span>📅</span>}
+          icon={<Calendar className="w-5 h-5 text-cyan-600" />}
           color="cyan"
         />
       </div>
@@ -254,7 +267,7 @@ export default function AccountantDashboard() {
             ))}
             {data.recentTransactions.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-8">
-                <span className="text-3xl">\ud83d\udccb</span>
+                <ClipboardList className="w-8 h-8 text-slate-300" />
                 <p className="text-sm text-slate-500">{t("accountant.noTransactions")}</p>
               </div>
             )}
@@ -296,8 +309,8 @@ export default function AccountantDashboard() {
                 {data.recentTransactions.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-6 py-16 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-3xl">📋</span>
+                      <div className="flex flex-col items-center gap-2 justify-center">
+                        <ClipboardList className="w-8 h-8 text-slate-300" />
                         <p className="text-sm text-slate-500">{t("accountant.noTransactions")}</p>
                       </div>
                     </td>
@@ -330,7 +343,7 @@ export default function AccountantDashboard() {
             })}
             {data.ordersByStatus.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-8">
-                <span className="text-3xl">📊</span>
+                <BarChart3 className="w-8 h-8 text-slate-300" />
                 <p className="text-sm text-slate-500">{t("accountant.noOrders")}</p>
               </div>
             )}

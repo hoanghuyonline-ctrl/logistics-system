@@ -5,6 +5,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { useI18n } from "@/lib/i18n";
+import { ShieldCheck } from "lucide-react";
 
 interface SmokeCheck {
   key: string;
@@ -322,7 +323,10 @@ export default function SystemHealthPage() {
                     {t("sysHealth.smoke.running")}
                   </span>
                 ) : (
-                  `\ud83d\udee1\ufe0f ${t("sysHealth.smoke.run")}`
+                  <span className="flex items-center justify-center gap-2">
+                    <ShieldCheck className="w-4 h-4" />
+                    {t("sysHealth.smoke.run")}
+                  </span>
                 )}
               </button>
             </div>

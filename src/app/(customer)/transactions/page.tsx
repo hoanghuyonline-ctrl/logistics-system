@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
+import { ClipboardList } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -72,8 +73,8 @@ export default function TransactionsPage() {
             />
           ))}
           {transactions.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-12">
-              <span className="text-3xl">📋</span>
+            <div className="flex flex-col items-center gap-3 py-12">
+              <ClipboardList className="w-10 h-10 text-slate-300" />
               <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
             </div>
           )}
@@ -115,8 +116,8 @@ export default function TransactionsPage() {
               {transactions.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-3xl">📋</span>
+                    <div className="flex flex-col items-center gap-3">
+                      <ClipboardList className="w-10 h-10 text-slate-300" />
                       <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
                     </div>
                   </td>

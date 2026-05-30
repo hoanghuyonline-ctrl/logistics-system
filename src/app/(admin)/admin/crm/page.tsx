@@ -8,6 +8,7 @@ import Pagination from "@/components/ui/Pagination";
 import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
+import { Edit2, Phone, RefreshCw, Calendar } from "lucide-react";
 
 interface Lead {
   id: string;
@@ -571,24 +572,24 @@ export default function CrmPage() {
                           .catch(() => {})
                           .finally(() => setLoadingActivities(false));
                       }}
-                      className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
+                      className="text-xs p-1.5 border border-slate-200 rounded hover:bg-slate-50 flex items-center justify-center"
                     >
-                      \ud83d\udcdd
+                      <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     {lead.status !== "CONVERTED" && lead.status !== "LOST" && (
                       <button
                         onClick={() => handleMarkContacted(lead.id)}
-                        className="text-xs px-2 py-1 border border-blue-200 text-blue-700 rounded hover:bg-blue-50"
+                        className="text-xs p-1.5 border border-blue-200 text-blue-700 rounded hover:bg-blue-50 flex items-center justify-center"
                       >
-                        \ud83d\udcde
+                        <Phone className="w-3.5 h-3.5" />
                       </button>
                     )}
                     {lead.status !== "CONVERTED" && (
                       <button
                         onClick={() => { setConvertLead(lead); setConvertMode("new"); setConvertEmail(lead.email || ""); }}
-                        className="text-xs px-2 py-1 border border-green-200 text-green-700 rounded hover:bg-green-50"
+                        className="text-xs p-1.5 border border-green-200 text-green-700 rounded hover:bg-green-50 flex items-center justify-center"
                       >
-                        \ud83d\udd04
+                        <RefreshCw className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -711,36 +712,36 @@ export default function CrmPage() {
                               .catch(() => {})
                               .finally(() => setLoadingActivities(false));
                           }}
-                          className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50"
+                          className="p-1 border border-slate-200 rounded hover:bg-slate-50 flex items-center justify-center"
                           title={t("crm.editNotes", "Ghi chú")}
                         >
-                          📝
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         {lead.status !== "CONVERTED" && lead.status !== "LOST" && (
                           <>
                             <button
                               onClick={() => handleMarkContacted(lead.id)}
-                              className="text-xs px-2 py-1 border border-blue-200 text-blue-700 rounded hover:bg-blue-50"
+                              className="p-1 border border-blue-200 text-blue-700 rounded hover:bg-blue-50 flex items-center justify-center"
                               title={t("crm.markContacted", "Đã liên hệ")}
                             >
-                              📞
+                              <Phone className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => { setFollowUpLead(lead); setFollowUpDate(lead.nextFollowUpAt ? lead.nextFollowUpAt.slice(0, 16) : ""); setFollowUpNoteInput(lead.followUpNote || ""); }}
-                              className="text-xs px-2 py-1 border border-orange-200 text-orange-700 rounded hover:bg-orange-50"
+                              className="p-1 border border-orange-200 text-orange-700 rounded hover:bg-orange-50 flex items-center justify-center"
                               title={t("crm.setFollowUp", "Đặt lịch chăm sóc")}
                             >
-                              📅
+                              <Calendar className="w-3.5 h-3.5" />
                             </button>
                           </>
                         )}
                         {lead.status !== "CONVERTED" && (
                           <button
                             onClick={() => { setConvertLead(lead); setConvertMode("new"); setConvertEmail(lead.email || ""); }}
-                            className="text-xs px-2 py-1 border border-green-200 text-green-700 rounded hover:bg-green-50"
+                            className="p-1 border border-green-200 text-green-700 rounded hover:bg-green-50 flex items-center justify-center"
                             title={t("crm.convertToCustomer", "Chuyển thành KH")}
                           >
-                            🔄
+                            <RefreshCw className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LandingNavbar, LandingFooter, LandingMobileBar } from "@/components/landing";
 import { useI18n } from "@/lib/i18n";
+import { ShoppingBag } from "lucide-react";
 
 interface Product {
   id: string;
@@ -98,7 +99,7 @@ export default function PublicShopPage() {
                   {product.imageUrl ? (
                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
                   ) : (
-                    <span className="text-4xl text-slate-300">{"\uD83D\uDECD\uFE0F"}</span>
+                    <ShoppingBag className="w-10 h-10 text-slate-300" />
                   )}
                 </div>
                 {/* Info */}

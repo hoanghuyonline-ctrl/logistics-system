@@ -9,6 +9,18 @@ import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useToast } from "@/components/ui/Toast";
 import { useI18n } from "@/lib/i18n";
 import { useAutoRefresh } from "@/lib/useAutoRefresh";
+import {
+  CreditCard,
+  Clock,
+  RotateCcw,
+  Gem,
+  AlertTriangle,
+  CheckCircle2,
+  Bell,
+  BarChart3,
+  DollarSign,
+  TrendingUp,
+} from "lucide-react";
 
 interface HealthData {
   customersWithDebt: number;
@@ -207,7 +219,7 @@ export default function FinancePage() {
       {health && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
           <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.customersWithDebt > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
-            <span className="text-lg">💳</span>
+            <CreditCard className={`w-5 h-5 shrink-0 ${health.customersWithDebt > 0 ? "text-red-500" : "text-slate-400"}`} />
             <div className="min-w-0">
               <div className="text-xs text-slate-500 truncate">{t("finance.customersWithDebt")}</div>
               <div className="text-base font-bold text-slate-900">{health.customersWithDebt}</div>
@@ -215,7 +227,7 @@ export default function FinancePage() {
             {health.customersWithDebt > 0 && <span className="text-[10px] font-semibold text-red-600 bg-red-100 px-1.5 py-0.5 rounded whitespace-nowrap">{t("finance.needsAction")}</span>}
           </div>
           <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.pendingPayments > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white"}`}>
-            <span className="text-lg">⏳</span>
+            <Clock className={`w-5 h-5 shrink-0 ${health.pendingPayments > 0 ? "text-amber-500" : "text-slate-400"}`} />
             <div className="min-w-0">
               <div className="text-xs text-slate-500 truncate">{t("finance.pendingDeposits")}</div>
               <div className="text-base font-bold text-slate-900">{health.pendingPayments}</div>
@@ -223,14 +235,14 @@ export default function FinancePage() {
             {health.pendingPayments > 0 && <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">{t("finance.awaitingConfirm")}</span>}
           </div>
           <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.todayRefunds > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white"}`}>
-            <span className="text-lg">↩️</span>
+            <RotateCcw className={`w-5 h-5 shrink-0 ${health.todayRefunds > 0 ? "text-amber-500" : "text-slate-400"}`} />
             <div className="min-w-0">
               <div className="text-xs text-slate-500 truncate">{t("finance.todayRefunds")}</div>
               <div className="text-base font-bold text-slate-900">{health.todayRefunds}</div>
             </div>
           </div>
           <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.highValueOrdersToday > 0 ? "border-purple-200 bg-purple-50" : "border-slate-200 bg-white"}`}>
-            <span className="text-lg">💎</span>
+            <Gem className={`w-5 h-5 shrink-0 ${health.highValueOrdersToday > 0 ? "text-purple-500" : "text-slate-400"}`} />
             <div className="min-w-0">
               <div className="text-xs text-slate-500 truncate">{t("finance.highValueToday")}</div>
               <div className="text-base font-bold text-slate-900">{health.highValueOrdersToday}</div>
@@ -238,7 +250,7 @@ export default function FinancePage() {
             {health.highValueOrdersToday > 0 && <span className="text-[10px] font-semibold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded whitespace-nowrap">{t("finance.highValue")}</span>}
           </div>
           <div className={`flex items-center gap-2 p-3 rounded-xl border ${health.negativeBalanceCount > 0 ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}>
-            <span className="text-lg">⚠️</span>
+            <AlertTriangle className={`w-5 h-5 shrink-0 ${health.negativeBalanceCount > 0 ? "text-red-500" : "text-slate-400"}`} />
             <div className="min-w-0">
               <div className="text-xs text-slate-500 truncate">{t("finance.negativeBalances")}</div>
               <div className="text-base font-bold text-slate-900">{health.negativeBalanceCount}</div>
@@ -314,7 +326,11 @@ export default function FinancePage() {
             ))}
           {topUpRequests.filter((r) => topUpFilter === "ALL" || r.status === "PENDING").length === 0 && (
             <div className="flex flex-col items-center gap-2 py-8">
-              <span className="text-2xl">{topUpFilter === "PENDING" ? "\u2705" : "\ud83d\udcb3"}</span>
+              {topUpFilter === "PENDING" ? (
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              ) : (
+                <CreditCard className="w-8 h-8 text-slate-300" />
+              )}
               <p className="text-sm text-slate-500">{t("topup.empty")}</p>
             </div>
           )}
@@ -403,8 +419,12 @@ export default function FinancePage() {
               {topUpRequests.filter((r) => topUpFilter === "ALL" || r.status === "PENDING").length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-3 py-10 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-2xl">{topUpFilter === "PENDING" ? "\u2705" : "\ud83d\udcb3"}</span>
+                    <div className="flex flex-col items-center gap-2 justify-center">
+                      {topUpFilter === "PENDING" ? (
+                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                      ) : (
+                        <CreditCard className="w-8 h-8 text-slate-300" />
+                      )}
                       <p className="text-sm text-slate-500">{t("topup.empty")}</p>
                     </div>
                   </td>
@@ -416,8 +436,8 @@ export default function FinancePage() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-        <KPICard title={t("admin.totalRevenue")} value={`${(profit?.totalRevenue || 0).toLocaleString()} VND`} icon={<span>💰</span>} color="green" />
-        <KPICard title={t("admin.totalProfit")} value={`${(profit?.totalProfit || 0).toLocaleString()} VND`} icon={<span>📈</span>} color="purple" />
+        <KPICard title={t("admin.totalRevenue")} value={`${(profit?.totalRevenue || 0).toLocaleString()} VND`} icon={<DollarSign className="w-5 h-5 text-emerald-600" />} color="green" />
+        <KPICard title={t("admin.totalProfit")} value={`${(profit?.totalProfit || 0).toLocaleString()} VND`} icon={<TrendingUp className="w-5 h-5 text-purple-600" />} color="purple" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -475,7 +495,7 @@ export default function FinancePage() {
           ))}
           {webhookLogs.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-8">
-              <span className="text-2xl">{"\uD83D\uDD14"}</span>
+              <Bell className="w-8 h-8 text-slate-300" />
               <p className="text-sm text-slate-500">{t("finance.webhookNoLogs")}</p>
             </div>
           )}
@@ -519,8 +539,8 @@ export default function FinancePage() {
               {webhookLogs.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-3 py-10 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-2xl">{"\uD83D\uDD14"}</span>
+                    <div className="flex flex-col items-center gap-2 justify-center">
+                      <Bell className="w-8 h-8 text-slate-300" />
                       <p className="text-sm text-slate-500">{t("finance.webhookNoLogs")}</p>
                     </div>
                   </td>
@@ -554,7 +574,7 @@ export default function FinancePage() {
           ))}
           {(!profit?.orders || profit.orders.length === 0) && (
             <div className="flex flex-col items-center gap-2 py-12">
-              <span className="text-3xl">\ud83d\udcca</span>
+              <BarChart3 className="w-10 h-10 text-slate-300" />
               <p className="text-sm text-slate-500">{t("finance.noCompletedOrders")}</p>
             </div>
           )}
@@ -589,8 +609,8 @@ export default function FinancePage() {
               {(!profit?.orders || profit.orders.length === 0) && (
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-3xl">📊</span>
+                    <div className="flex flex-col items-center gap-2 justify-center">
+                      <BarChart3 className="w-10 h-10 text-slate-300" />
                       <p className="text-sm text-slate-500">{t("finance.noCompletedOrders")}</p>
                     </div>
                   </td>

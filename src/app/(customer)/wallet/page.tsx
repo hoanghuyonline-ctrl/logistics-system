@@ -7,6 +7,17 @@ import Card from "@/components/ui/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import MobileDataCard from "@/components/ui/MobileDataCard";
 import { useI18n } from "@/lib/i18n";
+import {
+  Wallet,
+  BarChart2,
+  ClipboardList,
+  Landmark,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Lightbulb,
+  CreditCard,
+} from "lucide-react";
 
 interface BankConfig {
   topup_bank_name: string;
@@ -16,7 +27,7 @@ interface BankConfig {
   topup_transfer_prefix: string;
 }
 
-interface Wallet {
+interface WalletData {
   balance: string;
   debt: string;
 }
@@ -45,7 +56,7 @@ interface PendingTopUp {
 
 export default function WalletPage() {
   const { t } = useI18n();
-  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState("");
@@ -135,13 +146,13 @@ export default function WalletPage() {
         <KPICard
           title={t("wallet.availableBalance")}
           value={`${parseFloat(wallet?.balance || "0").toLocaleString()} VND`}
-          icon={<span>💰</span>}
+          icon={<Wallet className="w-5 h-5" />}
           color="green"
         />
         <KPICard
           title={t("wallet.outstandingDebt")}
           value={`${parseFloat(wallet?.debt || "0").toLocaleString()} VND`}
-          icon={<span>📊</span>}
+          icon={<BarChart2 className="w-5 h-5" />}
           color="red"
         />
       </div>
@@ -154,13 +165,15 @@ export default function WalletPage() {
           {showPendingSection && (
             <div className="border border-amber-300 rounded-xl p-5 bg-amber-50/60 space-y-4">
               <div className="bg-amber-100 border border-amber-300 rounded-xl p-3">
-                <p className="text-xs font-medium text-amber-900">
-                  ⏳ Bạn đang có một yêu cầu nạp tiền chờ xác nhận. Vui lòng chuyển khoản theo mã này hoặc huỷ yêu cầu để tạo mã mới.
+                <p className="text-xs font-medium text-amber-900 flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  Bạn đang có một yêu cầu nạp tiền chờ xác nhận. Vui lòng chuyển khoản theo mã này hoặc huỷ yêu cầu để tạo mã mới.
                 </p>
               </div>
 
               <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <span>📋</span> Thông tin chuyển khoản
+                <ClipboardList className="w-4 h-4 text-slate-500" />
+                Thông tin chuyển khoản
               </h4>
 
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -200,8 +213,9 @@ export default function WalletPage() {
                 </div>
               )}
 
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                <p className="text-xs font-medium text-emerald-800">✅ Yêu cầu nạp tiền đã được tạo. Quản trị viên sẽ đối chiếu nội dung chuyển khoản và xác nhận ví sau khi nhận tiền.</p>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-emerald-800">Yêu cầu nạp tiền đã được tạo. Quản trị viên sẽ đối chiếu nội dung chuyển khoản và xác nhận ví sau khi nhận tiền.</p>
               </div>
 
               <button
@@ -210,7 +224,8 @@ export default function WalletPage() {
                 onClick={handleCancelRequest}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-xl hover:bg-red-200 disabled:opacity-50 transition-colors"
               >
-                ❌ Huỷ yêu cầu nạp tiền
+                <XCircle className="w-4 h-4" />
+                Huỷ yêu cầu nạp tiền
               </button>
             </div>
           )}
@@ -268,13 +283,15 @@ export default function WalletPage() {
                 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
-                🏦 Tạo mã QR chuyển khoản
+                <Landmark className="w-4 h-4" />
+                Tạo mã QR chuyển khoản
               </button>
 
               {showNewQRSection && (
                 <div className="border border-blue-200 rounded-xl p-5 bg-blue-50/50 space-y-4">
                   <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                    <span>📋</span> Thông tin chuyển khoản
+                    <ClipboardList className="w-4 h-4 text-slate-500" />
+                    Thông tin chuyển khoản
                   </h4>
 
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -315,14 +332,18 @@ export default function WalletPage() {
                   )}
 
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
-                    <p className="text-xs font-medium text-amber-900">⚠️ Lưu ý quan trọng</p>
+                    <p className="text-xs font-medium text-amber-900 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      Lưu ý quan trọng
+                    </p>
                     <p className="text-xs text-amber-700">Vui lòng chuyển đúng số tiền và đúng nội dung để được xử lý nhanh.</p>
                     <p className="text-xs text-amber-700">Sau khi chuyển khoản, hệ thống sẽ kiểm tra và cập nhật ví sau khi xác nhận.</p>
                   </div>
 
                   {topUpSaved && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                      <p className="text-xs font-medium text-emerald-800">✅ Yêu cầu nạp tiền đã được tạo. Quản trị viên sẽ đối chiếu nội dung chuyển khoản và xác nhận ví sau khi nhận tiền.</p>
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <p className="text-xs font-medium text-emerald-800">Yêu cầu nạp tiền đã được tạo. Quản trị viên sẽ đối chiếu nội dung chuyển khoản và xác nhận ví sau khi nhận tiền.</p>
                     </div>
                   )}
                 </div>
@@ -364,8 +385,8 @@ export default function WalletPage() {
             );
           })}
           {transactions.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-12">
-              <span className="text-3xl">\ud83d\udcb3</span>
+            <div className="flex flex-col items-center gap-3 py-12">
+              <CreditCard className="w-10 h-10 text-slate-300" />
               <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
             </div>
           )}
@@ -407,8 +428,8 @@ export default function WalletPage() {
               {transactions.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-3xl">💳</span>
+                    <div className="flex flex-col items-center gap-3">
+                      <CreditCard className="w-10 h-10 text-slate-300" />
                       <p className="text-sm text-slate-500">{t("transactions.empty")}</p>
                     </div>
                   </td>
@@ -421,7 +442,7 @@ export default function WalletPage() {
 
       <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-5">
         <div className="flex items-start gap-3">
-          <span className="text-lg">💡</span>
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-amber-900">{t("wallet.depositHelpTitle")}</p>
             <p className="text-sm text-amber-700 mt-1">
