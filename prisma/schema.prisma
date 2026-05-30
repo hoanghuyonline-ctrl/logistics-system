@@ -235,6 +235,7 @@ model Authenticator {
   @@index([userId])
 }
 
+// Model public.Credential for storing user-bound WebAuthn/Passkey credentials
 model Credential {
   id                   String   @id @default(uuid())
   userId               String
