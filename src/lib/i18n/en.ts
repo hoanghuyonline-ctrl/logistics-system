@@ -78,6 +78,7 @@ const en: Record<string, string> = {
   "nav.wallet": "Wallet",
   "nav.transactions": "Transactions",
   "nav.biometric": "Biometric Authentication",
+  "profile.useBiometric": "Use Biometrics",
   "nav.issues": "Complaints / Support",
   "nav.channelLinking": "Notifications & Linking",
   "nav.notifications": "Notifications",

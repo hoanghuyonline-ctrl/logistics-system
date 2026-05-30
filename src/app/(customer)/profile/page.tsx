@@ -246,53 +246,43 @@ export default function ProfilePage() {
               </div>
 
               {/* Add New Key Form */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
-                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Đăng ký thêm thiết bị/vân tay mới</h4>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: Laptop cá nhân, iPhone 14..."
-                    value={newKeyName}
-                    onChange={(e) => setNewKeyName(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={registerBiometric}
-                    disabled={biometricRegistering}
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white text-sm font-bold rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
-                  >
-                    {biometricRegistering ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Đang thiết lập...
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.25"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="w-4 h-4"
-                        >
-                          <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
-                          <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
-                          <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
-                          <path d="M2 12a10 10 0 0 1 18-6" />
-                          <path d="M2 17c2.3 2 4.87 3 7 3" />
-                          <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
-                          <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
-                          <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
-                        </svg>
-                        Thêm vân tay / thiết bị
-                      </>
-                    )}
-                  </button>
-                </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
+                <button
+                  type="button"
+                  onClick={registerBiometric}
+                  disabled={biometricRegistering}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white text-base font-extrabold rounded-xl transition-all duration-200 shadow-md flex items-center justify-center gap-3 hover:scale-[1.02]"
+                >
+                  {biometricRegistering ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Đang xác thực...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-5 h-5"
+                      >
+                        <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
+                        <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
+                        <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
+                        <path d="M2 12a10 10 0 0 1 18-6" />
+                        <path d="M2 17c2.3 2 4.87 3 7 3" />
+                        <path d="M6 10.42C6.26 8.5 7.7 6.5 12 6.5c3.5 0 5.5 2.08 6 4.5" />
+                        <path d="M9.53 16.3C9.2 14.6 9 13.5 9 12" />
+                        <path d="M20.89 16.64c.04-.32.11-1.23.11-1.64" />
+                      </svg>
+                      {t("profile.useBiometric")}
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}
