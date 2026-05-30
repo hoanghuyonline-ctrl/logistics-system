@@ -268,7 +268,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       }`}
                     >
                       <span className="text-base w-6 text-center flex-shrink-0">🔒</span>
-                      <span>Sinh trắc học</span>
+                      <span>{t("nav.biometric")}</span>
                       {pathname === "/profile" && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />}
                     </Link>
                   )}
