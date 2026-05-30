@@ -28,6 +28,7 @@ const customerNav: NavItem[] = [
   { labelKey: "nav.myOrders", href: "/orders", icon: "📦" },
   { labelKey: "nav.wallet", href: "/wallet", icon: "💰" },
   { labelKey: "nav.transactions", href: "/transactions", icon: "📋" },
+  { labelKey: "nav.biometric", href: "/profile", icon: "🔒" },
   { labelKey: "nav.customs", href: "/customs", icon: "🛃" },
   { labelKey: "nav.knowledge", href: "/knowledge", icon: "📚" },
   { labelKey: "nav.transport", href: "/transport", icon: "🚚" },
