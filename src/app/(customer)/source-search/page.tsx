@@ -897,8 +897,21 @@ function SearchDashboard() {
         </>
       )}
 
+      {/* Search has been performed but no results were found */}
+      {!loading && searchQuery.trim() !== "" && results.length === 0 && (
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center max-w-xl mx-auto my-8">
+          <div className="text-5xl mb-4">🔍</div>
+          <h3 className="font-extrabold text-red-500 text-lg mb-2">
+            Không tìm thấy sản phẩm nào tương đồng, vui lòng thử lại bằng hình ảnh khác!
+          </h3>
+          <p className="text-slate-500 text-sm mb-4 leading-relaxed">
+            Hệ thống AI không nhận diện được sản phẩm trùng khớp. Bạn có thể thử tải lên hình ảnh rõ nét hơn, chụp cận cảnh sản phẩm ở chính giữa khung hình, hoặc nhập từ khóa dạng chữ để tìm kiếm.
+          </p>
+        </div>
+      )}
+
       {/* No Search results empty state */}
-      {!loading && results.length === 0 && (
+      {!loading && searchQuery.trim() === "" && results.length === 0 && (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center max-w-xl mx-auto my-8">
           <div className="text-5xl mb-4">🔍</div>
           <h3 className="font-bold text-slate-800 text-lg mb-1">Khởi tạo quy trình tìm hàng</h3>
