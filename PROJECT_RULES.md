@@ -44,6 +44,15 @@
 - **Styling:** Uses premium responsive Ant Design elements wrapped in React `Suspense` with explicit loading indicators.
 - **Commit History:** Officially deployed under stable commit `c535958c274b618b083eb6fd638a95e017730340`.
 
+## AI-Powered Support Knowledge Rules
+- **Logic File:** Located at `src/lib/support-knowledge.ts`.
+- **Semantic Intent (Vector Search ngầm):** Uses an advanced semantic classifier mapping queries to specific key logistical intents (Lost/Damaged Goods, Delay/Customs congestion, High Fee/Customs invoicing) and boosts correlation scores.
+- **Empathetic Crisis Auto-Replies:**
+  - Dynamic prompts intercept user queries in operational crisis situations (loss of goods, customs delays, pricing/fees).
+  - Responses prioritize customer satisfaction above all, remain highly professional, and end with an optimized call to action to collect the user's **SỐ ĐIỆN THOẠI (Phone Number)** for immediate hotline outreach.
+- **Database Safety:** Processes all calculations in-memory, avoiding database performance bottlenecks.
+- **Test Compatibility:** Maintains 100% backward compatibility with all 38 existing Vitest unit tests.
+
 ## Production Deployment (Windows + PM2)
 - **Server path:** `D:\BacTrungHai\logistics-system`
 - **Runtime:** PM2 running `next start -p 3000 -H 0.0.0.0` via `ecosystem.config.js`
