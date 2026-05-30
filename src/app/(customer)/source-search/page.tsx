@@ -42,6 +42,7 @@ interface ProductItem {
   supplier: string;
   rating: number;
   salesCount: string;
+  attributes?: Record<string, string>;
 }
 
 // Pre-defined high-quality search items representing realistic supplier outputs
@@ -188,6 +189,17 @@ function SearchDashboard() {
   const [limit] = useState(24);
   const [total, setTotal] = useState(0);
 
+  // Dynamic Google-system semantic filters states
+  const [availableFilters, setAvailableFilters] = useState<Array<{ key: string; label: string; options: string[] }>>([]);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  // Compute filtered results on-the-fly based on selected filters
+  const filteredResults = results.filter((item) => {
+    return Object.entries(selectedFilters).every(([key, val]) => {
+      return !val || item.attributes?.[key] === val;
+    });
+  });
+
   // Fetch exchange rate on mount
   useEffect(() => {
     fetch("/api/settings/exchange-rate")
@@ -219,6 +231,11 @@ function SearchDashboard() {
     setTranslating(true);
     setPage(targetPage);
 
+    // Reset user active filters on fresh query search (page 1)
+    if (targetPage === 1) {
+      setSelectedFilters({});
+    }
+
     const url = `/api/source-search?q=${encodeURIComponent(searchQuery)}&platform=${platform}&limit=${limit}&page=${targetPage}`;
     
     fetch(url)
@@ -230,6 +247,7 @@ function SearchDashboard() {
         setTranslatedText(data.translated);
         setResults(data.items);
         setTotal(data.total);
+        setAvailableFilters(data.filters || []);
 
         // Initialize default quantity to 1 for all items
         const initialQs: Record<string, number> = {};
@@ -417,6 +435,51 @@ function SearchDashboard() {
               </Button>
             </div>
 
+            {/* Google-system Semantic filters */}
+            {availableFilters.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-slate-100 px-1 animate-fadeIn">
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-2 uppercase tracking-wider font-bold">
+                  <span>⚡</span>
+                  <span>Bộ lọc Semantic thông minh:</span>
+                </div>
+                <div className="space-y-3">
+                  {availableFilters.map((filter) => (
+                    <div key={filter.key} className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-slate-500 min-w-[70px] font-semibold">{filter.label}:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {filter.options.map((option) => {
+                          const isSelected = selectedFilters[filter.key] === option;
+                          return (
+                            <button
+                              key={option}
+                              onClick={() => {
+                                setSelectedFilters((prev) => {
+                                  const updated = { ...prev };
+                                  if (updated[filter.key] === option) {
+                                    delete updated[filter.key];
+                                  } else {
+                                    updated[filter.key] = option;
+                                  }
+                                  return updated;
+                                });
+                              }}
+                              className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all duration-300 transform active:scale-95 shadow-sm ${
+                                isSelected
+                                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500 ring-offset-1"
+                                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 border border-slate-200/60"
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Translation & Exchange status banner */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 px-2 text-xs text-slate-500 gap-2 my-2">
               <div className="flex items-center gap-1">
@@ -488,12 +551,25 @@ function SearchDashboard() {
           </div>
 
           <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
-            <span>📦</span> Danh mục nguồn hàng quét được ({results.length} sản phẩm)
+            <span>📦</span> Danh mục nguồn hàng quét được ({filteredResults.length} / {results.length} sản phẩm)
           </h3>
 
-          {/* Product grid */}
-          <Row gutter={[20, 20]}>
-            {results.map((item) => {
+          {/* Product grid with fallback */}
+          {filteredResults.length === 0 ? (
+            <div className="text-center py-16 bg-white border border-slate-100 rounded-3xl shadow-sm my-6">
+              <span className="text-4xl">🔍</span>
+              <h4 className="font-bold text-slate-700 mt-3">Không tìm thấy sản phẩm nào khớp bộ lọc</h4>
+              <p className="text-slate-400 text-xs mt-1">Vui lòng bấm bỏ chọn các bộ lọc Semantic để hiển thị đầy đủ hàng hóa.</p>
+              <Button 
+                onClick={() => setSelectedFilters({})}
+                className="mt-4 rounded-xl font-semibold text-xs border-blue-500 text-blue-600 h-9"
+              >
+                Xóa tất cả bộ lọc
+              </Button>
+            </div>
+          ) : (
+            <Row gutter={[20, 20]}>
+              {filteredResults.map((item) => {
               const qty = quantities[item.id] || 1;
               const productCostCNY = item.priceCNY * qty;
               const productCostVND = productCostCNY * exchangeRate;
@@ -635,6 +711,7 @@ function SearchDashboard() {
               );
             })}
           </Row>
+          )}
 
           {/* Pagination Controls */}
           {total > limit && (

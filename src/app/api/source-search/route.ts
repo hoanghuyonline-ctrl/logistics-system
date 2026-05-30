@@ -12,9 +12,9 @@ interface ProductItem {
   supplier: string;
   rating: number;
   salesCount: string;
+  attributes: Record<string, string>;
 }
 
-// Generate realistic mock items database representing thousands of products
 const IMAGES = {
   headphone: [
     "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60",
@@ -81,22 +81,57 @@ export async function GET(request: Request) {
   const page = parseInt(searchParams.get("page") || "1", 10);
 
   if (!query.trim()) {
-    return NextResponse.json({ items: [], total: 0, translated: "" });
+    return NextResponse.json({ items: [], total: 0, translated: "", filters: [] });
   }
 
   const cleanQuery = query.trim().toLowerCase();
-  let translated = "其他货源 (General Items)";
+  
+  // 1. SEMANTIC PARSER - Classify user query category
   let category: keyof typeof IMAGES = "general";
-
+  let translated = "";
+  
+  // Custom smart keyword checking representing Google semantic system
   const matchedKey = Object.keys(DICTIONARY).find(key => cleanQuery.includes(key));
   if (matchedKey) {
     translated = DICTIONARY[matchedKey].zh;
     category = DICTIONARY[matchedKey].category;
   } else {
-    translated = `${query.trim()} 货源 (Smart Trans)`;
+    // Check general semantic patterns
+    if (/(áo|quần|váy|đầm|t-shirt|jeans|jean|hoodie|jacket)/gi.test(cleanQuery)) {
+      category = "clothes";
+      translated = `${query.trim()} 潮流服装 (Fashion Wear)`;
+    } else if (/(giày|dép|shoes|sneaker|boots)/gi.test(cleanQuery)) {
+      category = "shoes";
+      translated = `${query.trim()} 优质鞋类 (Premium Shoes)`;
+    } else if (/(tai nghe|headphone|bluetooth|loa|speaker|điện tử|cáp|sạc|nồi cơm|bóng đèn|quạt)/gi.test(cleanQuery)) {
+      category = "headphone"; // Tech & electric appliances
+      translated = `${query.trim()} 数码电器 (Smart Appliances)`;
+    } else {
+      category = "general";
+      translated = `${query.trim()} 优质货源 (Premium Sourcing)`;
+    }
   }
 
-  // Generate 60 high-quality products to support multi-pages
+  // 2. CONFIGURE DYNAMIC FILTERS BASED ON CATEGORY
+  let filters: Array<{ key: string; label: string; options: string[] }> = [];
+
+  if (category === "clothes" || category === "shoes") {
+    filters = [
+      { key: "size", label: "Kích cỡ", options: category === "shoes" ? ["38", "39", "40", "41", "42"] : ["S", "M", "L", "XL"] },
+      { key: "color", label: "Màu sắc", options: ["Đen", "Trắng", "Xám", "Xanh"] }
+    ];
+  } else if (category === "headphone") {
+    filters = [
+      { key: "voltage", label: "Điện áp", options: ["220V", "110V", "Pin sạc"] },
+      { key: "type", label: "Tính năng", options: ["Không dây", "Có dây", "Chống ồn"] }
+    ];
+  } else {
+    filters = [
+      { key: "material", label: "Chất liệu", options: ["Nhựa ABS", "Thép không gỉ", "Gỗ tự nhiên", "Da PU"] }
+    ];
+  }
+
+  // 3. GENERATE 60 MATCHING ITEMS WITH ATTRIBUTES
   const totalItems = 60;
   const allItems: ProductItem[] = [];
 
@@ -106,26 +141,41 @@ export async function GET(request: Request) {
     const imageUrl = imgList[(i - 1) % imgList.length];
     const supplier = SUPPLIERS[(i - 1) % SUPPLIERS.length];
     
-    // Custom names for headphones, shoes, clothes or custom
     let titleVi = "";
     let titleZh = "";
     let basePrice = 20;
+    const attributes: Record<string, string> = {};
 
-    if (category === "headphone") {
-      titleVi = `[Sản phẩm ${i}] Tai nghe HIFI Chống ồn cao cấp ANC ${i}`;
-      titleZh = `[商创款 ${i}] 头戴式主动降噪耳机高音质 HIFI TWS`;
-      basePrice = 40 + (i * 5);
-    } else if (category === "shoes") {
-      titleVi = `[Sản phẩm ${i}] Giày Sneaker Thể Thao Nam Nữ Siêu Nhẹ Mẫu ${i}`;
-      titleZh = `[新款 ${i}] 夏季透气运动鞋男女潮流情侣慢跑休闲鞋`;
-      basePrice = 30 + (i * 4);
-    } else if (category === "clothes") {
-      titleVi = `[Sản phẩm ${i}] Áo thun Unisex 100% Cotton Mềm Mịn Style ${i}`;
-      titleZh = `[爆款 ${i}] 纯棉宽松圆领短袖t恤潮牌国潮百搭半袖`;
+    // Populate attributes matching category options
+    if (category === "clothes") {
+      const sizes = ["S", "M", "L", "XL"];
+      const colors = ["Đen", "Trắng", "Xám", "Xanh"];
+      attributes.size = sizes[(i - 1) % sizes.length];
+      attributes.color = colors[(i - 1) % colors.length];
+      titleVi = `[Hàng sỉ ${i}] Áo thun thời trang ${attributes.color} - Size ${attributes.size}`;
+      titleZh = `[男士/女士 ${i}] 纯色圆领高品质短袖t恤潮牌`;
       basePrice = 15 + (i * 2);
+    } else if (category === "shoes") {
+      const sizes = ["38", "39", "40", "41", "42"];
+      const colors = ["Đen", "Trắng", "Xám", "Xanh"];
+      attributes.size = sizes[(i - 1) % sizes.length];
+      attributes.color = colors[(i - 1) % colors.length];
+      titleVi = `[Sneaker ${i}] Giày thể thao siêu êm ${attributes.color} - Size ${attributes.size}`;
+      titleZh = `[正品夏季 ${i}] 潮流情侣轻便透气跑步鞋休闲网鞋`;
+      basePrice = 30 + (i * 4);
+    } else if (category === "headphone") {
+      const voltages = ["220V", "110V", "Pin sạc"];
+      const types = ["Không dây", "Có dây", "Chống ồn"];
+      attributes.voltage = voltages[(i - 1) % voltages.length];
+      attributes.type = types[(i - 1) % types.length];
+      titleVi = `[Đồ điện ${i}] Thiết bị ${attributes.type} tích hợp (${attributes.voltage})`;
+      titleZh = `[智能电器 ${i}] 降噪高性能头戴式无线蓝牙耳机`;
+      basePrice = 40 + (i * 5);
     } else {
-      titleVi = `[Hàng quét ${i}] ${query} Cao cấp Nhập khẩu Trực tiếp Mẫu ${i}`;
-      titleZh = `[新品 ${i}] ${translated} 跨境精品热销优质商品`;
+      const materials = ["Nhựa ABS", "Thép không gỉ", "Gỗ tự nhiên", "Da PU"];
+      attributes.material = materials[(i - 1) % materials.length];
+      titleVi = `[Nội địa TQ ${i}] ${query} làm từ ${attributes.material}`;
+      titleZh = `[新品跨境 ${i}] ${translated} 环保优质耐用日用百货`;
       basePrice = 25 + (i * 3);
     }
 
@@ -138,7 +188,8 @@ export async function GET(request: Request) {
       imageUrl,
       supplier,
       rating: parseFloat((4.5 + ((i % 5) / 10)).toFixed(1)),
-      salesCount: `${(i * 1500).toLocaleString("vi-VN")}+`
+      salesCount: `${(i * 1200).toLocaleString("vi-VN")}+`,
+      attributes
     });
   }
 
@@ -153,6 +204,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     items: paginatedItems,
     total: filteredItems.length,
-    translated
+    translated,
+    filters
   });
 }
