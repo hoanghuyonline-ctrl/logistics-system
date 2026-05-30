@@ -111,6 +111,8 @@ const DICTIONARY: Record<string, { zh: string; pinyin: string; category: Categor
   "trà": { zh: "高山茶叶", pinyin: "gāoshān cháyè", category: "food" },
   "tra dao": { zh: "蜜桃茶", pinyin: "mìtáo chá", category: "food" },
   "trà đào": { zh: "蜜桃茶", pinyin: "mìtáo chá", category: "food" },
+  "tra xanh": { zh: "绿茶", pinyin: "lǜchá", category: "food" },
+  "trà xanh": { zh: "茶叶 绿茶", pinyin: "cháyè lǜchá", category: "food" },
   "ca phe": { zh: "咖啡豆", pinyin: "kāfēi dòu", category: "food" },
   "cafe": { zh: "精品咖啡", pinyin: "jīngpǐn kāfēi", category: "food" },
   "banh": { zh: "零食饼干", pinyin: "língshí bǐnggān", category: "food" },
@@ -296,6 +298,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") || "";
   const platform = (searchParams.get("platform") || "taobao") as Platform;
+  const sort = searchParams.get("sort") || "default";
   const limit = parseInt(searchParams.get("limit") || "100", 10);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const minPrice = searchParams.get("min_price") ? parseFloat(searchParams.get("min_price")!) : null;
@@ -377,7 +380,8 @@ export async function GET(request: Request) {
       i, category, cleanQuery, hanzi, pinyin
     );
 
-    if (!sanitizeData(titleVi) || !sanitizeData(titleZh)) continue;
+    const isAd = i % 7 === 0;
+    const finalAttributes = { ...attributes, isAd: isAd ? "true" : "false" };
 
     allItems.push({
       id: `${category}-${itemPlatform}-${i}`,
@@ -386,15 +390,15 @@ export async function GET(request: Request) {
       titleZh,
       priceCNY: basePrice,
       imageUrl,
-      supplier,
+      supplier: isAd ? `[Tài Trợ] ${supplier}` : supplier,
       rating: parseFloat((4.5 + ((i % 5) / 10)).toFixed(1)),
       salesCount: `${(i * 1200).toLocaleString("vi-VN")}+`,
-      attributes,
+      attributes: finalAttributes,
     });
   }
 
-  // Filter
-  let filtered = allItems.filter(item => item.platform === platform);
+  // Filter out paid ads/sponsored listings to keep only organic results matching Taobao/1688 app
+  let filtered = allItems.filter(item => item.platform === platform && item.attributes.isAd !== "true");
   if (minPrice !== null) filtered = filtered.filter(i => i.priceCNY >= minPrice);
   if (maxPrice !== null) filtered = filtered.filter(i => i.priceCNY <= maxPrice);
   if (size) filtered = filtered.filter(i => i.attributes.size === size);
@@ -402,6 +406,28 @@ export async function GET(request: Request) {
   filtered = filtered.filter(
     i => sanitizeData(i.titleVi) && sanitizeData(i.titleZh) && sanitizeData(i.supplier)
   );
+
+  // Sort mapping matching Taobao/1688 trend algorithms
+  if (sort === "renqi") {
+    // Sort by rating (popularity) descending, then sales descending
+    filtered = filtered.sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating;
+      const salesA = parseInt(a.salesCount.replace(/[^\d]/g, "")) || 0;
+      const salesB = parseInt(b.salesCount.replace(/[^\d]/g, "")) || 0;
+      return salesB - salesA;
+    });
+  } else if (sort === "sale") {
+    // Sort by sales descending
+    filtered = filtered.sort((a, b) => {
+      const salesA = parseInt(a.salesCount.replace(/[^\d]/g, "")) || 0;
+      const salesB = parseInt(b.salesCount.replace(/[^\d]/g, "")) || 0;
+      return salesB - salesA;
+    });
+  } else if (sort === "price_asc") {
+    filtered = filtered.sort((a, b) => a.priceCNY - b.priceCNY);
+  } else if (sort === "price_desc") {
+    filtered = filtered.sort((a, b) => b.priceCNY - a.priceCNY);
+  }
 
   const paginated = filtered.slice((page - 1) * limit, page * limit);
 
