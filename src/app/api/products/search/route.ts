@@ -55,8 +55,8 @@ const IMAGES: Record<Category, string[]> = {
     "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=500&auto=format&fit=crop&q=60",
   ],
   general: [
-    "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&auto=format&fit=crop&q=60",
   ],
 };
@@ -780,7 +780,7 @@ export async function POST(req: NextRequest) {
       { 
         items, 
         total: items.length, 
-        translated: `以图搜图 (Live Proxy: ${scrapedCategory.toUpperCase()} - Mirror Sync)`, 
+        translated: `[Live Proxy: CORE_SAME_ITEMS_SYNC] (${scrapedCategory.toUpperCase()} - Mirror Sync)`, 
         filters: [] 
       },
       {
