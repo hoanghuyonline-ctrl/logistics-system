@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 type Platform = "taobao" | "1688" | "tmall" | "other";
+type Category = "headphone" | "shoes" | "clothes" | "electronics" | "food" | "furniture" | "beauty" | "general";
 
 interface ProductItem {
   id: string;
@@ -17,147 +18,137 @@ interface ProductItem {
   attributes: Record<string, string>;
 }
 
-const IMAGES = {
+const IMAGES: Record<Category, string[]> = {
   headphone: [
     "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&auto=format&fit=crop&q=60"
   ],
   shoes: [
     "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60"
   ],
   clothes: [
     "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=60"
+    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=60",
+  ],
+  electronics: [
+    "https://images.unsplash.com/photo-1593359677879-a4bb92f829e1?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1461151304267-38535e780c79?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1585789575655-f9a94ddcb5da?w=500&auto=format&fit=crop&q=60",
+  ],
+  food: [
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1559181567-c3190bfa4614?w=500&auto=format&fit=crop&q=60",
+  ],
+  furniture: [
+    "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=500&auto=format&fit=crop&q=60",
+  ],
+  beauty: [
+    "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=500&auto=format&fit=crop&q=60",
   ],
   general: [
+    "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60",
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60"
-  ]
+  ],
 };
 
 const SUPPLIERS = [
-  "Cửa hàng Kỹ thuật Số Thâm Quyến",
-  "Xưởng Linh kiện Điện tử Nghĩa Ô",
-  "Tổng kho Giày dép Ôn Châu",
-  "Xưởng May Mặc Quảng Châu",
-  "Nhà máy Hàng tiêu dùng Chiết Giang",
-  "Tổng kho Hàng xuất khẩu Nghĩa Ô",
-  "Tmall Flagship Store Global",
-  "Hãng Giày Thời Trang Phúc Kiến",
-  "Cửa hàng Thời trang Triều Châu",
-  "Tmall Flagship Store Headset"
+  "Cửa hàng Kỹ thuật Số Thâm Quyến", "Xưởng Linh kiện Điện tử Nghĩa Ô",
+  "Tổng kho Giày dép Ôn Châu", "Xưởng May Mặc Quảng Châu",
+  "Nhà máy Hàng tiêu dùng Chiết Giang", "Tổng kho Hàng xuất khẩu Nghĩa Ô",
+  "Tmall Flagship Store Global", "Hãng Giày Thời Trang Phúc Kiến",
+  "Cửa hàng Thời trang Triều Châu", "Tmall Flagship Store Electronics",
 ];
 
-// NLP Intent Centroid Vectors for Cosine Similarity modeling
-const SEMANTIC_CENTROIDS = {
-  fashion: {
-    "ao": 1.0, "quan": 1.0, "vay": 1.0, "dam": 1.0, "len": 0.8,
-    "giay": 1.0, "dep": 0.9, "sneaker": 1.0, "jeans": 1.0,
-    "det": 0.7, "thoi": 0.8, "trang": 0.8, "cotton": 0.8, "khoac": 0.8,
-    "jean": 0.9, "hoodie": 1.0, "jacket": 1.0, "skirt": 1.0, "dress": 1.0,
-    "tui": 0.7, "xach": 0.7, "vi": 0.6, "quai": 0.6,
-    // Pinyin fashion terms
-    "yifu": 1.0, "qunzi": 1.0, "chenshan": 1.0, "kuzi": 1.0, "waitao": 0.9,
-    "pixie": 0.9, "nvzhuang": 1.0, "nanzhuang": 1.0, "hanfu": 0.8, "mianyi": 0.8
-  },
-  electronics: {
-    "o": 0.8, "cam": 0.8, "dien": 1.0, "bong": 0.7, "den": 0.7,
-    "noi": 0.8, "com": 0.8, "tai": 0.9, "nghe": 0.9, "sac": 1.0,
-    "pin": 1.0, "bluetooth": 1.0, "quat": 0.9, "may": 0.8, "cong": 0.7,
-    "suat": 0.7, "220v": 1.0, "soundbar": 1.0, "loa": 1.0, "wireless": 0.9,
-    "cap": 0.8, "cable": 0.8, "charger": 1.0, "led": 0.8, "smart": 0.7,
-    // Pinyin electronics terms
-    "erji": 1.0, "lanya": 1.0, "chongdian": 1.0, "shouji": 1.0, "diannao": 1.0,
-    "dianchi": 1.0, "youxian": 0.9, "wuxian": 1.0, "xiaomi": 1.0, "huawei": 1.0,
-    "oppo": 1.0, "vivo": 0.9, "shuma": 0.9, "zhineng": 0.8, "diandong": 0.9
-  }
+// Expanded dual-code dictionary: Vietnamese + Pinyin keywords → Hanzi
+const DICTIONARY: Record<string, { zh: string; pinyin: string; category: Category }> = {
+  // Electronics
+  "tivi": { zh: "电视机", pinyin: "diànshìjī", category: "electronics" },
+  "ti vi": { zh: "液晶电视", pinyin: "yèjīng diànshì", category: "electronics" },
+  "tv": { zh: "智能电视", pinyin: "zhìnéng diànshì", category: "electronics" },
+  "dieu hoa": { zh: "空调", pinyin: "kōngtiáo", category: "electronics" },
+  "điều hòa": { zh: "变频空调", pinyin: "biànpín kōngtiáo", category: "electronics" },
+  "may lanh": { zh: "空调", pinyin: "kōngtiáo", category: "electronics" },
+  "tu lanh": { zh: "冰箱", pinyin: "bīngxiāng", category: "electronics" },
+  "tủ lạnh": { zh: "节能冰箱", pinyin: "jiénéng bīngxiāng", category: "electronics" },
+  "may giat": { zh: "洗衣机", pinyin: "xǐyījī", category: "electronics" },
+  "may tinh": { zh: "笔记本电脑", pinyin: "bǐjìběn diànnǎo", category: "electronics" },
+  "laptop": { zh: "轻薄本电脑", pinyin: "qīngbóběn diànnǎo", category: "electronics" },
+  "dien thoai": { zh: "智能手机", pinyin: "zhìnéng shǒujī", category: "electronics" },
+  "smartphone": { zh: "旗舰智能手机", pinyin: "qíjiàn zhìnéng shǒujī", category: "electronics" },
+  "tai nghe": { zh: "蓝牙耳机", pinyin: "lányá ěrjī", category: "headphone" },
+  "headphone": { zh: "耳机头戴式", pinyin: "ěrjī tóudàishì", category: "headphone" },
+  "loa": { zh: "蓝牙音箱", pinyin: "lányá yīnxiāng", category: "headphone" },
+  "sac": { zh: "充电器", pinyin: "chōngdiànqì", category: "headphone" },
+  "pin": { zh: "锂电池", pinyin: "lǐ diànchí", category: "headphone" },
+  // Shoes & Fashion
+  "giay": { zh: "运动鞋", pinyin: "yùndòngxié", category: "shoes" },
+  "giày": { zh: "时尚板鞋", pinyin: "shíshàng bǎnxié", category: "shoes" },
+  "sneaker": { zh: "潮流运动鞋", pinyin: "cháoliú yùndòngxié", category: "shoes" },
+  "dep": { zh: "拖鞋凉鞋", pinyin: "tuōxié liángxié", category: "shoes" },
+  "ao": { zh: "夏季T恤", pinyin: "xiàjì T-xù", category: "clothes" },
+  "áo": { zh: "潮流短袖", pinyin: "cháoliú duǎnxiù", category: "clothes" },
+  "quan": { zh: "牛仔裤", pinyin: "niúzǎikù", category: "clothes" },
+  "quần": { zh: "长裤子", pinyin: "chángkùzi", category: "clothes" },
+  "váy": { zh: "连衣裙", pinyin: "liányīqún", category: "clothes" },
+  "dam": { zh: "裙子", pinyin: "qúnzi", category: "clothes" },
+  "len": { zh: "毛衣", pinyin: "máoyī", category: "clothes" },
+  "hoodie": { zh: "卫衣连帽", pinyin: "wèiyī liánmào", category: "clothes" },
+  "jacket": { zh: "夹克外套", pinyin: "jiākè wàitào", category: "clothes" },
+  "tui": { zh: "手提包", pinyin: "shǒutíbāo", category: "clothes" },
+  // Food & Drink
+  "tra": { zh: "茶叶", pinyin: "cháyè", category: "food" },
+  "trà": { zh: "高山茶叶", pinyin: "gāoshān cháyè", category: "food" },
+  "ca phe": { zh: "咖啡豆", pinyin: "kāfēi dòu", category: "food" },
+  "cafe": { zh: "精品咖啡", pinyin: "jīngpǐn kāfēi", category: "food" },
+  "banh": { zh: "零食饼干", pinyin: "língshí bǐnggān", category: "food" },
+  "keo": { zh: "糖果零食", pinyin: "tángguǒ língshí", category: "food" },
+  "nuoc": { zh: "饮料", pinyin: "yǐnliào", category: "food" },
+  // Furniture & Home
+  "ban": { zh: "办公桌", pinyin: "bàngōngzhuō", category: "furniture" },
+  "bàn": { zh: "实木书桌", pinyin: "shímù shūzhuō", category: "furniture" },
+  "ghe": { zh: "椅子", pinyin: "yǐzi", category: "furniture" },
+  "ghế": { zh: "人体工学椅", pinyin: "réntǐ gōngxué yǐ", category: "furniture" },
+  "tu": { zh: "收纳柜", pinyin: "shōunà guì", category: "furniture" },
+  "giuong": { zh: "床架", pinyin: "chuángjià", category: "furniture" },
+  "sofa": { zh: "沙发", pinyin: "shāfā", category: "furniture" },
+  // Beauty & Care
+  "kem": { zh: "护肤霜", pinyin: "hùfū shuāng", category: "beauty" },
+  "son moi": { zh: "口红唇膏", pinyin: "kǒuhóng chúngāo", category: "beauty" },
+  "nuoc hoa": { zh: "香水", pinyin: "xiāngshuǐ", category: "beauty" },
+  "my pham": { zh: "美妆护肤", pinyin: "měizhuāng hùfū", category: "beauty" },
+  "serum": { zh: "精华液", pinyin: "jīnghuá yè", category: "beauty" },
+  // Pinyin direct input
+  "xiaomi": { zh: "小米", pinyin: "xiǎomǐ", category: "electronics" },
+  "huawei": { zh: "华为", pinyin: "huáwèi", category: "electronics" },
+  "diianshi": { zh: "电视", pinyin: "diànshì", category: "electronics" },
+  "bingxiang": { zh: "冰箱", pinyin: "bīngxiāng", category: "electronics" },
+  "erji": { zh: "耳机", pinyin: "ěrjī", category: "headphone" },
+  "lanya": { zh: "蓝牙", pinyin: "lányá", category: "headphone" },
+  "yifu": { zh: "衣服", pinyin: "yīfu", category: "clothes" },
+  "qunzi": { zh: "裙子", pinyin: "qúnzi", category: "clothes" },
+  "pixie": { zh: "皮鞋", pinyin: "píxié", category: "shoes" },
+  "chaiye": { zh: "茶叶", pinyin: "cháyè", category: "food" },
 };
 
-// ============================================================
-// SONG MÃ DICTIONARY: Vietnamese → Hanzi + Pinyin (Dual-Code)
-// ============================================================
-const DICTIONARY: Record<string, { zh: string; pinyin: string; category: keyof typeof IMAGES }> = {
-  // Vietnamese → Hanzi + Pinyin
-  "tai nghe":    { zh: "蓝牙耳机", pinyin: "lányá ěrjī", category: "headphone" },
-  "headphone":   { zh: "耳机头戴式", pinyin: "ěrjī tóudàishì", category: "headphone" },
-  "loa":         { zh: "蓝牙音箱", pinyin: "lányá yīnxiāng", category: "headphone" },
-  "sac":         { zh: "充电器", pinyin: "chōngdiànqì", category: "headphone" },
-  "pin":         { zh: "锂电池", pinyin: "lǐ diànchí", category: "headphone" },
-  "giay":        { zh: "运动鞋", pinyin: "yùndòngxié", category: "shoes" },
-  "giày":        { zh: "时尚板鞋", pinyin: "shíshàng bǎnxié", category: "shoes" },
-  "sneaker":     { zh: "潮流运动鞋", pinyin: "cháoliú yùndòngxié", category: "shoes" },
-  "shoes":       { zh: "男女鞋", pinyin: "nánnǚxié", category: "shoes" },
-  "ao":          { zh: "夏季T恤", pinyin: "xiàjì T-xù", category: "clothes" },
-  "áo":          { zh: "潮流短袖", pinyin: "cháoliú duǎnxiù", category: "clothes" },
-  "quan":        { zh: "牛仔裤", pinyin: "niúzǎikù", category: "clothes" },
-  "quần":        { zh: "长裤子", pinyin: "chángkùzi", category: "clothes" },
-  "váy":         { zh: "连衣裙", pinyin: "liányīqún", category: "clothes" },
-  "dam":         { zh: "裙子", pinyin: "qúnzi", category: "clothes" },
-  "len":         { zh: "毛衣", pinyin: "máoyī", category: "clothes" },
-  "hoodie":      { zh: "卫衣连帽", pinyin: "wèiyī liánmào", category: "clothes" },
-  "jacket":      { zh: "夹克外套", pinyin: "jiākè wàitào", category: "clothes" },
-  "clothes":     { zh: "精品服装", pinyin: "jīngpǐn fúzhuāng", category: "clothes" },
-  // Pinyin input → Hanzi output (khách gõ Pinyin thẳng)
-  "xiaomi":      { zh: "小米", pinyin: "xiǎomǐ", category: "headphone" },
-  "huawei":      { zh: "华为", pinyin: "huáwèi", category: "headphone" },
-  "kuajing":     { zh: "跨境", pinyin: "kuàjìng", category: "general" },
-  "erji":        { zh: "耳机", pinyin: "ěrjī", category: "headphone" },
-  "lanya":       { zh: "蓝牙", pinyin: "lányá", category: "headphone" },
-  "yifu":        { zh: "衣服", pinyin: "yīfu", category: "clothes" },
-  "qunzi":       { zh: "裙子", pinyin: "qúnzi", category: "clothes" },
-  "chenshan":    { zh: "衬衫", pinyin: "chènshān", category: "clothes" },
-  "kuzi":        { zh: "裤子", pinyin: "kùzi", category: "clothes" },
-  "pixie":       { zh: "皮鞋", pinyin: "píxié", category: "shoes" },
-  "chongdian":   { zh: "充电器", pinyin: "chōngdiànqì", category: "headphone" },
-  "shouji":      { zh: "手机", pinyin: "shǒujī", category: "headphone" },
-  "diannao":     { zh: "电脑", pinyin: "diànnǎo", category: "headphone" },
-  "wuxian":      { zh: "无线", pinyin: "wúxiàn", category: "headphone" },
-  "zhineng":     { zh: "智能", pinyin: "zhìnéng", category: "headphone" }
-};
-
-// ============================================================
-// PINYIN DETECTION ENGINE
-// Nhận diện chuỗi Latinh Pinyin Trung Quốc thuần túy
-// ============================================================
-const PINYIN_SIGNATURE_PATTERNS = [
-  /\b(xiao|hua|kuai|jing|chan|shen|yang|zhong|guo|pei|lian|yi|fu|qun|chong|dian|shou|wu|zhi|neng|lanya|erji|pixie|yifu|kuzi|chenshan)\b/i
-];
-
-function detectInputMode(tokens: string[]): "vietnamese" | "pinyin" | "mixed" {
-  const joined = tokens.join(" ");
-  const hasPinyin = PINYIN_SIGNATURE_PATTERNS.some(p => p.test(joined));
-  // Vietnamese has common diacritical tokens even after stripping
-  const hasVietnamese = /\b(tai|nghe|giay|quan|ao|len|sac|pin|loa|dam|may|dien)\b/i.test(joined);
-
-  if (hasPinyin && hasVietnamese) return "mixed";
-  if (hasPinyin) return "pinyin";
-  return "vietnamese";
-}
-
-// Safe Google Sanitization filter to secure search query & results
 export function sanitizeData(text: string): boolean {
-  const forbiddenPatterns = [
+  const forbidden = [
     /cd\s+/i, /git\s+/i, /pm2/i, /xcopy/i, /rmdir/i,
     /npm\s+run/i, /node\s+/i, /npx\s+/i, /rm\s+-rf/i,
-    /deploy/i, /powershell/i, /cmd/i, /bash/i, /sudo/i
+    /deploy/i, /powershell/i, /cmd/i, /bash/i, /sudo/i,
   ];
-  return !forbiddenPatterns.some(p => p.test(text));
+  return !forbidden.some(p => p.test(text));
 }
 
-// Tokenizer & Accent Stripper
 function tokenizeAndNormalize(text: string): string[] {
   return text
     .toLowerCase()
@@ -168,20 +159,88 @@ function tokenizeAndNormalize(text: string): string[] {
     .filter(Boolean);
 }
 
-// Cosine Similarity
-function calculateCosineSimilarity(queryTokens: string[], centroid: Record<string, number>): number {
-  const queryFreq: Record<string, number> = {};
-  for (const token of queryTokens) queryFreq[token] = (queryFreq[token] || 0) + 1;
+// Build product titles that reflect the ACTUAL search query
+function buildProductTitles(
+  i: number,
+  category: Category,
+  query: string,
+  hanzi: string,
+  pinyin: string
+): { titleVi: string; titleZh: string; basePrice: number; attributes: Record<string, string> } {
+  const attributes: Record<string, string> = { pinyin };
+  let titleVi = "";
+  let titleZh = "";
+  let basePrice = 25;
 
-  let dot = 0, qMag = 0, cMag = 0;
-  const allKeys = new Set([...Object.keys(queryFreq), ...Object.keys(centroid)]);
-  for (const key of allKeys) {
-    const q = queryFreq[key] || 0;
-    const c = centroid[key] || 0;
-    dot += q * c; qMag += q * q; cMag += c * c;
+  switch (category) {
+    case "clothes": {
+      const sizes = ["S", "M", "L", "XL", "XXL"];
+      const colors = ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"];
+      attributes.size = sizes[(i - 1) % sizes.length];
+      attributes.color = colors[(i - 1) % colors.length];
+      titleVi = `[Hàng sỉ ${i}] ${query} thời trang ${attributes.color} - Size ${attributes.size}`;
+      titleZh = `[男女装 ${i}] ${hanzi} 纯色高品质`;
+      basePrice = 15 + i * 2;
+      break;
+    }
+    case "shoes": {
+      const sizes = ["38", "39", "40", "41", "42", "43"];
+      attributes.size = sizes[(i - 1) % sizes.length];
+      titleVi = `[Giày ${i}] ${query} êm chân size ${attributes.size}`;
+      titleZh = `[正品 ${i}] ${hanzi} 潮流时尚轻便`;
+      basePrice = 35 + i * 3;
+      break;
+    }
+    case "electronics": {
+      const types = ["32 inch", "43 inch", "55 inch", "65 inch"];
+      attributes.type = types[(i - 1) % types.length];
+      titleVi = `[Điện tử ${i}] ${query} chính hãng ${attributes.type}`;
+      titleZh = `[智能家电 ${i}] ${hanzi} 节能高清`;
+      basePrice = 500 + i * 50;
+      break;
+    }
+    case "headphone": {
+      const types = ["Không dây", "Có dây", "Chống ồn ANC"];
+      attributes.type = types[(i - 1) % types.length];
+      titleVi = `[Âm thanh ${i}] ${query} ${attributes.type} chất lượng cao`;
+      titleZh = `[数码音频 ${i}] ${hanzi} 降噪高性能`;
+      basePrice = 40 + i * 5;
+      break;
+    }
+    case "food": {
+      const weights = ["100g", "250g", "500g", "1kg"];
+      attributes.weight = weights[(i - 1) % weights.length];
+      titleVi = `[Thực phẩm ${i}] ${query} cao cấp ${attributes.weight}`;
+      titleZh = `[食品饮料 ${i}] ${hanzi} 精品优质`;
+      basePrice = 20 + i * 2;
+      break;
+    }
+    case "furniture": {
+      const materials = ["Gỗ tự nhiên", "MDF phủ melamine", "Thép sơn tĩnh điện", "Nhựa ABS"];
+      attributes.material = materials[(i - 1) % materials.length];
+      titleVi = `[Nội thất ${i}] ${query} ${attributes.material} cao cấp`;
+      titleZh = `[家具家居 ${i}] ${hanzi} 实木环保耐用`;
+      basePrice = 200 + i * 20;
+      break;
+    }
+    case "beauty": {
+      const volumes = ["30ml", "50ml", "100ml", "150ml"];
+      attributes.volume = volumes[(i - 1) % volumes.length];
+      titleVi = `[Làm đẹp ${i}] ${query} chính hãng ${attributes.volume}`;
+      titleZh = `[美妆护肤 ${i}] ${hanzi} 高端护肤精华`;
+      basePrice = 60 + i * 8;
+      break;
+    }
+    default: {
+      const materials = ["Nhựa ABS", "Thép không gỉ", "Gỗ tự nhiên", "Da PU"];
+      attributes.material = materials[(i - 1) % materials.length];
+      titleVi = `[Nội địa TQ ${i}] ${query} chất liệu ${attributes.material}`;
+      titleZh = `[新品跨境 ${i}] ${hanzi} (${pinyin}) 环保优质耐用`;
+      basePrice = 25 + i * 3;
+    }
   }
-  if (qMag === 0 || cMag === 0) return 0;
-  return dot / (Math.sqrt(qMag) * Math.sqrt(cMag));
+
+  return { titleVi, titleZh, basePrice, attributes };
 }
 
 export async function GET(request: Request) {
@@ -203,130 +262,62 @@ export async function GET(request: Request) {
   }
 
   const cleanQuery = query.trim().toLowerCase();
-  const tokens = tokenizeAndNormalize(cleanQuery);
 
-  // ============================================================
-  // BƯỚC 1: PHÁT HIỆN CHẾ ĐỘ NGÔN NGỮ (Vietnamese / Pinyin / Mixed)
-  // ============================================================
-  const inputMode = detectInputMode(tokens);
-
-  let category: keyof typeof IMAGES = "general";
-  let translated = "";
+  // ── STEP 1: Dictionary Lookup (longest match first) ──
+  let category: Category = "general";
   let hanzi = "";
   let pinyin = "";
+  let translated = "";
 
-  // ============================================================
-  // BƯỚC 2: TRA CỨU DICTIONARY SONG MÃ (Hanzi + Pinyin)
-  // ============================================================
-  const matchedKey = Object.keys(DICTIONARY).find(key => cleanQuery.includes(key));
+  const matchedKey = Object.keys(DICTIONARY)
+    .sort((a, b) => b.length - a.length) // longest key first for best match
+    .find(key => cleanQuery.includes(key));
 
   if (matchedKey) {
     const entry = DICTIONARY[matchedKey];
     hanzi = entry.zh;
     pinyin = entry.pinyin;
     category = entry.category;
-    // Build dual-code translated label for UI display
     translated = `${hanzi} (${pinyin})`;
   } else {
-    // ============================================================
-    // BƯỚC 3: VECTOR SEARCH NLP FALLBACK CHO TỪ KHÓA TỰ DO
-    // ============================================================
-    const fashionScore = calculateCosineSimilarity(tokens, SEMANTIC_CENTROIDS.fashion);
-    const electronicsScore = calculateCosineSimilarity(tokens, SEMANTIC_CENTROIDS.electronics);
-
-    if (fashionScore > 0.15 || electronicsScore > 0.15) {
-      if (fashionScore >= electronicsScore) {
-        category = "clothes";
-        hanzi = `${query.trim()} 潮流服装`;
-        pinyin = "cháoliú fúzhuāng";
-      } else {
-        category = "headphone";
-        hanzi = `${query.trim()} 智能数码`;
-        pinyin = "zhìnéng shùmǎ";
-      }
-    } else {
-      category = "general";
-      hanzi = `${query.trim()} 优质货源`;
-      pinyin = "yōuzhì huòyuán";
-    }
-
-    // For Pinyin input, include raw Pinyin in search tag
-    if (inputMode === "pinyin") {
-      translated = `${query.trim()} → ${hanzi} (${pinyin}) [Pinyin SEO]`;
-    } else if (inputMode === "mixed") {
-      translated = `${hanzi} (${pinyin}) [Hán tự + Pinyin kết hợp]`;
-    } else {
-      translated = `${hanzi} (${pinyin})`;
-    }
+    // ── STEP 2: Fallback – embed query directly in Hanzi search string ──
+    hanzi = `${query.trim()} 优质货源`;
+    pinyin = "yōuzhì huòyuán";
+    translated = `${encodeURIComponent(query.trim())} → ${hanzi} (${pinyin})`;
+    category = "general";
   }
 
-  // ============================================================
-  // BƯỚC 4: DYNAMIC FILTERS BASED ON DETECTED CATEGORY
-  // ============================================================
+  // ── STEP 3: Dynamic filters based on category ──
   let filters: Array<{ key: string; label: string; options: string[] }> = [];
   if (category === "clothes") {
     filters = [
       { key: "size", label: "Kích cỡ", options: ["S", "M", "L", "XL", "XXL"] },
-      { key: "color", label: "Màu sắc", options: ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"] }
+      { key: "color", label: "Màu sắc", options: ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"] },
     ];
-  } else if (category === "headphone") {
+  } else if (category === "shoes") {
+    filters = [{ key: "size", label: "Cỡ giày", options: ["38", "39", "40", "41", "42", "43"] }];
+  } else if (category === "electronics" || category === "headphone") {
     filters = [
       { key: "voltage", label: "Điện áp", options: ["220V", "110V", "Pin sạc"] },
-      { key: "type", label: "Tính năng", options: ["Không dây", "Có dây", "Chống ồn"] }
+      { key: "type", label: "Tính năng", options: ["Không dây", "Có dây", "Chống ồn"] },
     ];
   }
 
-  // ============================================================
-  // BƯỚC 5: GENERATE 300-PRODUCT DEEP CRAWL POOL
-  // ============================================================
-  const totalItems = 300;
+  // ── STEP 4: Generate 300-item dynamic product pool using actual query ──
   const allItems: ProductItem[] = [];
+  const imgList = IMAGES[category];
 
-  for (let i = 1; i <= totalItems; i++) {
-    const itemPlatform: Platform = i % 4 === 0 ? "taobao" : i % 4 === 1 ? "1688" : i % 4 === 2 ? "tmall" : "other";
-    const imgList = IMAGES[category];
+  for (let i = 1; i <= 300; i++) {
+    const itemPlatform: Platform =
+      i % 4 === 0 ? "taobao" : i % 4 === 1 ? "1688" : i % 4 === 2 ? "tmall" : "other";
     const imageUrl = imgList[(i - 1) % imgList.length];
     const supplier = SUPPLIERS[(i - 1) % SUPPLIERS.length];
 
-    let titleVi = "";
-    let titleZh = "";
-    let basePrice = 20;
-    const attributes: Record<string, string> = {
-      inputMode,
-      pinyin: pinyin || ""
-    };
+    const { titleVi, titleZh, basePrice, attributes } = buildProductTitles(
+      i, category, query.trim(), hanzi, pinyin
+    );
 
-    if (category === "clothes") {
-      const sizes = ["S", "M", "L", "XL", "XXL"];
-      const colors = ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"];
-      attributes.size = sizes[(i - 1) % sizes.length];
-      attributes.color = colors[(i - 1) % colors.length];
-      titleVi = `[Hàng sỉ ${i}] Áo thun thời trang ${attributes.color} - Size ${attributes.size}`;
-      titleZh = `[男士/女士 ${i}] ${hanzi} 纯色圆领高品质短袖t恤潮牌`;
-      basePrice = 15 + (i * 2);
-    } else if (category === "shoes") {
-      const sizes = ["S", "M", "L", "XL", "XXL"];
-      const colors = ["Đen", "Trắng", "Đỏ", "Xanh", "Xám"];
-      attributes.size = sizes[(i - 1) % sizes.length];
-      attributes.color = colors[(i - 1) % colors.length];
-      titleVi = `[Sneaker ${i}] Giày thể thao siêu êm ${attributes.color} - Size ${attributes.size}`;
-      titleZh = `[正品夏季 ${i}] ${hanzi} 潮流情侣轻便透气跑步鞋`;
-      basePrice = 30 + (i * 4);
-    } else if (category === "headphone") {
-      const voltages = ["220V", "110V", "Pin sạc"];
-      const types = ["Không dây", "Có dây", "Chống ồn"];
-      attributes.voltage = voltages[(i - 1) % voltages.length];
-      attributes.type = types[(i - 1) % types.length];
-      titleVi = `[Đồ điện ${i}] Thiết bị ${attributes.type} tích hợp (${attributes.voltage})`;
-      titleZh = `[智能电器 ${i}] ${hanzi} 降噪高性能头戴式无线蓝牙耳机`;
-      basePrice = 40 + (i * 5);
-    } else {
-      const materials = ["Nhựa ABS", "Thép không gỉ", "Gỗ tự nhiên", "Da PU"];
-      attributes.material = materials[(i - 1) % materials.length];
-      titleVi = `[Nội địa TQ ${i}] ${query} làm từ ${attributes.material}`;
-      titleZh = `[新品跨境 ${i}] ${hanzi} (${pinyin}) 环保优质耐用日用百货`;
-      basePrice = 25 + (i * 3);
-    }
+    if (!sanitizeData(titleVi) || !sanitizeData(titleZh)) continue;
 
     allItems.push({
       id: `${category}-${itemPlatform}-${i}`,
@@ -338,36 +329,30 @@ export async function GET(request: Request) {
       supplier,
       rating: parseFloat((4.5 + ((i % 5) / 10)).toFixed(1)),
       salesCount: `${(i * 1200).toLocaleString("vi-VN")}+`,
-      attributes
+      attributes,
     });
   }
 
-  // Filter by platform
-  let filteredItems = allItems.filter(item => item.platform === platform);
-
-  // Apply price & attribute filters
-  if (minPrice !== null) filteredItems = filteredItems.filter(item => item.priceCNY >= minPrice);
-  if (maxPrice !== null) filteredItems = filteredItems.filter(item => item.priceCNY <= maxPrice);
-  if (size) filteredItems = filteredItems.filter(item => item.attributes.size === size);
-  if (color) filteredItems = filteredItems.filter(item => item.attributes.color === color);
-
-  // Security sanitization
-  filteredItems = filteredItems.filter(
-    item => sanitizeData(item.titleVi) && sanitizeData(item.titleZh) && sanitizeData(item.supplier)
+  // ── STEP 5: Filter ──
+  let filtered = allItems.filter(item => item.platform === platform);
+  if (minPrice !== null) filtered = filtered.filter(i => i.priceCNY >= minPrice);
+  if (maxPrice !== null) filtered = filtered.filter(i => i.priceCNY <= maxPrice);
+  if (size) filtered = filtered.filter(i => i.attributes.size === size);
+  if (color) filtered = filtered.filter(i => i.attributes.color === color);
+  filtered = filtered.filter(
+    i => sanitizeData(i.titleVi) && sanitizeData(i.titleZh) && sanitizeData(i.supplier)
   );
 
-  // Paginate
-  const startIndex = (page - 1) * limit;
-  const paginatedItems = filteredItems.slice(startIndex, startIndex + limit);
+  const paginated = filtered.slice((page - 1) * limit, page * limit);
 
   return NextResponse.json(
-    { items: paginatedItems, total: filteredItems.length, translated, filters },
+    { items: paginated, total: filtered.length, translated, filters },
     {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         "Pragma": "no-cache",
-        "Expires": "0"
-      }
+        "Expires": "0",
+      },
     }
   );
 }
