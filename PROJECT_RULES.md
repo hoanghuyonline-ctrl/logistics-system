@@ -60,19 +60,26 @@
 - **Server path:** `D:\BacTrungHai\logistics-system`
 - **Runtime:** PM2 running `next start -p 3000 -H 0.0.0.0` via `ecosystem.config.js`
 - PM2 `watch` must remain `false` (prevents crash loops)
-- `.next/static` and `public` must be copied into `.next/standalone/` after every build (CSS/images break without this)
+- `.next/static`, `public`, and `prisma` must be copied into `.next/standalone/` after every build (CSS/images break without this)
 - Always run `npx prisma migrate deploy` when new migrations exist
 - **Docker is NOT used in production** — Docker Compose is optional for local dev PostgreSQL only
+- **MANDATORY DAILY WORK RULES & STANDALONE PM2 SAFE DEPLOY SEQUENCE:**
+  - Before building, you must run `npm.cmd install` (or `npm install`) to ensure all clean dependencies are fetched and cache is clear.
+  - To prevent locked/trapped local ports under Windows environment, you must explicitly run `taskkill /f /im node.exe` to free up port 3000 before executing `pm2 reload` or `pm2 restart`.
+  - Under no circumstances is any AI agent permitted to add, skip, or remove steps from this deploy sequence.
 - Standard deploy sequence:
   ```powershell
   cd /d D:\BacTrungHai\logistics-system
   git pull origin main
-  npm install
-  npx prisma migrate deploy
-  npm run build
+  call npm.cmd install
+  call npx.cmd prisma migrate deploy
+  call npx.cmd tsx scripts/replace-legacy-domain.ts
+  call npm.cmd run build
   xcopy /E /I /Y .next\static .next\standalone\.next\static
   xcopy /E /I /Y public .next\standalone\public
-  pm2 restart logistics-system
+  xcopy /E /I /Y prisma .next\standalone\prisma
+  taskkill /f /im node.exe
+  pm2 restart logistics-system || pm2 start ecosystem.config.js
   ```
 
 ## Webhook / Public Routes
