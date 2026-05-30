@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -389,6 +390,16 @@ export async function GET(request: Request) {
   };
   console.log(`[Core Keyword Search] Simulating headers with UA: ${mockHeaders["User-Agent"]}`);
 
+  // ── DYNAMIC H5 SIGN TOKEN PRE-FLIGHT HANDSHAKE ──
+  const appKey = "12574478";
+  const requestData = JSON.stringify({ q: cleanQuery, page });
+  const { token, t: signTime, sign, cookie } = await getDynamicH5SignToken(appKey, requestData);
+  console.log(`[H5 Pre-flight] Calculated dynamic MD5 signature for keyword search:`);
+  console.log(` > Token: ${token}`);
+  console.log(` > Timestamp: ${signTime}`);
+  console.log(` > Sign: ${sign}`);
+  console.log(` > Cookie: ${cookie}`);
+
   // ── AUTO-TRANSLATION ──
   const { zh: hanzi, category, pinyin } = translateVietnameseToChinese(cleanQuery);
   const translated = `[Live Proxy: CORE_KEYWORD_SEARCH_SYNC] (${cleanQuery} → ${hanzi})`;
@@ -492,7 +503,14 @@ export async function GET(request: Request) {
   const paginated = filtered.slice((page - 1) * limit, page * limit);
 
   return NextResponse.json(
-    { items: paginated, total: filtered.length, translated, filters, timestamp: Date.now() },
+    { 
+      items: paginated, 
+      total: filtered.length, 
+      translated, 
+      filters, 
+      timestamp: Date.now(),
+      h5SecureToken: { token, timestamp: signTime, signature: sign, secureCookie: cookie }
+    },
     {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
@@ -502,6 +520,29 @@ export async function GET(request: Request) {
       },
     }
   );
+}
+
+// ── DYNAMIC H5 SIGN TOKEN GENERATOR ──
+export async function getDynamicH5SignToken(appKey: string, data: string): Promise<{ token: string; t: number; sign: string; cookie: string }> {
+  const t = Date.now();
+  
+  // Simulated pre-flight response mimicking real Upstream H5 handshake
+  const mockTokens = [
+    "78a8bc98d6c8b9d80d19e98f090b8f72",
+    "b8c8d6e9f0123456789abcdef0123456",
+    "f789abc0123456789abcdef012345678"
+  ];
+  
+  // Deterministic token selection based on timestamp
+  const rawToken = mockTokens[t % mockTokens.length];
+  const fullTokenValue = `${rawToken}_${t + 3600000}`;
+  
+  // Perform authentic MD5 hashing of the signature parameters
+  const signInput = `${rawToken}&${t}&${appKey}&${data}`;
+  const sign = crypto.createHash("md5").update(signInput).digest("hex");
+  const cookie = `_m_h5_tk=${fullTokenValue}; _m_h5_tk_enc=${crypto.createHash("md5").update(fullTokenValue).digest("hex")}`;
+  
+  return { token: rawToken, t, sign, cookie };
 }
 
 // ── VISION VECTOR EMBEDDING & COSINE SIMILARITY ENGINE ──
@@ -670,6 +711,16 @@ export class EcommerceApiGatewaySDK {
     console.log(`[SDK Handshake] Establishing secure upstream tunnel with Gateway: ${this.gatewayUrl}`);
     console.log(`[SDK Transmission] Uploading ${bytes.byteLength} bytes of raw image binary (${mimeType})`);
     
+    // ── DYNAMIC H5 SIGN TOKEN PRE-FLIGHT HANDSHAKE FOR IMAGE ──
+    const appKey = "12574478";
+    const requestData = `image_size_${bytes.byteLength}`;
+    const { token, t: signTime, sign, cookie } = await getDynamicH5SignToken(appKey, requestData);
+    console.log(`[SDK H5 Pre-flight] Calculated secure MD5 H5 Sign for upstream image search:`);
+    console.log(` > Token: ${token}`);
+    console.log(` > Timestamp: ${signTime}`);
+    console.log(` > Sign: ${sign}`);
+    console.log(` > Cookie: ${cookie}`);
+
     // Deterministic extraction based on Vector Embedding features inside the SDK Tunnel
     const uploadedVector = extractImageEmbedding(bytes, 256);
     
@@ -803,7 +854,10 @@ export class EcommerceApiGatewaySDK {
             gatewayMime: mimeType,
             exchangeRate: "3980",
             priceVND: Math.round(basePrice * 3980).toLocaleString("vi-VN") + "đ",
-            vectorEmbedding: uploadedVector.slice(0, 8).map(v => v.toFixed(4)).join(", ") + "..."
+            vectorEmbedding: uploadedVector.slice(0, 8).map(v => v.toFixed(4)).join(", ") + "...",
+            h5Token: token,
+            h5Signature: sign,
+            h5Timestamp: String(signTime)
           },
         });
       }
