@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import { useI18n } from "@/lib/i18n";
+import { safeJsonParse } from "@/lib/emoji-utils";
 
 interface CustomsDetail {
   id: string;
@@ -80,9 +81,7 @@ export default function CustomsDetailPage() {
     );
   }
 
-  const services: string[] = detail.accompanyingServices
-    ? JSON.parse(detail.accompanyingServices)
-    : [];
+  const services: string[] = safeJsonParse<string[]>(detail.accompanyingServices, []);
 
   interface DocItem {
     url: string;
@@ -90,7 +89,7 @@ export default function CustomsDetailPage() {
     type?: string;
   }
 
-  const docs: DocItem[] = detail.documents ? JSON.parse(detail.documents) : [];
+  const docs: DocItem[] = safeJsonParse<DocItem[]>(detail.documents, []);
 
   return (
     <div className="max-w-3xl mx-auto">

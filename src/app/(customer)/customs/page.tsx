@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Card from "@/components/ui/Card";
 import { useI18n } from "@/lib/i18n";
+import { safeJsonParse } from "@/lib/emoji-utils";
 
 interface CustomsRequest {
   id: string;
@@ -77,9 +78,7 @@ export default function CustomsListPage() {
       ) : (
         <div className="space-y-3">
           {requests.map((req) => {
-            const services: string[] = req.accompanyingServices
-              ? JSON.parse(req.accompanyingServices)
-              : [];
+            const services: string[] = safeJsonParse<string[]>(req.accompanyingServices, []);
             return (
               <Link key={req.id} href={`/customs/${req.id}`}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer">

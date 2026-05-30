@@ -85,3 +85,35 @@ export function formatCNY(amount: number | string): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" }).format(num);
 }
+
+/**
+ * safeEmoji — Đảm bảo chuỗi emoji không bị surrogate pair bị cắt đứt (\ud83d...).
+ * Nếu chuỗi bị double-escaped (ví dụ "\\ud83d\\udce6"), hàm sẽ trả về fallback thay vì vẽ ký tự rác.
+ */
+export function safeEmoji(icon: string, fallback = "📄"): string {
+  if (!icon) return fallback;
+  // Detect raw escaped surrogate sequences (double-escaped unicode)
+  if (/\\ud[89ab][0-9a-f]{2}/i.test(icon)) return fallback;
+  // Detect lone surrogate code points that would cause rendering glitches
+  try {
+    // encodeURIComponent throws on lone surrogates
+    encodeURIComponent(icon);
+    return icon;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * safeJsonParse — Phân tích chuỗi JSON an toàn, trả về fallback nếu parse lỗi.
+ * Ngăn chặn lỗi khi dữ liệu từ DB trả về null hoặc chuỗi rỗng.
+ */
+export function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
