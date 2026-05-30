@@ -190,14 +190,18 @@ function SearchDashboard() {
   const [total, setTotal] = useState(0);
 
   // Dynamic Google-system semantic filters states
-  const [availableFilters, setAvailableFilters] = useState<Array<{ key: string; label: string; options: string[] }>>([]);
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   // Compute filtered results on-the-fly based on selected filters
   const filteredResults = results.filter((item) => {
-    return Object.entries(selectedFilters).every(([key, val]) => {
-      return !val || item.attributes?.[key] === val;
-    });
+    if (minPrice !== null && item.priceCNY < minPrice) return false;
+    if (maxPrice !== null && item.priceCNY > maxPrice) return false;
+    if (selectedSize && item.attributes?.size !== selectedSize) return false;
+    if (selectedColor && item.attributes?.color !== selectedColor) return false;
+    return true;
   });
 
   // Fetch exchange rate on mount
@@ -233,10 +237,17 @@ function SearchDashboard() {
 
     // Reset user active filters on fresh query search (page 1)
     if (targetPage === 1) {
-      setSelectedFilters({});
+      setMinPrice(null);
+      setMaxPrice(null);
+      setSelectedSize(null);
+      setSelectedColor(null);
     }
 
-    const url = `/api/source-search?q=${encodeURIComponent(searchQuery)}&platform=${platform}&limit=${limit}&page=${targetPage}`;
+    let url = `/api/source-search?q=${encodeURIComponent(searchQuery)}&platform=${platform}&limit=${limit}&page=${targetPage}`;
+    if (minPrice !== null) url += `&min_price=${minPrice}`;
+    if (maxPrice !== null) url += `&max_price=${maxPrice}`;
+    if (selectedSize) url += `&size=${selectedSize}`;
+    if (selectedColor) url += `&color=${selectedColor}`;
     
     fetch(url)
       .then((res) => {
@@ -247,7 +258,6 @@ function SearchDashboard() {
         setTranslatedText(data.translated);
         setResults(data.items);
         setTotal(data.total);
-        setAvailableFilters(data.filters || []);
 
         // Initialize default quantity to 1 for all items
         const initialQs: Record<string, number> = {};
@@ -455,50 +465,101 @@ function SearchDashboard() {
               </Button>
             </div>
 
-            {/* Google-system Semantic filters */}
-            {availableFilters.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-slate-100 px-1 animate-fadeIn">
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-2 uppercase tracking-wider font-bold">
-                  <span>⚡</span>
-                  <span>Bộ lọc Semantic thông minh:</span>
+            {/* Real-time Google Sourcing Filters Block */}
+            <div className="mt-4 pt-4 border-t border-slate-100 px-1 animate-fadeIn">
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-3 uppercase tracking-wider font-bold">
+                <span>⚡</span>
+                <span>Bộ lọc thực chiến nâng cao:</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. Price range */}
+                <div className="space-y-1.5">
+                  <span className="text-xs text-slate-500 font-semibold block">Khoảng giá (¥ CNY):</span>
+                  <div className="flex items-center gap-2">
+                    <InputNumber
+                      placeholder="Tối thiểu (¥)"
+                      value={minPrice ?? undefined}
+                      onChange={(val) => setMinPrice(val)}
+                      className="w-full rounded-xl border-slate-200 text-xs font-semibold h-9 flex items-center"
+                      min={0}
+                    />
+                    <span className="text-slate-400">-</span>
+                    <InputNumber
+                      placeholder="Tối đa (¥)"
+                      value={maxPrice ?? undefined}
+                      onChange={(val) => setMaxPrice(val)}
+                      className="w-full rounded-xl border-slate-200 text-xs font-semibold h-9 flex items-center"
+                      min={0}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {availableFilters.map((filter) => (
-                    <div key={filter.key} className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-slate-500 min-w-[70px] font-semibold">{filter.label}:</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {filter.options.map((option) => {
-                          const isSelected = selectedFilters[filter.key] === option;
-                          return (
-                            <button
-                              key={option}
-                              onClick={() => {
-                                setSelectedFilters((prev) => {
-                                  const updated = { ...prev };
-                                  if (updated[filter.key] === option) {
-                                    delete updated[filter.key];
-                                  } else {
-                                    updated[filter.key] = option;
-                                  }
-                                  return updated;
-                                });
-                              }}
-                              className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all duration-300 transform active:scale-95 shadow-sm ${
-                                isSelected
-                                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500 ring-offset-1"
-                                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 border border-slate-200/60"
-                              }`}
-                            >
-                              {option}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+
+                {/* 2. Sizes */}
+                <div className="space-y-1.5">
+                  <span className="text-xs text-slate-500 font-semibold block">Kích cỡ (Size):</span>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {["S", "M", "L", "XL", "XXL"].map((sz) => {
+                      const isSelected = selectedSize === sz;
+                      return (
+                        <button
+                          key={sz}
+                          onClick={() => setSelectedSize(selectedSize === sz ? null : sz)}
+                          className={`py-1.5 text-xs font-semibold rounded-xl transition-all duration-300 transform active:scale-95 shadow-sm border ${
+                            isSelected
+                              ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
+                              : "bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100"
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Colors */}
+                <div className="space-y-1.5">
+                  <span className="text-xs text-slate-500 font-semibold block">Màu sắc:</span>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {["Đen", "Trắng", "Đỏ", "Xanh", "Xám"].map((col) => {
+                      const isSelected = selectedColor === col;
+                      return (
+                        <button
+                          key={col}
+                          onClick={() => setSelectedColor(selectedColor === col ? null : col)}
+                          className={`py-1.5 text-xs font-semibold rounded-xl transition-all duration-300 transform active:scale-95 shadow-sm border truncate px-1 ${
+                            isSelected
+                              ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
+                              : "bg-slate-50 text-slate-600 border-slate-200/60 hover:bg-slate-100"
+                          }`}
+                          title={col}
+                        >
+                          {col}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* Reset Filters trigger */}
+              {(minPrice !== null || maxPrice !== null || selectedSize !== null || selectedColor !== null) && (
+                <div className="flex justify-end mt-3">
+                  <button
+                    onClick={() => {
+                      setMinPrice(null);
+                      setMaxPrice(null);
+                      setSelectedSize(null);
+                      setSelectedColor(null);
+                    }}
+                    className="text-[11px] font-bold text-red-500 hover:text-red-600 flex items-center gap-1 transition-colors duration-200"
+                  >
+                    ❌ Xóa nhanh tất cả bộ lọc
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Translation & Exchange status banner */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 px-2 text-xs text-slate-500 gap-2 my-2">
@@ -581,7 +642,12 @@ function SearchDashboard() {
               <h4 className="font-bold text-slate-700 mt-3">Không tìm thấy sản phẩm nào khớp bộ lọc</h4>
               <p className="text-slate-400 text-xs mt-1">Vui lòng bấm bỏ chọn các bộ lọc Semantic để hiển thị đầy đủ hàng hóa.</p>
               <Button 
-                onClick={() => setSelectedFilters({})}
+                onClick={() => {
+                  setMinPrice(null);
+                  setMaxPrice(null);
+                  setSelectedSize(null);
+                  setSelectedColor(null);
+                }}
                 className="mt-4 rounded-xl font-semibold text-xs border-blue-500 text-blue-600 h-9"
               >
                 Xóa tất cả bộ lọc
