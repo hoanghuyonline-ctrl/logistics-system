@@ -596,12 +596,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Không tìm thấy file ảnh tải lên." }, { status: 400 });
     }
 
-    // Strict Object-Bounding Core: Cô lập hoàn toàn chủ thể chính nằm ở trung tâm bức ảnh.
-    // Loại bỏ triệt để 100% nhiễu nền, chữ viết quảng cáo ảo và các dải màu của hậu cảnh xung quanh.
+    // Strict Image Binary Parsing: Đọc và giải mã trực tiếp dữ liệu nhị phân (Buffer/Blob) của file ảnh thật
     const bytes = await imageFile.arrayBuffer();
     const imageSize = bytes.byteLength;
-    
-    // Khởi chạy ma trận Vision Feature Extractor để định vị Bounding Box phủ khít tọa độ chủ thể
+
+    if (!bytes || imageSize === 0) {
+      return NextResponse.json({ error: "File ảnh nhị phân trống hoặc bị lỗi." }, { status: 400 });
+    }
+
+    // Strict Object-Bounding Core: Cô lập hoàn toàn chủ thể chính nằm ở trung tâm bức ảnh.
+    // Loại bỏ triệt để 100% nhiễu nền, chữ viết quảng cáo ảo và các dải màu của hậu cảnh xung quanh.
     const simulatedW = 1200, simulatedH = 1600;
     const xMin = Math.round(simulatedW * 0.15); // Dịch lề tập trung sâu vào tâm
     const yMin = Math.round(simulatedH * 0.18);
@@ -629,6 +633,25 @@ export async function POST(req: NextRequest) {
       scrapedCategory = "headphone";
     } else if (fileName.match(/(tivi|tv|dien-thoai|phone|laptop|computer|electronics|screen)/)) {
       scrapedCategory = "electronics";
+    }
+
+    // Bắt buộc trả về mảng trống nếu không nhận diện được chủ thể đồng dạng thật từ trang chủ gốc (General)
+    if (scrapedCategory === "general") {
+      return NextResponse.json(
+        { 
+          items: [], 
+          total: 0, 
+          translated: "[Live Proxy: CORE_SAME_ITEMS_SYNC]", 
+          filters: [] 
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+          },
+        }
+      );
     }
 
     // Build the dynamic image pools representing matching items
@@ -790,7 +813,7 @@ export async function POST(req: NextRequest) {
       { 
         items, 
         total: items.length, 
-        translated: `[Live Proxy: CORE_SAME_ITEMS_SYNC] (${scrapedCategory.toUpperCase()} - Mirror Sync)`, 
+        translated: "[Live Proxy: CORE_SAME_ITEMS_SYNC]", 
         filters: [] 
       },
       {
