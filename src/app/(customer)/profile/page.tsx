@@ -99,10 +99,10 @@ export default function ProfilePage() {
     setBiometricRegistering(true);
     try {
       // 1. Get registration options from server
-      const optRes = await fetch("/api/auth/biometric/options", {
+      const optRes = await fetch("/api/auth/webauthn/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "register", email: identifier }),
+        body: JSON.stringify({ action: "options", email: identifier }),
       });
 
       if (!optRes.ok) {
@@ -121,11 +121,10 @@ export default function ProfilePage() {
       const credential = await startRegistration(options);
 
       // 4. Verify credential on Server
-      const finalName = newKeyName.trim() || `Khóa Vân Tay (${new Date().toLocaleDateString("vi-VN")})`;
-      const verifyRes = await fetch("/api/auth/biometric/register", {
+      const verifyRes = await fetch("/api/auth/webauthn/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ response: credential, name: finalName }),
+        body: JSON.stringify({ action: "verify", response: credential }),
       });
 
       const verifyData = await verifyRes.json();

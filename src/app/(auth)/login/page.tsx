@@ -132,21 +132,17 @@ export default function LoginPage() {
 
     try {
       // 1. Request challenge options from server
-      const optRes = await fetch("/api/auth/biometric/options", {
+      const optRes = await fetch("/api/auth/webauthn/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "authenticate", email: email.trim() }),
+        body: JSON.stringify({ action: "options", email: email.trim() }),
       });
 
       if (!optRes.ok) {
         const data = await optRes.json();
-        if (optRes.status === 404) {
-          // No passkey registered — show smooth helper instead of redirecting
-          setError("Tài khoản chưa được kích hoạt Đăng nhập bằng thiết bị. Vui lòng sử dụng mật khẩu.");
-          setBiometricLoading(false);
-          return;
-        }
-        throw new Error(data.error || "Failed to get options");
+        setError(data.error || "Tài khoản chưa được kích hoạt Đăng nhập bằng thiết bị. Vui lòng sử dụng mật khẩu.");
+        setBiometricLoading(false);
+        return;
       }
 
       const { options } = await optRes.json();
@@ -165,10 +161,10 @@ export default function LoginPage() {
       }
 
       // 3. Verify with server and receive session cookie
-      const verifyRes = await fetch("/api/auth/biometric/verify", {
+      const verifyRes = await fetch("/api/auth/webauthn/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "authenticate", response: credential }),
+        body: JSON.stringify({ action: "verify", response: credential }),
       });
 
       const verifyData = await verifyRes.json();
