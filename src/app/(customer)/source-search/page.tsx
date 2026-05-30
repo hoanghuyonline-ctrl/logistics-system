@@ -200,7 +200,7 @@ function SearchDashboard() {
   const [loading, setLoading] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translatedText, setTranslatedText] = useState("");
-  const [exchangeRate, setExchangeRate] = useState<number>(3500);
+  const [exchangeRate, setExchangeRate] = useState<number>(3980);
   const [results, setResults] = useState<ProductItem[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
@@ -245,7 +245,7 @@ function SearchDashboard() {
       })
       .catch(() => {
         // Fallback to default
-        setExchangeRate(3500);
+        setExchangeRate(3980);
       });
   }, []);
 
