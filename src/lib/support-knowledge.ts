@@ -9,7 +9,7 @@ interface KnowledgeMatch {
   matchSource: "keywords" | "title" | "category" | "content";
 }
 
-const MAX_REPLY_LENGTH = 800; // Increased to accommodate professional AI scripts and CTA
+const MAX_REPLY_LENGTH = 1000; // Increased to fully accommodate brand scripting and premium lead offers
 
 const CHANNEL_COUNT_FIELD: Record<string, string> = {
   ZALO: "matchCountZalo",
@@ -44,22 +44,29 @@ export function generateAIAnswer(query: string, matchedTitle: string, matchedCon
   const isDelay = SEMANTIC_INTENTS[1].keywords.some(k => normalizedQuery.includes(k));
   const isHighFee = SEMANTIC_INTENTS[2].keywords.some(k => normalizedQuery.includes(k));
 
-  let header = "🤖 [AI Trợ Lý Bắc Trung Hải] ";
+  let header = "🤖 [AI Tổng Đài Viên - Bắc Trung Hải Logistics] ";
   let cskhBody = matchedContent;
-  let cta = "\n\n📞 Quý khách hãy để lại ngay SỐ ĐIỆN THOẠI tại đây hoặc liên hệ Hotline để đội ngũ chuyên viên kinh doanh liên hệ hỗ trợ trực tiếp và xử lý tức thời!";
+  
+  // Universal bait hooks that compel the user to type their PHONE NUMBER or ZALO NUMBER
+  let cta = "\n\n🎁 QUÀ TẶNG CHÀO MỪNG ĐẶC BIỆT từ bactrunghai.vn:\n" +
+            "Nhân dịp nâng cấp hệ thống AI, Bắc Trung Hải Logistics xin gửi tặng Quý khách mã VOUCHER GIẢM 10% TỔNG CƯỚC cho đơn hàng đầu tiên, cam kết GIỮ SLOT XE ƯU TIÊN ĐI NHANH nhất tuần và TẶNG KÈM trọn bộ tài liệu 'Danh sách 1000+ nguồn hàng Quảng Châu hot trend tận gốc'.\n\n" +
+            "👉 Quý khách hãy cung cấp ngay SỐ ĐIỆN THOẠI hoặc SỐ ZALO của mình tại đây. Hệ thống sẽ tự động gửi quà tặng đặc quyền và chuyên viên Bắc Trung Hải sẽ liên hệ hỗ trợ giữ slot ưu đãi cho Quý khách lập tức!";
 
   if (isLostGoods) {
     header = "🤖 [AI CSKH Bắc Trung Hải - Cam kết đền bù 100%] ";
-    cskhBody = "Bắc Trung Hải Logistics xin gửi lời xin lỗi chân thành sâu sắc nhất tới quý khách về sự cố phát sinh ngoài ý muốn này. Chúng tôi luôn cam kết đặt quyền lợi và sự an tâm của khách hàng lên hàng đầu. Đối với các tình huống hàng hóa bị hư hại, mất mát, thất lạc hoặc móp vỡ trong quá trình vận chuyển, Bắc Trung Hải thực thi chính sách bảo hiểm và đền bù tài chính lên tới 100% giá trị khai báo đơn hàng nhanh chóng, minh bạch.";
-    cta = "\n\n👉 Để được ưu tiên thụ lý hồ sơ đền bù và nhận hoàn tiền nhanh nhất, Quý khách vui lòng cung cấp ngay SỐ ĐIỆN THOẠI của mình tại đây. Trưởng bộ phận Khiếu nại sẽ gọi điện trực tiếp xử lý ngay lập tức!";
+    cskhBody = "Bắc Trung Hải Logistics xin gửi lời xin lỗi chân thành sâu sắc nhất tới quý khách về sự cố phát sinh ngoài ý muốn này. Chúng tôi luôn cam kết đặt quyền lợi và sự an tâm của khách hàng lên hàng đầu. Đối với các tình huống hàng hóa bị hư hại, mất mát, thất lạc hoặc móp vỡ trong quá trình vận chuyển trên hệ thống bactrunghai.vn, Bắc Trung Hải thực thi chính sách bảo hiểm và đền bù tài chính lên tới 100% giá trị khai báo đơn hàng nhanh chóng, minh bạch.";
+    cta = "\n\n🎁 ĐẶC QUYỀN ĐỀN BÙ ƯU TIÊN + GIẢM 10% CƯỚC:\n" +
+          "Để chúng tôi lập tức thụ lý hồ sơ hoàn tiền 100% nhanh nhất trong ngày, đồng thời gửi tặng THÊM Mã giảm 10% cước cho lô hàng tiếp theo, Quý khách vui lòng cung cấp ngay SỐ ĐIỆN THOẠI hoặc SỐ ZALO tại đây. Trưởng bộ phận xử lý khiếu nại của Bắc Trung Hải sẽ gọi điện trực tiếp hỗ trợ giải ngân ngay!";
   } else if (isDelay) {
     header = "🤖 [AI CSKH Bắc Trung Hải - Đồng hành bến bãi cửa khẩu] ";
     cskhBody = "Chúng tôi vô cùng thấu hiểu sự sốt ruột và tầm quan trọng của tiến độ hàng hóa đối với hoạt động kinh doanh của Quý khách. Tình trạng trễ xe, kẹt biên, tắc nghẽn thông quan tại biên giới là do các yếu tố chính sách biên mậu bất khả kháng. Tuy nhiên, đội ngũ hiện trường bến bãi của Bắc Trung Hải đang nỗ lực hoạt động 24/7 để thông xe nhanh nhất có thể và cập nhật lộ trình thực tế.";
-    cta = "\n\n👉 Quý khách vui lòng cung cấp ngay SỐ ĐIỆN THOẠI tại đây. Bộ phận Điều vận của chúng tôi sẽ lập tức liên hệ điện thoại cập nhật tiến độ xe hàng và thời gian giao nhận dự kiến chính xác nhất!";
+    cta = "\n\n🎁 SLOT THÔNG QUAN NHANH + VOUCHER GIẢM 10% TỔNG CƯỚC:\n" +
+          "Để nhận ngay suất giữ SLOT XE ĐI NHANH ƯU TIÊN thông quan bến bãi nhanh nhất cửa khẩu Lạng Sơn, Quý khách vui lòng cung cấp ngay SỐ ĐIỆN THOẠI hoặc SỐ ZALO của mình tại đây. Trưởng ban vận tải Bắc Trung Hải sẽ gọi điện trực tiếp điều phối xe hàng ưu tiên cho bạn!";
   } else if (isHighFee) {
     header = "🤖 [AI CSKH Bắc Trung Hải - Tối ưu cước chính ngạch] ";
     cskhBody = "Bắc Trung Hải cam kết đem lại mức cước phí vận chuyển tối ưu và cạnh tranh nhất thị trường. Chúng tôi có đầy đủ năng lực thông quan đi chính ngạch, xuất hóa đơn VAT đỏ hợp pháp, bảo vệ tối đa dòng hàng cho quý doanh nghiệp. Chúng tôi luôn sẵn sàng có chính sách chiết khấu sâu đặc quyền cho các đại lý đi hàng sản lượng lớn.";
-    cta = "\n\n👉 Để nhận Bảng giá cước ưu đãi đặc quyền tối ưu nhất dành riêng cho Quý khách, xin vui lòng để lại SỐ ĐIỆN THOẠI tại đây. Chuyên viên tư vấn cước sẽ gọi điện hỗ trợ thiết kế lộ trình giá tốt nhất!";
+    cta = "\n\n🎁 BẢNG GIÁ ĐẠI LÝ + GIẢM 10% CƯỚC + DANH SÁCH NGUỒN HÀNG:\n" +
+          "Để nhận ngay Bảng giá chiết khấu đại lý cực sâu của Bắc Trung Hải, Voucher giảm cước 10% và bộ tài liệu độc quyền '1000+ nguồn hàng Quảng Châu giá gốc', Quý khách hãy cung cấp ngay SỐ ĐIỆN THOẠI hoặc SỐ ZALO tại đây. Chuyên viên cước của chúng tôi sẽ gọi điện tư vấn tối ưu chi phí ngay!";
   }
 
   return `${header}${cskhBody}${cta}`;

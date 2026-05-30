@@ -50,6 +50,9 @@
 - **Empathetic Crisis Auto-Replies:**
   - Dynamic prompts intercept user queries in operational crisis situations (loss of goods, customs delays, pricing/fees).
   - Responses prioritize customer satisfaction above all, remain highly professional, and end with an optimized call to action to collect the user's **SỐ ĐIỆN THOẠI (Phone Number)** for immediate hotline outreach.
+- **Lead Capture Funnel Interception:**
+  - Standard phone patterns are parsed from customer messages. If a phone/Zalo number is detected, it is immediately routed through `capturePhoneLead` in `src/lib/lead-intake.ts` to automatically populate the CRM Lead database and record a `CONTACTED` lead activity.
+  - Generates instant auto-responses with high-converting brand gifts (10% discount, priority lane, source download catalog) and ensures zero data loss.
 - **Database Safety:** Processes all calculations in-memory, avoiding database performance bottlenecks.
 - **Test Compatibility:** Maintains 100% backward compatibility with all 38 existing Vitest unit tests.
 

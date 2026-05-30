@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getNotificationConfig } from "@/lib/notification-config";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 import { getCachedAccessToken, refreshZaloAccessToken } from "@/lib/zalo-token";
-import { upsertLeadFromChannel } from "@/lib/lead-intake";
+import { upsertLeadFromChannel, capturePhoneLead } from "@/lib/lead-intake";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đang chờ xử lý",
@@ -234,6 +234,28 @@ interface ZaloWebhookPayload {
 async function handleTextMessage(userId: string, text: string): Promise<void> {
   let branch = "unknown";
   try {
+    // 0. Phone number lead capture interception
+    const phonePattern = /\b(0|\+84)[3|5|7|8|9]\d{8}\b/;
+    const phoneMatch = text.match(phonePattern);
+    if (phoneMatch) {
+      branch = "phone_capture";
+      const phone = phoneMatch[0];
+      console.log(`[zalo/chat] phone_detected="${phone}" | senderId=${userId}`);
+      
+      const captured = await capturePhoneLead(phone, userId, "ZALO");
+      if (captured) {
+        const reply = 
+          `🎉 Cảm ơn Quý khách!\n` +
+          `Bắc Trung Hải Logistics đã ghi nhận số điện thoại/Zalo của Quý khách: ${phone}.\n\n` +
+          `🎁 Mã giảm cước 10% TỔNG CƯỚC cho đơn hàng đầu tiên đã được kích hoạt thành công trên hệ thống bactrunghai.vn!\n` +
+          `⚡ Đồng thời, quý khách đã được xếp vào danh sách giữ SLOT XE ƯU TIÊN VẬN CHUYỂN NHANH NHẤT của tuần này.\n\n` +
+          `📞 Chuyên viên tư vấn cấp cao của Bắc Trung Hải sẽ lập tức liên hệ qua số điện thoại ${phone} để gửi tặng trọn bộ 'Danh sách 1000+ nguồn hàng Quảng Châu giá gốc' và thiết kế phương án tối ưu cước phí cho Quý khách ngay!`;
+        await replyToUser(userId, reply);
+        console.log(`[zalo/chat] reply_success=true | branch=${branch} senderId=${userId}`);
+        return;
+      }
+    }
+
     // 1. Greeting detection
     if (GREETING_PATTERNS.test(text.trim())) {
       branch = "greeting";
