@@ -253,6 +253,71 @@ function SearchDashboard() {
     return Math.round(vnd).toLocaleString("vi-VN") + " ₫";
   };
 
+  // Handle Instant Camera Capture & Scan with auto-submit
+  const handleImageCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setTranslating(true);
+    setSearchQuery("Tìm kiếm bằng hình ảnh (Chụp trực tiếp)");
+    setPage(1);
+
+    // Reset filters
+    setMinPrice(null);
+    setMaxPrice(null);
+    setSelectedSize(null);
+    setSelectedColor(null);
+    setAvailableFilters([]);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("/api/source-search/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Lỗi máy chủ quét hình ảnh");
+      }
+
+      const data = await res.json();
+      setTranslatedText(data.translated || "以图搜图 (Image Sourcing)");
+      
+      // Filter out sanitizeData compliant and active items
+      const apiNewData = data.items.filter((item: ProductItem) => {
+        if (!sanitizeData(item.titleVi) || !sanitizeData(item.titleZh) || !sanitizeData(item.supplier)) return false;
+        return true;
+      });
+
+      setFilteredResults(apiNewData);
+      setResults(data.items);
+      setTotal(data.total);
+      setAvailableFilters(data.filters || []);
+
+      // Initialize default quantity to 1 for all items
+      setQuantities((prev) => {
+        const updated = { ...prev };
+        data.items.forEach((item: ProductItem) => {
+          if (!(item.id in updated)) {
+            updated[item.id] = 1;
+          }
+        });
+        return updated;
+      });
+
+      message.success(`Quét ảnh thành công! Đã tìm thấy ${data.items.length} nguồn hàng tương đồng.`);
+    } catch (err: any) {
+      console.error("[image-capture-scan] Error:", err);
+      message.error(err.message || "Không thể quét ảnh lúc này. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+      setTranslating(false);
+    }
+  };
+
   // Perform translation & mock search via API route
   const handleSearch = (targetPage = 1, append = false) => {
     if (!searchQuery.trim()) {
@@ -525,26 +590,58 @@ function SearchDashboard() {
           {/* Search inputs - Stacking layout vertically on mobile, horizontal on desktop */}
           <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-slate-100 shadow-sm my-4">
             <div className="flex flex-col md:flex-row gap-3">
-              <Input
-                placeholder="Dễ tìm nguồn (Tiếng Việc)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onPressEnter={() => handleSearch(1)}
-                size="large"
-                allowClear
-                prefix={<SearchOutlined className="text-slate-400" />}
-                suffix={
-                  searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors duration-200 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg cursor-pointer"
-                    >
-                      Dọn
-                    </button>
-                  )
-                }
-                className="rounded-2xl border-slate-200 focus:border-blue-500 py-3 text-base w-full min-h-[48px] flex items-center"
-              />
+              <div className="flex-1 flex gap-2 items-center">
+                <Input
+                  placeholder="Dễ tìm nguồn (Tiếng Việc)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onPressEnter={() => handleSearch(1)}
+                  size="large"
+                  allowClear
+                  prefix={<SearchOutlined className="text-slate-400" />}
+                  suffix={
+                    searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors duration-200 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg cursor-pointer"
+                      >
+                        Dọn
+                      </button>
+                    )
+                  }
+                  className="rounded-2xl border-slate-200 focus:border-blue-500 py-3 text-base w-full min-h-[48px] flex items-center"
+                />
+
+                {/* Instant Capture & Scan Camera Button */}
+                <label className="flex items-center justify-center w-12 h-12 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 text-slate-500 cursor-pointer transition-all duration-200 shrink-0 shadow-sm" title="Chụp ảnh tìm nguồn ngay">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.25"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"
+                    />
+                  </svg>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleImageCapture}
+                  />
+                </label>
+              </div>
               <Button
                 type="primary"
                 onClick={() => handleSearch(1)}
