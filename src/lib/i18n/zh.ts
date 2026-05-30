@@ -72,6 +72,7 @@ const zh: Record<string, string> = {
   // Sidebar nav
   "nav.operations": "运营中心",
   "nav.dashboard": "仪表板",
+  "nav.sourceSearch": "货源搜索",
   "nav.newOrder": "新建订单",
   "nav.myOrders": "我的订单",
   "nav.wallet": "钱包",

@@ -72,6 +72,7 @@ const en: Record<string, string> = {
   // Sidebar nav
   "nav.operations": "Operations",
   "nav.dashboard": "Dashboard",
+  "nav.sourceSearch": "Source Search",
   "nav.newOrder": "New Order",
   "nav.myOrders": "My Orders",
   "nav.wallet": "Wallet",

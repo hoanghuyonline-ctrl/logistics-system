@@ -21,6 +21,7 @@ interface NavGroup {
 
 const customerNav: NavItem[] = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
+  { labelKey: "nav.sourceSearch", href: "/source-search", icon: "🔍" },
   { labelKey: "nav.shop", href: "/shop", icon: "🛒" },
   { labelKey: "nav.shopRequests", href: "/shop/requests", icon: "🧾" },
   { labelKey: "nav.newOrder", href: "/orders/new", icon: "➕" },

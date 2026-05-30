@@ -72,6 +72,7 @@ const vi: Record<string, string> = {
   // Sidebar nav
   "nav.operations": "Điều hành",
   "nav.dashboard": "Bảng điều khiển",
+  "nav.sourceSearch": "Tìm kiếm nguồn hàng",
   "nav.newOrder": "Tạo đơn hàng",
   "nav.myOrders": "Đơn hàng của tôi",
   "nav.wallet": "Ví tiền",
