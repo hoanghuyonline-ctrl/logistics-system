@@ -248,7 +248,7 @@ function SearchDashboard() {
   };
 
   // Perform translation & mock search via API route
-  const handleSearch = (targetPage = 1) => {
+  const handleSearch = (targetPage = 1, append = false) => {
     if (!searchQuery.trim()) {
       message.warning("Vui lòng nhập từ khóa tìm kiếm!");
       return;
@@ -260,11 +260,13 @@ function SearchDashboard() {
     }
 
     setLoading(true);
-    setTranslating(true);
+    if (!append) {
+      setTranslating(true);
+    }
     setPage(targetPage);
 
     // Reset user active filters on fresh query search (page 1)
-    if (targetPage === 1) {
+    if (targetPage === 1 && !append) {
       setMinPrice(null);
       setMaxPrice(null);
       setSelectedSize(null);
@@ -285,18 +287,38 @@ function SearchDashboard() {
       })
       .then((data) => {
         setTranslatedText(data.translated);
-        setResults(data.items);
+        if (append) {
+          setResults((prev) => {
+            const merged = [...prev];
+            data.items.forEach((item: ProductItem) => {
+              if (!merged.some((m) => m.id === item.id)) {
+                merged.push(item);
+              }
+            });
+            return merged;
+          });
+        } else {
+          setResults(data.items);
+        }
         setTotal(data.total);
         setAvailableFilters(data.filters || []);
 
         // Initialize default quantity to 1 for all items
-        const initialQs: Record<string, number> = {};
-        data.items.forEach((item: ProductItem) => {
-          initialQs[item.id] = 1;
+        setQuantities((prev) => {
+          const updated = { ...prev };
+          data.items.forEach((item: ProductItem) => {
+            if (!(item.id in updated)) {
+              updated[item.id] = 1;
+            }
+          });
+          return updated;
         });
-        setQuantities(initialQs);
 
-        message.success(`Tìm kiếm thành công! Quét được ${data.items.length} nguồn hàng (Trang ${targetPage}).`);
+        if (append) {
+          message.success(`Đã tải thêm ${data.items.length} nguồn hàng (Trang ${targetPage}).`);
+        } else {
+          message.success(`Tìm kiếm thành công! Quét được ${data.items.length} nguồn hàng.`);
+        }
       })
       .catch((e) => {
         console.error(e);
@@ -307,6 +329,26 @@ function SearchDashboard() {
         setTranslating(false);
       });
   };
+
+  // Infinite scroll listener to auto load subsequent pages on mobile & desktop
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loading || results.length === 0 || results.length >= total) return;
+      
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+      
+      // If near the bottom within 150px
+      if (scrollHeight - scrollTop - clientHeight < 150) {
+        const nextPage = page + 1;
+        handleSearch(nextPage, true);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, results, page, total, searchQuery, platform, minPrice, maxPrice, selectedSize, selectedColor]);
 
   // Trigger search when platform tab changes if query is already present
   useEffect(() => {
@@ -704,7 +746,7 @@ function SearchDashboard() {
           </div>
 
           <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
-            <span>📦</span> Danh mục nguồn hàng quét được ({filteredResults.length} / {total || 50} sản phẩm)
+            <span>📦</span> {filteredResults.length} sản phẩm quét được
           </h3>
 
           {/* Product grid with fallback */}
