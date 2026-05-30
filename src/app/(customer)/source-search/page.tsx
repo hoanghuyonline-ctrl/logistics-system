@@ -209,6 +209,7 @@ function SearchDashboard() {
   const [page, setPage] = useState(1);
   const [limit] = useState(50);
   const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   // Dynamic Google-system semantic filters states
   const [minPrice, setMinPrice] = useState<number | null>(null);
@@ -262,6 +263,7 @@ function SearchDashboard() {
     setTranslating(true);
     setSearchQuery("Tìm kiếm bằng hình ảnh (Chụp trực tiếp)");
     setPage(1);
+    setHasMore(true);
 
     // Reset filters
     setMinPrice(null);
@@ -296,6 +298,11 @@ function SearchDashboard() {
       setResults(data.items);
       setTotal(data.total);
       setAvailableFilters(data.filters || []);
+
+      const maxPages = Math.ceil(data.total / limit);
+      if (data.items.length === 0 || 1 >= maxPages) {
+        setHasMore(false);
+      }
 
       // Initialize default quantity to 1 for all items
       setQuantities((prev) => {
@@ -333,8 +340,13 @@ function SearchDashboard() {
     setLoading(true);
     if (!append) {
       setTranslating(true);
+      setHasMore(true);
     }
-    setPage(targetPage);
+    
+    // Capping page to avoid displaying page numbers exceeding totalPages
+    const currentTotalPages = total > 0 ? Math.ceil(total / limit) : 1;
+    const cappedPage = targetPage > currentTotalPages && total > 0 ? currentTotalPages : targetPage;
+    setPage(cappedPage);
 
     // Reset user active filters on fresh query search (page 1)
     if (targetPage === 1 && !append) {
@@ -345,7 +357,7 @@ function SearchDashboard() {
       setAvailableFilters([]);
     }
 
-    let url = `/api/source-search?q=${encodeURIComponent(searchQuery)}&platform=${platform}&limit=${limit}&page=${targetPage}`;
+    let url = `/api/source-search?q=${encodeURIComponent(searchQuery)}&platform=${platform}&limit=${limit}&page=${cappedPage}`;
     if (minPrice !== null) url += `&min_price=${minPrice}`;
     if (maxPrice !== null) url += `&max_price=${maxPrice}`;
     if (selectedSize) url += `&size=${selectedSize}`;
@@ -369,6 +381,13 @@ function SearchDashboard() {
           return true;
         });
 
+        // Strict pagination guard checking
+        const currentTotal = data.total || 0;
+        const maxPages = Math.ceil(currentTotal / limit);
+        if (data.items.length === 0 || cappedPage >= maxPages) {
+          setHasMore(false);
+        }
+
         if (append) {
           // Append data using dynamic array spread syntax as requested by Ban quan tri
           setFilteredResults((prev) => [...prev, ...apiNewData]);
@@ -385,7 +404,7 @@ function SearchDashboard() {
           setFilteredResults(apiNewData);
           setResults(data.items);
         }
-        setTotal(data.total);
+        setTotal(currentTotal);
         setAvailableFilters(data.filters || []);
 
         // Initialize default quantity to 1 for all items
@@ -400,9 +419,13 @@ function SearchDashboard() {
         });
 
         if (append) {
-          message.success(`Đã tải thêm ${data.items.length} nguồn hàng (Trang ${targetPage}).`);
+          if (data.items.length > 0) {
+            message.success(`Đã tải thêm ${data.items.length} nguồn hàng (Trang ${cappedPage}).`);
+          }
         } else {
-          message.success(`Tìm kiếm thành công! Quét được ${data.items.length} nguồn hàng.`);
+          if (data.items.length > 0) {
+            message.success(`Tìm kiếm thành công! Quét được ${data.items.length} nguồn hàng.`);
+          }
         }
       })
       .catch((e) => {
@@ -418,7 +441,8 @@ function SearchDashboard() {
   // Infinite scroll listener to auto load subsequent pages on mobile & desktop
   useEffect(() => {
     const handleScroll = () => {
-      if (loading || results.length === 0 || results.length >= total) return;
+      const totalPages = Math.ceil(total / limit);
+      if (loading || results.length === 0 || page >= totalPages || !hasMore) return;
       
       const scrollHeight = document.documentElement.scrollHeight;
       const scrollTop = document.documentElement.scrollTop;
@@ -433,7 +457,7 @@ function SearchDashboard() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading, results, page, total, searchQuery, platform, minPrice, maxPrice, selectedSize, selectedColor]);
+  }, [loading, results, page, total, searchQuery, platform, minPrice, maxPrice, selectedSize, selectedColor, hasMore]);
 
   // Trigger search when platform tab changes if query is already present
   useEffect(() => {
@@ -1087,7 +1111,7 @@ function SearchDashboard() {
                 ◀ Trang trước
               </Button>
               <span className="text-slate-600 text-xs font-semibold whitespace-nowrap">
-                Trang {page} / {Math.ceil(total / limit)}
+                Trang {Math.min(page, Math.ceil(total / limit) || 1)} / {Math.ceil(total / limit) || 1}
               </span>
               <Button
                 disabled={page >= Math.ceil(total / limit)}
