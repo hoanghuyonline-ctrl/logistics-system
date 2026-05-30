@@ -287,6 +287,9 @@ const en: Record<string, string> = {
   "accountant.tx.ORDER_PAYMENT": "Payment",
   "accountant.tx.REFUND": "Refund",
   "accountant.tx.ADJUSTMENT": "Adjustment",
+  "accountant.tx.SALES_PAYMENT": "Order Payment",
+  "accountant.tx.MANUAL_ADD": "Manual Deposit",
+  "accountant.tx.MANUAL_DEDUCT": "Manual Deduction",
 
   // Order Detail
   "orderDetail.loading": "Loading order details...",
@@ -775,6 +778,9 @@ const en: Record<string, string> = {
   "transactions.tx.ORDER_PAYMENT": "Order Payment",
   "transactions.tx.REFUND": "Refund",
   "transactions.tx.ADJUSTMENT": "Adjustment",
+  "transactions.tx.SALES_PAYMENT": "Order Payment",
+  "transactions.tx.MANUAL_ADD": "Manual Deposit",
+  "transactions.tx.MANUAL_DEDUCT": "Manual Deduction",
 
   // Profile
   "profile.loading": "Loading profile...",

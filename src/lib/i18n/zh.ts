@@ -287,6 +287,9 @@ const zh: Record<string, string> = {
   "accountant.tx.ORDER_PAYMENT": "付款",
   "accountant.tx.REFUND": "退款",
   "accountant.tx.ADJUSTMENT": "调整",
+  "accountant.tx.SALES_PAYMENT": "订单付款",
+  "accountant.tx.MANUAL_ADD": "人工充值",
+  "accountant.tx.MANUAL_DEDUCT": "人工扣款",
 
   // Order Detail
   "orderDetail.loading": "正在加载订单详情...",
@@ -775,6 +778,9 @@ const zh: Record<string, string> = {
   "transactions.tx.ORDER_PAYMENT": "订单付款",
   "transactions.tx.REFUND": "退款",
   "transactions.tx.ADJUSTMENT": "调整",
+  "transactions.tx.SALES_PAYMENT": "订单付款",
+  "transactions.tx.MANUAL_ADD": "人工充值",
+  "transactions.tx.MANUAL_DEDUCT": "人工扣款",
 
   // Profile
   "profile.loading": "正在加载个人资料...",
