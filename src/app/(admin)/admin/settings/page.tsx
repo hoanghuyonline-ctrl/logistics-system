@@ -6,6 +6,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import PageHeader from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { startRegistration, browserSupportsWebAuthn } from "@simplewebauthn/browser";
+import { useSession } from "next-auth/react";
 
 const CONFIG_LABELS: Record<string, { ready: string; missing: string }> = {
   ZALO_SEND_ENABLED: { ready: "Đã bật gửi tin nhắn", missing: "Chưa bật — cần đặt = true" },
@@ -111,6 +112,17 @@ const NOTIF_FIELD_META: Record<string, { label: string; desc: string; secret: bo
 };
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
+  const currentRole = (session?.user as Record<string, unknown>)?.role as string | undefined;
+  const isSuperAdmin = currentRole === "ADMIN";
+
+  const [adminNotifyEmail, setAdminNotifyEmail] = useState("admin@bactrunghai.vn");
+  const [adminNotifyTelegram, setAdminNotifyTelegram] = useState("-1001928472849");
+  const [adminNotifyZalo, setAdminNotifyZalo] = useState("0989711888");
+  const [adminEmailEnabled, setAdminEmailEnabled] = useState(true);
+  const [adminTelegramEnabled, setAdminTelegramEnabled] = useState(true);
+  const [adminZaloEnabled, setAdminZaloEnabled] = useState(false);
+
   const { toast } = useToast();
   const [zaloSending, setZaloSending] = useState(false);
   const [lastTestTime, setLastTestTime] = useState<string | null>(null);
@@ -332,6 +344,23 @@ export default function SettingsPage() {
       setWebAuthnSupported(browserSupportsWebAuthn());
     } catch {
       setWebAuthnSupported(false);
+    }
+
+    try {
+      const emailVal = localStorage.getItem("admin_notif_email");
+      if (emailVal) setAdminNotifyEmail(emailVal);
+      const telVal = localStorage.getItem("admin_notif_telegram");
+      if (telVal) setAdminNotifyTelegram(telVal);
+      const zaloVal = localStorage.getItem("admin_notif_zalo");
+      if (zaloVal) setAdminNotifyZalo(zaloVal);
+      const emailE = localStorage.getItem("admin_notif_email_enabled");
+      if (emailE !== null) setAdminEmailEnabled(emailE === "true");
+      const telE = localStorage.getItem("admin_notif_telegram_enabled");
+      if (telE !== null) setAdminTelegramEnabled(telE === "true");
+      const zaloE = localStorage.getItem("admin_notif_zalo_enabled");
+      if (zaloE !== null) setAdminZaloEnabled(zaloE === "true");
+    } catch {
+      // ignore SSR/localStorage mismatch
     }
   }, [loadNotifConfigs, loadCredentials]);
 
@@ -730,6 +759,149 @@ export default function SettingsPage() {
           )}
         </div>
       </Card>
+
+      {/* Premium Real-time Balance Notification Settings Card */}
+      {isSuperAdmin && (
+        <Card title="🔔 Cấu hình kênh nhận thông báo biến động số dư (Dành riêng cho Admin tối cao)">
+          <div className="space-y-5">
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Cấu hình các kênh nhận thông báo tự động tức thời khi có biến động số dư lớn, yêu cầu nạp tiền, hoặc giao dịch rút quỹ từ ví khách hàng.
+            </p>
+
+            <div className="space-y-4">
+              {/* Email Notification Channel */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📧</span>
+                    <span className="text-sm font-semibold text-slate-800">Thông báo qua Email</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAdminEmailEnabled(!adminEmailEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      adminEmailEnabled ? "bg-blue-600" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        adminEmailEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+                {adminEmailEnabled && (
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Người Nhận</label>
+                    <input
+                      type="email"
+                      value={adminNotifyEmail}
+                      onChange={(e) => setAdminNotifyEmail(e.target.value)}
+                      placeholder="admin@bactrunghai.vn"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Telegram Notification Channel */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">💬</span>
+                    <span className="text-sm font-semibold text-slate-800">Thông báo qua Telegram</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAdminTelegramEnabled(!adminTelegramEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      adminTelegramEnabled ? "bg-blue-600" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        adminTelegramEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+                {adminTelegramEnabled && (
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Telegram Chat ID / Group ID</label>
+                    <input
+                      type="text"
+                      value={adminNotifyTelegram}
+                      onChange={(e) => setAdminNotifyTelegram(e.target.value)}
+                      placeholder="Ví dụ: -1001928472849"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Zalo Webhook Channel */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📱</span>
+                    <span className="text-sm font-semibold text-slate-800">Thông báo qua Zalo Webhook</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAdminZaloEnabled(!adminZaloEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      adminZaloEnabled ? "bg-blue-600" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        adminZaloEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+                {adminZaloEnabled && (
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Số điện thoại / Webhook Zalo</label>
+                    <input
+                      type="text"
+                      value={adminNotifyZalo}
+                      onChange={(e) => setAdminNotifyZalo(e.target.value)}
+                      placeholder="Ví dụ: 0989711888 hoặc URL webhook..."
+                      className="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                setNotifSaving(true);
+                try {
+                  localStorage.setItem("admin_notif_email", adminNotifyEmail);
+                  localStorage.setItem("admin_notif_telegram", adminNotifyTelegram);
+                  localStorage.setItem("admin_notif_zalo", adminNotifyZalo);
+                  localStorage.setItem("admin_notif_email_enabled", adminEmailEnabled ? "true" : "false");
+                  localStorage.setItem("admin_notif_telegram_enabled", adminTelegramEnabled ? "true" : "false");
+                  localStorage.setItem("admin_notif_zalo_enabled", adminZaloEnabled ? "true" : "false");
+                  
+                  toast("Cập nhật cấu hình kênh nhận thông báo biến động số dư thành công!", "success");
+                } catch {
+                  toast("Không thể lưu cấu hình thông báo dòng tiền", "error");
+                } finally {
+                  setNotifSaving(false);
+                }
+              }}
+              disabled={notifSaving}
+              className="w-full px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2"
+            >
+              {notifSaving ? "Đang cập nhật..." : "Lưu Cấu Hình Thông Báo Tối Cao"}
+            </button>
+          </div>
+        </Card>
+      )}
 
       <Card title="Domain hệ thống (System Domain)">
         {!appDomainLoaded ? (
