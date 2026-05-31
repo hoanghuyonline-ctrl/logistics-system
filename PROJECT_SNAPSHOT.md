@@ -618,6 +618,7 @@ pm2 restart logistics-system
 - ~~Domestic Transport Menu~~ ✓ 3 service types, customer request form, admin management (PR #391)
 - ~~Online Quotation Form~~ ✓ Public request form, admin management, lead capture (PR #392)
 - ~~Real-Time Product Snatcher H5 WebView Sandbox & Token Refresher~~ ✓ Interactive H5 Mobile WebView Simulator active on `/source-search` for Taobao, 1688, Tmall Mobile H5 scopes with 24/7 background session refresher token caching (`_m_h5_tk`), rendering neat 2-column grid layout displaying parallel price lines (¥ and đ) under fixed rate 3980, logging silently to Webhook API.
+- ~~CI System Pipeline Check & Standalone Rebuild Batch Trigger~~ ✓ Comprehensive static lint overrides and typecheck pipeline linked to automated `.\bat.bat` / `.\deploy.bat` standalone mode rebuild and PM2 hot restart.
 - International Trade Services (Thương mại quốc tế) — import consulting, tax calculation, HS Code, trade policy
 - Documents Menu (Chứng từ) — Invoice, Packing List, Bill of Lading, CO Forms, Manifest, AMS/ACI/ENS
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)
