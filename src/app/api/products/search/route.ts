@@ -3,6 +3,9 @@ import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
+// Upstream Authenticated Session Cookie Buffer to bypass login walls
+const UPSTREAM_SESSION_COOKIE = process.env.UPSTREAM_SESSION_COOKIE || "cookie_session_mock_placeholder_kgbth_v2; login_token=kgbth_upstream_cookie_bypass_token";
+
 type Platform = "taobao" | "1688" | "tmall" | "other";
 type Category = "headphone" | "shoes" | "clothes" | "electronics" | "food" | "furniture" | "beauty" | "general";
 
@@ -386,9 +389,11 @@ export async function GET(request: Request) {
     "Accept": "application/json, text/plain, */*",
     "Accept-Language": "zh-CN,zh;q=0.9,vi;q=0.8,en;q=0.7",
     "Referer": "https://s.taobao.com/",
-    "X-Requested-With": "XMLHttpRequest"
+    "X-Requested-With": "XMLHttpRequest",
+    "Cookie": UPSTREAM_SESSION_COOKIE
   };
   console.log(`[Core Keyword Search] Simulating headers with UA: ${mockHeaders["User-Agent"]}`);
+  console.log(`[Session Bypass] Attaching Authenticated Upstream Cookie: ${UPSTREAM_SESSION_COOKIE.slice(0, 30)}...`);
 
   // ── DYNAMIC H5 SIGN TOKEN PRE-FLIGHT HANDSHAKE ──
   const appKey = "12574478";
@@ -710,6 +715,7 @@ export class EcommerceApiGatewaySDK {
   async searchByImage(bytes: ArrayBuffer, fileName: string, mimeType: string): Promise<ProductItem[]> {
     console.log(`[SDK Handshake] Establishing secure upstream tunnel with Gateway: ${this.gatewayUrl}`);
     console.log(`[SDK Transmission] Uploading ${bytes.byteLength} bytes of raw image binary (${mimeType})`);
+    console.log(`[SDK Session Bypass] Attaching Authenticated Upstream Cookie: ${UPSTREAM_SESSION_COOKIE.slice(0, 30)}...`);
     
     // ── DYNAMIC H5 SIGN TOKEN PRE-FLIGHT HANDSHAKE FOR IMAGE ──
     const appKey = "12574478";
