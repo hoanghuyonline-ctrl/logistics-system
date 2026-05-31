@@ -1,0 +1,19 @@
+{
+  "security": {
+    "strictMode": true,
+    "bypassH5Protocol": true,
+    "allowedCID": ["CID-BTH-GLOBAL", "CID-VIETNAM-FLOW"],
+    "fixedRate": 3980,
+    "marginCalculation": {
+      "enabled": true,
+      "formula": "profit_margin = ((selling_price - cost_price * 3980) / selling_price) * 100"
+    }
+  },
+  "environment": {
+    "sandboxTesting": true,
+    "zaloWebhookSync": true,
+    "proactiveErrorTracking": true
+  },
+  "version": "1.0.0",
+  "name": "bth-vietnam-flow"
+}
