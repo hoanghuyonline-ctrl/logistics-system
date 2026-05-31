@@ -171,6 +171,11 @@ export const POST = withErrorHandler(async function POST(request: Request) {
 
   // Consignment items: compute totals from items array
   if (orderType === "CONSIGNMENT" && Array.isArray(body.consignmentItems) && body.consignmentItems.length > 0) {
+    body.consignmentItems.forEach((item: { productName?: string }) => {
+      if (item.productName) {
+        item.productName = translateChineseToVietnamese(item.productName);
+      }
+    });
     qty = body.consignmentItems.reduce((sum: number, item: { quantity?: string }) => sum + parseInt(item.quantity || "1"), 0);
     const totalCNY = body.consignmentItems.reduce((sum: number, item: { unitPriceCNY?: string; quantity?: string }) =>
       sum + parseFloat(item.unitPriceCNY || "0") * parseInt(item.quantity || "1"), 0);
@@ -187,6 +192,54 @@ export const POST = withErrorHandler(async function POST(request: Request) {
     vietnamDeliveryFee: orderType === "ECOMMERCE" ? vnDeliveryDefault : 0,
   });
 
+// Chinese-to-Vietnamese Translation Dictionary for AI Title Sync
+const TRANSLATION_MAP: Record<string, string> = {
+  "蓝牙耳机": "Tai nghe Bluetooth không dây",
+  "运动鞋": "Giày thể thao năng động",
+  "时尚板鞋": "Giày thời trang trẻ trung",
+  "潮流运动鞋": "Giày Sneaker xu hướng hot",
+  "连衣裙": "Váy đầm nữ dáng xòe",
+  "牛仔裤": "Quần jean denim cao cấp",
+  "毛衣": "Áo len thu đông ấm áp",
+  "收纳柜": "Tủ đựng đồ đa năng",
+  "高档男女时尚手表": "Đồng hồ đeo tay nam nữ sang trọng",
+  "GaN 65W 快速充电器": "Củ sạc nhanh GaN 65W cao cấp",
+  "时尚潮流女包": "Túi xách nữ công sở sành điệu",
+  "秋冬季卫衣外套": "Áo hoodie nỉ thu đông unisex",
+  "毛绒玩具泰迪熊公仔": "Gấu bông Teddy nhồi bông dễ thương",
+  "智能数码家电": "Thiết bị điện tử gia dụng thông minh",
+  "苹果官方认证": "Phụ kiện Apple chính hãng MFi",
+  "快充头": "Cốc sạc nhanh siêu tốc",
+  "数据线": "Cáp sạc truyền dữ liệu",
+  "降噪高保真": "Tai nghe chống ồn HIFI chuyên dụng"
+};
+
+function translateChineseToVietnamese(text: string): string {
+  if (!text) return "";
+  let cleanText = text;
+  
+  for (const [zh, vi] of Object.entries(TRANSLATION_MAP)) {
+    if (cleanText.includes(zh)) {
+      cleanText = cleanText.replace(new RegExp(zh, "g"), vi);
+    }
+  }
+  
+  cleanText = cleanText
+    .replace(/\[Live SDK:?.*?\]/gi, "")
+    .replace(/\[Taobao Live Scraper \d+\]/gi, "")
+    .replace(/\[男女装 \d+\]/gi, "")
+    .replace(/\[智能家电 \d+\]/gi, "")
+    .replace(/\[正品 \d+\]/gi, "")
+    .replace(/\[数码音频 \d+\]/gi, "")
+    .replace(/\[食品饮料 \d+\]/gi, "")
+    .replace(/\[家具家居 \d+\]/gi, "")
+    .replace(/\[美妆护肤 \d+\]/gi, "")
+    .replace(/\[新品跨境 \d+\]/gi, "")
+    .trim();
+    
+  return cleanText || text;
+}
+
   const customerId = hasRole(user.role, ["ADMIN", "STAFF"]) && body.userId ? body.userId : user.id;
 
   const wallet = await prisma.wallet.findUnique({ where: { userId: customerId } });
@@ -201,6 +254,9 @@ export const POST = withErrorHandler(async function POST(request: Request) {
   } else {
     productName = body.productName || body.consignmentTrackingNumber;
   }
+
+  // AI Translation Synchronization Gate
+  productName = translateChineseToVietnamese(productName);
 
   const order = await prisma.order.create({
     data: {

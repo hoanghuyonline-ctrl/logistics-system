@@ -54,7 +54,11 @@ function SearchDashboard() {
   const [exchangeRate, setExchangeRate] = useState<number>(3980);
   const [quantity, setQuantity] = useState<number>(1);
   
-  // Loading & Submitting
+  // SKU & Attribute selection state
+  const [selectedColor, setSelectedColor] = useState<string>("Đen");
+  const [selectedSize, setSelectedSize] = useState<string>("XL");
+  
+  // Loading & Submitting (Debounce request guard)
   const [loading, setLoading] = useState(false);
   const [submittingType, setSubmittingType] = useState<"ECOMMERCE" | "CONSIGNMENT" | null>(null);
 
@@ -64,6 +68,8 @@ function SearchDashboard() {
     setSearchResults([]);
     setPastedLink("");
     setParsedProduct(null);
+    setSelectedColor("Đen");
+    setSelectedSize("XL");
   }, [platform]);
 
   // Fetch exchange rate on mount
@@ -144,13 +150,19 @@ function SearchDashboard() {
     }
   };
 
-  // Create order hook calling the authentic logistics REST endpoint
+  // Create order hook calling the authentic logistics REST endpoint with strict double-click guard
   const handleCreateOrder = async (type: "ECOMMERCE" | "CONSIGNMENT", product: ProductItem) => {
+    if (submittingType !== null) return; // Strict block against duplicate submissions
     setSubmittingType(type);
 
     try {
       let payload: Record<string, unknown> = {};
       const originalUrl = pastedLink.trim() || `https://s.taobao.com/search?q=${encodeURIComponent(product.titleZh)}`;
+
+      // Capture dynamic SkuID and attributes details
+      const colorCode = selectedColor === "Đen" ? "BLK" : selectedColor === "Trắng" ? "WHT" : selectedColor === "Đỏ" ? "RED" : "BLU";
+      const generatedSkuId = `SKU-${product.platform.toUpperCase()}-${product.id}-${colorCode}-${selectedSize}`;
+      const productSpecs = `Màu sắc: ${selectedColor} | Kích cỡ: ${selectedSize} | SkuID: ${generatedSkuId}`;
 
       if (type === "ECOMMERCE") {
         payload = {
@@ -158,7 +170,7 @@ function SearchDashboard() {
           productName: product.titleVi,
           productLink: originalUrl,
           productImage: product.imageUrl,
-          productSpecs: `Platform: ${product.platform.toUpperCase()} | Item ID: ${product.id}`,
+          productSpecs: productSpecs,
           quantity: quantity,
           unitPriceCNY: product.priceCNY,
           notes: `Đơn mua hộ tự động trích xuất thực tế qua Shadow Viewport.`
@@ -175,7 +187,7 @@ function SearchDashboard() {
               productName: product.titleVi,
               quantity: String(quantity),
               unitPriceCNY: String(product.priceCNY),
-              specs: `Platform: ${product.platform.toUpperCase()} | ID: ${product.id}`
+              specs: productSpecs
             }
           ],
           notes: `Đơn ký gửi tự động trích xuất thực tế qua Shadow Viewport.`
@@ -195,7 +207,7 @@ function SearchDashboard() {
           description: (
             <div className="space-y-1 mt-1 text-xs text-slate-700">
               <p>Mã đơn hàng: <Tag color="blue" className="font-mono">{createdOrder.orderCode}</Tag></p>
-              <p>Sản phẩm: <strong>{product.titleVi}</strong></p>
+              <p>Sản phẩm: <strong>{createdOrder.productName || product.titleVi}</strong></p>
               <Divider className="my-1.5" />
               <Button
                 type="primary"
@@ -459,6 +471,48 @@ function SearchDashboard() {
 
                   <Divider className="my-2.5" />
 
+                  {/* Dynamic Color Selector */}
+                  <div className="space-y-1.5">
+                    <span className="font-semibold text-slate-700 text-xs">Phân loại màu sắc:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["Đen", "Trắng", "Đỏ", "Xanh"].map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setSelectedColor(color)}
+                          className={`px-3 py-1 rounded-xl text-[10px] font-bold transition-all border ${
+                            selectedColor === color
+                              ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                              : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dynamic Size Selector */}
+                  <div className="space-y-1.5 pt-1.5">
+                    <span className="font-semibold text-slate-700 text-xs">Kích thước / Size:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["S", "M", "L", "XL", "Free Size"].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-3 py-1 rounded-xl text-[10px] font-bold transition-all border ${
+                            selectedSize === size
+                              ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                              : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Divider className="my-2.5" />
+
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Giá thành tệ gốc:</span>
@@ -511,7 +565,8 @@ function SearchDashboard() {
                       icon={<ShoppingCartOutlined />}
                       onClick={() => handleCreateOrder("ECOMMERCE", parsedProduct)}
                       loading={submittingType === "ECOMMERCE"}
-                      className="w-full bg-[#FF5000] border-none text-white hover:bg-[#e04600] font-bold rounded-2xl text-xs py-3 h-auto flex items-center justify-center gap-1 shadow-sm"
+                      disabled={submittingType !== null}
+                      className="w-full bg-[#FF5000] border-none text-white hover:bg-[#e04600] font-bold rounded-2xl text-xs py-3 h-auto flex items-center justify-center gap-1 shadow-sm disabled:opacity-50"
                     >
                       Mua Trực Tiếp (Order)
                     </Button>
@@ -520,7 +575,8 @@ function SearchDashboard() {
                       icon={<FileTextOutlined />}
                       onClick={() => handleCreateOrder("CONSIGNMENT", parsedProduct)}
                       loading={submittingType === "CONSIGNMENT"}
-                      className="w-full border-blue-500 text-blue-600 hover:text-blue-700 hover:border-blue-700 font-bold rounded-2xl text-xs py-3 h-auto flex items-center justify-center gap-1"
+                      disabled={submittingType !== null}
+                      className="w-full border-blue-500 text-blue-600 hover:text-blue-700 hover:border-blue-700 font-bold rounded-2xl text-xs py-3 h-auto flex items-center justify-center gap-1 disabled:opacity-50"
                     >
                       Ký Gửi / Ủy Thác (Bến bãi)
                     </Button>
