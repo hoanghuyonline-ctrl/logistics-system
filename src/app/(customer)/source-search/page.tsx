@@ -12,30 +12,34 @@ import {
   InputNumber,
   Divider,
   message,
-  notification
+  notification,
+  Empty
 } from "antd";
 import {
   GlobalOutlined,
   CompassOutlined,
   DollarOutlined,
   InfoCircleOutlined,
-  BgColorsOutlined,
   LinkOutlined,
   ShoppingCartOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  SearchOutlined,
+  WarningOutlined
 } from "@ant-design/icons";
 import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
 
 type Platform = "taobao" | "1688" | "tmall";
 
-interface ParsedProduct {
+interface ProductItem {
   id: string;
   platform: Platform;
-  title: string;
+  titleVi: string;
+  titleZh: string;
   priceCNY: number;
   imageUrl: string;
-  originalUrl: string;
+  supplier: string;
+  salesCount: string;
 }
 
 function SearchDashboard() {
@@ -44,13 +48,22 @@ function SearchDashboard() {
   // States
   const [platform, setPlatform] = useState<Platform>("taobao");
   const [iframeUrl, setIframeUrl] = useState("https://h5.m.taobao.com/");
+  const [searchQuery, setSearchQuery] = useState("");
   const [pastedLink, setPastedLink] = useState("");
-  const [parsedProduct, setParsedProduct] = useState<ParsedProduct | null>(null);
+  const [searchResults, setSearchResults] = useState<ProductItem[]>([]);
+  const [parsedProduct, setParsedProduct] = useState<ProductItem | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(3980);
   const [quantity, setQuantity] = useState<number>(1);
+  
+  // Loading states
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [loadingParse, setLoadingParse] = useState(false);
   const [submittingType, setSubmittingType] = useState<"ECOMMERCE" | "CONSIGNMENT" | null>(null);
+  
+  // Track firewall blocks
+  const [isBlocked, setIsBlocked] = useState(false);
 
-  // Synchronize Iframe URL on platform tab click
+  // Sync platform selections with embedded iframe target
   useEffect(() => {
     if (platform === "taobao") {
       setIframeUrl("https://h5.m.taobao.com/");
@@ -59,11 +72,14 @@ function SearchDashboard() {
     } else {
       setIframeUrl("https://m.tmall.com/");
     }
+    setSearchQuery("");
+    setSearchResults([]);
     setPastedLink("");
     setParsedProduct(null);
+    setIsBlocked(false);
   }, [platform]);
 
-  // Fetch current exchange rate on mount
+  // Fetch exchange rate configurations from backend
   useEffect(() => {
     fetch("/api/settings/exchange-rate")
       .then((res) => res.json())
@@ -77,121 +93,104 @@ function SearchDashboard() {
       });
   }, []);
 
-  // Simulate injection on load
-  const handleIframeLoad = () => {
-    console.log("[Stealth Injection] Iframe loaded. Initiating secure CSS injection to strip Alibaba headers...");
-    try {
-      const iframe = document.getElementById("native-webview-iframe") as HTMLIFrameElement;
-      if (iframe && iframe.contentWindow) {
-        const style = document.createElement("style");
-        style.textContent = `
-          header, footer, .top-bar, .logo-container, .download-banner, .taobao-header {
-            display: none !important;
-          }
-        `;
-        iframe.contentDocument?.head.appendChild(style);
-        console.log("[Stealth Injection] Successfully applied custom DOM masking stylesheet.");
-      }
-    } catch (e) {
-      console.log("[Stealth Injection] Running under cross-origin constraints. Displaying dynamic overlay mask.");
-    }
-  };
-
-  // Parse pasted product link instantly
-  const handleParseLink = () => {
-    if (!pastedLink.trim()) {
-      message.warning("Vui lòng dán link sản phẩm muốn tạo đơn!");
+  // Perform authentic keyword search calling backend route
+  const handleKeywordSearch = async () => {
+    if (!searchQuery.trim()) {
+      message.warning("Vui lòng nhập từ khóa tìm kiếm!");
       return;
     }
 
-    const link = pastedLink.trim();
-    let detectedPlatform: Platform = "taobao";
-    let productId = `prod-${Date.now().toString().slice(-6)}`;
-    let title = "Sản phẩm tìm thấy qua WebView Wrapper";
-    let price = 50.0;
-    let image = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60";
+    setLoadingSearch(true);
+    setIsBlocked(false);
+    setSearchResults([]);
 
-    if (link.includes("1688.com")) {
-      detectedPlatform = "1688";
-      title = "Sản phẩm Bán Sỉ Tận Xưởng 1688.com";
-      price = 38.0;
-      image = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60";
-    } else if (link.includes("tmall.com")) {
-      detectedPlatform = "tmall";
-      title = "Hàng Hiệu Cao Cấp Tmall Flagship Store";
-      price = 180.0;
-      image = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60";
-    } else {
-      detectedPlatform = "taobao";
-      title = "Sản phẩm Nội Địa Trung Quốc Taobao.com";
-      price = 65.0;
-      image = "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=60";
-    }
-
-    // Extract potential ID parameter
     try {
-      const url = new URL(link);
-      const idParam = url.searchParams.get("id") || url.searchParams.get("itemId") || url.searchParams.get("offerId");
-      if (idParam) {
-        productId = idParam;
-      } else if (detectedPlatform === "1688") {
-        const pathParts = url.pathname.split("/");
-        const lastPart = pathParts[pathParts.length - 1];
-        if (lastPart.endsWith(".html")) {
-          productId = lastPart.replace(".html", "");
+      const res = await fetch(
+        `/api/products/search?q=${encodeURIComponent(searchQuery.trim())}&platform=${platform}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.items && data.items.length > 0) {
+          setSearchResults(data.items);
+        } else {
+          setIsBlocked(true);
         }
+      } else {
+        setIsBlocked(true);
       }
     } catch (e) {
-      console.error(e);
+      setIsBlocked(true);
+    } finally {
+      setLoadingSearch(false);
     }
-
-    setParsedProduct({
-      id: productId,
-      platform: detectedPlatform,
-      title: `${title} (ID: ${productId})`,
-      priceCNY: price,
-      imageUrl: image,
-      originalUrl: link
-    });
-
-    message.success("Bóc tách liên kết VIP thành công! Sẵn sàng tạo đơn hàng.");
   };
 
-  // Create order flow on local database
-  const handleCreateOrder = async (type: "ECOMMERCE" | "CONSIGNMENT") => {
-    if (!parsedProduct) return;
+  // Perform authentic Link extraction calling backend route
+  const handleParseLink = async () => {
+    if (!pastedLink.trim()) {
+      message.warning("Vui lòng dán link sản phẩm muốn bóc tách!");
+      return;
+    }
+
+    setLoadingParse(true);
+    setParsedProduct(null);
+
+    try {
+      const res = await fetch(`/api/products/search?q=${encodeURIComponent(pastedLink.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.items && data.items.length > 0) {
+          const firstItem = data.items[0];
+          setParsedProduct(firstItem);
+          message.success("Bóc tách liên kết VIP thành công! Sẵn sàng tạo đơn hàng.");
+        } else {
+          message.error("Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới");
+        }
+      } else {
+        message.error("Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới");
+      }
+    } catch (e) {
+      message.error("Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới");
+    } finally {
+      setLoadingParse(false);
+    }
+  };
+
+  // Order creation hook calling the authentic logistics REST endpoint
+  const handleCreateOrder = async (type: "ECOMMERCE" | "CONSIGNMENT", product: ProductItem) => {
     setSubmittingType(type);
 
     try {
       let payload: Record<string, unknown> = {};
+      const originalUrl = pastedLink.trim() || `https://s.taobao.com/search?q=${encodeURIComponent(product.titleZh)}`;
 
       if (type === "ECOMMERCE") {
         payload = {
           orderType: "ECOMMERCE",
-          productName: parsedProduct.title,
-          productLink: parsedProduct.originalUrl,
-          productImage: parsedProduct.imageUrl,
-          productSpecs: `Platform: ${parsedProduct.platform.toUpperCase()} | Product ID: ${parsedProduct.id}`,
+          productName: product.titleVi,
+          productLink: originalUrl,
+          productImage: product.imageUrl,
+          productSpecs: `Platform: ${product.platform.toUpperCase()} | Item ID: ${product.id}`,
           quantity: quantity,
-          unitPriceCNY: parsedProduct.priceCNY,
-          notes: `Tự động tạo đơn Mua hộ qua bộ trích xuất link VIP của WebView Wrapper.`
+          unitPriceCNY: product.priceCNY,
+          notes: `Đơn hàng mua hộ tự động được trích xuất thời gian thực qua WebView Wrapper.`
         };
       } else {
         payload = {
           orderType: "CONSIGNMENT",
-          productName: parsedProduct.title,
-          productLink: parsedProduct.originalUrl,
-          productImage: parsedProduct.imageUrl,
-          consignmentTrackingNumber: `KGBTH-${parsedProduct.platform.toUpperCase()}-${Date.now().toString().slice(-6)}`,
+          productName: product.titleVi,
+          productLink: originalUrl,
+          productImage: product.imageUrl,
+          consignmentTrackingNumber: `KGBTH-${product.platform.toUpperCase()}-${Date.now().toString().slice(-6)}`,
           consignmentItems: [
             {
-              productName: parsedProduct.title,
+              productName: product.titleVi,
               quantity: String(quantity),
-              unitPriceCNY: String(parsedProduct.priceCNY),
-              specs: `Platform: ${parsedProduct.platform.toUpperCase()} | ID: ${parsedProduct.id}`
+              unitPriceCNY: String(product.priceCNY),
+              specs: `Platform: ${product.platform.toUpperCase()} | ID: ${product.id}`
             }
           ],
-          notes: `Tự động đăng ký Ký gửi qua bộ trích xuất link VIP của WebView Wrapper.`
+          notes: `Đơn ký gửi tự động được trích xuất thời gian thực qua WebView Wrapper.`
         };
       }
 
@@ -204,11 +203,11 @@ function SearchDashboard() {
       if (res.ok) {
         const createdOrder = await res.json();
         notification.success({
-          message: type === "ECOMMERCE" ? "🎉 Đặt hàng trực tiếp thành công!" : "📦 Đăng ký Ký gửi thành công!",
+          message: type === "ECOMMERCE" ? "🎉 Đặt mua hộ thành công!" : "📦 Đăng ký Ký gửi thành công!",
           description: (
             <div className="space-y-1 mt-1 text-xs">
               <p>Mã đơn hàng: <Tag color="blue" className="font-mono">{createdOrder.orderCode}</Tag></p>
-              <p>Sản phẩm: <strong>{parsedProduct.title}</strong></p>
+              <p>Sản phẩm: <strong>{product.titleVi}</strong></p>
               <Divider className="my-1.5" />
               <Button
                 type="primary"
@@ -241,14 +240,13 @@ function SearchDashboard() {
     <div className="min-h-screen pb-12">
       <PageHeader
         title="Tìm kiếm nguồn hàng đa phương thức"
-        subtitle="Cổng WebView nhúng ngụy trang - Đăng nhập bằng mạng sạch cá nhân và bóc tách link đơn hàng trực tiếp"
+        subtitle="Cổng trích xuất giá thành & link gốc thời gian thực, ngụy trang WebView bảo mật"
       />
 
-      {/* Sourcing Hub Viewport Grid */}
       <Row gutter={[24, 24]} className="max-w-[1600px] mx-auto px-4 mt-6">
         
-        {/* Left Side: Dynamic Native WebView Terminal Box */}
-        <Col xs={24} lg={16}>
+        {/* Left Viewport: Native WebView wrapper terminal box */}
+        <Col xs={24} lg={15}>
           <Card
             bordered={false}
             className="shadow-lg rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 flex flex-col relative"
@@ -256,7 +254,7 @@ function SearchDashboard() {
               <div className="flex items-center justify-between text-slate-100 py-2">
                 <div className="flex items-center gap-2">
                   <CompassOutlined className="text-blue-400 animate-spin" />
-                  <span className="text-sm font-bold font-mono">NATIVE WEBVIEW TERMINAL CONTAINER</span>
+                  <span className="text-sm font-bold font-mono">NATIVE WEBVIEW TERMINAL WRAPPER</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Tag color="orange" className="font-bold border-none uppercase text-[10px]">
@@ -269,7 +267,7 @@ function SearchDashboard() {
               </div>
             }
           >
-            {/* Branded platform tabs */}
+            {/* Platform tab selector buttons */}
             <div className="flex gap-2 mb-4 bg-slate-950 p-2 rounded-2xl border border-slate-850">
               <Button
                 type={platform === "taobao" ? "primary" : "text"}
@@ -278,7 +276,7 @@ function SearchDashboard() {
                   platform === "taobao" ? "bg-[#FF5000] text-white" : "text-slate-400 hover:text-white"
                 }`}
               >
-                🛍️ Taobao Mobile
+                🛍️ Taobao H5 Mobile
               </Button>
               <Button
                 type={platform === "1688" ? "primary" : "text"}
@@ -287,7 +285,7 @@ function SearchDashboard() {
                   platform === "1688" ? "bg-[#FF6C00] text-white" : "text-slate-400 hover:text-white"
                 }`}
               >
-                🏭 1688 Mobile
+                🏭 1688 H5 Mobile
               </Button>
               <Button
                 type={platform === "tmall" ? "primary" : "text"}
@@ -296,59 +294,79 @@ function SearchDashboard() {
                   platform === "tmall" ? "bg-[#C40000] text-white" : "text-slate-400 hover:text-white"
                 }`}
               >
-                💎 Tmall Mobile
+                💎 Tmall H5 Mobile
               </Button>
             </div>
 
-            {/* Embedded Iframe wrapped in modern device frame */}
-            <div className="relative w-full h-[650px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
+            {/* Simulated browser search input inside WebView layout */}
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 mb-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Tìm kiếm sản phẩm trên trang gốc..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onPressEnter={handleKeywordSearch}
+                  className="rounded-xl bg-slate-900 border-slate-800 text-slate-200 text-xs placeholder:text-slate-500"
+                />
+                <Button
+                  type="primary"
+                  onClick={handleKeywordSearch}
+                  loading={loadingSearch}
+                  icon={<SearchOutlined />}
+                  className="bg-blue-600 hover:bg-blue-700 border-none font-bold rounded-xl text-xs px-5"
+                >
+                  Tìm kiếm
+                </Button>
+              </div>
+            </div>
+
+            {/* Embedded IFrame Sandboxed Client Viewport */}
+            <div className="relative w-full h-[600px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
               
-              {/* Stealth brand overlay (ngụy trang logo/header Trung Quốc) */}
-              <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-slate-950/95 to-slate-950/0 z-30 pointer-events-none flex items-center justify-between px-4">
+              {/* Floating Shield Overlays */}
+              <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-slate-950/95 to-slate-950/0 z-35 pointer-events-none flex items-center justify-between px-4">
                 <span className="text-[10px] text-slate-400 font-mono">MASK: stealth_header_strip_on</span>
-                <span className="text-[9px] text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">DOM SHIELD ACTIVE</span>
+                <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">DOM SHIELD ACTIVE</span>
               </div>
 
-              {/* Real Alibaba Iframe Portal */}
+              {/* Live Iframe Portal */}
               <iframe
                 id="native-webview-iframe"
                 src={iframeUrl}
-                onLoad={handleIframeLoad}
                 className="w-full h-full border-none z-10"
                 sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                 title="Sourcing Frame Target"
               />
 
-              {/* Bottom footer masking */}
-              <div className="absolute bottom-0 left-0 w-full h-10 bg-slate-950 z-30 pointer-events-none flex items-center justify-center">
+              <div className="absolute bottom-0 left-0 w-full h-10 bg-slate-950 z-35 pointer-events-none flex items-center justify-center">
                 <span className="text-[9px] text-slate-500 font-mono">Bắc Trung Hải Logistics - Safe Sandbox</span>
               </div>
             </div>
           </Card>
         </Col>
 
-        {/* Right Side: Link Snatcher & Order Generator Control Panel */}
-        <Col xs={24} lg={8}>
+        {/* Right Viewport: Link Snatcher Console & Price Calculator */}
+        <Col xs={24} lg={9}>
           <div className="space-y-6">
             
-            {/* Stealth Link Snatcher Console */}
+            {/* Link Snatcher Input Box */}
             <Card
               bordered={false}
               className="shadow-lg rounded-3xl bg-white border border-slate-100"
               title={
                 <div className="flex items-center gap-2 text-slate-800">
                   <LinkOutlined className="text-blue-600" />
-                  <span className="text-sm font-extrabold uppercase">Stealth Link Snatcher</span>
+                  <span className="text-sm font-extrabold uppercase">Báo Giá Link Gốc VIP</span>
                 </div>
               }
             >
               <p className="text-slate-500 text-xs leading-relaxed mb-4">
-                Khi tìm thấy nguồn hàng yêu thích trên khung nhúng, bạn hãy nhấn copy link sản phẩm rồi dán vào đây để bóc tách dữ liệu và tạo đơn ngay lập tức:
+                Copy link từ khung nhúng WebView dán vào đây để bóc tách giá gốc CNY và tự động quy đổi ra VNĐ:
               </p>
 
               <div className="space-y-3">
                 <Input.TextArea
-                  placeholder="Dán đường link sản phẩm tại đây..."
+                  placeholder="Dán link sản phẩm Taobao/1688/Tmall..."
                   value={pastedLink}
                   onChange={(e) => setPastedLink(e.target.value)}
                   rows={3}
@@ -357,15 +375,16 @@ function SearchDashboard() {
                 <Button
                   type="primary"
                   onClick={handleParseLink}
+                  loading={loadingParse}
                   icon={<GlobalOutlined />}
                   className="w-full min-h-[40px] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-semibold text-xs flex items-center justify-center"
                 >
-                  Bóc tách liên kết VIP
+                  Bóc tách giá trị thực tế
                 </Button>
               </div>
             </Card>
 
-            {/* Price mapping display card */}
+            {/* Display Parsed Product Details from Link */}
             {parsedProduct && (
               <Card
                 bordered={false}
@@ -375,7 +394,7 @@ function SearchDashboard() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={parsedProduct.imageUrl}
-                      alt={parsedProduct.title}
+                      alt={parsedProduct.titleVi}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-3 left-3">
@@ -389,7 +408,7 @@ function SearchDashboard() {
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm leading-snug line-clamp-2">
-                      {parsedProduct.title}
+                      {parsedProduct.titleVi}
                     </h4>
                     <p className="text-[10px] text-slate-400 font-mono mt-1 truncate">
                       ID: {parsedProduct.id}
@@ -400,7 +419,7 @@ function SearchDashboard() {
 
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Giá gốc Trung Quốc:</span>
+                      <span className="text-slate-400">Giá thành tệ gốc:</span>
                       <strong className="text-slate-700 font-mono">¥ {parsedProduct.priceCNY.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between">
@@ -423,7 +442,7 @@ function SearchDashboard() {
                     />
                   </div>
 
-                  {/* Pricing Breakdown Estimator */}
+                  {/* Dynamic Pricing Breakdown */}
                   <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 text-[10px] text-slate-500 space-y-1">
                     <div className="flex justify-between">
                       <span>Tiền hàng ({quantity} chiếc):</span>
@@ -436,19 +455,19 @@ function SearchDashboard() {
                       <span>{formatVND(parsedProduct.priceCNY * quantity * exchangeRate * 0.05)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-slate-800 text-xs border-t border-slate-200/60 pt-1 mt-1">
-                      <span>TỔNG DỰ TOÁN MUA:</span>
+                      <span>TỔNG DỰ TOÁN ĐƠN HÀNG:</span>
                       <span className="text-orange-600 font-mono">
                         {formatVND(parsedProduct.priceCNY * quantity * exchangeRate * 1.05 + 80000)}
                       </span>
                     </div>
                   </div>
 
-                  {/* Order Creation CTAs */}
+                  {/* Primary CTAs */}
                   <div className="space-y-2 pt-2">
                     <Button
                       type="primary"
                       icon={<ShoppingCartOutlined />}
-                      onClick={() => handleCreateOrder("ECOMMERCE")}
+                      onClick={() => handleCreateOrder("ECOMMERCE", parsedProduct)}
                       loading={submittingType === "ECOMMERCE"}
                       className="w-full bg-[#FF5000] border-none text-white hover:bg-[#e04600] font-bold rounded-xl text-xs py-2.5 h-auto flex items-center justify-center gap-1 shadow-sm"
                     >
@@ -457,7 +476,7 @@ function SearchDashboard() {
                     <Button
                       type="default"
                       icon={<FileTextOutlined />}
-                      onClick={() => handleCreateOrder("CONSIGNMENT")}
+                      onClick={() => handleCreateOrder("CONSIGNMENT", parsedProduct)}
                       loading={submittingType === "CONSIGNMENT"}
                       className="w-full border-blue-500 text-blue-600 hover:text-blue-700 hover:border-blue-700 font-bold rounded-xl text-xs py-2.5 h-auto flex items-center justify-center gap-1"
                     >
@@ -468,13 +487,66 @@ function SearchDashboard() {
               </Card>
             )}
 
-            {/* Exchange rate configurations info */}
-            <Card bordered={false} className="shadow-lg rounded-3xl bg-blue-50/50 border border-blue-100 p-1">
-              <div className="flex items-center gap-2 text-xs text-blue-800">
-                <DollarOutlined />
-                <span>Tỷ giá thu mua: <strong>1 CNY = {exchangeRate.toLocaleString("vi-VN")} đ</strong></span>
-              </div>
-            </Card>
+            {/* Keyword Search Result List */}
+            {searchResults.length > 0 && !parsedProduct && (
+              <Card
+                bordered={false}
+                className="shadow-lg rounded-3xl bg-white border border-slate-100 max-h-[500px] overflow-y-auto"
+                title={
+                  <div className="text-slate-800 text-xs font-bold uppercase">
+                    Kết quả bóc tách từ khóa ({searchResults.length})
+                  </div>
+                }
+              >
+                <div className="space-y-4">
+                  {searchResults.map((item) => (
+                    <div key={item.id} className="flex gap-3 border-b border-slate-50 pb-3 last:border-b-0 last:pb-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.imageUrl}
+                        alt={item.titleVi}
+                        className="w-14 h-14 rounded-xl object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-bold text-slate-800 text-xs truncate">{item.titleVi}</h5>
+                        <p className="text-[10px] text-slate-400 truncate font-mono">{item.supplier}</p>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-orange-600 font-bold text-xs font-mono">
+                            {formatVND(item.priceCNY * exchangeRate)}
+                          </span>
+                          <Button
+                            type="primary"
+                            size="small"
+                            onClick={() => {
+                              setParsedProduct(item);
+                              message.success(`Đã chọn sản phẩm: ${item.titleVi}`);
+                            }}
+                            className="bg-blue-600 border-none rounded-lg text-[10px] h-6"
+                          >
+                            Chọn sản phẩm
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Empty State Fallback Guard */}
+            {isBlocked && (
+              <Card bordered={false} className="shadow-lg rounded-3xl bg-white border border-slate-100 p-6 text-center">
+                <div className="text-amber-500 mb-2">
+                  <WarningOutlined style={{ fontSize: 32 }} />
+                </div>
+                <div className="font-bold text-slate-800 text-xs mb-2">
+                  MÁY CHỦ BỊ NGHẼN BẢO MẬT
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới
+                </p>
+              </Card>
+            )}
 
           </div>
         </Col>
