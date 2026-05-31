@@ -23,8 +23,6 @@ import {
   FileTextOutlined,
   SearchOutlined,
   WarningOutlined,
-  LoadingOutlined,
-  CheckCircleOutlined,
   GlobalOutlined
 } from "@ant-design/icons";
 import PageHeader from "@/components/ui/PageHeader";
@@ -62,27 +60,15 @@ function SearchDashboard() {
   const [loading, setLoading] = useState(false);
   const [submittingType, setSubmittingType] = useState<"ECOMMERCE" | "CONSIGNMENT" | null>(null);
   
-  // Shadow Tunnel status indicators
-  const [tunnelStatus, setTunnelStatus] = useState<"connecting" | "active" | "error">("connecting");
-  const [sessionToken, setSessionToken] = useState<string>("UPSTREAM_SESSION_ACTIVE");
   const [isBlocked, setIsBlocked] = useState(false);
 
-  // Sync platforms and trigger shadow tunnel connect
+  // Sync platforms and trigger clean states
   useEffect(() => {
-    setTunnelStatus("connecting");
     setSearchQuery("");
     setSearchResults([]);
     setPastedLink("");
     setParsedProduct(null);
     setIsBlocked(false);
-
-    // Simulate authentic background Shadow Tunnel handshaking
-    const timer = setTimeout(() => {
-      setTunnelStatus("active");
-      setSessionToken(`UPSTREAM_SESSION_${platform.toUpperCase()}_BYPASS_ACTIVE`);
-    }, 800);
-
-    return () => clearTimeout(timer);
   }, [platform]);
 
   // Fetch exchange rate on mount
@@ -181,7 +167,7 @@ function SearchDashboard() {
           productSpecs: `Platform: ${product.platform.toUpperCase()} | Item ID: ${product.id}`,
           quantity: quantity,
           unitPriceCNY: product.priceCNY,
-          notes: `Đơn hàng tự động trích xuất từ Shadow WebView Viewport.`
+          notes: `Đơn mua hộ tự động trích xuất thực tế qua Shadow Viewport.`
         };
       } else {
         payload = {
@@ -198,7 +184,7 @@ function SearchDashboard() {
               specs: `Platform: ${product.platform.toUpperCase()} | ID: ${product.id}`
             }
           ],
-          notes: `Đơn ký gửi tự động trích xuất từ Shadow WebView Viewport.`
+          notes: `Đơn ký gửi tự động trích xuất thực tế qua Shadow Viewport.`
         };
       }
 
@@ -213,7 +199,7 @@ function SearchDashboard() {
         notification.success({
           message: type === "ECOMMERCE" ? "🎉 Đặt mua hộ thành công!" : "📦 Đăng ký Ký gửi thành công!",
           description: (
-            <div className="space-y-1 mt-1 text-xs">
+            <div className="space-y-1 mt-1 text-xs text-slate-700">
               <p>Mã đơn hàng: <Tag color="blue" className="font-mono">{createdOrder.orderCode}</Tag></p>
               <p>Sản phẩm: <strong>{product.titleVi}</strong></p>
               <Divider className="my-1.5" />
@@ -245,10 +231,10 @@ function SearchDashboard() {
   };
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen pb-12 bg-slate-50/50">
       <PageHeader
         title="Tìm kiếm nguồn hàng đa phương thức"
-        subtitle="Hạ tầng Nhúng ngầm kín kẽ (Shadow WebView Injection) - Trích xuất giá gốc & link VIP thời gian thực"
+        subtitle="Hệ thống Nhúng ngầm Shadow Viewport - Báo giá trực tiếp CNY & Tạo đơn mua hàng tự động"
       />
 
       {/* Embedded 100% Shadow Viewport (Hidden Frame) */}
@@ -269,93 +255,69 @@ function SearchDashboard() {
         />
       </div>
 
-      {/* Main Sourcing Control Panel */}
-      <Row gutter={[24, 24]} className="max-w-[1600px] mx-auto px-4 mt-6">
+      {/* Main Responsive Grid Layout */}
+      <Row gutter={[24, 24]} className="max-w-[1400px] mx-auto px-4 mt-6">
         
-        {/* Left Side: Branded platform search and live results */}
-        <Col xs={24} lg={16}>
+        {/* Left Grid: Platform Selectors & Results Viewport */}
+        <Col xs={24} lg={15}>
           <div className="space-y-6">
             
-            {/* Sourcing Hub controls */}
+            {/* Main search cards with sleek flex alignment */}
             <Card
               bordered={false}
-              className="shadow-md rounded-3xl bg-white border border-slate-100 relative overflow-hidden"
-              style={{
-                background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)"
-              }}
+              className="shadow-sm rounded-3xl bg-white border border-slate-100/80 p-4"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full filter blur-3xl opacity-40 -mr-10 -mt-10"></div>
-              
-              {/* Platform Selector buttons */}
-              <div className="grid grid-cols-3 gap-3 mb-6 px-1">
-                <button
+              {/* Platform selector buttons - responsive flex layout */}
+              <div className="flex flex-wrap gap-2.5 mb-6">
+                <Button
                   onClick={() => setPlatform("taobao")}
-                  className={`flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all duration-300 transform hover:scale-[1.01] shadow-sm ${
-                    platform === "taobao"
-                      ? "bg-[#FF5000] text-white ring-2 ring-[#FF5000] ring-offset-2"
-                      : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF5000]/10"
+                  className={`font-semibold rounded-2xl text-xs flex-1 min-h-[44px] transition-all ${
+                    platform === "taobao" 
+                      ? "bg-[#FF5000] text-white border-none shadow-sm" 
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:text-[#FF5000] hover:bg-[#FF5000]/5"
                   }`}
                 >
                   🛍️ Taobao Sourcing
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setPlatform("1688")}
-                  className={`flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all duration-300 transform hover:scale-[1.01] shadow-sm ${
-                    platform === "1688"
-                      ? "bg-[#FF6C00] text-white ring-2 ring-[#FF6C00] ring-offset-2"
-                      : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF6C00]/10"
+                  className={`font-semibold rounded-2xl text-xs flex-1 min-h-[44px] transition-all ${
+                    platform === "1688" 
+                      ? "bg-[#FF6C00] text-white border-none shadow-sm" 
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:text-[#FF6C00] hover:bg-[#FF6C00]/5"
                   }`}
                 >
                   🏭 1688 Sourcing
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setPlatform("tmall")}
-                  className={`flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all duration-300 transform hover:scale-[1.01] shadow-sm ${
-                    platform === "tmall"
-                      ? "bg-[#C40000] text-white ring-2 ring-[#C40000] ring-offset-2"
-                      : "bg-white text-slate-700 border border-slate-200 hover:bg-[#C40000]/10"
+                  className={`font-semibold rounded-2xl text-xs flex-1 min-h-[44px] transition-all ${
+                    platform === "tmall" 
+                      ? "bg-[#C40000] text-white border-none shadow-sm" 
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:text-[#C40000] hover:bg-[#C40000]/5"
                   }`}
                 >
                   💎 Tmall Sourcing
-                </button>
+                </Button>
               </div>
 
-              {/* Dynamic Shadow Tunnel status indicators */}
-              <div className="flex flex-wrap gap-3 items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 text-[11px] font-mono text-slate-400 mb-6">
-                <div className="flex items-center gap-2">
-                  <CompassOutlined className="text-blue-400 animate-spin" />
-                  <span>SHADOW WEBPORT:</span>
-                  {tunnelStatus === "connecting" ? (
-                    <Tag color="warning" icon={<LoadingOutlined />} className="border-none font-bold">CONNECTING...</Tag>
-                  ) : (
-                    <Tag color="success" icon={<CheckCircleOutlined />} className="border-none font-bold">SECURED ONLINE</Tag>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>SESSION COOKIE:</span>
-                  <Tag color="blue" className="border-none font-bold font-mono text-[9px] uppercase">
-                    {sessionToken}
-                  </Tag>
-                </div>
-              </div>
-
-              {/* Keyword query bar */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-3">
+              {/* Main query input panel */}
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Input
-                  placeholder="Nhập tên mặt hàng bằng tiếng Việt để dịch thuật & quét..."
+                  placeholder="Nhập tên mặt hàng bằng tiếng Việt (ví dụ: giày thể thao, tai nghe...)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onPressEnter={handleSearch}
                   size="large"
                   prefix={<SearchOutlined className="text-slate-400" />}
-                  className="rounded-xl border-slate-200 py-2.5 text-sm flex-1"
+                  className="rounded-2xl border-slate-200 py-3 text-sm flex-1 min-h-[48px]"
                 />
                 <Button
                   type="primary"
                   onClick={handleSearch}
                   loading={loading && searchQuery !== ""}
                   size="large"
-                  className="bg-blue-600 hover:bg-blue-700 border-none font-bold rounded-xl text-sm px-8"
+                  className="bg-blue-600 hover:bg-blue-700 border-none font-bold rounded-2xl text-sm px-8 min-h-[48px]"
                 >
                   Quét Nguồn Hàng
                 </Button>
@@ -363,78 +325,79 @@ function SearchDashboard() {
 
             </Card>
 
-            {/* Keyword Search Result List */}
+            {/* Keyword Results Viewport */}
             {searchResults.length > 0 && !parsedProduct && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+              <Row gutter={[16, 16]} className="animate-fadeIn">
                 {searchResults.map((item) => (
-                  <Card
-                    key={item.id}
-                    bordered={false}
-                    className="shadow-md rounded-3xl bg-white border border-slate-100 hover:shadow-lg transition-shadow overflow-hidden flex flex-col"
-                    cover={
-                      <div className="h-44 bg-slate-50 relative overflow-hidden flex items-center justify-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={item.imageUrl}
-                          alt={item.titleVi}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-3 left-3 flex gap-2">
-                          <Tag color="orange" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
-                            {item.platform.toUpperCase()}
-                          </Tag>
-                          <Tag color="green" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
-                            {item.salesCount} Đã Bán
-                          </Tag>
+                  <Col xs={24} sm={12} key={item.id}>
+                    <Card
+                      bordered={false}
+                      className="shadow-sm rounded-3xl bg-white border border-slate-100 overflow-hidden hover:shadow-md transition-all flex flex-col h-full"
+                      cover={
+                        <div className="h-44 bg-slate-50 relative overflow-hidden flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.imageUrl}
+                            alt={item.titleVi}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-3 left-3 flex gap-1.5">
+                            <Tag color="orange" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
+                              {item.platform.toUpperCase()}
+                            </Tag>
+                            <Tag color="green" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
+                              {item.salesCount} Đã bán
+                            </Tag>
+                          </div>
                         </div>
-                      </div>
-                    }
-                  >
-                    <div className="space-y-3 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-xs leading-snug line-clamp-2">
-                          {item.titleVi}
-                        </h4>
-                        <p className="text-[10px] text-slate-400 font-mono mt-1 truncate">
-                          Nhà cung cấp: {item.supplier}
-                        </p>
-                      </div>
-
-                      <div>
-                        <Divider className="my-2" />
-
-                        <div className="flex justify-between items-baseline mb-3">
-                          <span className="text-[10px] text-slate-400">Giá gốc: ¥ {item.priceCNY.toFixed(2)}</span>
-                          <span className="text-orange-600 font-extrabold text-sm font-mono">
-                            {formatVND(item.priceCNY * exchangeRate)}
-                          </span>
+                      }
+                    >
+                      <div className="flex flex-col justify-between h-full flex-1">
+                        <div>
+                          <h4 className="font-bold text-slate-800 text-xs leading-snug line-clamp-2 min-h-[32px]">
+                            {item.titleVi}
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-mono mt-1.5 truncate">
+                            Nhà cung cấp: {item.supplier}
+                          </p>
                         </div>
 
-                        <Button
-                          type="primary"
-                          onClick={() => {
-                            setParsedProduct(item);
-                            message.success(`Đã chọn sản phẩm: ${item.titleVi}`);
-                          }}
-                          className="w-full bg-blue-600 border-none rounded-xl text-[11px] font-bold py-2 h-auto"
-                        >
-                          Xem cấu trúc báo giá & Tạo đơn
-                        </Button>
+                        <div>
+                          <Divider className="my-2.5" />
+
+                          <div className="flex justify-between items-baseline mb-3">
+                            <span className="text-[10px] text-slate-400">Yên gốc: ¥{item.priceCNY.toFixed(2)}</span>
+                            <span className="text-orange-600 font-extrabold text-xs font-mono">
+                              {formatVND(item.priceCNY * exchangeRate)}
+                            </span>
+                          </div>
+
+                          <Button
+                            type="primary"
+                            onClick={() => {
+                              setParsedProduct(item);
+                              message.success(`Đã chọn sản phẩm: ${item.titleVi}`);
+                            }}
+                            className="w-full bg-blue-600 border-none rounded-xl text-[10px] font-bold py-2 h-auto"
+                          >
+                            Báo giá chi tiết & Tạo đơn
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </Col>
                 ))}
-              </div>
+              </Row>
             )}
 
-            {/* Empty State Fallback Guard */}
+            {/* Strict Empty State Fallback Guard */}
             {isBlocked && (
-              <Card bordered={false} className="shadow-lg rounded-3xl bg-white border border-slate-100 p-8 text-center animate-fadeIn">
+              <Card bordered={false} className="shadow-sm rounded-3xl bg-white border border-slate-100 p-8 text-center animate-fadeIn">
                 <div className="text-amber-500 mb-3">
-                  <WarningOutlined style={{ fontSize: 40 }} />
+                  <WarningOutlined style={{ fontSize: 36 }} />
                 </div>
-                <div className="font-bold text-slate-800 text-xs mb-2 uppercase font-mono tracking-wider">
-                  MÁY CHỦ BỊ NGHẼN BẢO MẬT GỐC
+                <div className="font-bold text-slate-850 text-xs mb-2 tracking-wide font-mono uppercase">
+                  MÁY CHỦ GỐC NGHẼN BẢO MẬT
                 </div>
                 <p className="text-[11px] text-slate-500 max-w-md mx-auto leading-relaxed">
                   Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới
@@ -445,50 +408,50 @@ function SearchDashboard() {
           </div>
         </Col>
 
-        {/* Right Side: Link Snatcher Console & Price Calculator */}
-        <Col xs={24} lg={8}>
+        {/* Right Grid: VIP Link Snatcher console & pricing summaries */}
+        <Col xs={24} lg={9}>
           <div className="space-y-6">
             
-            {/* Link Snatcher Console */}
+            {/* Sourcing Link Snatcher panel */}
             <Card
               bordered={false}
-              className="shadow-lg rounded-3xl bg-white border border-slate-100"
+              className="shadow-sm rounded-3xl bg-white border border-slate-100"
               title={
                 <div className="flex items-center gap-2 text-slate-800">
                   <LinkOutlined className="text-blue-600" />
-                  <span className="text-sm font-extrabold uppercase">Báo Giá Link VIP</span>
+                  <span className="text-xs font-extrabold uppercase tracking-wider">Báo Giá Link VIP</span>
                 </div>
               }
             >
-              <p className="text-slate-500 text-xs leading-relaxed mb-4">
-                Dán đường link sản phẩm Taobao/1688/Tmall của bạn để trích xuất dải giá CNY chính xác:
+              <p className="text-slate-500 text-[11px] leading-relaxed mb-4">
+                Dán đường link sản phẩm Taobao/1688/Tmall để trích xuất dải giá CNY gốc và quy đổi tức thì:
               </p>
 
               <div className="space-y-3">
                 <Input.TextArea
-                  placeholder="Dán link sản phẩm của bạn tại đây..."
+                  placeholder="Dán link sản phẩm của bạn..."
                   value={pastedLink}
                   onChange={(e) => setPastedLink(e.target.value)}
                   rows={3}
-                  className="rounded-2xl border-slate-200 text-xs"
+                  className="rounded-2xl border-slate-200 text-xs p-3"
                 />
                 <Button
                   type="primary"
                   onClick={handleParseLink}
                   loading={loading && pastedLink !== ""}
                   icon={<GlobalOutlined />}
-                  className="w-full min-h-[40px] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-semibold text-xs flex items-center justify-center"
+                  className="w-full min-h-[44px] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-bold text-xs flex items-center justify-center"
                 >
                   Bóc tách giá trị thực tế
                 </Button>
               </div>
             </Card>
 
-            {/* Display Parsed Product Details from Link/Query */}
+            {/* Display Parsed Product Card details */}
             {parsedProduct && (
               <Card
                 bordered={false}
-                className="shadow-lg rounded-3xl bg-white border border-slate-100 animate-fadeIn"
+                className="shadow-sm rounded-3xl bg-white border border-slate-100 animate-fadeIn"
                 cover={
                   <div className="h-44 bg-slate-50 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -515,7 +478,7 @@ function SearchDashboard() {
                     </p>
                   </div>
 
-                  <Divider className="my-2" />
+                  <Divider className="my-2.5" />
 
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
@@ -530,7 +493,7 @@ function SearchDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs pt-1">
+                  <div className="flex items-center justify-between text-xs pt-1.5">
                     <span className="font-semibold text-slate-700">Chọn số lượng:</span>
                     <InputNumber
                       min={1}
@@ -542,7 +505,7 @@ function SearchDashboard() {
                     />
                   </div>
 
-                  {/* Dynamic Pricing Breakdown */}
+                  {/* Pricing summaries estimators */}
                   <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 text-[10px] text-slate-500 space-y-1">
                     <div className="flex justify-between">
                       <span>Tiền hàng ({quantity} chiếc):</span>
@@ -551,7 +514,7 @@ function SearchDashboard() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Phí mua hộ ủy thác (5%):</span>
+                      <span>Phí dịch vụ mua hộ (5%):</span>
                       <span>{formatVND(parsedProduct.priceCNY * quantity * exchangeRate * 0.05)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-slate-800 text-xs border-t border-slate-200/60 pt-1 mt-1">
@@ -562,7 +525,7 @@ function SearchDashboard() {
                     </div>
                   </div>
 
-                  {/* Primary CTAs */}
+                  {/* Action order submission triggers */}
                   <div className="space-y-2 pt-2">
                     <Button
                       type="primary"
@@ -587,11 +550,11 @@ function SearchDashboard() {
               </Card>
             )}
 
-            {/* Exchange rate information banner */}
-            <Card bordered={false} className="shadow-lg rounded-3xl bg-blue-50/50 border border-blue-100 p-1">
+            {/* Exchange rate summaries card */}
+            <Card bordered={false} className="shadow-sm rounded-3xl bg-blue-50/50 border border-blue-100 p-1">
               <div className="flex items-center gap-2 text-xs text-blue-800">
                 <DollarOutlined />
-                <span>Tỷ giá áp dụng: <strong>1 CNY = {exchangeRate.toLocaleString("vi-VN")} đ</strong></span>
+                <span>Tỷ giá quy đổi: <strong>1 CNY = {exchangeRate.toLocaleString("vi-VN")} đ</strong></span>
               </div>
             </Card>
 
