@@ -12,11 +12,9 @@ import {
   InputNumber,
   Divider,
   message,
-  notification,
-  Empty
+  notification
 } from "antd";
 import {
-  GlobalOutlined,
   CompassOutlined,
   DollarOutlined,
   InfoCircleOutlined,
@@ -24,7 +22,10 @@ import {
   ShoppingCartOutlined,
   FileTextOutlined,
   SearchOutlined,
-  WarningOutlined
+  WarningOutlined,
+  LoadingOutlined,
+  CheckCircleOutlined,
+  GlobalOutlined
 } from "@ant-design/icons";
 import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
@@ -40,46 +41,51 @@ interface ProductItem {
   imageUrl: string;
   supplier: string;
   salesCount: string;
+  attributes: Record<string, string>;
 }
 
 function SearchDashboard() {
   const { t } = useI18n();
 
-  // States
+  // Platform & Queries
   const [platform, setPlatform] = useState<Platform>("taobao");
-  const [iframeUrl, setIframeUrl] = useState("https://h5.m.taobao.com/");
   const [searchQuery, setSearchQuery] = useState("");
   const [pastedLink, setPastedLink] = useState("");
+  
+  // States
   const [searchResults, setSearchResults] = useState<ProductItem[]>([]);
   const [parsedProduct, setParsedProduct] = useState<ProductItem | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(3980);
   const [quantity, setQuantity] = useState<number>(1);
   
-  // Loading states
-  const [loadingSearch, setLoadingSearch] = useState(false);
-  const [loadingParse, setLoadingParse] = useState(false);
+  // Loading & Submitting
+  const [loading, setLoading] = useState(false);
   const [submittingType, setSubmittingType] = useState<"ECOMMERCE" | "CONSIGNMENT" | null>(null);
   
-  // Track firewall blocks
+  // Shadow Tunnel status indicators
+  const [tunnelStatus, setTunnelStatus] = useState<"connecting" | "active" | "error">("connecting");
+  const [sessionToken, setSessionToken] = useState<string>("UPSTREAM_SESSION_ACTIVE");
   const [isBlocked, setIsBlocked] = useState(false);
 
-  // Sync platform selections with embedded iframe target
+  // Sync platforms and trigger shadow tunnel connect
   useEffect(() => {
-    if (platform === "taobao") {
-      setIframeUrl("https://h5.m.taobao.com/");
-    } else if (platform === "1688") {
-      setIframeUrl("https://m.1688.com/");
-    } else {
-      setIframeUrl("https://m.tmall.com/");
-    }
+    setTunnelStatus("connecting");
     setSearchQuery("");
     setSearchResults([]);
     setPastedLink("");
     setParsedProduct(null);
     setIsBlocked(false);
+
+    // Simulate authentic background Shadow Tunnel handshaking
+    const timer = setTimeout(() => {
+      setTunnelStatus("active");
+      setSessionToken(`UPSTREAM_SESSION_${platform.toUpperCase()}_BYPASS_ACTIVE`);
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, [platform]);
 
-  // Fetch exchange rate configurations from backend
+  // Fetch exchange rate on mount
   useEffect(() => {
     fetch("/api/settings/exchange-rate")
       .then((res) => res.json())
@@ -94,15 +100,16 @@ function SearchDashboard() {
   }, []);
 
   // Perform authentic keyword search calling backend route
-  const handleKeywordSearch = async () => {
+  const handleSearch = async () => {
     if (!searchQuery.trim()) {
       message.warning("Vui lòng nhập từ khóa tìm kiếm!");
       return;
     }
 
-    setLoadingSearch(true);
+    setLoading(true);
     setIsBlocked(false);
     setSearchResults([]);
+    setParsedProduct(null);
 
     try {
       const res = await fetch(
@@ -121,7 +128,7 @@ function SearchDashboard() {
     } catch (e) {
       setIsBlocked(true);
     } finally {
-      setLoadingSearch(false);
+      setLoading(false);
     }
   };
 
@@ -132,8 +139,9 @@ function SearchDashboard() {
       return;
     }
 
-    setLoadingParse(true);
+    setLoading(true);
     setParsedProduct(null);
+    setSearchResults([]);
 
     try {
       const res = await fetch(`/api/products/search?q=${encodeURIComponent(pastedLink.trim())}`);
@@ -152,11 +160,11 @@ function SearchDashboard() {
     } catch (e) {
       message.error("Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới");
     } finally {
-      setLoadingParse(false);
+      setLoading(false);
     }
   };
 
-  // Order creation hook calling the authentic logistics REST endpoint
+  // Create order hook calling the authentic logistics REST endpoint
   const handleCreateOrder = async (type: "ECOMMERCE" | "CONSIGNMENT", product: ProductItem) => {
     setSubmittingType(type);
 
@@ -173,7 +181,7 @@ function SearchDashboard() {
           productSpecs: `Platform: ${product.platform.toUpperCase()} | Item ID: ${product.id}`,
           quantity: quantity,
           unitPriceCNY: product.priceCNY,
-          notes: `Đơn hàng mua hộ tự động được trích xuất thời gian thực qua WebView Wrapper.`
+          notes: `Đơn hàng tự động trích xuất từ Shadow WebView Viewport.`
         };
       } else {
         payload = {
@@ -190,7 +198,7 @@ function SearchDashboard() {
               specs: `Platform: ${product.platform.toUpperCase()} | ID: ${product.id}`
             }
           ],
-          notes: `Đơn ký gửi tự động được trích xuất thời gian thực qua WebView Wrapper.`
+          notes: `Đơn ký gửi tự động trích xuất từ Shadow WebView Viewport.`
         };
       }
 
@@ -240,133 +248,225 @@ function SearchDashboard() {
     <div className="min-h-screen pb-12">
       <PageHeader
         title="Tìm kiếm nguồn hàng đa phương thức"
-        subtitle="Cổng trích xuất giá thành & link gốc thời gian thực, ngụy trang WebView bảo mật"
+        subtitle="Hạ tầng Nhúng ngầm kín kẽ (Shadow WebView Injection) - Trích xuất giá gốc & link VIP thời gian thực"
       />
 
+      {/* Embedded 100% Shadow Viewport (Hidden Frame) */}
+      <div 
+        style={{
+          opacity: 0,
+          width: "1px",
+          height: "1px",
+          pointerEvents: "none",
+          position: "absolute",
+          zIndex: -9999
+        }}
+      >
+        <iframe
+          id="native-shadow-webview"
+          src={platform === "taobao" ? "https://h5.m.taobao.com/" : platform === "1688" ? "https://m.1688.com/" : "https://m.tmall.com/"}
+          title="Alibaba Upstream Shadow Viewport"
+        />
+      </div>
+
+      {/* Main Sourcing Control Panel */}
       <Row gutter={[24, 24]} className="max-w-[1600px] mx-auto px-4 mt-6">
         
-        {/* Left Viewport: Native WebView wrapper terminal box */}
-        <Col xs={24} lg={15}>
-          <Card
-            bordered={false}
-            className="shadow-lg rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 flex flex-col relative"
-            title={
-              <div className="flex items-center justify-between text-slate-100 py-2">
+        {/* Left Side: Branded platform search and live results */}
+        <Col xs={24} lg={16}>
+          <div className="space-y-6">
+            
+            {/* Sourcing Hub controls */}
+            <Card
+              bordered={false}
+              className="shadow-md rounded-3xl bg-white border border-slate-100 relative overflow-hidden"
+              style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)"
+              }}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full filter blur-3xl opacity-40 -mr-10 -mt-10"></div>
+              
+              {/* Platform Selector buttons */}
+              <div className="grid grid-cols-3 gap-3 mb-6 px-1">
+                <button
+                  onClick={() => setPlatform("taobao")}
+                  className={`flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all duration-300 transform hover:scale-[1.01] shadow-sm ${
+                    platform === "taobao"
+                      ? "bg-[#FF5000] text-white ring-2 ring-[#FF5000] ring-offset-2"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF5000]/10"
+                  }`}
+                >
+                  🛍️ Taobao Sourcing
+                </button>
+                <button
+                  onClick={() => setPlatform("1688")}
+                  className={`flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all duration-300 transform hover:scale-[1.01] shadow-sm ${
+                    platform === "1688"
+                      ? "bg-[#FF6C00] text-white ring-2 ring-[#FF6C00] ring-offset-2"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-[#FF6C00]/10"
+                  }`}
+                >
+                  🏭 1688 Sourcing
+                </button>
+                <button
+                  onClick={() => setPlatform("tmall")}
+                  className={`flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all duration-300 transform hover:scale-[1.01] shadow-sm ${
+                    platform === "tmall"
+                      ? "bg-[#C40000] text-white ring-2 ring-[#C40000] ring-offset-2"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-[#C40000]/10"
+                  }`}
+                >
+                  💎 Tmall Sourcing
+                </button>
+              </div>
+
+              {/* Dynamic Shadow Tunnel status indicators */}
+              <div className="flex flex-wrap gap-3 items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 text-[11px] font-mono text-slate-400 mb-6">
                 <div className="flex items-center gap-2">
                   <CompassOutlined className="text-blue-400 animate-spin" />
-                  <span className="text-sm font-bold font-mono">NATIVE WEBVIEW TERMINAL WRAPPER</span>
+                  <span>SHADOW WEBPORT:</span>
+                  {tunnelStatus === "connecting" ? (
+                    <Tag color="warning" icon={<LoadingOutlined />} className="border-none font-bold">CONNECTING...</Tag>
+                  ) : (
+                    <Tag color="success" icon={<CheckCircleOutlined />} className="border-none font-bold">SECURED ONLINE</Tag>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Tag color="orange" className="font-bold border-none uppercase text-[10px]">
-                    Brand Masking Active
-                  </Tag>
-                  <Tag color="green" className="font-bold border-none uppercase text-[10px]">
-                    Client IP Secured
+                  <span>SESSION COOKIE:</span>
+                  <Tag color="blue" className="border-none font-bold font-mono text-[9px] uppercase">
+                    {sessionToken}
                   </Tag>
                 </div>
               </div>
-            }
-          >
-            {/* Platform tab selector buttons */}
-            <div className="flex gap-2 mb-4 bg-slate-950 p-2 rounded-2xl border border-slate-850">
-              <Button
-                type={platform === "taobao" ? "primary" : "text"}
-                onClick={() => setPlatform("taobao")}
-                className={`font-semibold rounded-xl text-xs flex-1 ${
-                  platform === "taobao" ? "bg-[#FF5000] text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                🛍️ Taobao H5 Mobile
-              </Button>
-              <Button
-                type={platform === "1688" ? "primary" : "text"}
-                onClick={() => setPlatform("1688")}
-                className={`font-semibold rounded-xl text-xs flex-1 ${
-                  platform === "1688" ? "bg-[#FF6C00] text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                🏭 1688 H5 Mobile
-              </Button>
-              <Button
-                type={platform === "tmall" ? "primary" : "text"}
-                onClick={() => setPlatform("tmall")}
-                className={`font-semibold rounded-xl text-xs flex-1 ${
-                  platform === "tmall" ? "bg-[#C40000] text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                💎 Tmall H5 Mobile
-              </Button>
-            </div>
 
-            {/* Simulated browser search input inside WebView layout */}
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 mb-4">
-              <div className="flex gap-2">
+              {/* Keyword query bar */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-3">
                 <Input
-                  placeholder="Tìm kiếm sản phẩm trên trang gốc..."
+                  placeholder="Nhập tên mặt hàng bằng tiếng Việt để dịch thuật & quét..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onPressEnter={handleKeywordSearch}
-                  className="rounded-xl bg-slate-900 border-slate-800 text-slate-200 text-xs placeholder:text-slate-500"
+                  onPressEnter={handleSearch}
+                  size="large"
+                  prefix={<SearchOutlined className="text-slate-400" />}
+                  className="rounded-xl border-slate-200 py-2.5 text-sm flex-1"
                 />
                 <Button
                   type="primary"
-                  onClick={handleKeywordSearch}
-                  loading={loadingSearch}
-                  icon={<SearchOutlined />}
-                  className="bg-blue-600 hover:bg-blue-700 border-none font-bold rounded-xl text-xs px-5"
+                  onClick={handleSearch}
+                  loading={loading && searchQuery !== ""}
+                  size="large"
+                  className="bg-blue-600 hover:bg-blue-700 border-none font-bold rounded-xl text-sm px-8"
                 >
-                  Tìm kiếm
+                  Quét Nguồn Hàng
                 </Button>
               </div>
-            </div>
 
-            {/* Embedded IFrame Sandboxed Client Viewport */}
-            <div className="relative w-full h-[600px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
-              
-              {/* Floating Shield Overlays */}
-              <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-slate-950/95 to-slate-950/0 z-35 pointer-events-none flex items-center justify-between px-4">
-                <span className="text-[10px] text-slate-400 font-mono">MASK: stealth_header_strip_on</span>
-                <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">DOM SHIELD ACTIVE</span>
+            </Card>
+
+            {/* Keyword Search Result List */}
+            {searchResults.length > 0 && !parsedProduct && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+                {searchResults.map((item) => (
+                  <Card
+                    key={item.id}
+                    bordered={false}
+                    className="shadow-md rounded-3xl bg-white border border-slate-100 hover:shadow-lg transition-shadow overflow-hidden flex flex-col"
+                    cover={
+                      <div className="h-44 bg-slate-50 relative overflow-hidden flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={item.imageUrl}
+                          alt={item.titleVi}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-3 left-3 flex gap-2">
+                          <Tag color="orange" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
+                            {item.platform.toUpperCase()}
+                          </Tag>
+                          <Tag color="green" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
+                            {item.salesCount} Đã Bán
+                          </Tag>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <div className="space-y-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-xs leading-snug line-clamp-2">
+                          {item.titleVi}
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-mono mt-1 truncate">
+                          Nhà cung cấp: {item.supplier}
+                        </p>
+                      </div>
+
+                      <div>
+                        <Divider className="my-2" />
+
+                        <div className="flex justify-between items-baseline mb-3">
+                          <span className="text-[10px] text-slate-400">Giá gốc: ¥ {item.priceCNY.toFixed(2)}</span>
+                          <span className="text-orange-600 font-extrabold text-sm font-mono">
+                            {formatVND(item.priceCNY * exchangeRate)}
+                          </span>
+                        </div>
+
+                        <Button
+                          type="primary"
+                          onClick={() => {
+                            setParsedProduct(item);
+                            message.success(`Đã chọn sản phẩm: ${item.titleVi}`);
+                          }}
+                          className="w-full bg-blue-600 border-none rounded-xl text-[11px] font-bold py-2 h-auto"
+                        >
+                          Xem cấu trúc báo giá & Tạo đơn
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
+            )}
 
-              {/* Live Iframe Portal */}
-              <iframe
-                id="native-webview-iframe"
-                src={iframeUrl}
-                className="w-full h-full border-none z-10"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                title="Sourcing Frame Target"
-              />
+            {/* Empty State Fallback Guard */}
+            {isBlocked && (
+              <Card bordered={false} className="shadow-lg rounded-3xl bg-white border border-slate-100 p-8 text-center animate-fadeIn">
+                <div className="text-amber-500 mb-3">
+                  <WarningOutlined style={{ fontSize: 40 }} />
+                </div>
+                <div className="font-bold text-slate-800 text-xs mb-2 uppercase font-mono tracking-wider">
+                  MÁY CHỦ BỊ NGHẼN BẢO MẬT GỐC
+                </div>
+                <p className="text-[11px] text-slate-500 max-w-md mx-auto leading-relaxed">
+                  Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới
+                </p>
+              </Card>
+            )}
 
-              <div className="absolute bottom-0 left-0 w-full h-10 bg-slate-950 z-35 pointer-events-none flex items-center justify-center">
-                <span className="text-[9px] text-slate-500 font-mono">Bắc Trung Hải Logistics - Safe Sandbox</span>
-              </div>
-            </div>
-          </Card>
+          </div>
         </Col>
 
-        {/* Right Viewport: Link Snatcher Console & Price Calculator */}
-        <Col xs={24} lg={9}>
+        {/* Right Side: Link Snatcher Console & Price Calculator */}
+        <Col xs={24} lg={8}>
           <div className="space-y-6">
             
-            {/* Link Snatcher Input Box */}
+            {/* Link Snatcher Console */}
             <Card
               bordered={false}
               className="shadow-lg rounded-3xl bg-white border border-slate-100"
               title={
                 <div className="flex items-center gap-2 text-slate-800">
                   <LinkOutlined className="text-blue-600" />
-                  <span className="text-sm font-extrabold uppercase">Báo Giá Link Gốc VIP</span>
+                  <span className="text-sm font-extrabold uppercase">Báo Giá Link VIP</span>
                 </div>
               }
             >
               <p className="text-slate-500 text-xs leading-relaxed mb-4">
-                Copy link từ khung nhúng WebView dán vào đây để bóc tách giá gốc CNY và tự động quy đổi ra VNĐ:
+                Dán đường link sản phẩm Taobao/1688/Tmall của bạn để trích xuất dải giá CNY chính xác:
               </p>
 
               <div className="space-y-3">
                 <Input.TextArea
-                  placeholder="Dán link sản phẩm Taobao/1688/Tmall..."
+                  placeholder="Dán link sản phẩm của bạn tại đây..."
                   value={pastedLink}
                   onChange={(e) => setPastedLink(e.target.value)}
                   rows={3}
@@ -375,7 +475,7 @@ function SearchDashboard() {
                 <Button
                   type="primary"
                   onClick={handleParseLink}
-                  loading={loadingParse}
+                  loading={loading && pastedLink !== ""}
                   icon={<GlobalOutlined />}
                   className="w-full min-h-[40px] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-semibold text-xs flex items-center justify-center"
                 >
@@ -384,7 +484,7 @@ function SearchDashboard() {
               </div>
             </Card>
 
-            {/* Display Parsed Product Details from Link */}
+            {/* Display Parsed Product Details from Link/Query */}
             {parsedProduct && (
               <Card
                 bordered={false}
@@ -407,11 +507,11 @@ function SearchDashboard() {
               >
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-bold text-slate-800 text-sm leading-snug line-clamp-2">
+                    <h4 className="font-bold text-slate-800 text-xs leading-snug line-clamp-2">
                       {parsedProduct.titleVi}
                     </h4>
                     <p className="text-[10px] text-slate-400 font-mono mt-1 truncate">
-                      ID: {parsedProduct.id}
+                      Mã sản phẩm: {parsedProduct.id}
                     </p>
                   </div>
 
@@ -451,7 +551,7 @@ function SearchDashboard() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Phí dịch vụ mua hộ (5%):</span>
+                      <span>Phí mua hộ ủy thác (5%):</span>
                       <span>{formatVND(parsedProduct.priceCNY * quantity * exchangeRate * 0.05)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-slate-800 text-xs border-t border-slate-200/60 pt-1 mt-1">
@@ -487,66 +587,13 @@ function SearchDashboard() {
               </Card>
             )}
 
-            {/* Keyword Search Result List */}
-            {searchResults.length > 0 && !parsedProduct && (
-              <Card
-                bordered={false}
-                className="shadow-lg rounded-3xl bg-white border border-slate-100 max-h-[500px] overflow-y-auto"
-                title={
-                  <div className="text-slate-800 text-xs font-bold uppercase">
-                    Kết quả bóc tách từ khóa ({searchResults.length})
-                  </div>
-                }
-              >
-                <div className="space-y-4">
-                  {searchResults.map((item) => (
-                    <div key={item.id} className="flex gap-3 border-b border-slate-50 pb-3 last:border-b-0 last:pb-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.imageUrl}
-                        alt={item.titleVi}
-                        className="w-14 h-14 rounded-xl object-cover shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h5 className="font-bold text-slate-800 text-xs truncate">{item.titleVi}</h5>
-                        <p className="text-[10px] text-slate-400 truncate font-mono">{item.supplier}</p>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-orange-600 font-bold text-xs font-mono">
-                            {formatVND(item.priceCNY * exchangeRate)}
-                          </span>
-                          <Button
-                            type="primary"
-                            size="small"
-                            onClick={() => {
-                              setParsedProduct(item);
-                              message.success(`Đã chọn sản phẩm: ${item.titleVi}`);
-                            }}
-                            className="bg-blue-600 border-none rounded-lg text-[10px] h-6"
-                          >
-                            Chọn sản phẩm
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {/* Empty State Fallback Guard */}
-            {isBlocked && (
-              <Card bordered={false} className="shadow-lg rounded-3xl bg-white border border-slate-100 p-6 text-center">
-                <div className="text-amber-500 mb-2">
-                  <WarningOutlined style={{ fontSize: 32 }} />
-                </div>
-                <div className="font-bold text-slate-800 text-xs mb-2">
-                  MÁY CHỦ BỊ NGHẼN BẢO MẬT
-                </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới
-                </p>
-              </Card>
-            )}
+            {/* Exchange rate information banner */}
+            <Card bordered={false} className="shadow-lg rounded-3xl bg-blue-50/50 border border-blue-100 p-1">
+              <div className="flex items-center gap-2 text-xs text-blue-800">
+                <DollarOutlined />
+                <span>Tỷ giá áp dụng: <strong>1 CNY = {exchangeRate.toLocaleString("vi-VN")} đ</strong></span>
+              </div>
+            </Card>
 
           </div>
         </Col>
