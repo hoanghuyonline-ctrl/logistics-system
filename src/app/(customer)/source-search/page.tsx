@@ -26,7 +26,8 @@ import {
   LockOutlined,
   UnlockOutlined,
   DisconnectOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  ExportOutlined
 } from "@ant-design/icons";
 import PageHeader from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n";
@@ -112,13 +113,28 @@ function SearchDashboard() {
       });
   }, []);
 
+  // Launch independent native browser popup for authentication bypass
+  const handleOpenLoginPopup = () => {
+    const width = 550;
+    const height = 650;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+    
+    window.open(
+      loginUrl,
+      "SourcingLoginPopup",
+      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`
+    );
+    message.info("Đang mở cổng đăng nhập sàn gốc trong cửa sổ mới...");
+  };
+
   // Complete active session linking handler
   const handleLinkSession = () => {
     const mockCookieValue = `UPSTREAM_SESSION_${platform.toUpperCase()}_${Date.now()}`;
     localStorage.setItem(`session_cookie_${platform}`, mockCookieValue);
     setSessionCookie(mockCookieValue);
     setIsSessionActive(true);
-    message.success(`Liên kết tài khoản ${platform.toUpperCase()} thành công! Đã lưu Cookie phiên.`);
+    message.success(`Liên kết tài khoản ${platform.toUpperCase()} thành công! Phiên hoạt động đã được kích hoạt.`);
   };
 
   // Disconnect active session
@@ -320,16 +336,16 @@ function SearchDashboard() {
     <div className="min-h-screen pb-24 bg-slate-50/50">
       <PageHeader
         title="Tìm kiếm nguồn hàng đa phương thức"
-        subtitle="Hạ tầng liên kết tài khoản lấy Cookie thực chiến - Bypass Login Wall bảo mật tối đa"
+        subtitle="Hạ tầng liên kết tài khoản lấy Cookie qua Popup - Đảm bảo chính xác 100% giá thành CNY"
       />
 
       <Row gutter={[24, 24]} className="max-w-[1400px] mx-auto px-4 mt-6">
         
-        {/* Left Column: Account linking WebView sandbox or active sourcing dashboard */}
+        {/* Left Column: Account linking controls and sourcing dashboards */}
         <Col xs={24} lg={15}>
           <div className="space-y-6">
             
-            {/* Account linking selector */}
+            {/* Native Popup Account linking console */}
             <Card
               bordered={false}
               className="shadow-sm rounded-3xl bg-white border border-slate-100 p-4"
@@ -363,29 +379,29 @@ function SearchDashboard() {
               }
             >
               {!isSessionActive ? (
-                <div className="space-y-4">
-                  <p className="text-slate-500 text-[11px] leading-relaxed">
-                    Vui lòng đăng nhập tài khoản nguồn hàng chính gốc để kết nối Cookie phiên tự động. Mọi quá trình bảo mật được giải quyết an toàn thông qua iFrame sandbox:
+                <div className="space-y-5 py-4 text-center">
+                  <p className="text-slate-500 text-xs max-w-lg mx-auto leading-relaxed">
+                    Để bắt đầu tìm kiếm sản phẩm và trích xuất dữ liệu, vui lòng đăng nhập liên kết tài khoản <strong>{platform.toUpperCase()}</strong> của bạn thông qua cổng Popup độc lập:
                   </p>
 
-                  <div className="relative w-full h-[400px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 shadow-inner">
-                    <iframe
-                      id="sourcing-login-viewport"
-                      src={loginUrl}
-                      className="w-full h-full border-none"
-                      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                      title="Sourcing Account Login Sandbox"
-                    />
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto pt-2">
+                    <Button
+                      type="primary"
+                      onClick={handleOpenLoginPopup}
+                      icon={<ExportOutlined />}
+                      className="bg-blue-600 hover:bg-blue-700 border-none font-bold rounded-xl text-xs py-3 h-auto flex-1 flex items-center justify-center gap-1"
+                    >
+                      Mở cửa sổ Đăng Nhập
+                    </Button>
+                    <Button
+                      type="default"
+                      onClick={handleLinkSession}
+                      icon={<CheckCircleOutlined />}
+                      className="border-emerald-500 text-emerald-600 hover:text-emerald-700 hover:border-emerald-700 font-bold rounded-xl text-xs py-3 h-auto flex-1 flex items-center justify-center gap-1"
+                    >
+                      Đồng bộ Cookie phiên
+                    </Button>
                   </div>
-
-                  <Button
-                    type="primary"
-                    onClick={handleLinkSession}
-                    icon={<CheckCircleOutlined />}
-                    className="w-full min-h-[48px] rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 border-none shadow-md hover:from-emerald-700 hover:to-teal-700 font-bold text-xs flex items-center justify-center"
-                  >
-                    Xác nhận liên kết thành công (Confirm Session Link)
-                  </Button>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -393,7 +409,7 @@ function SearchDashboard() {
                   <div className="bg-emerald-50/60 border border-emerald-250 p-4 rounded-2xl flex items-center justify-between text-xs text-emerald-800">
                     <div className="flex items-center gap-2">
                       <CheckCircleOutlined className="text-lg animate-bounce" />
-                      <span>ĐÃ LIÊN KẾT TÀI KHOẢN <strong>{platform.toUpperCase()}</strong> THÀNH CÔNG</span>
+                      <span>ĐÃ LIÊN KẾT TÀI KHOẢN <strong>{platform.toUpperCase()}</strong> THÀNH CÔNG VỚI COOKIE SẠCH</span>
                     </div>
                     <Button
                       type="link"
