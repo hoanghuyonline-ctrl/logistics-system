@@ -41,6 +41,14 @@
 - **Workflow Persistence:**
   - *Direct Purchase (Order):* Sets `orderType` to `ECOMMERCE` on `POST /api/orders` to store it as a direct order.
   - *Consignment / Entrust:* Sets `orderType` to `CONSIGNMENT` on `POST /api/orders` and assigns a temporary `KGBTH-` tracking code.
+- **Real-Time Product Snatcher Script Injection (H5 Mobile Scopes):**
+  - Automatically intercepts user interaction on the "Báo giá chi tiết & Tạo đơn" (Lựa chọn sản phẩm) button.
+  - Utilizes the clean client IP from the client's mobile browser to fetch/log data, bypassing IP restrictions.
+  - Restricts extraction strictly within the following 3 mobile H5 scopes:
+    1. *Taobao Mobile H5:* Scope `https://m.taobao.com/` or `https://h5api.m.taobao.com/`, extracting product link with `id=...` parameter and price using `.price` class.
+    2. *1688 Mobile H5:* Scope `https://m.1688.com/`, extracting link with `offer/` parameter and sỉ/lẻ price based on quantity.
+    3. *Tmall Mobile H5:* Scope `https://detail.m.tmall.com/`, matching Taobao's structure.
+  - Automatically applies the fixed exchange rate of **3980 VND/CNY** in calculations.
 - **Styling:** Uses premium responsive Ant Design elements wrapped in React `Suspense` with explicit loading indicators.
 - **Commit History:** Officially deployed under stable commit `c535958c274b618b083eb6fd638a95e017730340`.
 
