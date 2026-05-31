@@ -17,12 +17,10 @@ import {
 import {
   CompassOutlined,
   DollarOutlined,
-  InfoCircleOutlined,
   LinkOutlined,
   ShoppingCartOutlined,
   FileTextOutlined,
   SearchOutlined,
-  WarningOutlined,
   GlobalOutlined
 } from "@ant-design/icons";
 import PageHeader from "@/components/ui/PageHeader";
@@ -59,8 +57,6 @@ function SearchDashboard() {
   // Loading & Submitting
   const [loading, setLoading] = useState(false);
   const [submittingType, setSubmittingType] = useState<"ECOMMERCE" | "CONSIGNMENT" | null>(null);
-  
-  const [isBlocked, setIsBlocked] = useState(false);
 
   // Sync platforms and trigger clean states
   useEffect(() => {
@@ -68,7 +64,6 @@ function SearchDashboard() {
     setSearchResults([]);
     setPastedLink("");
     setParsedProduct(null);
-    setIsBlocked(false);
   }, [platform]);
 
   // Fetch exchange rate on mount
@@ -93,7 +88,6 @@ function SearchDashboard() {
     }
 
     setLoading(true);
-    setIsBlocked(false);
     setSearchResults([]);
     setParsedProduct(null);
 
@@ -106,13 +100,13 @@ function SearchDashboard() {
         if (data && data.items && data.items.length > 0) {
           setSearchResults(data.items);
         } else {
-          setIsBlocked(true);
+          message.info("Không tìm thấy sản phẩm tương thích. Vui lòng thử lại với từ khóa khác!");
         }
       } else {
-        setIsBlocked(true);
+        message.error("Gặp sự cố kết nối tới máy chủ nguồn. Vui lòng quét lại!");
       }
     } catch (e) {
-      setIsBlocked(true);
+      message.error("Lỗi kết nối mạng khi tìm kiếm sản phẩm.");
     } finally {
       setLoading(false);
     }
@@ -138,13 +132,13 @@ function SearchDashboard() {
           setParsedProduct(firstItem);
           message.success("Bóc tách liên kết VIP thành công! Sẵn sàng tạo đơn hàng.");
         } else {
-          message.error("Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới");
+          message.error("Không trích xuất được thông tin từ link này. Vui lòng dán link sản phẩm chuẩn Taobao/1688/Tmall!");
         }
       } else {
-        message.error("Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới");
+        message.error("Giao dịch kết nối bị chặn bởi tường lửa đối tác.");
       }
     } catch (e) {
-      message.error("Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới");
+      message.error("Lỗi mạng khi trích xuất giá thành.");
     } finally {
       setLoading(false);
     }
@@ -231,7 +225,7 @@ function SearchDashboard() {
   };
 
   return (
-    <div className="min-h-screen pb-12 bg-slate-50/50">
+    <div className="min-h-screen pb-24 bg-slate-50/50">
       <PageHeader
         title="Tìm kiếm nguồn hàng đa phương thức"
         subtitle="Hệ thống Nhúng ngầm Shadow Viewport - Báo giá trực tiếp CNY & Tạo đơn mua hàng tự động"
@@ -304,7 +298,7 @@ function SearchDashboard() {
               {/* Main query input panel */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Input
-                  placeholder="Nhập tên mặt hàng bằng tiếng Việt (ví dụ: giày thể thao, tai nghe...)"
+                  placeholder="Nhập tên mặt hàng bằng tiếng Việt..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onPressEnter={handleSearch}
@@ -390,26 +384,11 @@ function SearchDashboard() {
               </Row>
             )}
 
-            {/* Strict Empty State Fallback Guard */}
-            {isBlocked && (
-              <Card bordered={false} className="shadow-sm rounded-3xl bg-white border border-slate-100 p-8 text-center animate-fadeIn">
-                <div className="text-amber-500 mb-3">
-                  <WarningOutlined style={{ fontSize: 36 }} />
-                </div>
-                <div className="font-bold text-slate-850 text-xs mb-2 tracking-wide font-mono uppercase">
-                  MÁY CHỦ GỐC NGHẼN BẢO MẬT
-                </div>
-                <p className="text-[11px] text-slate-500 max-w-md mx-auto leading-relaxed">
-                  Hệ thống đang nghẽn mạch bảo mật, vui lòng dán trực tiếp đường link sản phẩm vào ô bên dưới
-                </p>
-              </Card>
-            )}
-
           </div>
         </Col>
 
-        {/* Right Grid: VIP Link Snatcher console & pricing summaries */}
-        <Col xs={24} lg={9}>
+        {/* Right Grid: VIP Link Snatcher console & pricing summaries - Generous bottom padding to prevent Zalo overlaps */}
+        <Col xs={24} lg={9} className="pb-32 sm:pb-36">
           <div className="space-y-6">
             
             {/* Sourcing Link Snatcher panel */}
@@ -419,7 +398,7 @@ function SearchDashboard() {
               title={
                 <div className="flex items-center gap-2 text-slate-800">
                   <LinkOutlined className="text-blue-600" />
-                  <span className="text-xs font-extrabold uppercase tracking-wider">Báo Giá Link VIP</span>
+                  <span className="text-xs font-extrabold uppercase tracking-wider">BÁO GIÁ LINK VIP</span>
                 </div>
               }
             >
@@ -427,7 +406,7 @@ function SearchDashboard() {
                 Dán đường link sản phẩm Taobao/1688/Tmall để trích xuất dải giá CNY gốc và quy đổi tức thì:
               </p>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Input.TextArea
                   placeholder="Dán link sản phẩm của bạn..."
                   value={pastedLink}
@@ -440,7 +419,7 @@ function SearchDashboard() {
                   onClick={handleParseLink}
                   loading={loading && pastedLink !== ""}
                   icon={<GlobalOutlined />}
-                  className="w-full min-h-[44px] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-bold text-xs flex items-center justify-center"
+                  className="w-full min-h-[48px] rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 border-none shadow-md hover:from-blue-700 hover:to-indigo-700 font-bold text-xs flex items-center justify-center"
                 >
                   Bóc tách giá trị thực tế
                 </Button>
@@ -532,7 +511,7 @@ function SearchDashboard() {
                       icon={<ShoppingCartOutlined />}
                       onClick={() => handleCreateOrder("ECOMMERCE", parsedProduct)}
                       loading={submittingType === "ECOMMERCE"}
-                      className="w-full bg-[#FF5000] border-none text-white hover:bg-[#e04600] font-bold rounded-xl text-xs py-2.5 h-auto flex items-center justify-center gap-1 shadow-sm"
+                      className="w-full bg-[#FF5000] border-none text-white hover:bg-[#e04600] font-bold rounded-2xl text-xs py-3 h-auto flex items-center justify-center gap-1 shadow-sm"
                     >
                       Mua Trực Tiếp (Order)
                     </Button>
@@ -541,7 +520,7 @@ function SearchDashboard() {
                       icon={<FileTextOutlined />}
                       onClick={() => handleCreateOrder("CONSIGNMENT", parsedProduct)}
                       loading={submittingType === "CONSIGNMENT"}
-                      className="w-full border-blue-500 text-blue-600 hover:text-blue-700 hover:border-blue-700 font-bold rounded-xl text-xs py-2.5 h-auto flex items-center justify-center gap-1"
+                      className="w-full border-blue-500 text-blue-600 hover:text-blue-700 hover:border-blue-700 font-bold rounded-2xl text-xs py-3 h-auto flex items-center justify-center gap-1"
                     >
                       Ký Gửi / Ủy Thác (Bến bãi)
                     </Button>
