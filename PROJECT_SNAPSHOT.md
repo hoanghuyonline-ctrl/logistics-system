@@ -617,7 +617,7 @@ pm2 restart logistics-system
 - ~~Knowledge/Marketing Menu~~ ✓ Article CMS, public knowledge base, SEO categories (PR #390)
 - ~~Domestic Transport Menu~~ ✓ 3 service types, customer request form, admin management (PR #391)
 - ~~Online Quotation Form~~ ✓ Public request form, admin management, lead capture (PR #392)
-- ~~Real-Time Product Snatcher Script Injection~~ ✓ Client clean IP H5 Snatcher active on `/source-search` "Lựa chọn sản phẩm" click, extracting link, price, and picUrl under fixed exchange rate 3980 for Taobao, 1688, Tmall Mobile H5 scopes, logging silently to Webhook API.
+- ~~Real-Time Product Snatcher H5 WebView Sandbox~~ ✓ Interactive H5 Mobile WebView Simulator active on `/source-search` for Taobao, 1688, Tmall Mobile H5 scopes using client clean IP, running the quarantined extraction engine under fixed exchange rate 3980, logging silently to Webhook API.
 - International Trade Services (Thương mại quốc tế) — import consulting, tax calculation, HS Code, trade policy
 - Documents Menu (Chứng từ) — Invoice, Packing List, Bill of Lading, CO Forms, Manifest, AMS/ACI/ENS
 - Accountant finance/transactions pages (dashboard done, finance & analytics use admin routes)

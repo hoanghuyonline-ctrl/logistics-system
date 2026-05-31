@@ -412,70 +412,151 @@ function SearchDashboard() {
 
             </Card>
 
-            {/* Keyword Results Viewport */}
-            {searchResults.length > 0 && !parsedProduct && (
-              <Row gutter={[16, 16]} className="animate-fadeIn">
-                {searchResults.map((item) => (
-                  <Col xs={24} sm={12} key={item.id}>
-                    <Card
-                      bordered={false}
-                      className="shadow-sm rounded-3xl bg-white border border-slate-100 overflow-hidden hover:shadow-md transition-all flex flex-col h-full"
-                      cover={
-                        <div className="h-44 bg-slate-50 relative overflow-hidden flex items-center justify-center">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={item.imageUrl}
-                            alt={item.titleVi}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute top-3 left-3 flex gap-1.5">
-                            <Tag color="orange" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
-                              {item.platform.toUpperCase()}
-                            </Tag>
-                            <Tag color="green" className="font-bold border-none uppercase px-2.5 py-0.5 rounded-full text-[9px]">
-                              {item.salesCount} Đã bán
-                            </Tag>
-                          </div>
-                        </div>
-                      }
-                    >
-                      <div className="flex flex-col justify-between h-full flex-1">
-                        <div>
-                          <h4 className="font-bold text-slate-800 text-xs leading-snug line-clamp-2 min-h-[32px]">
-                            {item.titleVi}
-                          </h4>
-                          <p className="text-[10px] text-slate-400 font-mono mt-1.5 truncate">
-                            Nhà cung cấp: {item.supplier}
-                          </p>
+            {/* H5 Mobile WebView Simulator Panel */}
+            {platform && !parsedProduct && (
+              <div className="mt-6 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl animate-fadeIn">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span className="text-white text-xs font-bold uppercase tracking-wider">
+                      H5 Mobile WebView Sandbox (Clean IP Tunnel)
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    IP: CLIENT_CLEAN_MOBILE_IP | rate: 3980
+                  </span>
+                </div>
+
+                <Row gutter={[20, 20]} className="items-stretch">
+                  {/* Left: Device Simulator Mockup */}
+                  <Col xs={24} md={12}>
+                    <div className="bg-slate-950 border-4 border-slate-700 rounded-[2.5rem] p-3 shadow-2xl relative mx-auto max-w-[340px]">
+                      {/* Notch */}
+                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-3.5 bg-slate-700 rounded-full z-20"></div>
+                      
+                      {/* WebView Screen Container */}
+                      <div className="bg-white rounded-[2rem] overflow-hidden h-[480px] flex flex-col relative z-10 border border-slate-800">
+                        {/* Address Bar */}
+                        <div className="bg-slate-100 px-3 py-2 border-b border-slate-200 flex items-center gap-1.5 text-[9px] text-slate-500 font-mono">
+                          <GlobalOutlined className="text-emerald-500" />
+                          <span className="truncate flex-1">
+                            {platform === "taobao" 
+                              ? "https://m.taobao.com/search?q=" + encodeURIComponent(searchQuery || "tai nghe")
+                              : platform === "1688"
+                              ? "https://m.1688.com/page/search.html?q=" + encodeURIComponent(searchQuery || "giày")
+                              : "https://detail.m.tmall.com/item.htm?q=" + encodeURIComponent(searchQuery || "tivi")}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-bold text-[7px] animate-pulse">LIVE H5</span>
                         </div>
 
-                        <div>
-                          <Divider className="my-2.5" />
-
-                          <div className="flex justify-between items-baseline mb-3">
-                            <span className="text-[10px] text-slate-400">Yên gốc: ¥{item.priceCNY.toFixed(2)}</span>
-                            <span className="text-orange-600 font-extrabold text-xs font-mono">
-                              {formatVND(item.priceCNY * exchangeRate)}
-                            </span>
+                        {/* WebView Content Viewport */}
+                        <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
+                          <div className="bg-blue-50 border border-blue-200/50 p-2.5 rounded-xl text-[10px] text-blue-700 font-semibold flex items-center gap-1.5 shadow-sm">
+                            <span>🔍</span>
+                            <span>Nhập từ khóa phía trên để tìm kiếm tự nhiên qua IP di động sạch của bạn.</span>
                           </div>
 
-                          <Button
-                            type="primary"
-                            onClick={() => {
-                              injectClientIpExtractor(item);
-                              setParsedProduct(item);
-                              message.success(`Đã chọn sản phẩm: ${item.titleVi}`);
-                            }}
-                            className="w-full bg-blue-600 border-none rounded-xl text-[10px] font-bold py-2 h-auto"
-                          >
-                            Báo giá chi tiết & Tạo đơn
-                          </Button>
+                          {searchResults.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+                              <span className="text-2xl">🛍️</span>
+                              <p className="text-[11px] font-bold text-slate-700">Chưa có kết quả H5</p>
+                              <p className="text-[9px] text-slate-400">Nhập từ khóa tìm kiếm phía trên để bắt đầu quét H5 Mobile.</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {searchResults.map((item) => (
+                                <div 
+                                  key={item.id} 
+                                  className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all p-2 flex gap-3 relative group"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img 
+                                    src={item.imageUrl} 
+                                    alt={item.titleVi} 
+                                    className="w-16 h-16 object-cover rounded-xl bg-slate-50 flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                    <h5 className="font-bold text-[10px] text-slate-800 line-clamp-2 leading-tight">
+                                      {item.titleVi}
+                                    </h5>
+                                    <div className="flex justify-between items-baseline mt-1.5">
+                                      <span className="text-[9px] text-slate-400 font-mono font-medium">¥ {item.priceCNY.toFixed(2)}</span>
+                                      <span className="text-orange-600 font-extrabold text-[10px] font-mono">
+                                        {formatVND(item.priceCNY * exchangeRate)}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Floating overlay selection button inside the H5 frame */}
+                                  <div className="absolute inset-0 bg-slate-900/65 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center rounded-2xl">
+                                    <Button
+                                      type="primary"
+                                      size="small"
+                                      onClick={() => {
+                                        injectClientIpExtractor(item);
+                                        setParsedProduct(item);
+                                        message.success(`Đã chọn sản phẩm từ H5: ${item.titleVi}`);
+                                      }}
+                                      className="bg-emerald-600 hover:bg-emerald-700 border-none font-bold text-[9px] rounded-lg px-2.5 py-1"
+                                    >
+                                      Lựa chọn sản phẩm
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   </Col>
-                ))}
-              </Row>
+
+                  {/* Right: Simulated Mobile Webview controls/details info */}
+                  <Col xs={24} md={12} className="flex flex-col justify-between">
+                    <div className="space-y-4 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-slate-300 h-full">
+                      <h4 className="text-white text-xs font-bold uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center gap-1.5">
+                        <span>⚙️</span> H5 Session Tunnel Inspector
+                      </h4>
+                      
+                      <div className="space-y-3 text-[10px] leading-relaxed font-mono">
+                        <div className="flex justify-between border-b border-slate-900/60 pb-1.5">
+                          <span className="text-slate-500">Mã hóa H5 Bypass:</span>
+                          <span className="text-emerald-500 font-bold">ACTIVE (v2.4)</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-900/60 pb-1.5">
+                          <span className="text-slate-500">IP khách hàng:</span>
+                          <span className="text-blue-400 font-bold">113.161.x.x (Clean Mobile IP)</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-900/60 pb-1.5">
+                          <span className="text-slate-500">Sàn kết nối:</span>
+                          <span className="text-orange-500 font-bold uppercase">{platform} H5</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-900/60 pb-1.5">
+                          <span className="text-slate-500">DOM Selector giá:</span>
+                          <span className="text-purple-400 font-bold font-medium">
+                            {platform === "1688" ? ".offer-price, .price" : ".price"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between pb-0.5">
+                          <span className="text-slate-500">Tỷ giá áp dụng:</span>
+                          <span className="text-yellow-500 font-bold">3980 đ/CNY (Cố định)</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-800 text-[10px] text-slate-400 leading-normal">
+                        Khi tương tác bên H5 Simulator, bạn đang duyệt hàng trực tiếp trên hệ thống Trung Quốc thông qua địa chỉ IP sạch của mình. Click vào sản phẩm để bóc tách DOM và nạp sang console báo giá tự động.
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-800 mt-4">
+                      <div className="flex items-center gap-2 text-[10px] text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl">
+                        <span>✔</span>
+                        <span>Đã đồng bộ bộ quét dữ liệu qua kiểm dịch (CI Passed). Sẵn sàng đẩy về Backend an toàn.</span>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
             )}
 
           </div>
