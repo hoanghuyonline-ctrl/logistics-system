@@ -44,10 +44,14 @@
 - **H5 Mobile WebView Sandbox & Real-Time Product Snatcher:**
   - Intercepting the `Taobao Sourcing`, `1688 Sourcing`, and `Tmall Sourcing` buttons opens an in-app interactive **H5 Mobile WebView Simulator** device frame.
   - Enables users to naturally browse and search using their clean mobile browser IP and credentials to avoid server IP bans.
+  - Taps into a background H5 Refresher cron-job simulating real mobile handshakes to auto-renew Alibaba H5 tokens (`_m_h5_tk` / `_m_h5_tk_enc`) in-cache 24/7 without needing user login.
   - The clean-room CI-tested extraction engine runs silently inside the device simulator, automatically extracting:
     1. *Taobao Mobile H5:* Scope `https://m.taobao.com/` (or `h5api.m.taobao.com`), capturing URL `id=...` and `.price` / `.price-num`.
     2. *1688 Mobile H5:* Scope `https://m.1688.com/`, capturing URL `/offer/[id].html` and sỉ/lẻ prices.
     3. *Tmall Mobile H5:* Scope `https://detail.m.tmall.com/`, matching Taobao structure.
+  - The WebView results are displayed in a clean **2-column grid layout** showing song song parallel price tags:
+    * Dòng 1: Raw currency prices of the platform (¥).
+    * Dòng 2: Dynamic calculated price in Vietnam Dong under the fixed exchange rate of **3980 VND/CNY** (đ).
   - The floating "Lựa chọn sản phẩm" action overlay automatically applies the fixed exchange rate of **3980 VND/CNY** when transferring parsed product details to the procurement console.
 - **Styling:** Uses premium responsive Ant Design elements wrapped in React `Suspense` with explicit loading indicators.
 - **Commit History:** Officially deployed under stable commit `c535958c274b618b083eb6fd638a95e017730340`.

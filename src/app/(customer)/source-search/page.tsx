@@ -463,27 +463,34 @@ function SearchDashboard() {
                               <p className="text-[9px] text-slate-400">Nhập từ khóa tìm kiếm phía trên để bắt đầu quét H5 Mobile.</p>
                             </div>
                           ) : (
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-2.5">
                               {searchResults.map((item) => (
                                 <div 
                                   key={item.id} 
-                                  className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all p-2 flex gap-3 relative group"
+                                  className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all p-2 flex flex-col justify-between relative group h-full"
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img 
-                                    src={item.imageUrl} 
-                                    alt={item.titleVi} 
-                                    className="w-16 h-16 object-cover rounded-xl bg-slate-50 flex-shrink-0"
-                                  />
-                                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                                    <h5 className="font-bold text-[10px] text-slate-800 line-clamp-2 leading-tight">
+                                  <div>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img 
+                                      src={item.imageUrl} 
+                                      alt={item.titleVi} 
+                                      className="w-full h-24 object-cover rounded-xl bg-slate-50 mb-2 flex-shrink-0"
+                                    />
+                                    <h5 className="font-bold text-[9px] text-slate-800 line-clamp-2 leading-tight px-0.5">
                                       {item.titleVi}
                                     </h5>
-                                    <div className="flex justify-between items-baseline mt-1.5">
-                                      <span className="text-[9px] text-slate-400 font-mono font-medium">¥ {item.priceCNY.toFixed(2)}</span>
-                                      <span className="text-orange-600 font-extrabold text-[10px] font-mono">
-                                        {formatVND(item.priceCNY * exchangeRate)}
-                                      </span>
+                                  </div>
+                                  
+                                  <div className="mt-2 pt-1.5 border-t border-slate-100 px-0.5">
+                                    {/* Line 1: Chinese Yuan Price */}
+                                    <div className="text-[9px] text-slate-400 font-mono flex justify-between">
+                                      <span>Yên gốc:</span>
+                                      <span className="font-semibold text-slate-600">¥ {item.priceCNY.toFixed(2)}</span>
+                                    </div>
+                                    {/* Line 2: Calculated VND Price under 3980 */}
+                                    <div className="text-[10px] text-orange-600 font-extrabold font-mono flex justify-between mt-0.5">
+                                      <span>Việt Nam:</span>
+                                      <span>{formatVND(item.priceCNY * 3980)}</span>
                                     </div>
                                   </div>
 
