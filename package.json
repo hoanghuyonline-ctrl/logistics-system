@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
+    "ci": "npm run lint && npm run typecheck",
     "seed": "npx tsx prisma/seed.ts",
     "seed:knowledge": "npx tsx prisma/seed-support-knowledge.ts",
     "test": "vitest run",
