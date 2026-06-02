@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
+import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { findSupportKnowledgeAnswer } from "@/lib/support-knowledge";
 import { upsertLeadFromChannel } from "@/lib/lead-intake";
@@ -23,10 +24,36 @@ const WELCOME_MESSAGE =
   "Vui lòng gửi mã đơn hàng để tra cứu trạng thái vận chuyển.\n\n" +
   "Ví dụ:\nORD-20260504-I9J0";
 
+// [FIX] Verify X-Hub-Signature-256 from Meta to reject forged webhook calls.
+// Returns true if valid (or if APP_SECRET not configured — graceful degradation).
+function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
+  const appSecret = process.env.MESSENGER_APP_SECRET;
+  if (!appSecret) {
+    // Secret not configured: skip verification but warn
+    console.warn("[messenger/webhook] MESSENGER_APP_SECRET not set — skipping signature check (insecure)");
+    return true;
+  }
+  if (!signatureHeader?.startsWith("sha256=")) {
+    console.warn("[messenger/webhook] Missing or malformed X-Hub-Signature-256 header");
+    return false;
+  }
+  const expected = createHmac("sha256", appSecret).update(rawBody).digest("hex");
+  const received = signatureHeader.slice(7); // strip "sha256="
+  try {
+    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(received, "hex"));
+  } catch {
+    return false;
+  }
+}
+
 async function sendMessage(recipientId: string, text: string): Promise<void> {
   const token = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
   if (!token) {
-    console.warn("[messenger/webhook] MESSENGER_PAGE_ACCESS_TOKEN not configured — skipping reply");
+    console.warn(
+      "[messenger/webhook] ⚠️  MESSENGER_PAGE_ACCESS_TOKEN not configured — skipping reply.\n" +
+      "  → Go to Meta Developer Dashboard → Your App → Messenger → Page Access Token → Generate Token\n" +
+      "  → Paste the new token into .env as MESSENGER_PAGE_ACCESS_TOKEN=<token>"
+    );
     return;
   }
 
@@ -45,9 +72,35 @@ async function sendMessage(recipientId: string, text: string): Promise<void> {
 
     if (!res.ok) {
       const errorBody = await res.text();
-      console.error(
-        `[messenger/webhook] Graph API error — status: ${res.status}, body: ${errorBody}`
-      );
+      // [FIX] Detect OAuthException (token expired / revoked) for clear operator guidance
+      let parsedError: { error?: { code?: number; type?: string; message?: string } } = {};
+      try { parsedError = JSON.parse(errorBody); } catch { /* non-JSON body */ }
+      const errCode = parsedError?.error?.code;
+      const errType = parsedError?.error?.type;
+      if (errType === "OAuthException" || errCode === 190 || errCode === 100) {
+        console.error(
+          `[messenger/webhook] 🔴 OAuthException (code ${errCode}) — Page Access Token is EXPIRED or INVALID.\n` +
+          "  ACTION REQUIRED:\n" +
+          "  1. Go to Meta Developer Dashboard → Your App → Messenger → Page Access Token\n" +
+          "  2. Click 'Generate Token' for the correct Facebook Page\n" +
+          "  3. Update MESSENGER_PAGE_ACCESS_TOKEN in .env / .env.local / server environment\n" +
+          "  4. Restart PM2: pm2 restart logistics-system\n" +
+          `  Raw error: ${errorBody}`
+        );
+      } else if (errCode === 10 || errCode === 200) {
+        console.error(
+          `[messenger/webhook] 🔴 Permission error (code ${errCode}) — App may be in Development mode.\n` +
+          "  ACTION REQUIRED:\n" +
+          "  1. Go to Meta Developer Dashboard → App Review → Permissions\n" +
+          "  2. Request 'pages_messaging' Advanced Access (required for non-admin users)\n" +
+          "  3. Switch App Mode from Development → Live\n" +
+          `  Raw error: ${errorBody}`
+        );
+      } else {
+        console.error(
+          `[messenger/webhook] Graph API error — status: ${res.status}, body: ${errorBody}`
+        );
+      }
       return;
     }
 
@@ -150,10 +203,29 @@ interface MessengerWebhookPayload {
  */
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as MessengerWebhookPayload;
+    // [FIX] Read raw body text first for signature verification before parsing JSON
+    const rawBody = await request.text();
+    const signature = (request as unknown as { headers: { get: (k: string) => string | null } })
+      .headers.get("x-hub-signature-256");
 
+    if (!verifyMetaSignature(rawBody, signature)) {
+      console.warn("[messenger/webhook] ⚠️  Signature mismatch — ignoring request (possible spoofed call)");
+      // Still return 200 so Meta doesn't disable the webhook endpoint
+      return Response.json({ ok: true });
+    }
+
+    let body: MessengerWebhookPayload;
+    try {
+      body = JSON.parse(rawBody) as MessengerWebhookPayload;
+    } catch {
+      console.error("[messenger/webhook] Invalid JSON payload");
+      return Response.json({ ok: true });
+    }
+
+    // [FIX] Always return 200 for non-page objects — returning 404 causes Meta to block/disable the webhook
     if (body.object !== "page") {
-      return Response.json({ error: "Unsupported object type" }, { status: 404 });
+      console.log(`[messenger/webhook] Non-page object type received: "${body.object}" — ignoring`);
+      return Response.json({ ok: true });
     }
 
     if (body.entry) {
