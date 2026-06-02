@@ -77,10 +77,15 @@ export async function POST(req: NextRequest) {
         userName: user.email || user.phone || user.id,
         userDisplayName: user.fullName || user.email || user.phone || "Người dùng Bắc Trung Hải",
         attestationType: "none",
+        // [CROSS-PLATFORM FIX] authenticatorAttachment: "platform" + userVerification: "required"
+        // ensures Samsung/Android shows the native fingerprint popup instead of hanging.
+        // timeout: 60000 prevents Cốc Cốc / Samsung WebView from timing out too early.
         authenticatorSelection: {
+          authenticatorAttachment: "platform",
           residentKey: "preferred",
-          userVerification: "preferred",
+          userVerification: "required",
         },
+        timeout: 60000,
         excludeCredentials,
       });
 

@@ -69,10 +69,15 @@ export async function POST(req: NextRequest) {
         userName: user.email || user.phone || user.id,
         userDisplayName: user.fullName || user.email || user.phone || "Người dùng Bắc Trung Hải",
         attestationType: "none",
+        // [CROSS-PLATFORM FIX] See /api/auth/webauthn/register for rationale.
+        // authenticatorAttachment:"platform" + userVerification:"required" + timeout:60000
+        // fixes Samsung/Android Cốc Cốc fingerprint popup (prevents Timeout).
         authenticatorSelection: {
+          authenticatorAttachment: "platform",
           residentKey: "preferred",
-          userVerification: "preferred",
+          userVerification: "required",
         },
+        timeout: 60000,
         excludeCredentials,
       });
 

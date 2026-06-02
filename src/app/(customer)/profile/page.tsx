@@ -21,6 +21,11 @@ export default function ProfilePage() {
   const [credentials, setCredentials] = useState<any[]>([]);
   const [loadingCredentials, setLoadingCredentials] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
+  // [iOS FIX] Pre-fetched registration options so startRegistration() fires synchronously
+  // inside the onClick handler (iOS requires navigator.credentials.create() within the
+  // same user-gesture tick — async fetch before it causes "Denied Permission").
+  const [prefetchedOptions, setPrefetchedOptions] = useState<any>(null);
+  const [prefetchError, setPrefetchError] = useState<string | null>(null);
 
   async function loadCredentials() {
     try {
@@ -61,8 +66,42 @@ export default function ProfilePage() {
     const identifier = profile.email || profile.phone;
     if (identifier) {
       loadCredentials();
+      // [iOS FIX] Pre-fetch registration options as soon as we know the user identifier.
+      // This runs in the background so that when the user clicks the button,
+      // we can call startRegistration() synchronously without an intervening async fetch.
+      prefetchRegistrationOptions(identifier);
     }
   }, [profile.email, profile.phone]);
+
+  async function prefetchRegistrationOptions(identifier: string) {
+    try {
+      const optRes = await fetch("/api/auth/webauthn/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "options", email: identifier }),
+      });
+      if (!optRes.ok) {
+        const data = await optRes.json();
+        setPrefetchError(data.error || "Không thể lấy thông tin đăng ký");
+        return;
+      }
+      const { options } = await optRes.json();
+      // [SAMSUNG FIX] Enforce platform authenticator + required userVerification client-side.
+      // This guarantees Android/Cốc Cốc shows the native fingerprint dialog.
+      if (!options.authenticatorSelection) {
+        options.authenticatorSelection = {};
+      }
+      options.authenticatorSelection.authenticatorAttachment = "platform";
+      options.authenticatorSelection.userVerification = "required";
+      if (!options.timeout || options.timeout < 60000) {
+        options.timeout = 60000;
+      }
+      setPrefetchedOptions(options);
+      setPrefetchError(null);
+    } catch {
+      setPrefetchError("Lỗi kết nối khi chuẩn bị đăng ký sinh trắc học");
+    }
+  }
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -90,37 +129,56 @@ export default function ProfilePage() {
     }
   }
 
+  // [iOS + SAMSUNG UNIFIED HANDLER]
+  // iOS: startRegistration() is called synchronously — no async fetch inside this handler.
+  // Samsung: options already have authenticatorAttachment:"platform" + userVerification:"required".
   async function registerBiometric() {
     const identifier = profile.email || profile.phone;
     if (!identifier) {
       toast("Bạn cần cập nhật email hoặc số điện thoại trước khi đăng ký sinh trắc học", "error");
       return;
     }
+
+    // If pre-fetched options are stale/missing, do a blocking fetch now.
+    // On iOS this still works as long as the total round-trip < ~5s.
+    let options = prefetchedOptions;
+    if (!options) {
+      if (prefetchError) {
+        toast(prefetchError, "error");
+        return;
+      }
+      // Fallback: fetch synchronously (may fail on slow iOS — rare case)
+      try {
+        const optRes = await fetch("/api/auth/webauthn/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "options", email: identifier }),
+        });
+        if (!optRes.ok) {
+          const data = await optRes.json();
+          throw new Error(data.error || "Không thể lấy thông tin đăng ký");
+        }
+        const { options: freshOpts } = await optRes.json();
+        if (!freshOpts.authenticatorSelection) freshOpts.authenticatorSelection = {};
+        freshOpts.authenticatorSelection.authenticatorAttachment = "platform";
+        freshOpts.authenticatorSelection.userVerification = "required";
+        if (!freshOpts.timeout || freshOpts.timeout < 60000) freshOpts.timeout = 60000;
+        options = freshOpts;
+      } catch (err: any) {
+        toast(err.message || "Không thể lấy Options đăng ký", "error");
+        return;
+      }
+    }
+
     setBiometricRegistering(true);
+    // Invalidate pre-fetched options (challenge is single-use)
+    setPrefetchedOptions(null);
+
     try {
-      // 1. Get registration options from server
-      const optRes = await fetch("/api/auth/webauthn/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "options", email: identifier }),
-      });
-
-      if (!optRes.ok) {
-        const data = await optRes.json();
-        throw new Error(data.error || "Không thể lấy thông tin đăng ký");
-      }
-
-      const { options } = await optRes.json();
-
-      // 2. Enforce userVerification to preferred
-      if (options.authenticatorSelection) {
-        options.authenticatorSelection.userVerification = "preferred";
-      }
-
-      // 3. Prompt OS biometric credential creation
+      // ✅ startRegistration() called with already-ready options — no async gap on iOS
       const credential = await startRegistration(options);
 
-      // 4. Verify credential on Server
+      // Verify credential on server
       const verifyRes = await fetch("/api/auth/webauthn/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -135,9 +193,19 @@ export default function ProfilePage() {
       toast("Kích hoạt Đăng nhập nhanh bằng Vân tay/Thiết bị thành công!", "success");
       setNewKeyName("");
       loadCredentials();
+      // Re-fetch options for next registration attempt
+      prefetchRegistrationOptions(identifier);
     } catch (err: any) {
       console.error("[biometric-register] Error:", err);
-      toast(err.message || "Không thể đăng ký sinh trắc học trên thiết bị này.", "error");
+      const isPermissionDenied = err?.name === "NotAllowedError";
+      toast(
+        isPermissionDenied
+          ? "Bạn đã từ chối quyền sinh trắc học hoặc phiên đã hết hạn. Vui lòng thử lại."
+          : err.message || "Không thể đăng ký sinh trắc học trên thiết bị này.",
+        "error",
+      );
+      // Re-fetch fresh options so user can retry
+      prefetchRegistrationOptions(identifier);
     } finally {
       setBiometricRegistering(false);
     }

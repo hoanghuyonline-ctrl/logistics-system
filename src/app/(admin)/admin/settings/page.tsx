@@ -239,6 +239,10 @@ export default function SettingsPage() {
   const [credentials, setCredentials] = useState<any[]>([]);
   const [loadingCredentials, setLoadingCredentials] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
+  // [iOS FIX] Pre-fetched registration options so startRegistration() fires synchronously
+  // inside the onClick handler (iOS: navigator.credentials.create() MUST be in user-gesture tick).
+  const [prefetchedOptions, setPrefetchedOptions] = useState<any>(null);
+  const [prefetchError, setPrefetchError] = useState<string | null>(null);
 
   const loadCredentials = useCallback(async (emailAddr = adminEmail) => {
     const targetEmail = emailAddr || adminEmail;
@@ -335,6 +339,8 @@ export default function SettingsPage() {
           if (identifier) {
             setAdminEmail(identifier);
             loadCredentials(identifier);
+            // [iOS FIX] Pre-fetch options immediately after we know who the admin is.
+            prefetchAdminRegistrationOptions(identifier);
           }
         }
       })
@@ -502,27 +508,69 @@ export default function SettingsPage() {
     }
   }
 
-  async function registerBiometric() {
-    if (!adminEmail) return;
-    setBiometricRegistering(true);
+  async function prefetchAdminRegistrationOptions(identifier: string) {
     try {
       const optRes = await fetch("/api/auth/biometric/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "register", email: adminEmail }),
+        body: JSON.stringify({ mode: "register", email: identifier }),
       });
-
       if (!optRes.ok) {
         const data = await optRes.json();
-        throw new Error(data.error || "Không thể lấy thông tin đăng ký");
+        setPrefetchError(data.error || "Không thể lấy thông tin đăng ký");
+        return;
       }
-
       const { options } = await optRes.json();
+      // [SAMSUNG FIX] Enforce client-side as safety net
+      if (!options.authenticatorSelection) options.authenticatorSelection = {};
+      options.authenticatorSelection.authenticatorAttachment = "platform";
+      options.authenticatorSelection.userVerification = "required";
+      if (!options.timeout || options.timeout < 60000) options.timeout = 60000;
+      setPrefetchedOptions(options);
+      setPrefetchError(null);
+    } catch {
+      setPrefetchError("Lỗi kết nối khi chuẩn bị đăng ký sinh trắc học");
+    }
+  }
 
-      if (options.authenticatorSelection) {
-        options.authenticatorSelection.userVerification = "preferred";
+  // [iOS + SAMSUNG UNIFIED HANDLER]
+  async function registerBiometric() {
+    if (!adminEmail) return;
+
+    let options = prefetchedOptions;
+    if (!options) {
+      if (prefetchError) {
+        toast(prefetchError, "error");
+        return;
       }
+      // Fallback blocking fetch
+      try {
+        const optRes = await fetch("/api/auth/biometric/options", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "register", email: adminEmail }),
+        });
+        if (!optRes.ok) {
+          const data = await optRes.json();
+          throw new Error(data.error || "Không thể lấy thông tin đăng ký");
+        }
+        const { options: freshOpts } = await optRes.json();
+        if (!freshOpts.authenticatorSelection) freshOpts.authenticatorSelection = {};
+        freshOpts.authenticatorSelection.authenticatorAttachment = "platform";
+        freshOpts.authenticatorSelection.userVerification = "required";
+        if (!freshOpts.timeout || freshOpts.timeout < 60000) freshOpts.timeout = 60000;
+        options = freshOpts;
+      } catch (err: any) {
+        toast(err.message || "Không thể lấy Options đăng ký", "error");
+        return;
+      }
+    }
 
+    setBiometricRegistering(true);
+    setPrefetchedOptions(null); // Challenge is single-use
+
+    try {
+      // ✅ startRegistration() with pre-ready options — synchronous on iOS
       const credential = await startRegistration(options);
 
       const finalName = newKeyName.trim() || `Khóa Vân Tay (${new Date().toLocaleDateString("vi-VN")})`;
@@ -540,9 +588,17 @@ export default function SettingsPage() {
       toast("Kích hoạt Đăng nhập nhanh bằng Vân tay/Thiết bị thành công!", "success");
       setNewKeyName("");
       loadCredentials(adminEmail);
+      prefetchAdminRegistrationOptions(adminEmail);
     } catch (err: any) {
       console.error("[biometric-register] Error:", err);
-      toast(err.message || "Không thể đăng ký sinh trắc học trên thiết bị này.", "error");
+      const isPermissionDenied = err?.name === "NotAllowedError";
+      toast(
+        isPermissionDenied
+          ? "Bạn đã từ chối quyền sinh trắc học hoặc phiên đã hết hạn. Vui lòng thử lại."
+          : err.message || "Không thể đăng ký sinh trắc học trên thiết bị này.",
+        "error",
+      );
+      prefetchAdminRegistrationOptions(adminEmail);
     } finally {
       setBiometricRegistering(false);
     }
