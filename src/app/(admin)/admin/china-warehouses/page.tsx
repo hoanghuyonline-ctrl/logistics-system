@@ -47,6 +47,7 @@ export default function ChinaWarehousesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<WarehouseForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [translatingField, setTranslatingField] = useState<"name" | "address" | null>(null);
 
   const fetchWarehouses = useCallback(async () => {
     const res = await fetch("/api/admin/china-warehouses");
@@ -76,6 +77,48 @@ export default function ChinaWarehousesPage() {
       addressEn: wh.addressEn,
     });
     setShowForm(true);
+  }
+
+  async function handleTranslateField(field: "name" | "address") {
+    const textToTranslate = field === "name" ? form.nameVi : form.addressVi;
+    if (!textToTranslate || !textToTranslate.trim()) {
+      toast("Vui lòng nhập thông tin tiếng Việt trước", "error");
+      return;
+    }
+
+    setTranslatingField(field);
+    try {
+      const res = await fetch("/api/admin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textToTranslate }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (field === "name") {
+          setForm((prev) => ({
+            ...prev,
+            nameZh: data.zh,
+            nameEn: data.en,
+          }));
+          toast("Đã tự động dịch tên kho bằng AI!", "success");
+        } else {
+          setForm((prev) => ({
+            ...prev,
+            addressZh: data.zh,
+            addressEn: data.en,
+          }));
+          toast("Đã tự động dịch địa chỉ kho bằng AI!", "success");
+        }
+      } else {
+        const data = await res.json();
+        toast(data.error || "Dịch thuật thất bại", "error");
+      }
+    } catch {
+      toast("Lỗi kết nối khi gọi AI dịch thuật", "error");
+    } finally {
+      setTranslatingField(null);
+    }
   }
 
   async function handleSave() {
@@ -159,7 +202,17 @@ export default function ChinaWarehousesPage() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">🇻🇳 {t("warehouse.nameVi")}</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-medium text-slate-500">🇻🇳 {t("warehouse.nameVi")}</label>
+                <button
+                  type="button"
+                  onClick={() => handleTranslateField("name")}
+                  disabled={translatingField === "name" || !form.nameVi}
+                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-0.5 cursor-pointer"
+                >
+                  {translatingField === "name" ? "⏳ Đang dịch..." : "✨ Tự dịch AI"}
+                </button>
+              </div>
               <input
                 type="text"
                 value={form.nameVi}
@@ -189,7 +242,17 @@ export default function ChinaWarehousesPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">🇻🇳 {t("warehouse.addressVi")}</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-medium text-slate-500">🇻🇳 {t("warehouse.addressVi")}</label>
+                <button
+                  type="button"
+                  onClick={() => handleTranslateField("address")}
+                  disabled={translatingField === "address" || !form.addressVi}
+                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-0.5 cursor-pointer"
+                >
+                  {translatingField === "address" ? "⏳ Đang dịch..." : "✨ Tự dịch AI"}
+                </button>
+              </div>
               <textarea
                 value={form.addressVi}
                 onChange={(e) => setForm({ ...form, addressVi: e.target.value })}
