@@ -95,6 +95,7 @@ const adminNavGroups: NavGroup[] = [
   {
     label: "NỘI DUNG & MARKETING",
     items: [
+      { labelKey: "nav.homepageCms", href: "/admin/homepage", icon: "🏠" },
       { labelKey: "nav.knowledgeBase", href: "/admin/knowledge", icon: "📚" },
       { labelKey: "nav.quotationManagement", href: "/admin/quotation", icon: "💰" },
     ],

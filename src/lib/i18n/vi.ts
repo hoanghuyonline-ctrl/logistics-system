@@ -1701,6 +1701,7 @@ const vi: Record<string, string> = {
   // Nav - Knowledge
   "nav.knowledge": "Kiến thức",
   "nav.knowledgeBase": "Quản lý bài viết",
+  "nav.homepageCms": "Quản lý Trang chủ",
 
   // Knowledge - Admin
   "knowledge.adminTitle": "Quản lý bài viết",

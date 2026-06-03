@@ -1701,6 +1701,7 @@ const zh: Record<string, string> = {
   // Nav - Knowledge
   "nav.knowledge": "知识库",
   "nav.knowledgeBase": "文章管理",
+  "nav.homepageCms": "首页管理",
 
   // Knowledge - Admin
   "knowledge.adminTitle": "文章管理",

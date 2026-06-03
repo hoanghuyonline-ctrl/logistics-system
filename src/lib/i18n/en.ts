@@ -1701,6 +1701,7 @@ const en: Record<string, string> = {
   // Nav - Knowledge
   "nav.knowledge": "Knowledge",
   "nav.knowledgeBase": "Article Management",
+  "nav.homepageCms": "Homepage CMS",
 
   // Knowledge - Admin
   "knowledge.adminTitle": "Article Management",
