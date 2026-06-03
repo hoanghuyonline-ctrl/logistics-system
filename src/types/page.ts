@@ -18,6 +18,9 @@ export interface BannerBlock extends BaseBlock {
   imageUrl: string;
   buttonText: string;
   buttonLink: string;
+  description?: string;
+  cardTitle?: string;
+  cardDesc?: string;
 }
 
 export interface AboutBlock extends BaseBlock {

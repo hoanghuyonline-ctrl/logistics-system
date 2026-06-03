@@ -14,14 +14,30 @@ interface LandingHeroProps {
   cmsSubtitle?: string;
   /** CMS override for the background image URL. Shown as an overlay at 35% opacity. */
   cmsImageUrl?: string;
+  /** CMS override for the main description block. */
+  cmsDescription?: string;
+  /** CMS override for the small card title (right side). */
+  cmsCardTitle?: string;
+  /** CMS override for the small card description (right side). */
+  cmsCardDesc?: string;
 }
 
-export default function LandingHero({ cmsTitle, cmsSubtitle, cmsImageUrl }: LandingHeroProps = {}) {
+export default function LandingHero({
+  cmsTitle,
+  cmsSubtitle,
+  cmsImageUrl,
+  cmsDescription,
+  cmsCardTitle,
+  cmsCardDesc,
+}: LandingHeroProps = {}) {
   const { t } = useI18n();
 
   // Resolve display values — CMS value takes priority if provided and non-empty
-  const displayTitle    = cmsTitle?.trim()    || "Giải pháp vận tải toàn diện";
-  const displaySubtitle = cmsSubtitle?.trim() || "Kết nối giao thương, nâng tầm logistics";
+  const displayTitle       = cmsTitle?.trim()       || "Giải pháp vận tải toàn diện";
+  const displaySubtitle    = cmsSubtitle?.trim()    || "Kết nối giao thương, nâng tầm logistics";
+  const displayDescription = cmsDescription?.trim() || t("landing.heroDesc");
+  const displayCardTitle   = cmsCardTitle?.trim()   || "Bắc Trung Hải Logistics";
+  const displayCardDesc    = cmsCardDesc?.trim()    || "Vận tải hiệu quả, an toàn tối đa";
 
   return (
     <section className="relative overflow-hidden bg-slate-950 text-white">
@@ -63,7 +79,7 @@ export default function LandingHero({ cmsTitle, cmsSubtitle, cmsImageUrl }: Land
 
             {/* Description (always from i18n, not CMS-overridable — preserves translations) */}
             <p className="animate-fade-up animation-delay-200 text-lg text-slate-300 leading-relaxed max-w-2xl">
-              {t("landing.heroDesc")}
+              {displayDescription}
             </p>
 
             {/* Actions — unchanged */}
@@ -116,8 +132,8 @@ export default function LandingHero({ cmsTitle, cmsSubtitle, cmsImageUrl }: Land
                 <span className="text-[10px] uppercase font-bold tracking-wider text-orange-500/60 border border-orange-500/30 px-2.5 py-1 rounded-full">Active</span>
               </div>
               <div className="space-y-2">
-                <h4 className="text-slate-400 text-xs font-semibold tracking-wide uppercase">Bắc Trung Hải Logistics</h4>
-                <p className="text-white font-extrabold text-lg leading-tight">Vận tải hiệu quả, an toàn tối đa</p>
+                <h4 className="text-slate-400 text-xs font-semibold tracking-wide uppercase">{displayCardTitle}</h4>
+                <p className="text-white font-extrabold text-lg leading-tight">{displayCardDesc}</p>
               </div>
             </div>
           </div>

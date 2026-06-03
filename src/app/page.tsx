@@ -261,6 +261,9 @@ export default async function Home({
         cmsTitle={activeBanner?.title}
         cmsSubtitle={activeBanner?.subtitle}
         cmsImageUrl={activeBanner?.imageUrl}
+        cmsDescription={activeBanner?.description}
+        cmsCardTitle={activeBanner?.cardTitle}
+        cmsCardDesc={activeBanner?.cardDesc}
       />
 
       <LandingStatsServer locale={locale} />

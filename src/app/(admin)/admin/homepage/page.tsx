@@ -19,9 +19,12 @@ const initialBlocks: HomePageBlock[] = [
     isVisible: true,
     title: 'BẮC TRUNG HẢI LOGISTICS',
     subtitle: 'Giải pháp vận tải toàn diện, uy tín hàng đầu',
+    description: 'Hệ thống bến bãi chuyên nghiệp, mua hàng Taobao, 1688, Tmall trọn gói, vận chuyển thần tốc Việt - Trung.',
     imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d',
     buttonText: 'Liên hệ ngay',
     buttonLink: '#contact',
+    cardTitle: 'Bắc Trung Hải Logistics',
+    cardDesc: 'Vận tải hiệu quả, an toàn tối đa',
   },
   {
     id: 'a1',
@@ -119,6 +122,138 @@ function TextareaField({
   );
 }
 
+/* ── R2 Image Uploader component with Drag & Drop ────────────────── */
+function ImageUploader({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUpload = async (file: File) => {
+    setIsUploading(true);
+    setError(null);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/homepage/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Upload thất bại");
+      }
+
+      const data = await res.json();
+      onChange(data.url);
+    } catch (e: any) {
+      setError(e.message || "Không thể tải ảnh lên");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleUpload(e.target.files[0]);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+        {label}
+      </label>
+
+      {value ? (
+        <div className="relative group overflow-hidden rounded-xl border border-slate-200 bg-slate-50 h-40 flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="Preview" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium shadow transition-transform active:scale-95 animate-fade-in"
+            >
+              🗑️ Xóa ảnh
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          onDragEnter={handleDrag}
+          onDragOver={handleDrag}
+          onDragLeave={handleDrag}
+          onDrop={handleDrop}
+          className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+            dragActive
+              ? "border-indigo-500 bg-indigo-50/50"
+              : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/30"
+          }`}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleChange}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            disabled={isUploading}
+          />
+          {isUploading ? (
+            <div className="flex flex-col items-center gap-1.5 py-2">
+              <svg className="w-6 h-6 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              <span className="text-xs text-slate-500 font-medium">Đang tải ảnh lên R2...</span>
+            </div>
+          ) : (
+            <div className="text-center py-2">
+              <span className="text-2xl mb-1 block">📁</span>
+              <p className="text-xs font-medium text-slate-600">
+                Kéo thả ảnh vào đây hoặc click để chọn
+              </p>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Chấp nhận JPG, PNG, WebP, GIF (Tối đa 10MB)
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      {error && <p className="text-xs text-red-500 font-medium mt-1">{error}</p>}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Block-specific editor forms                                          */
 /* ------------------------------------------------------------------ */
@@ -133,15 +268,18 @@ function BannerEditor({
     <div className="space-y-4">
       <InputField label="Tiêu đề chính" value={block.title} onChange={(v) => update({ title: v })} />
       <InputField label="Tiêu đề phụ" value={block.subtitle} onChange={(v) => update({ subtitle: v })} />
-      <InputField label="URL ảnh nền" value={block.imageUrl} onChange={(v) => update({ imageUrl: v })} type="url" />
-      {block.imageUrl && (
-        <div className="overflow-hidden rounded-lg border border-slate-200 h-32">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={block.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-        </div>
-      )}
+      <TextareaField label="Mô tả chính" value={block.description || ''} onChange={(v) => update({ description: v })} rows={3} />
+      
+      <ImageUploader label="Ảnh nền Banner" value={block.imageUrl} onChange={(v) => update({ imageUrl: v })} />
+      
       <InputField label="Văn bản nút CTA" value={block.buttonText} onChange={(v) => update({ buttonText: v })} />
       <InputField label="Đường dẫn nút CTA" value={block.buttonLink} onChange={(v) => update({ buttonLink: v })} />
+
+      <div className="border-t border-slate-100 pt-4 space-y-4">
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Khối thông tin phụ bên phải</h4>
+        <InputField label="Tiêu đề card phụ" value={block.cardTitle || ''} onChange={(v) => update({ cardTitle: v })} />
+        <InputField label="Mô tả card phụ" value={block.cardDesc || ''} onChange={(v) => update({ cardDesc: v })} />
+      </div>
     </div>
   );
 }
@@ -157,13 +295,7 @@ function AboutEditor({
     <div className="space-y-4">
       <InputField label="Tiêu đề phần" value={block.title} onChange={(v) => update({ title: v })} />
       <TextareaField label="Nội dung chi tiết" value={block.content} onChange={(v) => update({ content: v })} rows={5} />
-      <InputField label="URL ảnh minh họa" value={block.imageUrl} onChange={(v) => update({ imageUrl: v })} type="url" />
-      {block.imageUrl && (
-        <div className="overflow-hidden rounded-lg border border-slate-200 h-32">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={block.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-        </div>
-      )}
+      <ImageUploader label="Ảnh minh họa" value={block.imageUrl} onChange={(v) => update({ imageUrl: v })} />
     </div>
   );
 }
