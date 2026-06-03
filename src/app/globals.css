@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
 /* ── Global Mobile Safety Overrides ── */
-html,
-body,
 #__next {
   overflow-x: clip !important;
   max-width: 100vw !important;
