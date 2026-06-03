@@ -3,6 +3,8 @@ import type { Locale } from "@/lib/i18n/types";
 import vi from "@/lib/i18n/vi";
 import en from "@/lib/i18n/en";
 import zh from "@/lib/i18n/zh";
+import { prisma } from "@/lib/prisma";
+import type { HomePageBlock, BannerBlock, AboutBlock } from "@/types/page";
 
 import {
   LandingNavbar,
@@ -18,7 +20,9 @@ import {
   LandingMobileBar,
 } from "@/components/landing";
 
+// ─────────────────────────────────────────────────────────────────────────────
 // Dictionaries mapping for Server-Side Translations
+// ─────────────────────────────────────────────────────────────────────────────
 const dictionaries: Record<Locale, Record<string, string>> = { vi, en, zh };
 
 // Server-side translation helper matching client-side hook behavior
@@ -28,7 +32,117 @@ function getT(locale: Locale) {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CMS Config loader — reads homepage_blocks from SystemConfig table via Prisma
+// Returns parsed HomePageBlock[] or empty array on any error (safe fallback)
+// ─────────────────────────────────────────────────────────────────────────────
+async function getHomepageCmsConfig(): Promise<HomePageBlock[]> {
+  try {
+    const record = await prisma.systemConfig.findUnique({
+      where: { key: "homepage_blocks" },
+    });
+    if (!record?.value) return [];
+    const parsed = JSON.parse(record.value) as HomePageBlock[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // DB unavailable or JSON parse error → degrade gracefully, never throw
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CMS-driven Banner Section (Server Component, no props needed for icons)
+//
+// Renders only when Admin saved a visible banner block with a non-empty imageUrl.
+// Placed BEFORE LandingHero so the existing hero is always preserved below it.
+// Returns null if block is hidden or image missing → zero visual impact.
+// ─────────────────────────────────────────────────────────────────────────────
+function CmsBannerSection({ block }: { block: BannerBlock }) {
+  if (!block.isVisible || !block.imageUrl) return null;
+
+  return (
+    <section
+      id="cms-banner"
+      className="relative h-[55vh] md:h-[70vh] flex items-center justify-center bg-slate-900 text-white overflow-hidden"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={block.imageUrl}
+        alt={block.title}
+        className="absolute inset-0 w-full h-full object-cover opacity-35"
+      />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-transparent to-slate-950/80" />
+
+      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto space-y-5">
+        {block.title && (
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+            {block.title}
+          </h2>
+        )}
+        {block.subtitle && (
+          <p className="text-sm sm:text-lg md:text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto">
+            {block.subtitle}
+          </p>
+        )}
+        {block.buttonText && block.buttonLink && (
+          <a
+            href={block.buttonLink}
+            className="inline-block bg-orange-600 hover:bg-orange-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-orange-600/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-sm"
+          >
+            {block.buttonText}
+          </a>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CMS-driven About Section (Server Component)
+//
+// Renders only when Admin saved a visible about block with non-empty content.
+// Inserted between LandingTrust and LandingHowItWorks.
+// Returns null if block is hidden or has no content → zero visual impact.
+// ─────────────────────────────────────────────────────────────────────────────
+function CmsAboutSection({ block }: { block: AboutBlock }) {
+  if (!block.isVisible || (!block.content && !block.title)) return null;
+
+  return (
+    <section id="cms-about" className="py-16 md:py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+          <div className="space-y-5">
+            {block.title && (
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
+                {block.title}
+              </h2>
+            )}
+            {block.content && (
+              <p className="text-slate-600 leading-relaxed text-base md:text-lg whitespace-pre-line">
+                {block.content}
+              </p>
+            )}
+          </div>
+          {block.imageUrl && (
+            <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-100 h-72 md:h-96">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={block.imageUrl}
+                alt={block.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 1. Stats Component as a pure Server Component
+// ─────────────────────────────────────────────────────────────────────────────
 function LandingStatsServer({ locale }: { locale: Locale }) {
   const t = getT(locale);
 
@@ -80,7 +194,9 @@ function PhoneIcon() {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 // 2. Locations Component as a pure Server Component
+// ─────────────────────────────────────────────────────────────────────────────
 function LandingLocationsServer({ locale }: { locale: Locale }) {
   const t = getT(locale);
 
@@ -149,7 +265,9 @@ function LandingLocationsServer({ locale }: { locale: Locale }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 // Helper to determine the locale asynchronously on the server
+// ─────────────────────────────────────────────────────────────────────────────
 async function getLocale(searchParams: Promise<{ lang?: string }>) {
   try {
     const resolvedParams = await searchParams;
@@ -173,21 +291,46 @@ async function getLocale(searchParams: Promise<{ lang?: string }>) {
   return "vi" as Locale;
 }
 
-// 3. Fully Optimized Server Page component (removed "use client")
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. Main Homepage — Async Server Component
+//
+// CMS Integration:
+//   • Loads homepage_blocks from SystemConfig (key: 'homepage_blocks') via Prisma
+//   • banner block visible + imageUrl → CmsBannerSection rendered BEFORE LandingHero
+//   • about  block visible + content  → CmsAboutSection rendered between Trust and HowItWorks
+//   • All existing components (LandingHero, LandingServices, etc.) always render
+//   • On any DB error → cmsBlocks = [], all CMS sections return null → identical to pre-CMS
+// ─────────────────────────────────────────────────────────────────────────────
 export default async function Home({
   searchParams,
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const locale = await getLocale(searchParams);
+  const [locale, cmsBlocks] = await Promise.all([
+    getLocale(searchParams),
+    getHomepageCmsConfig(),
+  ]);
+
+  // Extract typed blocks (undefined if Admin hasn't configured them yet)
+  const bannerBlock = cmsBlocks.find((b) => b.type === "banner") as BannerBlock | undefined;
+  const aboutBlock  = cmsBlocks.find((b) => b.type === "about")  as AboutBlock  | undefined;
 
   return (
     <div className="min-h-screen bg-white pb-14 sm:pb-0">
       <LandingNavbar />
+
+      {/* CMS Banner — null if not configured or isVisible=false */}
+      {bannerBlock && <CmsBannerSection block={bannerBlock} />}
+
+      {/* Always-on original components (unchanged) */}
       <LandingHero />
       <LandingStatsServer locale={locale} />
       <LandingServices />
       <LandingTrust />
+
+      {/* CMS About section — null if not configured or isVisible=false */}
+      {aboutBlock && <CmsAboutSection block={aboutBlock} />}
+
       <LandingHowItWorks />
       <LandingOrderTracking />
       <LandingLeadForm />
