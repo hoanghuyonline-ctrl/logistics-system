@@ -3,15 +3,42 @@
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 
-export default function LandingHero() {
+// ─────────────────────────────────────────────────────────────────────────────
+// Props — all optional; fallback to hardcoded defaults when not provided.
+// Page.tsx (Server Component) passes these from the CMS SystemConfig DB.
+// ─────────────────────────────────────────────────────────────────────────────
+interface LandingHeroProps {
+  /** CMS override for the main headline (first line). */
+  cmsTitle?: string;
+  /** CMS override for the gradient sub-headline (second line). */
+  cmsSubtitle?: string;
+  /** CMS override for the background image URL. Shown as an overlay at 35% opacity. */
+  cmsImageUrl?: string;
+}
+
+export default function LandingHero({ cmsTitle, cmsSubtitle, cmsImageUrl }: LandingHeroProps = {}) {
   const { t } = useI18n();
+
+  // Resolve display values — CMS value takes priority if provided and non-empty
+  const displayTitle    = cmsTitle?.trim()    || "Giải pháp vận tải toàn diện";
+  const displaySubtitle = cmsSubtitle?.trim() || "Kết nối giao thương, nâng tầm logistics";
 
   return (
     <section className="relative overflow-hidden bg-slate-950 text-white">
-      {/* Background gradients and industrial patterns */}
+      {/* ── Background ── */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.15),transparent_60%)]" />
-      
+
+      {/* CMS background image overlay (shown only when Admin sets an imageUrl) */}
+      {cmsImageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={cmsImageUrl}
+          alt={displayTitle}
+          className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-luminosity"
+        />
+      )}
+
       {/* Structural accent shapes */}
       <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.2) 0%, transparent 70%)" }} />
       <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-20 blur-3xl" style={{ background: "radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%)" }} />
@@ -25,37 +52,37 @@ export default function LandingHero() {
               {t("landing.badge")}
             </div>
 
-            {/* Headline with Slogan */}
+            {/* ── Headline ── CMS-driven, fallback to hardcoded default */}
             <h1 className="animate-fade-up animation-delay-100 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
-              Giải pháp vận tải toàn diện
+              {displayTitle}
               <br />
               <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 bg-clip-text text-transparent">
-                Kết nối giao thương, nâng tầm logistics
+                {displaySubtitle}
               </span>
             </h1>
 
-            {/* Description */}
+            {/* Description (always from i18n, not CMS-overridable — preserves translations) */}
             <p className="animate-fade-up animation-delay-200 text-lg text-slate-300 leading-relaxed max-w-2xl">
               {t("landing.heroDesc")}
             </p>
 
-            {/* Actions */}
+            {/* Actions — unchanged */}
             <div className="animate-fade-up animation-delay-300 flex flex-wrap gap-4 pt-4">
-              <Link 
-                href="/register" 
+              <Link
+                href="/register"
                 className="inline-flex items-center justify-center px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-600/20 hover:shadow-orange-600/30 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-sm"
               >
                 {t("landing.startShipping")}
               </Link>
-              <Link 
-                href="/login" 
+              <Link
+                href="/login"
                 className="inline-flex items-center justify-center px-7 py-4 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white font-bold rounded-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-sm"
               >
                 {t("landing.signInDashboard")}
               </Link>
             </div>
 
-            {/* Trust indicators */}
+            {/* Trust indicators — unchanged */}
             <div className="animate-fade-up animation-delay-400 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-slate-400 pt-6">
               <span className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
@@ -76,7 +103,7 @@ export default function LandingHero() {
             </div>
           </div>
 
-          {/* Decorative Cargo Art on Right */}
+          {/* Decorative Cargo Art — unchanged */}
           <div className="hidden lg:col-span-4 lg:flex justify-center animate-fade-in animation-delay-300">
             <div className="relative w-72 h-72 rounded-3xl border border-slate-800 bg-slate-900/30 p-8 shadow-2xl flex flex-col justify-between overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent" />

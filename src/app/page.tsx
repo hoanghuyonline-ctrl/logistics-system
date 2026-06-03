@@ -25,7 +25,6 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 const dictionaries: Record<Locale, Record<string, string>> = { vi, en, zh };
 
-// Server-side translation helper matching client-side hook behavior
 function getT(locale: Locale) {
   return (key: string, fallback?: string): string => {
     return dictionaries[locale]?.[key] ?? dictionaries.en[key] ?? fallback ?? key;
@@ -33,8 +32,8 @@ function getT(locale: Locale) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CMS Config loader — reads homepage_blocks from SystemConfig table via Prisma
-// Returns parsed HomePageBlock[] or empty array on any error (safe fallback)
+// CMS Config loader — reads homepage_blocks from SystemConfig via Prisma
+// Safe fallback: returns [] on any DB/parse error — page never crashes
 // ─────────────────────────────────────────────────────────────────────────────
 async function getHomepageCmsConfig(): Promise<HomePageBlock[]> {
   try {
@@ -45,65 +44,14 @@ async function getHomepageCmsConfig(): Promise<HomePageBlock[]> {
     const parsed = JSON.parse(record.value) as HomePageBlock[];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
-    // DB unavailable or JSON parse error → degrade gracefully, never throw
     return [];
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CMS-driven Banner Section (Server Component, no props needed for icons)
-//
-// Renders only when Admin saved a visible banner block with a non-empty imageUrl.
-// Placed BEFORE LandingHero so the existing hero is always preserved below it.
-// Returns null if block is hidden or image missing → zero visual impact.
-// ─────────────────────────────────────────────────────────────────────────────
-function CmsBannerSection({ block }: { block: BannerBlock }) {
-  if (!block.isVisible || !block.imageUrl) return null;
-
-  return (
-    <section
-      id="cms-banner"
-      className="relative h-[55vh] md:h-[70vh] flex items-center justify-center bg-slate-900 text-white overflow-hidden"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={block.imageUrl}
-        alt={block.title}
-        className="absolute inset-0 w-full h-full object-cover opacity-35"
-      />
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-transparent to-slate-950/80" />
-
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto space-y-5">
-        {block.title && (
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-            {block.title}
-          </h2>
-        )}
-        {block.subtitle && (
-          <p className="text-sm sm:text-lg md:text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            {block.subtitle}
-          </p>
-        )}
-        {block.buttonText && block.buttonLink && (
-          <a
-            href={block.buttonLink}
-            className="inline-block bg-orange-600 hover:bg-orange-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-orange-600/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-sm"
-          >
-            {block.buttonText}
-          </a>
-        )}
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // CMS-driven About Section (Server Component)
-//
-// Renders only when Admin saved a visible about block with non-empty content.
-// Inserted between LandingTrust and LandingHowItWorks.
-// Returns null if block is hidden or has no content → zero visual impact.
+// Renders between LandingTrust and LandingHowItWorks when Admin has configured
+// a visible about block. Returns null if not configured or isVisible=false.
 // ─────────────────────────────────────────────────────────────────────────────
 function CmsAboutSection({ block }: { block: AboutBlock }) {
   if (!block.isVisible || (!block.content && !block.title)) return null;
@@ -141,7 +89,7 @@ function CmsAboutSection({ block }: { block: AboutBlock }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. Stats Component as a pure Server Component
+// 1. Stats Component — pure Server Component
 // ─────────────────────────────────────────────────────────────────────────────
 function LandingStatsServer({ locale }: { locale: Locale }) {
   const t = getT(locale);
@@ -176,7 +124,7 @@ function LandingStatsServer({ locale }: { locale: Locale }) {
   );
 }
 
-// SVG Icons for Locations Server Component
+// SVG Icons for Locations
 function LocationPinIcon() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -195,32 +143,16 @@ function PhoneIcon() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. Locations Component as a pure Server Component
+// 2. Locations Component — pure Server Component
 // ─────────────────────────────────────────────────────────────────────────────
 function LandingLocationsServer({ locale }: { locale: Locale }) {
   const t = getT(locale);
 
   const locations = [
-    {
-      name: t("landing.headOffice"),
-      address: t("landing.headOfficeAddr"),
-      phone: "0989 711 888",
-    },
-    {
-      name: t("landing.chinaWarehouse"),
-      address: t("landing.chinaWarehouseAddr"),
-      phone: "19162296663",
-    },
-    {
-      name: t("landing.bacNinhOffice"),
-      address: t("landing.bacNinhOfficeAddr"),
-      phone: null,
-    },
-    {
-      name: t("landing.hanoiWarehouse"),
-      address: t("landing.hanoiWarehouseAddr"),
-      phone: null,
-    },
+    { name: t("landing.headOffice"),     address: t("landing.headOfficeAddr"),   phone: "0989 711 888" },
+    { name: t("landing.chinaWarehouse"), address: t("landing.chinaWarehouseAddr"), phone: "19162296663" },
+    { name: t("landing.bacNinhOffice"),  address: t("landing.bacNinhOfficeAddr"), phone: null },
+    { name: t("landing.hanoiWarehouse"), address: t("landing.hanoiWarehouseAddr"), phone: null },
   ];
 
   return (
@@ -266,7 +198,7 @@ function LandingLocationsServer({ locale }: { locale: Locale }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper to determine the locale asynchronously on the server
+// Locale detection helper
 // ─────────────────────────────────────────────────────────────────────────────
 async function getLocale(searchParams: Promise<{ lang?: string }>) {
   try {
@@ -274,9 +206,7 @@ async function getLocale(searchParams: Promise<{ lang?: string }>) {
     if (resolvedParams.lang && ["vi", "en", "zh"].includes(resolvedParams.lang)) {
       return resolvedParams.lang as Locale;
     }
-  } catch {
-    // Ignore error
-  }
+  } catch { /* ignore */ }
 
   try {
     const cookieStore = await cookies();
@@ -284,9 +214,7 @@ async function getLocale(searchParams: Promise<{ lang?: string }>) {
     if (cookieLocale && ["vi", "en", "zh"].includes(cookieLocale)) {
       return cookieLocale as Locale;
     }
-  } catch {
-    // Ignore error
-  }
+  } catch { /* ignore */ }
 
   return "vi" as Locale;
 }
@@ -294,12 +222,14 @@ async function getLocale(searchParams: Promise<{ lang?: string }>) {
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. Main Homepage — Async Server Component
 //
-// CMS Integration:
-//   • Loads homepage_blocks from SystemConfig (key: 'homepage_blocks') via Prisma
-//   • banner block visible + imageUrl → CmsBannerSection rendered BEFORE LandingHero
-//   • about  block visible + content  → CmsAboutSection rendered between Trust and HowItWorks
-//   • All existing components (LandingHero, LandingServices, etc.) always render
-//   • On any DB error → cmsBlocks = [], all CMS sections return null → identical to pre-CMS
+// CMS Integration (zero-impact design):
+//   • Fetches homepage_blocks from SystemConfig via Prisma in parallel with locale
+//   • banner block (isVisible=true) → cmsTitle / cmsSubtitle / cmsImageUrl
+//     passed directly as PROPS into LandingHero — replaces the hardcoded
+//     headline text *inside* the same Hero component (no duplicate section)
+//   • about block  (isVisible=true) → CmsAboutSection between Trust & HowItWorks
+//   • DB empty / error → all blocks undefined → LandingHero falls back to
+//     its own hardcoded defaults — page renders exactly as before
 // ─────────────────────────────────────────────────────────────────────────────
 export default async function Home({
   searchParams,
@@ -311,19 +241,28 @@ export default async function Home({
     getHomepageCmsConfig(),
   ]);
 
-  // Extract typed blocks (undefined if Admin hasn't configured them yet)
+  // Extract typed blocks (undefined when not configured in Admin)
   const bannerBlock = cmsBlocks.find((b) => b.type === "banner") as BannerBlock | undefined;
   const aboutBlock  = cmsBlocks.find((b) => b.type === "about")  as AboutBlock  | undefined;
+
+  // Only pass CMS overrides when the block exists AND is visible
+  const activeBanner = bannerBlock?.isVisible ? bannerBlock : undefined;
 
   return (
     <div className="min-h-screen bg-white pb-14 sm:pb-0">
       <LandingNavbar />
 
-      {/* CMS Banner — null if not configured or isVisible=false */}
-      {bannerBlock && <CmsBannerSection block={bannerBlock} />}
+      {/*
+        CMS data injected directly into LandingHero via props.
+        When activeBanner is undefined, LandingHero renders its
+        own hardcoded defaults — visually identical to pre-CMS state.
+      */}
+      <LandingHero
+        cmsTitle={activeBanner?.title}
+        cmsSubtitle={activeBanner?.subtitle}
+        cmsImageUrl={activeBanner?.imageUrl}
+      />
 
-      {/* Always-on original components (unchanged) */}
-      <LandingHero />
       <LandingStatsServer locale={locale} />
       <LandingServices />
       <LandingTrust />
