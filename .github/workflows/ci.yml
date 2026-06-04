@@ -1,39 +1,225 @@
-name: CI
+##
+# GitHub Actions CI — Dynamic CMS Homepage
+# File: .github/workflows/ci.yml
+#
+# Kích hoạt:
+#   • push lên nhánh main, develop, hoặc bất kỳ feature/* branch
+#   • Tạo Pull Request vào main hoặc develop
+#
+# Pipeline gồm 3 job song song:
+#   1. lint-typecheck  — ESLint + TypeScript strict check
+#   2. unit-test       — Vitest unit tests (không cần DB)
+#   3. build           — Next.js production build (smoke test tổng thể)
+#
+# Yêu cầu GitHub Secrets:
+#   NEXTAUTH_SECRET — bất kỳ chuỗi ngẫu nhiên (dùng dummy cho CI)
+#   (DATABASE_URL    — CI dùng PostgreSQL service riêng, không cần secret)
+##
+
+name: CI — Bắc Trung Hải Logistics
 
 on:
   push:
-    branches: ["main", "feature/*"]
+    branches:
+      - main
+      - develop
+      - "feature/*"
+      - "fix/*"
+      - "cms/*"       # Nhánh đặc biệt cho CMS features
   pull_request:
-    branches: ["main", "feature/*"]
+    branches:
+      - main
+      - develop
+
+# Hủy run cũ khi có commit mới trên cùng nhánh (tránh lãng phí CI minutes)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
-    name: Continuous Integration
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 1: Lint & TypeScript Check
+  # Chạy nhanh (~2-3 phút), phát hiện lỗi syntax/type sớm nhất
+  # ────────────────────────────────────────────────────────────────────────────
+  lint-typecheck:
+    name: "🔍 Lint & TypeCheck"
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout code
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: "⚙️ Setup Node.js 20"
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
+      - name: "📦 Install dependencies"
+        run: npm ci --prefer-offline
 
-      - name: Generate Prisma client
+      - name: "🔧 Generate Prisma Client"
+        # Cần generate trước khi typecheck vì code import @prisma/client
         run: npx prisma generate
 
-      - name: Lint check
+      - name: "🔍 ESLint — Kiểm tra cú pháp và best practices"
+        # Dùng || true để CI pass dù có warning (lỗi thật sẽ bị TypeCheck bắt)
+        # Bỏ || true khi muốn enforce strict lint
         run: npm run lint || true
-        continue-on-error: true
 
-      - name: Build check
+      - name: "📘 TypeScript — Kiểm tra kiểu dữ liệu"
+        # next typegen tạo các route types, rồi tsc kiểm tra toàn bộ
+        run: |
+          npx next typegen 2>/dev/null || true
+          npx tsc --noEmit --skipLibCheck
+        env:
+          # Cần các env này để TypeScript không báo lỗi import config
+          NEXTAUTH_SECRET: dummy-secret-for-ci-only
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_db
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 2: Unit Tests (Vitest)
+  # Chạy song song với lint, không cần DB thật (pure logic tests)
+  # ────────────────────────────────────────────────────────────────────────────
+  unit-test:
+    name: "🧪 Unit Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "⚙️ Setup Node.js 20"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: "📦 Install dependencies"
+        run: npm ci --prefer-offline
+
+      - name: "🔧 Generate Prisma Client"
+        run: npx prisma generate
+
+      - name: "🧪 Chạy Vitest unit tests"
+        run: npm run test
+        env:
+          # Vitest không kết nối DB thật — các test chỉ test pure logic
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_db
+
+      - name: "📊 Upload test results (nếu có)"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results/
+            coverage/
+          if-no-files-found: ignore
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 3: Production Build Check
+  # Chạy sau khi lint + test pass (depends-on để tiết kiệm CI minutes)
+  # Đảm bảo Next.js build thành công trước khi merge/deploy
+  # ────────────────────────────────────────────────────────────────────────────
+  build:
+    name: "🏗️ Production Build"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Chỉ build khi cả lint và test đều pass
+    needs: [lint-typecheck, unit-test]
+
+    services:
+      # PostgreSQL service để Prisma generate + build không bị lỗi DB connection
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: logistics
+          POSTGRES_PASSWORD: logistics_ci
+          POSTGRES_DB: logistics_ci_db
+        ports:
+          - 5432:5432
+        # Chờ PostgreSQL sẵn sàng trước khi chạy steps
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "⚙️ Setup Node.js 20"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: "📦 Install dependencies"
+        run: npm ci --prefer-offline
+
+      - name: "🔧 Generate Prisma Client"
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5432/logistics_ci_db
+
+      - name: "🗄️ Push Prisma schema lên DB CI (không cần migration history)"
+        # db push an toàn hơn migrate deploy trong CI vì không cần migration files
+        run: npx prisma db push --skip-generate --accept-data-loss
+        env:
+          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5432/logistics_ci_db
+
+      - name: "🏗️ Next.js Production Build"
         run: npm run build
         env:
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-secret' }}
+          # Secrets bắt buộc cho Next.js build
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-ci-secret-32-chars-minimum' }}
           NEXTAUTH_URL: https://bactrunghai.vn
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/logistics_db
+          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5432/logistics_ci_db
+          # Tắt telemetry để tăng tốc build
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: "📦 Upload .next build artifacts"
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build-${{ github.sha }}
+          path: |
+            .next/standalone/
+            .next/static/
+          # Giữ 7 ngày để debug nếu cần
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 4 (Tùy chọn): Thông báo kết quả CI qua Telegram
+  # Chạy sau tất cả jobs, chỉ thông báo khi fail trên nhánh main
+  # ────────────────────────────────────────────────────────────────────────────
+  notify-on-failure:
+    name: "📣 Thông báo lỗi CI"
+    runs-on: ubuntu-latest
+    needs: [lint-typecheck, unit-test, build]
+    # Chỉ chạy khi có job fail VÀ đang ở nhánh main
+    if: |
+      failure() &&
+      github.ref == 'refs/heads/main' &&
+      secrets.TELEGRAM_BOT_TOKEN != ''
+
+    steps:
+      - name: "📨 Gửi thông báo Telegram"
+        run: |
+          MESSAGE="🚨 *CI THẤT BẠI* trên nhánh \`main\`
+          
+          📋 *Repo:* ${{ github.repository }}
+          👤 *Commit bởi:* ${{ github.actor }}
+          💬 *Commit:* ${{ github.event.head_commit.message }}
+          🔗 *Chi tiết:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown" || true

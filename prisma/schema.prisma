@@ -892,3 +892,71 @@ model FinancialSnapshot {
 
   @@index([periodType, targetDate])
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dynamic CMS: Quản lý nội dung trang chủ động
+//
+// Thiết kế:
+//   • HomepageSection  — khối cấp cao (banner, stats, services, locations...)
+//   • HomepageItem     — mục con trong một section (từng dịch vụ, địa điểm...)
+//   • Cột `meta` (Json) — lưu dữ liệu đặc thù không có cấu trúc cố định:
+//       banner → { exchangeRate, buttonLink, cardTitle, cardDesc }
+//       stats  → { icon, trend }
+//       location → { phone, mapUrl, isPrimary }
+//       social → { platform, url }
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Khối section cấp cao trên trang chủ (banner, stats, services, locations, social...)
+model HomepageSection {
+  id          String   @id @default(uuid())
+  /// Loại section: "banner" | "stats" | "services" | "locations" | "about" | "social" | "cta"
+  sectionType String
+  /// Tên hiển thị để Admin nhận biết (ví dụ: "Banner Chính", "Thống kê nổi bật")
+  label       String
+  /// Thứ tự xuất hiện trên trang (số nhỏ hơn → xuất hiện trước)
+  orderIndex  Int      @default(0)
+  /// Ẩn/hiện section — false = ẩn hoàn toàn, không xóa dữ liệu
+  isActive    Boolean  @default(true)
+  /// Tiêu đề chính của section (có thể null nếu section không cần title)
+  title       String?
+  /// Mô tả / subtitle của section
+  subtitle    String?  @db.Text
+  /// Dữ liệu JSON linh hoạt: tỷ giá, màu nền, link, cờ đặc thù theo loại section
+  meta        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// Danh sách các mục con thuộc section này
+  items HomepageItem[]
+
+  @@index([sectionType, isActive])
+  @@index([orderIndex])
+  @@map("homepage_sections")
+}
+
+/// Mục con bên trong một HomepageSection (dịch vụ, địa điểm, stat, link mạng xã hội...)
+model HomepageItem {
+  id         String   @id @default(uuid())
+  sectionId  String
+  /// Tên / tiêu đề của mục (ví dụ: "Vận chuyển nhanh", "Hà Nội", "Facebook")
+  label      String
+  /// Mô tả chi tiết (nội dung phụ bên dưới tiêu đề)
+  content    String?  @db.Text
+  /// Icon: emoji hoặc tên icon từ thư viện (ví dụ: "🚚", "truck", "map-pin")
+  icon       String?
+  /// URL ảnh minh họa (nếu mục cần ảnh)
+  imageUrl   String?
+  /// Thứ tự hiển thị trong cùng section
+  orderIndex Int      @default(0)
+  /// Ẩn/hiện mục — giúp Admin tạm tắt một mục mà không xóa
+  isActive   Boolean  @default(true)
+  /// Dữ liệu JSON đặc thù theo loại: { phone, mapUrl } hoặc { url, platform } hoặc { value, trend }
+  meta       Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  section HomepageSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, orderIndex])
+  @@map("homepage_items")
+}
