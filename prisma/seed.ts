@@ -13,85 +13,111 @@ async function main() {
   const password = await bcrypt.hash("pass123", 12);
   const adminPassword = await bcrypt.hash("admin123", 12);
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@logistics.vn" },
-    update: {},
-    create: {
-      email: "admin@logistics.vn",
-      password: adminPassword,
-      fullName: "System Admin",
-      phone: "0901234567",
-      role: "ADMIN",
-      wallet: { create: { balance: 0, debt: 0 } },
-    },
-  });
+  // 1. Tìm hoặc tạo tài khoản ADMIN an toàn
+  let admin = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+  if (!admin) {
+    try {
+      admin = await prisma.user.upsert({
+        where: { email: "admin@logistics.vn" },
+        update: {},
+        create: {
+          email: "admin@logistics.vn",
+          password: adminPassword,
+          fullName: "System Admin",
+          phone: "0901234567",
+          role: "ADMIN",
+          wallet: { create: { balance: 0, debt: 0 } },
+        },
+      });
+    } catch {
+      admin = await prisma.user.create({
+        data: {
+          email: "admin-fallback@logistics.vn",
+          password: adminPassword,
+          fullName: "System Admin Fallback",
+          phone: "090" + Math.floor(1000000 + Math.random() * 9000000),
+          role: "ADMIN",
+          wallet: { create: { balance: 0, debt: 0 } },
+        },
+      });
+    }
+  }
 
-  const customer1 = await prisma.user.upsert({
-    where: { email: "customer1@gmail.com" },
-    update: {},
-    create: {
-      email: "customer1@gmail.com",
-      password,
-      fullName: "Nguyen Van A",
-      phone: "0912345678",
-      address: "123 Le Loi, District 1, HCMC",
-      role: "CUSTOMER",
-      wallet: { create: { balance: 50000000, debt: 0 } },
-    },
-  });
+  // 2. Chỉ tạo người dùng và dữ liệu test nếu DB trống (hoặc tối đa có 1 Admin vừa tạo ở trên)
+  const userCount = await prisma.user.count();
+  let customer1: any = null;
+  let customer2: any = null;
+  let whChina: any = null;
+  let whVietnam: any = null;
 
-  const customer2 = await prisma.user.upsert({
-    where: { email: "customer2@gmail.com" },
-    update: {},
-    create: {
-      email: "customer2@gmail.com",
-      password,
-      fullName: "Tran Thi B",
-      phone: "0923456789",
-      address: "456 Nguyen Hue, District 1, HCMC",
-      role: "CUSTOMER",
-      wallet: { create: { balance: 30000000, debt: 0 } },
-    },
-  });
+  if (userCount <= 1) {
+    customer1 = await prisma.user.upsert({
+      where: { email: "customer1@gmail.com" },
+      update: {},
+      create: {
+        email: "customer1@gmail.com",
+        password,
+        fullName: "Nguyen Van A",
+        phone: "0912345678",
+        address: "123 Le Loi, District 1, HCMC",
+        role: "CUSTOMER",
+        wallet: { create: { balance: 50000000, debt: 0 } },
+      },
+    });
 
-  const whChina = await prisma.user.upsert({
-    where: { email: "wh.china@logistics.vn" },
-    update: {},
-    create: {
-      email: "wh.china@logistics.vn",
-      password,
-      fullName: "China Warehouse Staff",
-      phone: "13800138000",
-      role: "WAREHOUSE_CN",
-      wallet: { create: { balance: 0, debt: 0 } },
-    },
-  });
+    customer2 = await prisma.user.upsert({
+      where: { email: "customer2@gmail.com" },
+      update: {},
+      create: {
+        email: "customer2@gmail.com",
+        password,
+        fullName: "Tran Thi B",
+        phone: "0923456789",
+        address: "456 Nguyen Hue, District 1, HCMC",
+        role: "CUSTOMER",
+        wallet: { create: { balance: 30000000, debt: 0 } },
+      },
+    });
 
-  const whVietnam = await prisma.user.upsert({
-    where: { email: "wh.vietnam@logistics.vn" },
-    update: {},
-    create: {
-      email: "wh.vietnam@logistics.vn",
-      password,
-      fullName: "Vietnam Warehouse Staff",
-      phone: "0934567890",
-      role: "WAREHOUSE_VN",
-      wallet: { create: { balance: 0, debt: 0 } },
-    },
-  });
+    whChina = await prisma.user.upsert({
+      where: { email: "wh.china@logistics.vn" },
+      update: {},
+      create: {
+        email: "wh.china@logistics.vn",
+        password,
+        fullName: "China Warehouse Staff",
+        phone: "13800138000",
+        role: "WAREHOUSE_CN",
+        wallet: { create: { balance: 0, debt: 0 } },
+      },
+    });
 
-  await prisma.user.upsert({
-    where: { email: "accountant@logistics.vn" },
-    update: {},
-    create: {
-      email: "accountant@logistics.vn",
-      password,
-      fullName: "Le Van C - Accountant",
-      phone: "0945678901",
-      role: "ACCOUNTANT",
-      wallet: { create: { balance: 0, debt: 0 } },
-    },
-  });
+    whVietnam = await prisma.user.upsert({
+      where: { email: "wh.vietnam@logistics.vn" },
+      update: {},
+      create: {
+        email: "wh.vietnam@logistics.vn",
+        password,
+        fullName: "Vietnam Warehouse Staff",
+        phone: "0934567890",
+        role: "WAREHOUSE_VN",
+        wallet: { create: { balance: 0, debt: 0 } },
+      },
+    });
+
+    await prisma.user.upsert({
+      where: { email: "accountant@logistics.vn" },
+      update: {},
+      create: {
+        email: "accountant@logistics.vn",
+        password,
+        fullName: "Le Van C - Accountant",
+        phone: "0945678901",
+        role: "ACCOUNTANT",
+        wallet: { create: { balance: 0, debt: 0 } },
+      },
+    });
+  }
 
   const configs = [
     { key: "exchange_rate", value: "3500" },
@@ -109,8 +135,9 @@ async function main() {
     });
   }
 
-  await prisma.order.create({
-    data: {
+  if (customer1 && customer2 && whChina && whVietnam) {
+    await prisma.order.create({
+      data: {
       orderCode: "ORD-20260501-A1B2",
       userId: customer1.id,
       productName: "Xiaomi Redmi Note 13 Pro Case",
@@ -371,6 +398,7 @@ async function main() {
       },
     ],
   });
+  }
 
   // Support knowledge base — 123 real Vietnamese entries from external data file
   const existingCount = await prisma.supportKnowledge.count();
