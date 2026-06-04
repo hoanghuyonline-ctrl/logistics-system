@@ -202,14 +202,13 @@ jobs:
     name: "📣 Thông báo lỗi CI"
     runs-on: ubuntu-latest
     needs: [lint-typecheck, unit-test, build]
-    # Chỉ chạy khi có job fail VÀ đang ở nhánh main
     if: |
       failure() &&
-      github.ref == 'refs/heads/main' &&
-      secrets.TELEGRAM_BOT_TOKEN != ''
+      github.ref == 'refs/heads/main'
 
     steps:
       - name: "📨 Gửi thông báo Telegram"
+        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
         run: |
           MESSAGE="🚨 *CI THẤT BẠI* trên nhánh \`main\`
           
