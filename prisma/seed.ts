@@ -379,6 +379,9 @@ async function main() {
     }
   }
 
+  // ── Seed Homepage CMS sections ──────────────────────────────────────────
+  await seedHomepageCms(prisma, admin.id);
+
   console.log("Seed completed successfully!");
   console.log("Test accounts:");
   console.log("  admin@logistics.vn / admin123");
@@ -389,6 +392,159 @@ async function main() {
   console.log("  accountant@logistics.vn / pass123");
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Seed dữ liệu mặc định cho Dynamic CMS trang chủ.
+// Dùng upsert theo id → chạy lại nhiều lần vẫn an toàn (idempotent).
+// ─────────────────────────────────────────────────────────────────────────────
+async function seedHomepageCms(prisma: PrismaClient, _adminId: string) {
+  console.log("  → Seeding homepage CMS sections...");
+
+  // ── 1. Banner chính ───────────────────────────────────────────────────────
+  await prisma.homepageSection.upsert({
+    where: { id: "sec-banner-001" },
+    update: {},
+    create: {
+      id: "sec-banner-001",
+      sectionType: "banner",
+      label: "Banner Chính",
+      orderIndex: 1,
+      isActive: true,
+      title: "BẮC TRUNG HẢI LOGISTICS",
+      subtitle: "Giải pháp vận tải toàn diện, uy tín hàng đầu",
+      meta: {
+        exchangeRate: 3980,
+        buttonText: "Liên hệ ngay",
+        buttonLink: "#contact",
+        cardTitle: "Bắc Trung Hải Logistics",
+        cardDesc: "Vận tải hiệu quả, an toàn tối đa",
+        bgImageUrl: "",
+      },
+    },
+  });
+
+  // ── 2. Thống kê ────────────────────────────────────────────────────────────
+  const statsSection = await prisma.homepageSection.upsert({
+    where: { id: "sec-stats-001" },
+    update: {},
+    create: {
+      id: "sec-stats-001",
+      sectionType: "stats",
+      label: "Thống Kê Nổi Bật",
+      orderIndex: 2,
+      isActive: true,
+      title: null,
+      subtitle: null,
+      meta: { showTrend: true },
+    },
+  });
+
+  const statsItems = [
+    { id: "item-stat-001", label: "Đơn Hàng Đã Xử Lý",     content: "Tổng đơn hàng thành công",              icon: "📦", orderIndex: 1, meta: { value: "10K+",  trend: "+15%",   trendUp: true  } },
+    { id: "item-stat-002", label: "Tỷ Lệ Giao Thành Công",  content: "Cam kết chất lượng cao nhất",           icon: "✅", orderIndex: 2, meta: { value: "99.5%", trend: "ổn định", trendUp: true  } },
+    { id: "item-stat-003", label: "Thời Gian Vận Chuyển",   content: "Trung bình từ Trung Quốc về Việt Nam",  icon: "⚡", orderIndex: 3, meta: { value: "5-7",   unit: "ngày",    trendUp: true  } },
+    { id: "item-stat-004", label: "Hỗ Trợ Khách Hàng",     content: "Đội ngũ tư vấn luôn sẵn sàng",         icon: "🎧", orderIndex: 4, meta: { value: "24/7",  trendUp: true  } },
+  ];
+  for (const item of statsItems) {
+    await prisma.homepageItem.upsert({
+      where: { id: item.id },
+      update: {},
+      create: { ...item, sectionId: statsSection.id, isActive: true },
+    });
+  }
+
+  // ── 3. Lý do chọn chúng tôi ────────────────────────────────────────────────
+  const whySection = await prisma.homepageSection.upsert({
+    where: { id: "sec-why-001" },
+    update: {},
+    create: {
+      id: "sec-why-001",
+      sectionType: "why_choose_us",
+      label: "Lý Do Chọn Chúng Tôi",
+      orderIndex: 3,
+      isActive: true,
+      title: "Tại Sao Chọn Bắc Trung Hải?",
+      subtitle: "Chúng tôi cam kết mang lại sự an tâm tuyệt đối cho từng lô hàng",
+      meta: null,
+    },
+  });
+
+  const whyItems = [
+    { id: "item-why-001", label: "Kho Trung Quốc Chính Hãng",    content: "Kho tại Quảng Châu & Nam Ninh, camera 24/7, nhận hàng trực tiếp từ xưởng",       icon: "🏭", orderIndex: 1, meta: { color: "blue"    } },
+    { id: "item-why-002", label: "Theo Dõi Realtime",             content: "Cập nhật trạng thái từng kiện hàng theo thời gian thực qua hệ thống online",      icon: "📡", orderIndex: 2, meta: { color: "emerald" } },
+    { id: "item-why-003", label: "Tư Vấn Người Việt",             content: "Đội ngũ nhân viên Việt Nam thông thạo tiếng Trung, hỗ trợ trực tiếp tại địa phương", icon: "🤝", orderIndex: 3, meta: { color: "amber"   } },
+    { id: "item-why-004", label: "Thông Báo Zalo & Telegram",     content: "Tự động gửi cập nhật vận chuyển qua Zalo và Telegram, không bỏ sót thông tin",   icon: "🔔", orderIndex: 4, meta: { color: "purple"  } },
+  ];
+  for (const item of whyItems) {
+    await prisma.homepageItem.upsert({
+      where: { id: item.id },
+      update: {},
+      create: { ...item, sectionId: whySection.id, isActive: true },
+    });
+  }
+
+  // ── 4. Dịch vụ nổi bật ────────────────────────────────────────────────────
+  const servicesSection = await prisma.homepageSection.upsert({
+    where: { id: "sec-services-001" },
+    update: {},
+    create: {
+      id: "sec-services-001",
+      sectionType: "services",
+      label: "Dịch Vụ Nổi Bật",
+      orderIndex: 4,
+      isActive: true,
+      title: "Năng Lực Đóng Gói Logistics",
+      subtitle: "Hệ thống cơ sở hạ tầng bền vững đáp ứng mọi yêu cầu nghiêm ngặt nhất",
+      meta: { columns: 4 },
+    },
+  });
+
+  const serviceItems = [
+    { id: "item-svc-001", label: "Vận Tải Nội Địa Bắc–Trung–Nam",  content: "Hệ thống xe tải, container trung chuyển liên tỉnh kết nối chặt chẽ, luân chuyển hàng hóa thần tốc qua các dải vùng miền cả nước.", icon: "🚚", orderIndex: 1, meta: { highlight: false, badge: ""         } },
+    { id: "item-svc-002", label: "Dịch Vụ Bến Bãi & Lưu Kho",      content: "Tổng kho diện tích lớn tại Trung Quốc (Nam Ninh) và Việt Nam (Lạng Sơn, Hà Nội, Bắc Ninh) được camera an ninh giám sát 24/7.", icon: "🏭", orderIndex: 2, meta: { highlight: true,  badge: "Phổ biến" } },
+    { id: "item-svc-003", label: "Thông Quan Hải Quan",             content: "Xử lý trọn gói thủ tục thông quan chính ngạch, hóa đơn VAT đầy đủ, kê khai thuế và ủy thác xuất nhập khẩu an toàn.", icon: "📋", orderIndex: 3, meta: { highlight: false, badge: ""         } },
+    { id: "item-svc-004", label: "Thương Mại Quốc Tế",              content: "Mua hàng Taobao, 1688, Tmall trọn gói với tỷ giá minh bạch. Thanh toán an toàn, theo dõi đơn từng bước.",                  icon: "🌐", orderIndex: 4, meta: { highlight: false, badge: "Mới"     } },
+  ];
+  for (const item of serviceItems) {
+    await prisma.homepageItem.upsert({
+      where: { id: item.id },
+      update: {},
+      create: { ...item, sectionId: servicesSection.id, isActive: true },
+    });
+  }
+
+  // ── 5. Địa điểm & kho bãi ─────────────────────────────────────────────────
+  const locationsSection = await prisma.homepageSection.upsert({
+    where: { id: "sec-locations-001" },
+    update: {},
+    create: {
+      id: "sec-locations-001",
+      sectionType: "locations",
+      label: "Địa Điểm & Kho Bãi",
+      orderIndex: 5,
+      isActive: true,
+      title: "Hệ Thống Kho Bãi Toàn Quốc",
+      subtitle: "Mạng lưới kho bãi phủ rộng từ Trung Quốc đến Việt Nam, phục vụ nhanh mọi tỉnh thành",
+      meta: null,
+    },
+  });
+
+  const locationItems = [
+    { id: "item-loc-001", label: "Trụ Sở Hà Nội (Văn Phòng Chính)", content: "Số 123, Đường Láng, Đống Đa, Hà Nội",         icon: "🏢", orderIndex: 1, meta: { phone: "0989711888",  isPrimary: true,  mapUrl: "" } },
+    { id: "item-loc-002", label: "Kho Trung Quốc (Quảng Châu)",     content: "Guangzhou, Guangdong Province, China",        icon: "🇨🇳", orderIndex: 2, meta: { phone: "19162296663", isPrimary: false, mapUrl: "" } },
+    { id: "item-loc-003", label: "Văn Phòng Bắc Ninh",              content: "KCN Tiên Sơn, Bắc Ninh",                     icon: "📍", orderIndex: 3, meta: { phone: null,          isPrimary: false, mapUrl: "" } },
+    { id: "item-loc-004", label: "Kho Hà Nội (Long Biên)",          content: "Long Biên, Hà Nội",                          icon: "📦", orderIndex: 4, meta: { phone: null,          isPrimary: false, mapUrl: "" } },
+  ];
+  for (const item of locationItems) {
+    await prisma.homepageItem.upsert({
+      where: { id: item.id },
+      update: {},
+      create: { ...item, sectionId: locationsSection.id, isActive: true },
+    });
+  }
+
+  console.log("  ✓ Homepage CMS seeded: 5 sections, 16 items");
+}
+
 main()
   .catch((e) => {
     console.error(e);
@@ -397,3 +553,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
