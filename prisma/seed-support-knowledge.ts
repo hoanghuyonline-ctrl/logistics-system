@@ -5,6 +5,7 @@
  * Usage: npm run seed:knowledge
  */
 
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { supportKnowledgeEntries } from "./support-knowledge-data";
