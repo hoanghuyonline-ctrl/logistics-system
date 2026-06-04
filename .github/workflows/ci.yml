@@ -141,9 +141,8 @@ jobs:
           POSTGRES_DB: logistics_ci_db
         ports:
           - 5433:5432
-        # Chờ PostgreSQL sẵn sàng trước khi chạy steps
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U logistics -d logistics_ci_db"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -160,6 +159,16 @@ jobs:
 
       - name: "📦 Install dependencies"
         run: npm ci --prefer-offline
+
+      - name: "⏳ Chờ PostgreSQL sẵn sàng"
+        run: |
+          for i in {1..30}; do
+            nc -z localhost 5433 && echo "PostgreSQL đã sẵn sàng!" && exit 0
+            echo "Đang chờ PostgreSQL..."
+            sleep 1
+          done
+          echo "Lỗi: PostgreSQL không sẵn sàng sau 30 giây!"
+          exit 1
 
       - name: "🔧 Generate Prisma Client"
         run: npx prisma generate
