@@ -104,10 +104,10 @@ async function getLocale(searchParams: Promise<{ lang?: string }>) {
 // CMS Sub-Components (Server Components — không cần 'use client')
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Banner hero lớn — đọc tỷ giá từ meta.exchangeRate */
-function CmsBannerSection({ section }: { section: HomepageSectionDto }) {
+/** Banner hero lớn — đọc tỷ giá từ systemConfig */
+function CmsBannerSection({ section, exchangeRate }: { section: HomepageSectionDto; exchangeRate: number }) {
   const meta = section.meta as BannerSectionMeta | null;
-  const rate = meta?.exchangeRate ?? 3980;
+  const rate = exchangeRate;
   const buttonText = meta?.buttonText ?? 'Liên hệ ngay';
   const buttonLink = meta?.buttonLink ?? '#contact';
   const cardTitle  = meta?.cardTitle  ?? 'Bắc Trung Hải Logistics';
@@ -371,9 +371,9 @@ function CmsLocationsSection({ section }: { section: HomepageSectionDto }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Dispatcher — map sectionType → Component
 // ─────────────────────────────────────────────────────────────────────────────
-function renderSection(section: HomepageSectionDto) {
+function renderSection(section: HomepageSectionDto, exchangeRate: number) {
   switch (section.sectionType) {
-    case 'banner':        return <CmsBannerSection        key={section.id} section={section} />;
+    case 'banner':        return <CmsBannerSection        key={section.id} section={section} exchangeRate={exchangeRate} />;
     case 'stats':         return <CmsStatsSection         key={section.id} section={section} />;
     case 'services':      return <CmsServicesSection      key={section.id} section={section} />;
     case 'why_choose_us': return <CmsWhyChooseUsSection   key={section.id} section={section} />;
@@ -391,17 +391,20 @@ export default async function Home({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const [cmsSections] = await Promise.all([
+  const [cmsSections, rateConfig] = await Promise.all([
     getCmsSections(),
+    prisma.systemConfig.findUnique({ where: { key: 'exchange_rate' } }),
     getLocale(searchParams), // locale dùng nếu cần sau
   ]);
+
+  const exchangeRate = rateConfig ? Number(rateConfig.value) : 3980;
 
   // Nếu CMS đã có dữ liệu → render hoàn toàn từ DB
   if (cmsSections.length > 0) {
     return (
       <div className="min-h-screen bg-white pb-14 sm:pb-0">
         <LandingNavbar />
-        {cmsSections.map(renderSection)}
+        {cmsSections.map((s) => renderSection(s, exchangeRate))}
         <LandingHowItWorks />
         <LandingOrderTracking />
         <LandingLeadForm />

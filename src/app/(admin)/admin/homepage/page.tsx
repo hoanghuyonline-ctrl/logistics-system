@@ -101,10 +101,12 @@ function ItemEditor({
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
 function EditModal({
   section,
+  systemExchangeRate,
   onSave,
   onClose,
 }: {
   section: HomepageSectionDto;
+  systemExchangeRate: number;
   onSave: (updated: HomepageSectionDto) => void;
   onClose: () => void;
 }) {
@@ -189,13 +191,10 @@ function EditModal({
                   <label className="text-[11px] font-semibold text-slate-500 uppercase">
                     Tỷ giá CNY→VND (₫)
                   </label>
-                  <input
-                    type="number"
-                    value={bannerMeta?.exchangeRate ?? 3980}
-                    onChange={(e) => updateMeta({ exchangeRate: Number(e.target.value) })}
-                    className="mt-1 w-full rounded-lg border border-orange-300 bg-white px-3 py-2 text-sm font-bold text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                  <p className="text-[10px] text-orange-500 mt-1">Hiển thị công khai trên trang chủ</p>
+                  <div className="mt-1 w-full rounded-lg border border-orange-200 bg-orange-100/50 px-3 py-2 text-sm font-bold text-orange-700 select-none">
+                    {systemExchangeRate.toLocaleString('vi-VN')} ₫
+                  </div>
+                  <p className="text-[10px] text-orange-500 mt-1">Được đồng bộ tự động từ hệ thống</p>
                 </div>
                 <div>
                   <label className="text-[11px] font-semibold text-slate-500 uppercase">Văn bản nút CTA</label>
@@ -267,6 +266,7 @@ function EditModal({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminHomepagePage() {
   const [sections, setSections] = useState<HomepageSectionDto[]>([]);
+  const [systemExchangeRate, setSystemExchangeRate] = useState<number>(3980);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -277,10 +277,17 @@ export default function AdminHomepagePage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/admin/homepage/sections');
-        if (res.ok) {
-          const data: HomepageSectionDto[] = await res.json();
+        const [resSec, resRate] = await Promise.all([
+          fetch('/api/admin/homepage/sections'),
+          fetch('/api/settings/exchange-rate'),
+        ]);
+        if (resSec.ok) {
+          const data: HomepageSectionDto[] = await resSec.json();
           setSections(data.sort((a, b) => a.orderIndex - b.orderIndex));
+        }
+        if (resRate.ok) {
+          const rateData = await resRate.json();
+          setSystemExchangeRate(Number(rateData.exchange_rate) || 3980);
         }
       } catch {
         setToast({ type: 'error', msg: 'Không thể tải cấu hình. Kiểm tra kết nối.' });
@@ -321,26 +328,33 @@ export default function AdminHomepagePage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const payload: UpsertHomepageSectionPayload[] = sections.map((s) => ({
-        id: s.id,
-        sectionType: s.sectionType,
-        label: s.label,
-        orderIndex: s.orderIndex,
-        isActive: s.isActive,
-        title: s.title,
-        subtitle: s.subtitle,
-        meta: s.meta,
-        items: s.items.map((i) => ({
-          id: i.id,
-          label: i.label,
-          content: i.content,
-          icon: i.icon,
-          imageUrl: i.imageUrl,
-          orderIndex: i.orderIndex,
-          isActive: i.isActive,
-          meta: i.meta,
-        })),
-      }));
+      const payload: UpsertHomepageSectionPayload[] = sections.map((s) => {
+        let meta = s.meta;
+        if (s.sectionType === 'banner' && meta) {
+          const { exchangeRate, ...rest } = meta as any;
+          meta = rest;
+        }
+        return {
+          id: s.id,
+          sectionType: s.sectionType,
+          label: s.label,
+          orderIndex: s.orderIndex,
+          isActive: s.isActive,
+          title: s.title,
+          subtitle: s.subtitle,
+          meta: meta,
+          items: s.items.map((i) => ({
+            id: i.id,
+            label: i.label,
+            content: i.content,
+            icon: i.icon,
+            imageUrl: i.imageUrl,
+            orderIndex: i.orderIndex,
+            isActive: i.isActive,
+            meta: i.meta,
+          })),
+        };
+      });
 
       const res = await fetch('/api/admin/homepage/sections', {
         method: 'PUT',
@@ -406,18 +420,16 @@ export default function AdminHomepagePage() {
         </div>
 
         {/* Chú thích tỷ giá */}
-        {sections.some((s) => s.sectionType === 'banner') && (
-          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 text-sm text-orange-700">
-            <span className="text-base">💱</span>
-            <span>
-              Tỷ giá CNY→VND hiện tại:{' '}
-              <strong>
-                {((sections.find((s) => s.sectionType === 'banner')?.meta as BannerSectionMeta | null)?.exchangeRate ?? 3980).toLocaleString('vi-VN')} ₫
-              </strong>
-              {' '}— Nhấn <strong>Chỉnh sửa</strong> trên Banner để cập nhật
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 text-sm text-orange-700">
+          <span className="text-base">💱</span>
+          <span>
+            Tỷ giá hiện tại của hệ thống:{' '}
+            <strong>
+              {systemExchangeRate.toLocaleString('vi-VN')} ₫
+            </strong>
+            {' '}(Được đồng bộ tự động)
+          </span>
+        </div>
 
         {/* Drag & Drop List */}
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -473,9 +485,9 @@ export default function AdminHomepagePage() {
                                     <p className="text-xs text-slate-400">
                                       {SECTION_TYPE_LABELS[section.sectionType] ?? section.sectionType}
                                       {section.items.length > 0 && ` · ${section.items.length} mục`}
-                                      {bannerMeta?.exchangeRate && (
+                                      {section.sectionType === 'banner' && (
                                         <span className="ml-2 font-medium text-orange-500">
-                                          💱 {bannerMeta.exchangeRate.toLocaleString('vi-VN')} ₫
+                                          💱 {systemExchangeRate.toLocaleString('vi-VN')} ₫
                                         </span>
                                       )}
                                     </p>
@@ -532,6 +544,7 @@ export default function AdminHomepagePage() {
       {editingSection && (
         <EditModal
           section={editingSection}
+          systemExchangeRate={systemExchangeRate}
           onSave={applyEdit}
           onClose={() => setEditingSection(null)}
         />
