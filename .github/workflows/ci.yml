@@ -162,13 +162,30 @@ jobs:
 
       - name: "⏳ Chờ PostgreSQL sẵn sàng"
         run: |
-          for i in {1..30}; do
-            nc -z localhost 5433 && echo "PostgreSQL đã sẵn sàng!" && exit 0
-            echo "Đang chờ PostgreSQL..."
-            sleep 1
-          done
-          echo "Lỗi: PostgreSQL không sẵn sàng sau 30 giây!"
-          exit 1
+          node -e "
+          const { Client } = require('pg');
+          const client = new Client({
+            connectionString: 'postgresql://logistics:logistics_ci@localhost:5433/logistics_ci_db'
+          });
+          let retries = 30;
+          const connect = async () => {
+            while (retries > 0) {
+              try {
+                await client.connect();
+                console.log('PostgreSQL đã sẵn sàng!');
+                await client.end();
+                process.exit(0);
+              } catch (err) {
+                console.log('Đang chờ PostgreSQL khởi động... (' + retries + ')');
+                retries--;
+                await new Promise(r => setTimeout(r, 1000));
+              }
+            }
+            console.error('Lỗi: PostgreSQL không sẵn sàng sau 30 giây!');
+            process.exit(1);
+          };
+          connect();
+          "
 
       - name: "🔧 Generate Prisma Client"
         run: npx prisma generate
