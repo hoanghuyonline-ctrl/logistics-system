@@ -80,13 +80,13 @@ function validatePayload(body: unknown): string | null {
 // Test Suite 1: VALID_SECTION_TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 describe('VALID_SECTION_TYPES', () => {
-  it('chứa đúng 7 loại section', () => {
-    expect(VALID_SECTION_TYPES.size).toBe(7);
+  it('chứa đúng 8 loại section', () => {
+    expect(VALID_SECTION_TYPES.size).toBe(8);
   });
 
   it('chứa các loại section cần thiết', () => {
     const required: HomepageSectionType[] = [
-      'banner', 'stats', 'services', 'about', 'locations', 'social', 'cta',
+      'banner', 'stats', 'services', 'why_choose_us', 'about', 'locations', 'social', 'cta',
     ];
     required.forEach((type) => {
       expect(VALID_SECTION_TYPES.has(type)).toBe(true);
