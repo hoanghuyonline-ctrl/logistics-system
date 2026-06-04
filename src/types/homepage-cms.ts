@@ -16,13 +16,14 @@
 
 /** Các loại section được hỗ trợ trong Dynamic CMS */
 export type HomepageSectionType =
-  | 'banner'      // Banner chính (title, subtitle, ảnh nền, tỷ giá, CTA)
-  | 'stats'       // Thống kê nổi bật (10K+ đơn, 99.5%, v.v.)
-  | 'services'    // Dịch vụ nổi bật (grid card)
-  | 'about'       // Giới thiệu công ty
-  | 'locations'   // Địa điểm & kho bãi
-  | 'social'      // Mạng xã hội
-  | 'cta';        // Call-to-action cuối trang
+  | 'banner'         // Banner chính (title, subtitle, ảnh nền, tỷ giá, CTA)
+  | 'stats'          // Thống kê nổi bật (10K+ đơn, 99.5%, v.v.)
+  | 'services'       // Dịch vụ nổi bật (grid card)
+  | 'why_choose_us'  // Lý do chọn chúng tôi (benefits grid với icon + văn bản động)
+  | 'about'          // Giới thiệu công ty
+  | 'locations'      // Địa điểm & kho bãi
+  | 'social'         // Mạng xã hội
+  | 'cta';           // Call-to-action cuối trang
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meta types — dữ liệu JSON đặc thù theo từng loại
@@ -74,6 +75,12 @@ export interface ServicesItemMeta {
   highlight?: boolean;
   /** Nhãn badge (ví dụ: "Phổ biến", "Hot", "Mới") */
   badge?: string;
+}
+
+/** Meta cho item trong section 'why_choose_us' */
+export interface WhyChooseUsItemMeta {
+  /** Màu accent cho icon background: 'blue' | 'emerald' | 'amber' | 'purple' | 'orange' */
+  color?: string;
 }
 
 /** Meta cho section loại 'about' */
@@ -181,16 +188,17 @@ export interface UpsertHomepageSectionPayload {
 
 /** Các loại section hợp lệ — dùng để validate đầu vào từ Admin */
 export const VALID_SECTION_TYPES = new Set<HomepageSectionType>([
-  'banner', 'stats', 'services', 'about', 'locations', 'social', 'cta',
+  'banner', 'stats', 'services', 'why_choose_us', 'about', 'locations', 'social', 'cta',
 ]);
 
 /** Label hiển thị cho từng loại section trong Admin UI */
 export const SECTION_TYPE_LABELS: Record<HomepageSectionType, string> = {
-  banner:    '🖼️ Banner Chính',
-  stats:     '📊 Thống Kê',
-  services:  '⚙️ Dịch Vụ',
-  about:     'ℹ️ Giới Thiệu',
-  locations: '📍 Địa Điểm',
-  social:    '🌐 Mạng Xã Hội',
-  cta:       '📣 Kêu Gọi Hành Động',
+  banner:        '🖼️ Banner Chính',
+  stats:         '📊 Thống Kê',
+  services:      '⚙️ Dịch Vụ',
+  why_choose_us: '✅ Lý Do Chọn Chúng Tôi',
+  about:         'ℹ️ Giới Thiệu',
+  locations:     '📍 Địa Điểm',
+  social:        '🌐 Mạng Xã Hội',
+  cta:           '📣 Kêu Gọi Hành Động',
 };

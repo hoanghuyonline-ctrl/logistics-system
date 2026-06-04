@@ -1,483 +1,395 @@
 'use client';
-
-import React, { useState, useCallback, useEffect } from 'react';
+/**
+ * src/app/(admin)/admin/homepage/page.tsx
+ * Admin CMS — Quản lý trang chủ (Drag & Drop + Edit Modal + Tỷ giá)
+ * API: GET/PUT /api/admin/homepage/sections
+ */
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import type {
-  HomePageBlock,
-  BannerBlock,
-  AboutBlock,
-  ServicesBlock,
-} from '@/types/page';
+  HomepageSectionDto,
+  HomepageItemDto,
+  UpsertHomepageSectionPayload,
+  BannerSectionMeta,
+} from '@/types/homepage-cms';
+import { SECTION_TYPE_LABELS } from '@/types/homepage-cms';
 
-/* ------------------------------------------------------------------ */
-/* Dữ liệu fallback khi DB chưa có cấu hình                             */
-/* ------------------------------------------------------------------ */
-const initialBlocks: HomePageBlock[] = [
-  {
-    id: 'b1',
-    type: 'banner',
-    isVisible: true,
-    title: 'BẮC TRUNG HẢI LOGISTICS',
-    subtitle: 'Giải pháp vận tải toàn diện, uy tín hàng đầu',
-    description: 'Hệ thống bến bãi chuyên nghiệp, mua hàng Taobao, 1688, Tmall trọn gói, vận chuyển thần tốc Việt - Trung.',
-    imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d',
-    buttonText: 'Liên hệ ngay',
-    buttonLink: '#contact',
-    cardTitle: 'Bắc Trung Hải Logistics',
-    cardDesc: 'Vận tải hiệu quả, an toàn tối đa',
-  },
-  {
-    id: 'a1',
-    type: 'about',
-    isVisible: true,
-    title: 'Về Chúng Tôi',
-    content:
-      'Hệ thống bến bãi hiện đại, mạng lưới vận chuyển phủ rộng khắp các tỉnh thành, cam kết mang đến dịch vụ logistics nhanh chóng, an toàn và tối ưu chi phí nhất.',
-    imageUrl: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec',
-  },
-  {
-    id: 's1',
-    type: 'services',
-    isVisible: true,
-    title: 'Dịch Vụ Nổi Bật',
-    itemCount: 4,
-  },
-];
+// ─── Types ────────────────────────────────────────────────────────────────────
+type Toast = { type: 'success' | 'error'; msg: string } | null;
 
-/* ------------------------------------------------------------------ */
-/* Toast notification state type                                         */
-/* ------------------------------------------------------------------ */
-type ToastState = {
-  type: 'success' | 'error';
-  message: string;
-} | null;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function sectionIcon(type: string) {
+  const m: Record<string, string> = {
+    banner: '🖼️', stats: '📊', services: '⚙️',
+    why_choose_us: '✅', about: 'ℹ️', locations: '📍',
+    social: '🌐', cta: '📣',
+  };
+  return m[type] ?? '📄';
+}
 
-/* ------------------------------------------------------------------ */
-/* Helpers                                                              */
-/* ------------------------------------------------------------------ */
-const BLOCK_LABELS: Record<HomePageBlock['type'], string> = {
-  banner: 'Banner chính',
-  about: 'Giới thiệu',
-  services: 'Dịch vụ',
-};
-
-const BLOCK_ICONS: Record<HomePageBlock['type'], string> = {
-  banner: '🖼️',
-  about: 'ℹ️',
-  services: '⚙️',
-};
-
-/* ------------------------------------------------------------------ */
-/* Sub-components: reusable form fields                                  */
-/* ------------------------------------------------------------------ */
-function InputField({
-  label,
-  value,
-  onChange,
-  type = 'text',
-}: {
-  label: string;
-  value: string | number;
-  onChange: (v: string) => void;
-  type?: 'text' | 'number' | 'url';
-}) {
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function ToastBanner({ toast, onClose }: { toast: Toast; onClose: () => void }) {
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, [toast, onClose]);
+  if (!toast) return null;
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-      />
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border max-w-sm ${toast.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+      <span className="text-xl">{toast.type === 'success' ? '✅' : '❌'}</span>
+      <p className="text-sm font-medium flex-1">{toast.msg}</p>
+      <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl ml-2">×</button>
     </div>
   );
 }
 
-function TextareaField({
-  label,
-  value,
-  onChange,
-  rows = 4,
+// ─── Item Editor (mục con trong modal) ────────────────────────────────────────
+function ItemEditor({
+  item, onChange,
 }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  rows?: number;
+  item: HomepageItemDto;
+  onChange: (fields: Partial<HomepageItemDto>) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-        {label}
-      </label>
-      <textarea
-        rows={rows}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
-      />
-    </div>
-  );
-}
-
-/* ── R2 Image Uploader component with Drag & Drop ────────────────── */
-function ImageUploader({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (url: string) => void;
-}) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleUpload = async (file: File) => {
-    setIsUploading(true);
-    setError(null);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/admin/homepage/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Upload thất bại");
-      }
-
-      const data = await res.json();
-      onChange(data.url);
-    } catch (e: any) {
-      setError(e.message || "Không thể tải ảnh lên");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleUpload(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      handleUpload(e.target.files[0]);
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-        {label}
-      </label>
-
-      {value ? (
-        <div className="relative group overflow-hidden rounded-xl border border-slate-200 bg-slate-50 h-40 flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="Preview" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => onChange("")}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium shadow transition-transform active:scale-95 animate-fade-in"
-            >
-              🗑️ Xóa ảnh
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div
-          onDragEnter={handleDrag}
-          onDragOver={handleDrag}
-          onDragLeave={handleDrag}
-          onDrop={handleDrop}
-          className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-            dragActive
-              ? "border-indigo-500 bg-indigo-50/50"
-              : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/30"
-          }`}
-        >
+    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-lg">{item.icon ?? '📄'}</span>
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Mục: {item.label}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[11px] font-semibold text-slate-500 uppercase">Tên / Tiêu đề</label>
           <input
-            type="file"
-            accept="image/*"
-            onChange={handleChange}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            disabled={isUploading}
+            value={item.label}
+            onChange={(e) => onChange({ label: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
           />
-          {isUploading ? (
-            <div className="flex flex-col items-center gap-1.5 py-2">
-              <svg className="w-6 h-6 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              <span className="text-xs text-slate-500 font-medium">Đang tải ảnh lên R2...</span>
+        </div>
+        <div>
+          <label className="text-[11px] font-semibold text-slate-500 uppercase">Icon (emoji)</label>
+          <input
+            value={item.icon ?? ''}
+            onChange={(e) => onChange({ icon: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            placeholder="🚚"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-[11px] font-semibold text-slate-500 uppercase">Mô tả</label>
+        <textarea
+          rows={2}
+          value={item.content ?? ''}
+          onChange={(e) => onChange({ content: e.target.value })}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+        />
+      </div>
+      <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={item.isActive}
+          onChange={(e) => onChange({ isActive: e.target.checked })}
+          className="rounded border-slate-300"
+        />
+        Hiển thị mục này
+      </label>
+    </div>
+  );
+}
+
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
+function EditModal({
+  section,
+  onSave,
+  onClose,
+}: {
+  section: HomepageSectionDto;
+  onSave: (updated: HomepageSectionDto) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState<HomepageSectionDto>(() => JSON.parse(JSON.stringify(section)));
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const bannerMeta = draft.sectionType === 'banner' ? (draft.meta as BannerSectionMeta | null) : null;
+
+  const updateMeta = (patch: Partial<BannerSectionMeta>) =>
+    setDraft((d) => ({ ...d, meta: { ...(d.meta ?? {}), ...patch } }));
+
+  const updateItem = (itemId: string, fields: Partial<HomepageItemDto>) =>
+    setDraft((d) => ({
+      ...d,
+      items: d.items.map((i) => (i.id === itemId ? { ...i, ...fields } : i)),
+    }));
+
+  // Đóng khi click overlay
+  const handleOverlay = (e: React.MouseEvent) => {
+    if (e.target === overlayRef.current) onClose();
+  };
+
+  return (
+    <div
+      ref={overlayRef}
+      onClick={handleOverlay}
+      className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+    >
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{sectionIcon(draft.sectionType)}</span>
+            <div>
+              <h2 className="font-bold text-slate-800">Chỉnh sửa Section</h2>
+              <p className="text-xs text-slate-400">{SECTION_TYPE_LABELS[draft.sectionType] ?? draft.sectionType}</p>
             </div>
-          ) : (
-            <div className="text-center py-2">
-              <span className="text-2xl mb-1 block">📁</span>
-              <p className="text-xs font-medium text-slate-600">
-                Kéo thả ảnh vào đây hoặc click để chọn
-              </p>
-              <p className="text-[10px] text-slate-400 mt-1">
-                Chấp nhận JPG, PNG, WebP, GIF (Tối đa 10MB)
-              </p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 text-lg">×</button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+          {/* Section chung */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Thông tin Section</h3>
+            <div>
+              <label className="text-[11px] font-semibold text-slate-500 uppercase">Tiêu đề chính</label>
+              <input
+                value={draft.title ?? ''}
+                onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-slate-500 uppercase">Mô tả / Subtitle</label>
+              <textarea
+                rows={2}
+                value={draft.subtitle ?? ''}
+                onChange={(e) => setDraft((d) => ({ ...d, subtitle: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={draft.isActive}
+                onChange={(e) => setDraft((d) => ({ ...d, isActive: e.target.checked }))}
+                className="rounded border-slate-300"
+              />
+              Hiển thị section này trên trang chủ
+            </label>
+          </div>
+
+          {/* Banner đặc biệt: tỷ giá + CTA */}
+          {draft.sectionType === 'banner' && (
+            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 space-y-3">
+              <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wide flex items-center gap-1">
+                💱 Cấu hình Banner (Tỷ giá & CTA)
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase">
+                    Tỷ giá CNY→VND (₫)
+                  </label>
+                  <input
+                    type="number"
+                    value={bannerMeta?.exchangeRate ?? 3980}
+                    onChange={(e) => updateMeta({ exchangeRate: Number(e.target.value) })}
+                    className="mt-1 w-full rounded-lg border border-orange-300 bg-white px-3 py-2 text-sm font-bold text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  />
+                  <p className="text-[10px] text-orange-500 mt-1">Hiển thị công khai trên trang chủ</p>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase">Văn bản nút CTA</label>
+                  <input
+                    value={bannerMeta?.buttonText ?? ''}
+                    onChange={(e) => updateMeta({ buttonText: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder="Liên hệ ngay"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase">Link nút CTA</label>
+                  <input
+                    value={bannerMeta?.buttonLink ?? ''}
+                    onChange={(e) => updateMeta({ buttonLink: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder="#contact"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase">Tiêu đề card phụ</label>
+                  <input
+                    value={bannerMeta?.cardTitle ?? ''}
+                    onChange={(e) => updateMeta({ cardTitle: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Items */}
+          {draft.items.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                Các mục ({draft.items.length})
+              </h3>
+              {draft.items.map((item) => (
+                <ItemEditor
+                  key={item.id}
+                  item={item}
+                  onChange={(fields) => updateItem(item.id, fields)}
+                />
+              ))}
             </div>
           )}
         </div>
-      )}
-      {error && <p className="text-xs text-red-500 font-medium mt-1">{error}</p>}
-    </div>
-  );
-}
 
-/* ------------------------------------------------------------------ */
-/* Block-specific editor forms                                          */
-/* ------------------------------------------------------------------ */
-function BannerEditor({
-  block,
-  update,
-}: {
-  block: BannerBlock;
-  update: (fields: Partial<BannerBlock>) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <InputField label="Tiêu đề chính" value={block.title} onChange={(v) => update({ title: v })} />
-      <InputField label="Tiêu đề phụ" value={block.subtitle} onChange={(v) => update({ subtitle: v })} />
-      <TextareaField label="Mô tả chính" value={block.description || ''} onChange={(v) => update({ description: v })} rows={3} />
-      
-      <ImageUploader label="Ảnh nền Banner" value={block.imageUrl} onChange={(v) => update({ imageUrl: v })} />
-      
-      <InputField label="Văn bản nút CTA" value={block.buttonText} onChange={(v) => update({ buttonText: v })} />
-      <InputField label="Đường dẫn nút CTA" value={block.buttonLink} onChange={(v) => update({ buttonLink: v })} />
-
-      <div className="border-t border-slate-100 pt-4 space-y-4">
-        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Khối thông tin phụ bên phải</h4>
-        <InputField label="Tiêu đề card phụ" value={block.cardTitle || ''} onChange={(v) => update({ cardTitle: v })} />
-        <InputField label="Mô tả card phụ" value={block.cardDesc || ''} onChange={(v) => update({ cardDesc: v })} />
+        {/* Footer */}
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={() => { onSave(draft); onClose(); }}
+            className="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors"
+          >
+            ✓ Áp dụng thay đổi
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function AboutEditor({
-  block,
-  update,
-}: {
-  block: AboutBlock;
-  update: (fields: Partial<AboutBlock>) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <InputField label="Tiêu đề phần" value={block.title} onChange={(v) => update({ title: v })} />
-      <TextareaField label="Nội dung chi tiết" value={block.content} onChange={(v) => update({ content: v })} rows={5} />
-      <ImageUploader label="Ảnh minh họa" value={block.imageUrl} onChange={(v) => update({ imageUrl: v })} />
-    </div>
-  );
-}
-
-function ServicesEditor({
-  block,
-  update,
-}: {
-  block: ServicesBlock;
-  update: (fields: Partial<ServicesBlock>) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <InputField label="Tiêu đề phần" value={block.title} onChange={(v) => update({ title: v })} />
-      <InputField
-        label="Số dịch vụ hiển thị"
-        value={block.itemCount}
-        onChange={(v) => update({ itemCount: Math.max(1, parseInt(v) || 1) })}
-        type="number"
-      />
-      <p className="text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
-        💡 Lưới tự động: 1 cột (mobile) → 2 cột (tablet) → 4 cột (desktop).
-      </p>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Toast Component                                                       */
-/* ------------------------------------------------------------------ */
-function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(onClose, 4000);
-    return () => clearTimeout(timer);
-  }, [toast, onClose]);
-
-  if (!toast) return null;
-
-  const isSuccess = toast.type === 'success';
-
-  return (
-    <div
-      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl border transition-all duration-300 max-w-sm ${
-        isSuccess
-          ? 'bg-green-50 border-green-200 text-green-800'
-          : 'bg-red-50 border-red-200 text-red-800'
-      }`}
-    >
-      <span className="text-xl">{isSuccess ? '✅' : '❌'}</span>
-      <p className="text-sm font-medium flex-1">{toast.message}</p>
-      <button
-        onClick={onClose}
-        className="text-slate-400 hover:text-slate-600 text-lg leading-none ml-2"
-        aria-label="Đóng thông báo"
-      >
-        ×
-      </button>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Main Page Component                                                  */
-/* ------------------------------------------------------------------ */
-export default function AdminHomePage() {
-  const [blocks, setBlocks] = useState<HomePageBlock[]>(initialBlocks);
-  const [selectedId, setSelectedId] = useState<string | null>('b1');
-  const [activeTab, setActiveTab] = useState<'layout' | 'content'>('layout');
-  const [isSaving, setIsSaving] = useState(false);
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function AdminHomepagePage() {
+  const [sections, setSections] = useState<HomepageSectionDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [toast, setToast] = useState<ToastState>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [editingSection, setEditingSection] = useState<HomepageSectionDto | null>(null);
+  const [toast, setToast] = useState<Toast>(null);
 
-  /* ── Fetch cấu hình từ DB khi mount ─────────────────────────────── */
+  // ── Fetch từ API admin ────────────────────────────────────────────────────
   useEffect(() => {
-    async function loadConfig() {
+    (async () => {
       try {
-        const res = await fetch('/api/admin/homepage');
+        const res = await fetch('/api/admin/homepage/sections');
         if (res.ok) {
-          const data: HomePageBlock[] = await res.json();
-          // Nếu DB có dữ liệu (mảng không rỗng) thì dùng, không thì giữ initialBlocks
-          if (Array.isArray(data) && data.length > 0) {
-            setBlocks(data);
-            setSelectedId(data[0]?.id ?? null);
-          }
+          const data: HomepageSectionDto[] = await res.json();
+          setSections(data.sort((a, b) => a.orderIndex - b.orderIndex));
         }
       } catch {
-        // Không kết nối được → dùng initialBlocks đã set sẵn
+        setToast({ type: 'error', msg: 'Không thể tải cấu hình. Kiểm tra kết nối.' });
       } finally {
         setIsLoading(false);
       }
-    }
-    loadConfig();
+    })();
   }, []);
 
-  /* ── Drag-and-drop handler ───────────────────────────────────────── */
-  const onDragEnd = useCallback(
-    (result: DropResult) => {
-      if (!result.destination) return;
-      const copy = Array.from(blocks);
-      const [moved] = copy.splice(result.source.index, 1);
-      copy.splice(result.destination.index, 0, moved);
-      setBlocks(copy);
-      setIsDirty(true);
-    },
-    [blocks],
-  );
-
-  /* ── Generic block field updater ────────────────────────────────── */
-  const updateBlock = useCallback((id: string, fields: Partial<HomePageBlock>) => {
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === id ? ({ ...b, ...fields } as HomePageBlock) : b)),
-    );
+  // ── Drag & Drop ───────────────────────────────────────────────────────────
+  const onDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
+    setSections((prev) => {
+      const arr = [...prev];
+      const [moved] = arr.splice(result.source.index, 1);
+      arr.splice(result.destination!.index, 0, moved);
+      // Cập nhật orderIndex theo vị trí mới
+      return arr.map((s, i) => ({ ...s, orderIndex: i + 1 }));
+    });
     setIsDirty(true);
   }, []);
 
-  /* ── Select block + switch tab on mobile ────────────────────────── */
-  const selectBlock = useCallback((id: string) => {
-    setSelectedId(id);
-    setActiveTab('content');
-  }, []);
+  // ── Toggle hiện/ẩn section ────────────────────────────────────────────────
+  const toggleActive = (id: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s)),
+    );
+    setIsDirty(true);
+  };
 
-  /* ── Save → PUT /api/admin/homepage ─────────────────────────────── */
-  const handleSave = useCallback(async () => {
+  // ── Áp dụng thay đổi từ modal ─────────────────────────────────────────────
+  const applyEdit = (updated: HomepageSectionDto) => {
+    setSections((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    setIsDirty(true);
+  };
+
+  // ── Lưu toàn bộ ──────────────────────────────────────────────────────────
+  const handleSave = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch('/api/admin/homepage', {
+      const payload: UpsertHomepageSectionPayload[] = sections.map((s) => ({
+        id: s.id,
+        sectionType: s.sectionType,
+        label: s.label,
+        orderIndex: s.orderIndex,
+        isActive: s.isActive,
+        title: s.title,
+        subtitle: s.subtitle,
+        meta: s.meta,
+        items: s.items.map((i) => ({
+          id: i.id,
+          label: i.label,
+          content: i.content,
+          icon: i.icon,
+          imageUrl: i.imageUrl,
+          orderIndex: i.orderIndex,
+          isActive: i.isActive,
+          meta: i.meta,
+        })),
+      }));
+
+      const res = await fetch('/api/admin/homepage/sections', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(blocks),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-
       if (res.ok) {
-        setToast({ type: 'success', message: data.message ?? 'Đã lưu cấu hình trang chủ thành công!' });
+        setToast({ type: 'success', msg: data.message ?? 'Đã lưu thành công!' });
         setIsDirty(false);
       } else {
-        setToast({ type: 'error', message: data.error ?? 'Lưu thất bại. Vui lòng thử lại.' });
+        setToast({ type: 'error', msg: data.error ?? 'Lưu thất bại. Thử lại.' });
       }
     } catch {
-      setToast({ type: 'error', message: 'Lỗi kết nối. Kiểm tra mạng và thử lại.' });
+      setToast({ type: 'error', msg: 'Lỗi kết nối. Kiểm tra mạng.' });
     } finally {
       setIsSaving(false);
     }
-  }, [blocks]);
+  };
 
-  const selectedBlock = blocks.find((b) => b.id === selectedId) ?? null;
-
-  /* ── Loading skeleton ────────────────────────────────────────────── */
+  // ── Loading skeleton ──────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-4 animate-pulse">
         <div className="h-10 bg-slate-200 rounded-xl w-72" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-64 bg-slate-100 rounded-2xl" />
-          <div className="h-64 bg-slate-100 rounded-2xl" />
-        </div>
+        {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-slate-100 rounded-2xl" />)}
       </div>
     );
   }
 
-  /* ── Main render ─────────────────────────────────────────────────── */
   return (
     <>
       <div className="space-y-6">
-        {/* Page header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Quản lý Giao diện Trang Chủ</h1>
             <p className="mt-1 text-sm text-slate-500">
-              Kéo thả để sắp xếp · Nhấn khối để sửa nội dung · Lưu để cập nhật ngay trên web
+              Kéo thả để sắp xếp thứ tự · Nhấn <strong>Chỉnh sửa</strong> để sửa nội dung · Toggle để ẩn/hiện
             </p>
           </div>
           <button
             id="cms-save-btn"
             onClick={handleSave}
             disabled={isSaving}
-            className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
+            className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed shrink-0 ${
               isDirty
-                ? 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 ring-2 ring-indigo-200'
+                ? 'bg-indigo-600 text-white hover:bg-indigo-700 ring-2 ring-indigo-200'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -489,174 +401,144 @@ export default function AdminHomePage() {
                 </svg>
                 Đang lưu...
               </>
-            ) : (
-              <>{isDirty ? '💾 Lưu thay đổi' : '✓ Đã lưu'}</>
-            )}
+            ) : isDirty ? '💾 Lưu cấu hình' : '✓ Đã lưu'}
           </button>
         </div>
 
-        {/* Mobile tab switcher */}
-        <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1 md:hidden">
-          {(['layout', 'content'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all duration-200 ${
-                activeTab === tab
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {tab === 'layout' ? '📋 Sắp xếp khối' : '✏️ Sửa nội dung'}
-            </button>
-          ))}
-        </div>
+        {/* Chú thích tỷ giá */}
+        {sections.some((s) => s.sectionType === 'banner') && (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 text-sm text-orange-700">
+            <span className="text-base">💱</span>
+            <span>
+              Tỷ giá CNY→VND hiện tại:{' '}
+              <strong>
+                {((sections.find((s) => s.sectionType === 'banner')?.meta as BannerSectionMeta | null)?.exchangeRate ?? 3980).toLocaleString('vi-VN')} ₫
+              </strong>
+              {' '}— Nhấn <strong>Chỉnh sửa</strong> trên Banner để cập nhật
+            </span>
+          </div>
+        )}
 
-        {/* Main two-column editor */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {/* ── LEFT: Block list with DnD ─────────────────────────── */}
-          <div
-            className={`${
-              activeTab === 'layout' ? 'block' : 'hidden md:block'
-            } rounded-2xl border border-slate-200 bg-white shadow-sm`}
-          >
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="font-semibold text-slate-700">Bố cục trang chủ</h2>
-              <p className="mt-0.5 text-xs text-slate-400">
-                Kéo thả để thay đổi thứ tự · Toggle để ẩn/hiện
-              </p>
+        {/* Drag & Drop List */}
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="font-semibold text-slate-700">Bố cục trang chủ</h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {sections.length} sections · Kéo thả ⠿ để sắp xếp thứ tự hiển thị
+            </p>
+          </div>
+
+          {sections.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">
+              <p className="text-4xl mb-3">📭</p>
+              <p className="text-sm">Chưa có section nào. Chạy migration seed để tạo dữ liệu mặc định.</p>
             </div>
-            <div className="p-4">
-              <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="homepage-blocks">
-                  {(droppableProvided) => (
-                    <div
-                      {...droppableProvided.droppableProps}
-                      ref={droppableProvided.innerRef}
-                      className="space-y-3"
-                    >
-                      {blocks.map((block, index) => (
-                        <Draggable key={block.id} draggableId={block.id} index={index}>
-                          {(draggableProvided, snapshot) => (
+          ) : (
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable droppableId="homepage-sections">
+                {(drop) => (
+                  <div ref={drop.innerRef} {...drop.droppableProps} className="divide-y divide-slate-100">
+                    {sections.map((section, index) => {
+                      const bannerMeta = section.sectionType === 'banner'
+                        ? (section.meta as BannerSectionMeta | null)
+                        : null;
+
+                      return (
+                        <Draggable key={section.id} draggableId={section.id} index={index}>
+                          {(drag, snapshot) => (
                             <div
-                              ref={draggableProvided.innerRef}
-                              {...draggableProvided.draggableProps}
-                              {...draggableProvided.dragHandleProps}
-                              onClick={() => selectBlock(block.id)}
-                              className={`flex cursor-pointer touch-none items-center justify-between gap-3 rounded-xl border-2 p-4 transition-all duration-150 select-none ${
+                              ref={drag.innerRef}
+                              {...drag.draggableProps}
+                              className={`flex items-center gap-4 px-5 py-4 transition-all duration-150 ${
                                 snapshot.isDragging
-                                  ? 'border-indigo-400 bg-indigo-50 shadow-lg rotate-1 scale-[1.02]'
-                                  : selectedId === block.id
-                                    ? 'border-indigo-500 bg-indigo-50/60'
-                                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-                              }`}
+                                  ? 'bg-indigo-50 shadow-lg rounded-xl scale-[1.01]'
+                                  : 'bg-white hover:bg-slate-50'
+                              } ${!section.isActive ? 'opacity-50' : ''}`}
                             >
-                              <div className="flex min-w-0 items-center gap-3">
-                                <span className="text-xl leading-none">{BLOCK_ICONS[block.type]}</span>
-                                <div className="min-w-0">
-                                  <p className="truncate font-semibold text-slate-800 text-sm">
-                                    {BLOCK_LABELS[block.type]}
-                                  </p>
-                                  <p className="text-[11px] text-slate-400">ID: {block.id}</p>
+                              {/* Drag handle */}
+                              <div
+                                {...drag.dragHandleProps}
+                                className="text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing text-xl select-none shrink-0"
+                                title="Kéo để sắp xếp"
+                              >
+                                ⠿
+                              </div>
+
+                              {/* Icon + thông tin */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xl leading-none">{sectionIcon(section.sectionType)}</span>
+                                  <div>
+                                    <p className="font-semibold text-slate-800 text-sm">{section.label}</p>
+                                    <p className="text-xs text-slate-400">
+                                      {SECTION_TYPE_LABELS[section.sectionType] ?? section.sectionType}
+                                      {section.items.length > 0 && ` · ${section.items.length} mục`}
+                                      {bannerMeta?.exchangeRate && (
+                                        <span className="ml-2 font-medium text-orange-500">
+                                          💱 {bannerMeta.exchangeRate.toLocaleString('vi-VN')} ₫
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-3 shrink-0">
-                                {/* Visibility toggle */}
+                              {/* Controls */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                {/* Edit */}
+                                <button
+                                  onClick={() => setEditingSection(section)}
+                                  className="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                                >
+                                  ✏️ Chỉnh sửa
+                                </button>
+
+                                {/* Toggle */}
                                 <label
                                   className="relative inline-flex cursor-pointer items-center"
-                                  title={block.isVisible ? 'Đang hiển thị' : 'Đang ẩn'}
-                                  onClick={(e) => e.stopPropagation()}
+                                  title={section.isActive ? 'Đang hiển thị' : 'Đang ẩn'}
+                                  onClick={(e) => { e.preventDefault(); toggleActive(section.id); }}
                                 >
-                                  <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={block.isVisible}
-                                    onChange={(e) =>
-                                      updateBlock(block.id, { isVisible: e.target.checked })
-                                    }
-                                  />
-                                  <div className="w-9 h-5 rounded-full bg-slate-200 peer-checked:bg-indigo-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-4 after:h-4 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-4" />
+                                  <div className={`w-10 h-5 rounded-full transition-colors ${section.isActive ? 'bg-indigo-500' : 'bg-slate-200'}`}>
+                                    <div className={`absolute top-[2px] left-[2px] w-4 h-4 rounded-full bg-white shadow transition-transform ${section.isActive ? 'translate-x-5' : ''}`} />
+                                  </div>
                                 </label>
-                                <span className="text-slate-300 text-lg">⠿</span>
                               </div>
                             </div>
                           )}
                         </Draggable>
-                      ))}
-                      {droppableProvided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            </div>
-
-            {/* JSON debug panel */}
-            <details className="border-t border-slate-100 px-5 py-3">
-              <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-600 select-none">
-                🔍 Xem JSON cấu hình (debug)
-              </summary>
-              <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-slate-900 p-3 text-[10px] text-green-400">
-                {JSON.stringify(blocks, null, 2)}
-              </pre>
-            </details>
-          </div>
-
-          {/* ── RIGHT: Content editor ─────────────────────────────── */}
-          <div
-            className={`${
-              activeTab === 'content' ? 'block' : 'hidden md:block'
-            } rounded-2xl border border-slate-200 bg-white shadow-sm`}
-          >
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="font-semibold text-slate-700">Cấu hình nội dung</h2>
-              {selectedBlock ? (
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Đang chỉnh:{' '}
-                  <span className="font-semibold text-indigo-600">
-                    {BLOCK_ICONS[selectedBlock.type]} {BLOCK_LABELS[selectedBlock.type]}
-                  </span>
-                </p>
-              ) : (
-                <p className="mt-0.5 text-xs text-slate-400">Chọn một khối bên trái để bắt đầu</p>
-              )}
-            </div>
-
-            <div className="p-5">
-              {selectedBlock ? (
-                <>
-                  {selectedBlock.type === 'banner' && (
-                    <BannerEditor
-                      block={selectedBlock as BannerBlock}
-                      update={(fields) => updateBlock(selectedBlock.id, fields)}
-                    />
-                  )}
-                  {selectedBlock.type === 'about' && (
-                    <AboutEditor
-                      block={selectedBlock as AboutBlock}
-                      update={(fields) => updateBlock(selectedBlock.id, fields)}
-                    />
-                  )}
-                  {selectedBlock.type === 'services' && (
-                    <ServicesEditor
-                      block={selectedBlock as ServicesBlock}
-                      update={(fields) => updateBlock(selectedBlock.id, fields)}
-                    />
-                  )}
-                </>
-              ) : (
-                <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 text-center text-slate-400">
-                  <span className="text-4xl">👈</span>
-                  <p className="text-sm">Nhấn vào một khối để chỉnh sửa nội dung</p>
-                </div>
-              )}
-            </div>
-          </div>
+                      );
+                    })}
+                    {drop.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          )}
         </div>
+
+        {/* JSON debug */}
+        <details className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <summary className="cursor-pointer px-5 py-3 text-xs text-slate-400 hover:text-slate-600 select-none">
+            🔍 Xem JSON cấu hình hiện tại (debug)
+          </summary>
+          <pre className="px-5 pb-4 max-h-64 overflow-auto text-[10px] text-green-400 bg-slate-900">
+            {JSON.stringify(sections, null, 2)}
+          </pre>
+        </details>
       </div>
 
-      {/* Toast notification */}
-      <Toast toast={toast} onClose={() => setToast(null)} />
+      {/* Edit Modal */}
+      {editingSection && (
+        <EditModal
+          section={editingSection}
+          onSave={applyEdit}
+          onClose={() => setEditingSection(null)}
+        />
+      )}
+
+      {/* Toast */}
+      <ToastBanner toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }
