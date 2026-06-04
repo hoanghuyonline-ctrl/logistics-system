@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
 
 /* ── Global Mobile Safety Overrides ── */
 #__next {

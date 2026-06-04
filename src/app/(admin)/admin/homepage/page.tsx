@@ -13,6 +13,7 @@ import type {
   BannerSectionMeta,
 } from '@/types/homepage-cms';
 import { SECTION_TYPE_LABELS } from '@/types/homepage-cms';
+import RichTextEditor from '@/components/admin/RichTextEditor';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Toast = { type: 'success' | 'error'; msg: string } | null;
@@ -77,12 +78,10 @@ function ItemEditor({
         </div>
       </div>
       <div>
-        <label className="text-[11px] font-semibold text-slate-500 uppercase">Mô tả</label>
-        <textarea
-          rows={2}
+        <label className="text-[11px] font-semibold text-slate-500 uppercase mb-1 block">Mô tả</label>
+        <RichTextEditor
           value={item.content ?? ''}
-          onChange={(e) => onChange({ content: e.target.value })}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+          onChange={(html) => onChange({ content: html })}
         />
       </div>
       <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
@@ -161,12 +160,10 @@ function EditModal({
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-slate-500 uppercase">Mô tả / Subtitle</label>
-              <textarea
-                rows={2}
+              <label className="text-[11px] font-semibold text-slate-500 uppercase mb-1 block">Mô tả / Subtitle</label>
+              <RichTextEditor
                 value={draft.subtitle ?? ''}
-                onChange={(e) => setDraft((d) => ({ ...d, subtitle: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+                onChange={(html) => setDraft((d) => ({ ...d, subtitle: html }))}
               />
             </div>
             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">

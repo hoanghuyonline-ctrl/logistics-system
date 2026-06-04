@@ -15,6 +15,8 @@
  * Fallback: khi DB rỗng → render các component hardcode LandingXxx đã có.
  */
 
+export const dynamic = 'force-dynamic';
+
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -135,13 +137,13 @@ function CmsBannerSection({ section, exchangeRate }: { section: HomepageSectionD
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white mb-4">
               {section.title ?? 'Giải pháp vận tải toàn diện'}
-              <br />
-              <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 bg-clip-text text-transparent">
-                {section.subtitle ?? 'Kết nối giao thương, nâng tầm logistics'}
-              </span>
             </h1>
+            <div
+              className="prose prose-slate prose-invert max-w-3xl text-slate-300 text-lg leading-relaxed mb-6 [&_strong]:text-orange-400 [&_a]:text-orange-400 [&_a]:underline"
+              dangerouslySetInnerHTML={{ __html: section.subtitle ?? 'Kết nối giao thương, nâng tầm logistics' }}
+            />
 
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
@@ -195,7 +197,10 @@ function CmsStatsSection({ section }: { section: HomepageSectionDto }) {
               <div key={item.id} className={`text-center ${i < section.items.length - 1 ? 'lg:border-r lg:border-slate-200' : ''}`}>
                 <div className="text-3xl font-bold text-indigo-700">{m?.value ?? item.label}</div>
                 {m?.unit && <div className="text-sm text-indigo-400 font-medium">{m.unit}</div>}
-                <p className="text-sm text-slate-500 mt-1">{item.content ?? item.label}</p>
+                <div
+                  className="prose prose-slate max-w-none text-sm text-slate-500 mt-1"
+                  dangerouslySetInnerHTML={{ __html: item.content ?? item.label }}
+                />
                 {m?.trend && (
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block ${m.trendUp ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
                     {m.trend}
@@ -221,7 +226,12 @@ function CmsServicesSection({ section }: { section: HomepageSectionDto }) {
         {(section.title || section.subtitle) && (
           <div className="text-center mb-16 space-y-4">
             {section.title && <h2 className="text-3xl lg:text-5xl font-extrabold text-white tracking-tight">{section.title}</h2>}
-            {section.subtitle && <p className="text-slate-400 max-w-2xl mx-auto text-lg">{section.subtitle}</p>}
+            {section.subtitle && (
+              <div
+                className="prose prose-slate prose-invert max-w-2xl mx-auto text-lg text-slate-400"
+                dangerouslySetInnerHTML={{ __html: section.subtitle }}
+              />
+            )}
           </div>
         )}
         <div className={`grid grid-cols-1 md:grid-cols-2 ${cols} gap-8`}>
@@ -239,7 +249,12 @@ function CmsServicesSection({ section }: { section: HomepageSectionDto }) {
                   {item.icon ?? '⚙️'}
                 </div>
                 <h3 className="text-lg font-bold text-white mb-3 group-hover:text-orange-400 transition-colors">{item.label}</h3>
-                {item.content && <p className="text-sm text-slate-400 leading-relaxed">{item.content}</p>}
+                {item.content && (
+                  <div
+                    className="prose prose-slate prose-invert text-sm text-slate-400 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: item.content }}
+                  />
+                )}
               </div>
             );
           })}
@@ -268,7 +283,12 @@ function CmsWhyChooseUsSection({ section }: { section: HomepageSectionDto }) {
         {(section.title || section.subtitle) && (
           <div className="text-center mb-10">
             {section.title && <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">{section.title}</h2>}
-            {section.subtitle && <p className="mt-2 text-sm text-slate-500">{section.subtitle}</p>}
+            {section.subtitle && (
+              <div
+                className="prose prose-slate max-w-2xl mx-auto mt-2 text-sm text-slate-500"
+                dangerouslySetInnerHTML={{ __html: section.subtitle }}
+              />
+            )}
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -282,7 +302,12 @@ function CmsWhyChooseUsSection({ section }: { section: HomepageSectionDto }) {
                   {item.icon ?? '✅'}
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900 mb-1">{item.label}</h3>
-                {item.content && <p className="text-xs text-slate-500 leading-relaxed">{item.content}</p>}
+                {item.content && (
+                  <div
+                    className="prose prose-slate text-xs text-slate-500 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: item.content }}
+                  />
+                )}
               </div>
             );
           })}
@@ -301,13 +326,23 @@ function CmsAboutSection({ section }: { section: HomepageSectionDto }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
           <div className="space-y-5">
             {section.title && <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">{section.title}</h2>}
-            {section.subtitle && <p className="text-slate-600 leading-relaxed text-base md:text-lg whitespace-pre-line">{section.subtitle}</p>}
+            {section.subtitle && (
+              <div
+                className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-base md:text-lg"
+                dangerouslySetInnerHTML={{ __html: section.subtitle }}
+              />
+            )}
             {section.items.map((item) => (
               <div key={item.id} className="flex gap-3">
                 <span className="text-xl shrink-0 mt-0.5">{item.icon ?? '✓'}</span>
                 <div>
                   <p className="font-semibold text-slate-800 text-sm">{item.label}</p>
-                  {item.content && <p className="text-slate-500 text-sm mt-0.5">{item.content}</p>}
+                  {item.content && (
+                    <div
+                      className="prose prose-slate text-slate-500 text-sm mt-0.5"
+                      dangerouslySetInnerHTML={{ __html: item.content }}
+                    />
+                  )}
                 </div>
               </div>
             ))}
@@ -332,7 +367,12 @@ function CmsLocationsSection({ section }: { section: HomepageSectionDto }) {
         {(section.title || section.subtitle) && (
           <div className="text-center mb-14">
             {section.title && <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">{section.title}</h2>}
-            {section.subtitle && <p className="mt-3 text-lg text-slate-500 max-w-2xl mx-auto">{section.subtitle}</p>}
+            {section.subtitle && (
+              <div
+                className="prose prose-slate max-w-2xl mx-auto mt-3 text-lg text-slate-500"
+                dangerouslySetInnerHTML={{ __html: section.subtitle }}
+              />
+            )}
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -351,7 +391,12 @@ function CmsLocationsSection({ section }: { section: HomepageSectionDto }) {
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600">Trụ sở chính</span>
                       )}
                     </div>
-                    {item.content && <p className="text-sm text-slate-500 leading-relaxed mt-1">{item.content}</p>}
+                    {item.content && (
+                      <div
+                        className="prose prose-slate text-sm text-slate-500 leading-relaxed mt-1"
+                        dangerouslySetInnerHTML={{ __html: item.content }}
+                      />
+                    )}
                     {m?.phone && (
                       <a href={`tel:${m.phone}`} className="mt-2 flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 transition-colors">
                         📞 {m.phone}

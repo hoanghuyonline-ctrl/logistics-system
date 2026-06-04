@@ -94,9 +94,9 @@ describe('VALID_SECTION_TYPES', () => {
   });
 
   it('không chứa loại section không hợp lệ', () => {
-    // @ts-expect-error — test intentional invalid input
+    // @ts-expect-error - test intentional invalid input
     expect(VALID_SECTION_TYPES.has('unknown')).toBe(false);
-    // @ts-expect-error
+    // @ts-expect-error - test intentional empty input
     expect(VALID_SECTION_TYPES.has('')).toBe(false);
   });
 });
