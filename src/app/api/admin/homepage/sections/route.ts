@@ -22,6 +22,7 @@
  */
 export const dynamic = 'force-dynamic';
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import {
   getCurrentUser,
@@ -35,6 +36,18 @@ import type {
   UpsertHomepageItemPayload,
 } from '@/types/homepage-cms';
 import { VALID_SECTION_TYPES } from '@/types/homepage-cms';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Prisma JSON Helper
+// Prisma v7 yêu cầu Prisma.JsonNull (không phải null thuần) cho trường JSONB nullable.
+// Hàm này chuyển đổi: null/undefined → Prisma.JsonNull, object → InputJsonValue
+// ─────────────────────────────────────────────────────────────────────────────
+function toJsonValue(
+  val: Record<string, unknown> | null | undefined,
+): Prisma.InputJsonValue | typeof Prisma.JsonNull {
+  if (val === null || val === undefined) return Prisma.JsonNull;
+  return val as Prisma.InputJsonValue;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validation Helpers
@@ -160,7 +173,8 @@ export const PUT = withErrorHandler(async function PUT(request: Request) {
         isActive:    sectionPayload.isActive,
         title:       sectionPayload.title ?? null,
         subtitle:    sectionPayload.subtitle ?? null,
-        meta:        (sectionPayload.meta ?? null) as object | null,
+        // Prisma v7: dùng Prisma.JsonNull thay vì null thuần cho trường JSONB nullable
+        meta:        toJsonValue(sectionPayload.meta),
       };
 
       let sectionId: string;
@@ -206,7 +220,8 @@ export const PUT = withErrorHandler(async function PUT(request: Request) {
             imageUrl:   itemPayload.imageUrl ?? null,
             orderIndex: itemPayload.orderIndex,
             isActive:   itemPayload.isActive,
-            meta:       (itemPayload.meta ?? null) as object | null,
+            // Prisma v7: dùng Prisma.JsonNull thay vì null thuần cho trường JSONB nullable
+            meta:       toJsonValue(itemPayload.meta),
           };
 
           if (itemPayload.id && existingItemIds.has(itemPayload.id)) {
