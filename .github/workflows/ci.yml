@@ -140,7 +140,7 @@ jobs:
           POSTGRES_PASSWORD: logistics_ci
           POSTGRES_DB: logistics_ci_db
         ports:
-          - 5432:5432
+          - 5433:5432
         # Chờ PostgreSQL sẵn sàng trước khi chạy steps
         options: >-
           --health-cmd pg_isready
@@ -164,13 +164,13 @@ jobs:
       - name: "🔧 Generate Prisma Client"
         run: npx prisma generate
         env:
-          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5432/logistics_ci_db
+          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5433/logistics_ci_db
 
       - name: "🗄️ Push Prisma schema lên DB CI (không cần migration history)"
         # db push an toàn hơn migrate deploy trong CI vì không cần migration files
         run: npx prisma db push --skip-generate --accept-data-loss
         env:
-          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5432/logistics_ci_db
+          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5433/logistics_ci_db
 
       - name: "🏗️ Next.js Production Build"
         run: npm run build
@@ -178,7 +178,7 @@ jobs:
           # Secrets bắt buộc cho Next.js build
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-ci-secret-32-chars-minimum' }}
           NEXTAUTH_URL: https://bactrunghai.vn
-          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5432/logistics_ci_db
+          DATABASE_URL: postgresql://logistics:logistics_ci@localhost:5433/logistics_ci_db
           # Tắt telemetry để tăng tốc build
           NEXT_TELEMETRY_DISABLED: 1
 
