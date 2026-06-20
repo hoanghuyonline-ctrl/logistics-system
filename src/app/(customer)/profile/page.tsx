@@ -75,10 +75,10 @@ export default function ProfilePage() {
 
   async function prefetchRegistrationOptions(identifier: string) {
     try {
-      const optRes = await fetch("/api/auth/webauthn/register", {
+      const optRes = await fetch("/api/auth/biometric/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "options", email: identifier }),
+        body: JSON.stringify({ mode: "register", email: identifier }),
       });
       if (!optRes.ok) {
         const data = await optRes.json();
@@ -149,10 +149,10 @@ export default function ProfilePage() {
       }
       // Fallback: fetch synchronously (may fail on slow iOS — rare case)
       try {
-        const optRes = await fetch("/api/auth/webauthn/register", {
+        const optRes = await fetch("/api/auth/biometric/options", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "options", email: identifier }),
+          body: JSON.stringify({ mode: "register", email: identifier }),
         });
         if (!optRes.ok) {
           const data = await optRes.json();
@@ -178,11 +178,12 @@ export default function ProfilePage() {
       // ✅ startRegistration() called with already-ready options — no async gap on iOS
       const credential = await startRegistration(options);
 
-      // Verify credential on server
-      const verifyRes = await fetch("/api/auth/webauthn/register", {
+      // Verify credential on server — uses /api/auth/biometric/register to save to Credential table
+      const finalName = newKeyName.trim() || `Khóa Thiết Bị (${new Date().toLocaleDateString("vi-VN")})`;
+      const verifyRes = await fetch("/api/auth/biometric/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify", response: credential }),
+        body: JSON.stringify({ response: credential, name: finalName }),
       });
 
       const verifyData = await verifyRes.json();

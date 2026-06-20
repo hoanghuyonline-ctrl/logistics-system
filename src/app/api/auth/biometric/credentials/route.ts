@@ -12,18 +12,39 @@ export const GET = withErrorHandler(async function GET() {
   const sessionUser = await getCurrentUser();
   if (!sessionUser) return errorResponse("Unauthorized", 401);
 
-  const credentials = await prisma.credential.findMany({
-    where: { userId: sessionUser.id },
-    select: {
-      id: true,
-      name: true,
-      credentialDeviceType: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  // Query both Credential (new) and Authenticator (legacy) tables
+  const [credentials, authenticators] = await Promise.all([
+    prisma.credential.findMany({
+      where: { userId: sessionUser.id },
+      select: {
+        id: true,
+        name: true,
+        credentialDeviceType: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.authenticator.findMany({
+      where: { userId: sessionUser.id },
+      select: {
+        id: true,
+        credentialDeviceType: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-  return jsonResponse(credentials);
+  // Merge: Authenticator entries get a generated name since the old table has no name field
+  const merged = [
+    ...credentials,
+    ...authenticators.map((a) => ({
+      ...a,
+      name: `Khóa Thiết Bị (legacy)`,
+    })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return jsonResponse(merged);
 });
 
 /**
@@ -42,24 +63,33 @@ export const DELETE = withErrorHandler(async function DELETE(req: NextRequest) {
       return errorResponse("Thiếu thông tin ID thiết bị cần xóa.", 400);
     }
 
-    // Guard: ensure the user owns this credential
+    // Check Credential table first (new)
     const cred = await prisma.credential.findUnique({
       where: { id: credentialId },
     });
 
-    if (!cred) {
-      return errorResponse("Không tìm thấy thiết bị này trên hệ thống.", 404);
+    if (cred) {
+      if (cred.userId !== sessionUser.id) {
+        return errorResponse("Bạn không có quyền xóa thiết bị này.", 403);
+      }
+      await prisma.credential.delete({ where: { id: credentialId } });
+      return jsonResponse({ success: true, message: "Đã xóa thiết bị thành công." });
     }
 
-    if (cred.userId !== sessionUser.id) {
-      return errorResponse("Bạn không có quyền xóa thiết bị này.", 403);
-    }
-
-    await prisma.credential.delete({
+    // Fallback: check Authenticator table (legacy)
+    const auth = await prisma.authenticator.findUnique({
       where: { id: credentialId },
     });
 
-    return jsonResponse({ success: true, message: "Đã xóa thiết bị thành công." });
+    if (auth) {
+      if (auth.userId !== sessionUser.id) {
+        return errorResponse("Bạn không có quyền xóa thiết bị này.", 403);
+      }
+      await prisma.authenticator.delete({ where: { id: credentialId } });
+      return jsonResponse({ success: true, message: "Đã xóa thiết bị thành công." });
+    }
+
+    return errorResponse("Không tìm thấy thiết bị này trên hệ thống.", 404);
   } catch (err) {
     console.error("[biometric/credentials/delete] Error:", err);
     return errorResponse("Lỗi máy chủ nội bộ khi xóa thiết bị.", 500);
