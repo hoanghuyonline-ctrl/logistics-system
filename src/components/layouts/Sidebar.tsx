@@ -64,6 +64,7 @@ const adminNavGroups: NavGroup[] = [
   {
     label: "QUẢN LÝ ĐƠN HÀNG",
     items: [
+      { labelKey: "nav.newOrder", href: "/orders/new", icon: "➕" },
       { labelKey: "nav.orders", href: "/admin/orders", icon: "📦" },
       { labelKey: "nav.packages", href: "/admin/packages", icon: "📫" },
       { labelKey: "nav.stuckShipments", href: "/admin/stuck-shipments", icon: "⚠️" },
@@ -75,6 +76,7 @@ const adminNavGroups: NavGroup[] = [
   {
     label: "TÀI CHÍNH & PHÂN TÍCH",
     items: [
+      { labelKey: "nav.wallet", href: "/wallet", icon: "💰" },
       { labelKey: "nav.finance", href: "/admin/finance", icon: "💰" },
       { labelKey: "nav.analytics", href: "/admin/analytics", icon: "📈" },
       { labelKey: "nav.analyticsSummary", href: "/admin/analytics-summary", icon: "📈" },

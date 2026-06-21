@@ -173,7 +173,15 @@ function AdminOrdersContent() {
 
   return (
     <div>
-      <PageHeader title={t("orders.adminTitle")} subtitle={t("orders.adminSubtitle")} />
+      <PageHeader 
+        title={t("orders.adminTitle")} 
+        subtitle={t("orders.adminSubtitle")} 
+        action={
+          <Link href="/orders/new" className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            + {t("orders.newOrder", "Tạo đơn mới")}
+          </Link>
+        }
+      />
 
       {summary && (
         <div className="flex flex-wrap gap-2 mb-4">
