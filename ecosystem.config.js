@@ -2,8 +2,7 @@ module.exports = {
   apps: [
     {
       name: "logistics-system",
-      script: "node_modules/next/dist/bin/next",
-      args: "start -p 3000 -H 0.0.0.0",
+      script: ".next/standalone/server.js",
       cwd: "D:\\BacTrungHai\\logistics-system",
       instances: 1,
       exec_mode: "fork",
@@ -11,6 +10,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 3000,
+        HOSTNAME: "0.0.0.0",
       },
       max_restarts: 10,
       min_uptime: "10s",
